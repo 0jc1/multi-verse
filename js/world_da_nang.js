@@ -198,9 +198,11 @@ AV.registerWorld({
     const box = (b, mat, col, x0, x1, y0, y1, z0, z1, glow) => b.add(mat, BG.box, col, M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0), glow);
     const solid = (x0, x1, z0, z1) => { ctx.cols.push([x0, x1, z0, z1]); occ.push({ x0, x1, z0, z1 }) };
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
-    /* real-looking signs: lit at night */
-    const label = (lines, x, y, z, ry, w, h, bg, fg, frame, back) => { const tx = plainTex(lines, bg, fg, 512, Math.round(512 * h / w), frame), m = new THREE.MeshStandardMaterial({ map: tx, emissiveMap: tx, emissive: 0xffffff, emissiveIntensity: .05, roughness: .6 }); m.userData.lin = 1;
-      const s = new THREE.Mesh(AV.G.pln, m); s.position.set(x, y, z); s.rotation.y = ry; s.scale.set(w, h, 1); grp.add(s); lit.push(m); if (back !== false) B.decor.add(MT.v, BG.box, 0x3a3a3c, M(x - Math.sin(ry) * .06, y, z - Math.cos(ry) * .06, w + .1, h + .1, .1, 0, ry, 0)); return s };
+    /* real-looking signs: lit at night; text textures are cached so repeated hotel names share one material */
+    const LTX = new Map();
+    const label = (lines, x, y, z, ry, w, h, bg, fg, frame, back) => { const k = lines.join('|') + bg + fg + (frame || '') + w + h; let m = LTX.get(k);
+      if (!m) { const tx = plainTex(lines, bg, fg, 512, Math.round(512 * h / w), frame); m = new THREE.MeshStandardMaterial({ map: tx, emissiveMap: tx, emissive: 0xffffff, emissiveIntensity: .05, roughness: .6 }); m.userData.lin = 1; LTX.set(k, m); lit.push(m) }
+      const s = new THREE.Mesh(AV.G.pln, m); s.position.set(x, y, z); s.rotation.y = ry; s.scale.set(w, h, 1); grp.add(s); if (back !== false) B.decor.add(MT.v, BG.box, 0x3a3a3c, M(x - Math.sin(ry) * .06, y, z - Math.cos(ry) * .06, w + .1, h + .1, .1, 0, ry, 0)); return s };
     ctx.upd.push(() => { const nk = AV.nightK || 0; for (const m of lit) m.emissiveIntensity = .05 + nk * .85 });
 
     /* ---------- terrain: painted ground, carved river, beach profile ---------- */

@@ -141,6 +141,8 @@ WORLDS = [
  W('neon_nexus','Neon Nexus - Virtual Vegas',None,'Neon arcades and holographic arenas (fictional points only)','Neon funk',extra=dict(kind='additional_concept')),
  W('quantum_ziggurat','Quantum Ziggurat',None,'Galactic casino pyramids (fictional points only)','Space lounge',extra=dict(kind='additional_concept')),
  W('alien_maze_x9','Alien Maze Planet X-9',None,'Twisting routes, Crystal Gardens, Gravity Club','Strange harmonies',extra=dict(kind='additional_concept')),
+ W('da_nang','Đà Nẵng - river city by the sea',21,'Vietnamese coastal city: Hàn River, Dragon Bridge, My Khe beach','Sunny travel beats, sea breeze','playable',
+   ['Dragon Bridge (Cầu Rồng)','Hàn River & Love Pier','My Khe Beach (Biển Mỹ Khê)','Hàn Market','Da Nang Cathedral (Rooster Church)','Sơn Trà Night Market','Sun Wheel · Asia Park','Cồn Market','Sơn Trà peninsula & Lady Buddha','Marble Mountains']),
  W('verdalux','Verdalux (jungle moon, V0.8 legacy)',None,'Preserved V0.8 location: Grakk and the Drum Log','Drum log and moss tones','planned',
    ['Glow-trees','Drum Log','Grakk','Portal gate'],extra=dict(kind='legacy_v08')),
 ]

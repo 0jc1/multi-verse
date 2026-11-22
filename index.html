@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Apeverse V0.9.4 - The Living Multiverse</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/apeverse.css">
+</head><body>
+<canvas id="c"></canvas><div id="err"></div>
+
+<!-- START SCREEN -->
+<div id="start" class="ov"><div class="wrap">
+  <img id="heroImg" alt="The Stone Ape Band: gorilla bassist, Ztonedape, orangutan saxophonist" style="display:none">
+  <h1>APEVERSE</h1><div id="sub">V0.9 &middot; The Living Multiverse</div>
+  <h3 id="h_dev">HOW WOULD YOU LIKE TO PLAY?</h3>
+  <div class="row"><button id="dLap" class="on">Laptop / Desktop</button><button id="dPho">Phone / Tablet</button></div>
+  <div id="phoneNote" class="note" style="display:none">Touch controls: left stick = move, drag the right side = look, round buttons = act. Landscape works best. Graphics set to Low.</div>
+  <h3 id="h_lang">LANGUAGE</h3>
+  <div class="row"><button id="lEn" class="on">English</button><button id="lEs">Espa&ntilde;ol</button></div>
+  <div class="note" id="langNote">English and Espa&ntilde;ol are fully translated in this build. Other languages are not offered until their translations exist.</div>
+  <h3 id="h_opt">OPTIONS</h3>
+  <label><input id="mus" type="checkbox" checked> <span id="t_mus">Music</span></label> &nbsp;
+  <span id="t_gfx">Graphics</span> <select id="gq"><option>Low</option><option>Medium</option><option selected>High</option></select>
+  <div class="row" style="margin-top:18px"><button id="bNew">New game</button><button id="bCont">Continue saved game</button></div>
+  <div class="note" id="saveNote">Progress is stored in this browser only. Clearing site data erases it. Your V0.8 save is imported automatically (the original is never deleted).</div>
+  <div class="note" id="modeNote"></div>
+</div></div>
+
+<!-- TOUCH CONTROLS -->
+<div id="tc"><div id="lz"></div><div id="js"><div id="jk"></div></div>
+  <button id="tE" class="tb" style="right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(40px + env(safe-area-inset-bottom,0px));width:80px;height:80px">Act</button>
+  <button id="tJ" class="tb" style="right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))">Jump</button>
+  <button id="tR" class="tb" style="right:calc(30px + env(safe-area-inset-right,0px));bottom:calc(136px + env(safe-area-inset-bottom,0px))">Run</button>
+  <button id="tP" class="tb pipeBtn" style="right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(100px + env(safe-area-inset-bottom,0px))">Pipe</button>
+  <button id="tM" class="tb" style="right:calc(12px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Map</button>
+  <button id="tI" class="tb" style="right:calc(84px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Bag</button>
+  <button id="tO" class="tb" style="right:calc(156px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Set</button>
+  <button id="tZ" class="tb" style="display:none;right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(172px + env(safe-area-inset-bottom,0px))">Sink</button>
+  <button id="tF" class="tb" style="display:none;left:calc(16px + env(safe-area-inset-left,0px));top:calc(120px + env(safe-area-inset-top,0px));background:rgba(255,180,60,.55)">Fest</button>
+  <button id="tN" class="tb" style="right:calc(200px + env(safe-area-inset-right,0px));bottom:calc(212px + env(safe-area-inset-bottom,0px));width:52px;height:52px">⇄</button>
+  <button id="tU" class="tb" style="display:none;right:calc(200px + env(safe-area-inset-right,0px));bottom:calc(126px + env(safe-area-inset-bottom,0px))">Use</button>
+  <button id="tW" class="tb" style="right:calc(200px + env(safe-area-inset-right,0px));bottom:calc(40px + env(safe-area-inset-bottom,0px));width:76px;height:76px;background:rgba(60,160,255,.55)">Splash</button>
+  <div id="pb"><button id="t1" class="tb" style="position:static">1</button><button id="t2" class="tb" style="position:static">2</button><button id="t3" class="tb" style="position:static">3</button></div>
+</div>
+<div id="rot" class="hud" style="display:none;left:50%;top:60px;transform:translateX(-50%);background:var(--pn);padding:6px 12px;border-radius:8px">Rotate your phone to landscape</div>
+<div id="fade"></div>
+<div id="top" class="hud"></div>
+<div id="hint" class="hud"></div>
+<div id="prompt" class="hud"></div><div id="toast" class="hud"></div>
+
+<!-- CHAT -->
+<div id="chat" class="pnl"><b id="cn"></b> <span id="tag"></span><div id="log"></div><input id="ci" type="text" maxlength="200" placeholder="Type anything and press Enter..."><div class="row" style="margin-top:6px"><span id="chips"></span><button id="cs">Send</button><button id="cx">Leave (Esc)</button></div></div>
+
+<!-- PANELS -->
+<div id="map" class="pnl"></div><div id="inv" class="pnl"></div><div id="away" class="pnl"></div><div id="set" class="pnl"></div>
+<div id="pipe" class="holo"></div>
+<div id="viewer" class="holo"></div>
+<div id="cinema" class="holo"></div>
+<div id="concert" class="pnl"></div>
+<div id="cmp" class="pnl"></div><div id="pool" class="holo"></div><div id="splash"></div><div id="fxv"></div><div id="cmhud"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="lib/GLTFLoader.js"></script>
+<script src="lib/extras/CopyShader.js"></script>
+<script src="lib/extras/LuminosityHighPassShader.js"></script>
+<script src="lib/extras/EffectComposer.js"></script>
+<script src="lib/extras/RenderPass.js"></script>
+<script src="lib/extras/ShaderPass.js"></script>
+<script src="lib/extras/FXAAShader.js"></script>
+<script src="lib/extras/UnrealBloomPass.js"></script>
+<script src="lib/extras/RGBELoader.js"></script>
+<script src="data/worlds.js"></script>
+<script src="data/media.js"></script>
+<script src="data/films.js"></script>
+<script src="data/hero.js"></script>
+<script src="data/npcs.js"></script>
+<script src="data/npcs_cm.js"></script>
+<script src="data/models.js"></script>
+<script src="data/music.js"></script>
+<script src="data/items.js"></script>
+<script src="data/items_vienna.js"></script>
+<script src="js/core.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world_kit.js"></script>
+<script src="js/arch_kit.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/chars.js"></script>
+<script src="js/chars_human.js"></script>
+<script src="js/sculpt.js"></script>
+<script src="js/anatomy.js"></script>
+<script src="js/pbr.js"></script>
+<script src="js/rig.js"></script>
+<script src="js/chars_real.js"></script>
+<script src="js/city_life.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/npc.js"></script>
+<script src="js/media.js"></script>
+<script src="js/portal.js"></script>
+<script src="js/world_ape_town.js"></script>
+<script src="js/world_verdalux.js"></script>
+<script src="js/gfx_forge.js"></script>
+<script src="js/beings.js"></script>
+<script src="js/astro9_districts.js"></script>
+<script src="js/world_astro9.js"></script>
+<script src="js/world_jungle_dub.js"></script>
+<script src="js/pool.js"></script>
+<script src="js/world_chiang_mai.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/bag.js"></script>
+<script src="js/gfx.js"></script>
+<script src="js/main.js"></script>
+</body></html>

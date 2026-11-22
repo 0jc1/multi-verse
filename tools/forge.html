@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Apeverse asset forge</title></head>
+<body style="font:14px sans-serif;background:#111;color:#ddd;padding:20px">
+<h2>Apeverse asset forge (V0.9.6)</h2>
+<p>Exports the procedural Astro-9 prototype assets (js/gfx_forge.js) as GLB files with three.js r128's GLTFExporter.<br>
+Run <code>tools\forge_glb.ps1</code> to write them into <code>assets/models/astro9/</code>, or press the button to download them here.</p>
+<button id="go">Build + download GLBs</button> <span id="st"></span>
+<script src="../lib/three.min.js"></script>
+<script src="../lib/extras/GLTFExporter.js"></script>
+<script src="../js/gfx_forge.js"></script>
+<script>
+window.FORGE = {
+  items() { const F = AV.forge, z = F.alien('zib'), o = F.alien('orbo'); return [['spiral_tower.glb', F.tower(1), []], ['alien_zib.glb', z.root, z.clips], ['alien_orbo.glb', o.root, o.clips]] },
+  glb(obj, clips) { return new Promise(ok => new THREE.GLTFExporter().parse(obj, ok, { binary: true, animations: clips, onlyVisible: true })) },
+  b64(buf) { return new Promise(ok => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.readAsDataURL(new Blob([buf])) }) },
+  async run() { const out = {}; for (const [n, obj, clips] of FORGE.items()) out[n] = await FORGE.b64(await FORGE.glb(obj, clips)); return JSON.stringify(out) }
+};
+document.getElementById('go').onclick = async () => { for (const [n, obj, clips] of FORGE.items()) { const b = await FORGE.glb(obj, clips), a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([b])); a.download = n; a.click(); document.getElementById('st').textContent += n + ' (' + (b.byteLength / 1024 | 0) + ' KB) ' } };
+</script>
+</body></html>

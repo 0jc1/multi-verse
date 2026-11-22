@@ -1,0 +1,358 @@
+[
+ {
+  "id": "ape_town",
+  "name": "Ape Town",
+  "roadmap_no": 1,
+  "core_identity": "Main home hub: music, art, galleries, cinema",
+  "music_identity": "Boom-bap hip-hop, mellow bass, Rhodes, tropical groove",
+  "status": "playable",
+  "landmarks": [
+   "La Finca gateway",
+   "Circular Plaza",
+   "Lotus Canal stage (Stone Ape Band)",
+   "Gallery Gardens (Living Paintings)",
+   "Outdoor Cinema",
+   "Zil's Cafe",
+   "Eco-lodge apartment",
+   "Portal Grove",
+   "Waterfalls and bridges"
+  ],
+  "art_refs": [
+   "Apeverse Town_ Psychedelic Garden Masterplan.png",
+   "Psychedelic Stone Ape Festival Valley Map-1.png"
+  ]
+ },
+ {
+  "id": "jungle_dub",
+  "name": "Jungle Dub Party Planet",
+  "roadmap_no": 2,
+  "core_identity": "Jungle raves, reggae, dub, nature",
+  "music_identity": "Dub reggae, deep bass, percussion",
+  "status": "playable",
+  "landmarks": [
+   "Jungle Rave main stage",
+   "Roots Village",
+   "Dub Lab",
+   "Bamboo Bazaar",
+   "River Bar",
+   "Floating Bungalows",
+   "Lotus Lagoon",
+   "Treehouse lodging",
+   "Jungle Cinema",
+   "Crystal waterfalls"
+  ],
+  "art_refs": [
+   "Apeverse Jungle Rave Map.png",
+   "Neon Jungle Festival Map-2.png"
+  ]
+ },
+ {
+  "id": "cyberpunk",
+  "name": "Cyberpunk Metropolis",
+  "roadmap_no": 3,
+  "core_identity": "Neon skyscrapers and futuristic nightlife",
+  "music_identity": "Dark synth funk",
+  "status": "planned",
+  "landmarks": [
+   "Neon avenues",
+   "Rooftop club",
+   "Screening room"
+  ],
+  "art_refs": [
+   "Neon Cyberpunk Festival City Map-3.png"
+  ]
+ },
+ {
+  "id": "astro9",
+  "name": "Astro-9 Market World",
+  "roadmap_no": 4,
+  "core_identity": "Intergalactic bazaar and Club Graviton",
+  "music_identity": "Cosmic funk, space jazz",
+  "status": "playable",
+  "landmarks": [
+   "Central Plaza",
+   "Intergalactic Bazaar",
+   "Astro Cafe",
+   "Orbit Lounge",
+   "Docking Bay",
+   "Cinema 9",
+   "Glassopy observatory",
+   "Club Graviton",
+   "Portals"
+  ],
+  "art_refs": [
+   "Astro-9_ Intergalactic Market World.png"
+  ]
+ },
+ {
+  "id": "bio_jungle",
+  "name": "Bioluminescent Jungle World",
+  "roadmap_no": 5,
+  "core_identity": "Original luminous creatures and ecosystems",
+  "music_identity": "Ambient fantasy percussion",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": [
+   "Bioluminescent Jungle Festival Map-5.png"
+  ]
+ },
+ {
+  "id": "mayan",
+  "name": "Mayan Canal Kingdom",
+  "roadmap_no": 6,
+  "core_identity": "Temples, canals, boats and jungles",
+  "music_identity": "Percussion and flutes",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": [
+   "Mesoamerican Jungle City at Sunrise-6.png"
+  ]
+ },
+ {
+  "id": "robot",
+  "name": "Robot World",
+  "roadmap_no": 7,
+  "core_identity": "Mechanical cities and robotic life",
+  "music_identity": "Mechanical funk",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "weird_alien",
+  "name": "Weird Alien Planet",
+  "roadmap_no": 8,
+  "core_identity": "Impossible biology and mysterious terrain",
+  "music_identity": "Experimental ambient",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "madrid",
+  "name": "Madrid / Pinar Universe",
+  "roadmap_no": 9,
+  "core_identity": "Urban memories, neighborhoods and culture",
+  "music_identity": "Hip-hop, jazz, street music",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": [
+   "Apeverse Madrid_ Psychedelic City Map.png"
+  ]
+ },
+ {
+  "id": "london",
+  "name": "London Traveler World",
+  "roadmap_no": 10,
+  "core_identity": "Streets, markets, pubs and music culture",
+  "music_identity": "Rhodes jazz-hop",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "chiang_mai",
+  "name": "Chiang Mai Universe",
+  "roadmap_no": 11,
+  "core_identity": "Giant Hostel, temples, music, markets",
+  "music_identity": "Relaxed fusion, acoustic travel beats",
+  "status": "playable",
+  "landmarks": [
+   "Giant Hostel",
+   "Blue's Live Music Bar",
+   "Pineapple Express",
+   "Chada's Vegetarian",
+   "Khun Kae's Juice Bar",
+   "Tha Phae Gate",
+   "Night Bazaar",
+   "Doi Suthep",
+   "Ping River",
+   "Route to Pai"
+  ],
+  "art_refs": [
+   "Chiang Mai Old City Adventure Map.png"
+  ]
+ },
+ {
+  "id": "pai",
+  "name": "Pai World",
+  "roadmap_no": 12,
+  "core_identity": "Mountain town, river and nature",
+  "music_identity": "Acoustic fusion",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "acid_dmt",
+  "name": "Acid-DMT Dimension",
+  "roadmap_no": 13,
+  "core_identity": "Surreal psychedelic geometry",
+  "music_identity": "Experimental electronics",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "ibiza",
+  "name": "Ibiza 60s Island City",
+  "roadmap_no": 14,
+  "core_identity": "Vintage island, flower-power atmosphere",
+  "music_identity": "60s psychedelic soul",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "burning_pyramid",
+  "name": "Burning Pyramid Festival World",
+  "roadmap_no": 15,
+  "core_identity": "Desert festivals and pyramids",
+  "music_identity": "Downtempo desert grooves",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "atlantis",
+  "name": "Underwater City / Atlantis",
+  "roadmap_no": 16,
+  "core_identity": "Coral cities and marine life",
+  "music_identity": "Aquatic ambient",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": [
+   "Apeverse Atlantis Underwater City Map.png"
+  ]
+ },
+ {
+  "id": "vienna",
+  "name": "Vienna 2000s Memory World",
+  "roadmap_no": 17,
+  "core_identity": "Nostalgic city, music, nightlife, school",
+  "music_identity": "Nostalgic urban nightlife",
+  "status": "planned",
+  "landmarks": [
+   "Stephansplatz",
+   "Donaukanal (LEGENDARY HAPPENS graffiti)",
+   "Flex",
+   "Badeschiff",
+   "Naschmarkt",
+   "Prater",
+   "Schonbrunn",
+   "Belvedere",
+   "Vienna International School (22nd district, near Alte Donau)"
+  ],
+  "art_refs": [
+   "Apeverse Vienna 2000s Memory Map (1).png"
+  ]
+ },
+ {
+  "id": "space_jazz",
+  "name": "Space Jazz Lounge Planet",
+  "roadmap_no": 18,
+  "core_identity": "Peaceful interstellar music world",
+  "music_identity": "Space jazz",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "prehistoric",
+  "name": "Prehistoric Dinosaur World",
+  "roadmap_no": 19,
+  "core_identity": "Ancient nature and dinosaurs",
+  "music_identity": "Tribal percussion",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "volcanic_funk",
+  "name": "Volcanic Funk Planet",
+  "roadmap_no": 20,
+  "core_identity": "Lava, music and volcanic landscapes",
+  "music_identity": "Heavy funk",
+  "status": "planned",
+  "landmarks": [],
+  "art_refs": []
+ },
+ {
+  "id": "somatra",
+  "name": "Somatra - The Flower Maze Planet",
+  "roadmap_no": null,
+  "core_identity": "Flower labyrinths, giant plants, crystal caves",
+  "music_identity": "Psychedelic jungle percussion",
+  "status": "planned",
+  "landmarks": [
+   "Orchid Labyrinth",
+   "Lotus Spire",
+   "Mushroom Gardens",
+   "Emerald Falls",
+   "River of Colors",
+   "Crystal Caves",
+   "Skyroot Village",
+   "Canopy Rave",
+   "Portal"
+  ],
+  "kind": "additional_concept",
+  "art_refs": [
+   "Apeverse Somatra_ The Flower Maze Planet.png"
+  ]
+ },
+ {
+  "id": "neon_nexus",
+  "name": "Neon Nexus - Virtual Vegas",
+  "roadmap_no": null,
+  "core_identity": "Neon arcades and holographic arenas (fictional points only)",
+  "music_identity": "Neon funk",
+  "status": "planned",
+  "landmarks": [],
+  "kind": "additional_concept",
+  "art_refs": [
+   "Galactic Neon Market City-4.png"
+  ]
+ },
+ {
+  "id": "quantum_ziggurat",
+  "name": "Quantum Ziggurat",
+  "roadmap_no": null,
+  "core_identity": "Galactic casino pyramids (fictional points only)",
+  "music_identity": "Space lounge",
+  "status": "planned",
+  "landmarks": [],
+  "kind": "additional_concept",
+  "art_refs": [
+   "Quantum Ziggurat_ Galactic Casino World.png"
+  ]
+ },
+ {
+  "id": "alien_maze_x9",
+  "name": "Alien Maze Planet X-9",
+  "roadmap_no": null,
+  "core_identity": "Twisting routes, Crystal Gardens, Gravity Club",
+  "music_identity": "Strange harmonies",
+  "status": "planned",
+  "landmarks": [],
+  "kind": "additional_concept",
+  "art_refs": [
+   "Apeverse Alien Maze Planet X-9.png"
+  ]
+ },
+ {
+  "id": "verdalux",
+  "name": "Verdalux (jungle moon, V0.8 legacy)",
+  "roadmap_no": null,
+  "core_identity": "Preserved V0.8 location: Grakk and the Drum Log",
+  "music_identity": "Drum log and moss tones",
+  "status": "playable",
+  "landmarks": [
+   "Glow-trees",
+   "Drum Log",
+   "Grakk",
+   "Portal gate"
+  ],
+  "kind": "legacy_v08",
+  "art_refs": []
+ }
+]

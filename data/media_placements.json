@@ -1,0 +1,626 @@
+{
+ "placements": [
+  {
+   "filename": "Banana_melt.mp4",
+   "title": "Banana Melt",
+   "world": "ape_town",
+   "room": "Animated-art gallery",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 32.1,
+    "width": 452,
+    "height": 678
+   },
+   "file": "assets/media/paintings/Banana_melt.mp4",
+   "caption": "A banana that refuses to stay solid.",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Bissap_abbibi_special_V1.mp4",
+   "title": "Bissap Abibi Special",
+   "world": "ape_town",
+   "room": "Cafe / art gallery",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 41.5,
+    "width": 464,
+    "height": 688
+   },
+   "file": "assets/media/paintings/Bissap_abbibi_special_V1.mp4",
+   "caption": "Hibiscus-red specials from the caf\u00e9 wall.",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Chill_Rhythms_loop_V3.mp4",
+   "title": "Chill Rhythms",
+   "world": "ape_town",
+   "room": "Botanical gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 59.6,
+    "width": 432,
+    "height": 640
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Freeze_ur_mind_ZtoneApe_summer_promo.mp4",
+   "title": "Freeze Ur Mind (summer promo)",
+   "world": "ape_town",
+   "room": "Promotional-art gallery",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 23.4,
+    "width": 1290,
+    "height": 1920
+   },
+   "file": "assets/media/paintings/Freeze_ur_mind_ZtoneApe_summer_promo.mp4",
+   "caption": "Summer promo from the Ztonedape archive.",
+   "review_flag": "Promotional video: confirm music/voice rights before public release.",
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Funky_chimp_choco_parody_advert_V2.mp4",
+   "title": "Funky Chimp Choco (parody ad)",
+   "world": "ape_town",
+   "room": "Fantasy advertisement exhibition",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 39.4,
+    "width": 464,
+    "height": 688
+   },
+   "file": "assets/media/paintings/Funky_chimp_choco_parody_advert_V2.mp4",
+   "caption": "A fictional chocolate advert starring a funky chimp.",
+   "review_flag": "Parody advert: confirm it does not imitate a real brand before public release.",
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "HARP_HOP_ztoned_ape_V1.mp4",
+   "title": "Harp Hop",
+   "world": "ape_town",
+   "room": "Music-art gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 70.1,
+    "width": 1080,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Harp_hop_2.mp4",
+   "title": "Harp Hop 2",
+   "world": "ape_town",
+   "room": "Music-art gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 48.3,
+    "width": 464,
+    "height": 688
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Hazy_wonderland_Vibes_HD.mp4",
+   "title": "Hazy Wonderland Vibes",
+   "world": "ape_town",
+   "room": "Psychedelic botanical gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 28.1,
+    "width": 1080,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Japan_jamz_V2 (1).mp4",
+   "title": "Japan Jamz",
+   "world": "astro9",
+   "room": "Travel-art gallery / Cinema 9",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 23.5,
+    "width": 1080,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Mango_inferno_parody_advert_V2.mp4",
+   "title": "Mango Inferno (parody ad)",
+   "world": "ape_town",
+   "room": "Fantasy advertisement exhibition",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 27.5,
+    "width": 454,
+    "height": 674
+   },
+   "file": "assets/media/paintings/Mango_inferno_parody_advert_V2.mp4",
+   "caption": "A fictional mango advert that runs a little hot.",
+   "review_flag": "Parody advert: confirm it does not imitate a real brand before public release.",
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Mango_tango_sorbet_ztoned_ape (1).mp4",
+   "title": "Mango Tango Sorbet",
+   "world": "ape_town",
+   "room": "Food-art gallery",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 52.6,
+    "width": 464,
+    "height": 688
+   },
+   "file": "assets/media/paintings/Mango_tango_sorbet_ztoned_ape (1).mp4",
+   "caption": "Sorbet, tango, mango.",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Tropical_thunder_zing_za_thc_drink_promo_1_V3.mp4",
+   "title": "Tropical Thunder Zing-Za (parody promo)",
+   "world": "ape_town",
+   "room": "Optional promotional-art exhibition",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 23.7,
+    "width": 1296,
+    "height": 1920
+   },
+   "file": "assets/media/paintings/Tropical_thunder_zing_za_thc_drink_promo_1_V3.mp4",
+   "caption": "Fictional parody drink promo (mature-theme label).",
+   "review_flag": "Filename references a cannabis-themed drink; fictional parody promo. Needs content label and rights review before public release.",
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Underwater_jam_V2.mp4",
+   "title": "Underwater Jam",
+   "world": "atlantis",
+   "room": "Atlantis gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 22.4,
+    "width": 1296,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "ZtonedApe_Grinding_Forever_V1.mp4",
+   "title": "Grinding Forever",
+   "world": "ape_town",
+   "room": "Ztonedape portfolio gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 18.1,
+    "width": 1298,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "Ztoned_ape_s_interdimentional_ice_cream_V6.mp4",
+   "title": "Interdimensional Ice Cream",
+   "world": "ape_town",
+   "room": "Interdimensional food-art exhibition",
+   "status": "present",
+   "manifest_meta": {
+    "duration_s": 32.3,
+    "width": 1296,
+    "height": 1920
+   },
+   "file": "assets/media/paintings/Ztoned_ape_s_interdimentional_ice_cream_V6.mp4",
+   "caption": "Ice cream from another dimension.",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "alien_Groove_alien_animation_loop_1_V5.mp4",
+   "title": "Alien Groove",
+   "world": "astro9",
+   "room": "Astro-9 art gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 27.8,
+    "width": 432,
+    "height": 640
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "borisito_swing_shortdog_vid.mp4",
+   "title": "Borisito Swing",
+   "world": "madrid",
+   "room": "Madrid personal-memory gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 21.1,
+    "width": 1294,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "burning_man_ztonedape_V1.mp4",
+   "title": "Burning Man (Ztonedape)",
+   "world": "burning_pyramid",
+   "room": "Festival gallery / potential portal",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 29.5,
+    "width": 1024,
+    "height": 1536
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "chant_V1.mp4",
+   "title": "Chant",
+   "world": "jungle_dub",
+   "room": "Jungle Dub music gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 33.2,
+    "width": 864,
+    "height": 1280
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "cow abduction loop 2.mp4",
+   "title": "Cow Abduction Loop",
+   "world": "astro9",
+   "room": "Alien Maze / Astro-9",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 16.7,
+    "width": 864,
+    "height": 1280
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "egypt_world_travel_1_V1.mp4",
+   "title": "Egypt World Travel 1",
+   "world": "burning_pyramid",
+   "room": "Burning Pyramid Festival gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 37.9,
+    "width": 464,
+    "height": 688
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "egypt_world_travel_V1 (1).mp4",
+   "title": "Egypt World Travel",
+   "world": "burning_pyramid",
+   "room": "Burning Pyramid Festival gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 12.1,
+    "width": 464,
+    "height": 688
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "grove_with_me_cubims_animation_boom_bap_short_V1.mp4",
+   "title": "Groove With Me (cubist boom-bap)",
+   "world": "jungle_dub",
+   "room": "Jungle Dub music exhibition",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 15.3,
+    "width": 1280,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "in_the_music_promo_roman_fresco_V1.mp4",
+   "title": "In The Music (Roman fresco promo)",
+   "world": "ape_town",
+   "room": "Historical-art gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 17.0,
+    "width": 1294,
+    "height": 1920
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "pai_hostel_beatz.mp4",
+   "title": "Pai Hostel Beatz",
+   "world": "pai",
+   "room": "Pai World gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 35.5,
+    "width": 432,
+    "height": 640
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "sax_circle_chant_I_1_V1.mp4",
+   "title": "Sax Circle Chant",
+   "world": "jungle_dub",
+   "room": "Jazz / Jungle Dub music gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 41.6,
+    "width": 864,
+    "height": 1280
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "treehouse_beats_animation_loop_V1.mp4",
+   "title": "Treehouse Beats",
+   "world": "jungle_dub",
+   "room": "Jungle Dub treehouse gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 48.2,
+    "width": 432,
+    "height": 640
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  },
+  {
+   "filename": "wonderland_jamms_V2.mp4",
+   "title": "Wonderland Jamms",
+   "world": "ape_town",
+   "room": "Fantasy-art gallery",
+   "status": "missing",
+   "manifest_meta": {
+    "duration_s": 34.0,
+    "width": 458,
+    "height": 680
+   },
+   "file": null,
+   "caption": "",
+   "review_flag": null,
+   "download_enabled": false,
+   "special_portal": null
+  }
+ ],
+ "cinema_catalog_entries": [
+  {
+   "filename": "Cosmic_odyssey_ztonedape_music_video_V1.mp4",
+   "title": "Cosmic odyssey ztonedape music video V1",
+   "duration_s": 191.6,
+   "present": false
+  },
+  {
+   "filename": "dimensional drift ztonedape musicvideo.mp4",
+   "title": "dimensional drift ztonedape musicvideo",
+   "duration_s": 157.76,
+   "present": false
+  },
+  {
+   "filename": "elevated_V2_ztonedape_music_video.mp4",
+   "title": "elevated V2 ztonedape music video",
+   "duration_s": 165.87,
+   "present": false
+  },
+  {
+   "filename": "Feeling_Good_Ztoned_Ape_music_video (1).mp4",
+   "title": "Feeling Good Ztoned Ape music video (1)",
+   "duration_s": 187.34,
+   "present": false
+  },
+  {
+   "filename": "Feeling_high.mp4",
+   "title": "Feeling high",
+   "duration_s": 151.3,
+   "present": false
+  },
+  {
+   "filename": "hip_hop_ztonedape_music_video_V4.mp4",
+   "title": "hip hop ztonedape music video V4",
+   "duration_s": 166.44,
+   "present": false
+  },
+  {
+   "filename": "History_of_Cannabis_ai_animation_V2.mp4",
+   "title": "History of Cannabis ai animation V2",
+   "duration_s": 198.38,
+   "present": false
+  },
+  {
+   "filename": "i_love_you_mary_jane_ztoned_ape_musicvideoV1.mp4",
+   "title": "i love you mary jane ztoned ape musicvideoV1",
+   "duration_s": 168.74,
+   "present": false
+  },
+  {
+   "filename": "Joyfull_ZtonedApe_Music_Video_ (1).mp4",
+   "title": "Joyfull ZtonedApe Music Video  (1)",
+   "duration_s": 161.37,
+   "present": false
+  },
+  {
+   "filename": "lost_on_wanderlust_V1_music_video_ztonedape_bamb_alejo_V4.mp4",
+   "title": "lost on wanderlust V1 music video ztonedape bamb alejo V4",
+   "duration_s": 116.87,
+   "present": false
+  },
+  {
+   "filename": "metamorphic_ZtonedApe.mp4",
+   "title": "metamorphic ZtonedApe",
+   "duration_s": 175.96,
+   "present": false
+  },
+  {
+   "filename": "peace_love_ZtonedApe_V6.mp4",
+   "title": "peace love ZtonedApe V6",
+   "duration_s": 200.75,
+   "present": false
+  },
+  {
+   "filename": "Sunshine_in_a_bag_musicvideo_ztonedapemp3_hd_V2.mp4",
+   "title": "Sunshine in a bag musicvideo ztonedapemp3 hd V2",
+   "duration_s": 192.08,
+   "present": false
+  },
+  {
+   "filename": "Today_is_a_Good_Day_ZTONEDAPE.mp4",
+   "title": "Today is a Good Day ZTONEDAPE",
+   "duration_s": 122.69,
+   "present": false
+  },
+  {
+   "filename": "Visions_in_Sound_ ztoned ape music video.mp4",
+   "title": "Visions in Sound  ztoned ape music video",
+   "duration_s": 148.13,
+   "present": false
+  },
+  {
+   "filename": "weed_weed_ztonedape music video_V1.mp4",
+   "title": "weed weed ztonedape music video V1",
+   "duration_s": 143.49,
+   "present": false
+  },
+  {
+   "filename": "ztoned_ape_trippy_music_videomp4_V1.mp4",
+   "title": "ztoned ape trippy music videomp4 V1",
+   "duration_s": 169.15,
+   "present": false
+  },
+  {
+   "filename": "ZtonedApe_0_views_Official_Music_Video_V3.mp4",
+   "title": "ZtonedApe 0 views Official Music Video V3",
+   "duration_s": 161.6,
+   "present": false
+  },
+  {
+   "filename": "ztonedape_I_wanna_travel_the_world_music_video_V1.mp4",
+   "title": "ztonedape I wanna travel the world music video V1",
+   "duration_s": 131.67,
+   "present": false
+  },
+  {
+   "filename": "Chronic Chronicles hip hop MUSICVIDEO ztonedape.mp4",
+   "title": "Chronic Chronicles hip hop MUSICVIDEO ztonedape",
+   "duration_s": 142.66,
+   "present": false
+  }
+ ],
+ "special_candidates": {
+  "Giant_Hostel_1_V2.mp4": {
+   "in_supplied_files": false,
+   "listed_in_catalog_or_manifest": []
+  },
+  "happy_new_year_dub_party_V4.mp4": {
+   "in_supplied_files": false,
+   "listed_in_catalog_or_manifest": []
+  },
+  "burning_man_ztonedape_V1.mp4": {
+   "in_supplied_files": false,
+   "listed_in_catalog_or_manifest": [
+    "burning_man_ztonedape_V1.mp4",
+    "burning_man_ztonedape_V1.mp4"
+   ]
+  },
+  "ztonedape traveller.mp4": {
+   "in_supplied_files": false,
+   "listed_in_catalog_or_manifest": [
+    "ztoned_ape_trippy_music_videomp4_V1.mp4"
+   ]
+  }
+ },
+ "note": "Edit world/room here to move paintings. A catalog entry is not a playable file; only status=present is playable."
+}

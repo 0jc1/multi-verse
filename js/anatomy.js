@@ -2,6 +2,8 @@
    One parametric great-ape body (skeleton + sculpt primitives) with three species presets that follow the band reference art:
    gorilla (broad, crested skull, heavy brow, flat nose), chimp (big ears, protruding muzzle) and orangutan (cheek flanges,
    throat sac, long arms, pot belly). Clothing, sneakers and hats are separate sculpts that share the same skeleton.
+   Two humans and two aliens (alien_zib, alien_orbo: big crania, almond / cyclops eye sockets, spring-tipped antennae, a
+   wobbling crown, skin-tight suit with glowing trims painted on the single body sculpt) use the same body builder.
    Character space: metres, y up, facing +z, the character's LEFT is +x. Bones have identity rest rotations. */
 'use strict';
 (function (factory) { const root = typeof window !== 'undefined' ? window : globalThis; factory(root); if (root.AV) (root.AV._gensrc = root.AV._gensrc || []).push(factory.toString()) })(function (root) {
@@ -30,7 +32,15 @@ AN.SPECIES = {
     fur: { body: 0, head: 0, arm: 0, hand: 0 } },
   human_b: { s: .96, face: 'human', bare: true, bulk: .58, h: .0075, hipY: .96, chestY: 1.3, shY: 1.45, shW: .18, neckY: 1.5, neckZ: -.01, headY: 1.585, headZ: .0, armA: .22, arm1: .29, arm2: .26, palmL: .085, handW: .7, hipW: .1, kneeY: .52, ankleY: .085, footL: .24,
     chest: [.15, .14, .1], belly: [.125, .125, .08], pelvis: [.165, .12, .105], trap: .45, delt: .055, uarm: [.046, .038], farm: [.04, .03], thigh: [.09, .058], shin: [.056, .038], neckR: .05, head: .97,
-    fur: { body: 0, head: 0, arm: 0, hand: 0 } }
+    fur: { body: 0, head: 0, arm: 0, hand: 0 } },
+  /* aliens (soft-body versions of the forge aliens Zib + Orbo): no fur; material channels are 0 suit, 1 skin, 2 dark, 3 glow.
+     eye = [x, y, z, r] head-relative (x mirrored), eyeN eyes, eyeShape = almond scale, ant = antenna [base x, y, z, tip dx, dy, dz] */
+  alien_zib: { s: 1, face: 'alien', alien: 'zib', bulk: .5, h: .012, hipY: .98, chestY: 1.3, shY: 1.46, shW: .18, neckY: 1.5, neckZ: -.01, headY: 1.62, headZ: .01, armA: .17, arm1: .32, arm2: .31, palmL: .085, handW: .78, fingL: 1.3, hipW: .085, kneeY: .52, ankleY: .085, footL: .23,
+    chest: [.14, .14, .095], belly: [.11, .12, .08], pelvis: [.13, .1, .09], trap: .35, delt: .05, uarm: [.042, .034], farm: [.036, .026], thigh: [.07, .048], shin: [.048, .034], neckR: .038, head: 1,
+    eye: [.056, .1, .112, .036], eyeN: 2, eyeShape: [1.4, .8, .75], eyeTilt: .38, ant: [.055, .29, -.05, .05, .15, .01], fur: { body: 0, head: 0, arm: 0, hand: 0 } },
+  alien_orbo: { s: 1, face: 'alien', alien: 'orbo', bulk: .9, h: .0135, hipY: .56, chestY: .84, shY: .98, shW: .25, neckY: 1.0, neckZ: 0, headY: 1.06, headZ: .03, armA: .55, arm1: .25, arm2: .23, palmL: .075, handW: .85, fingL: 1, hipW: .11, kneeY: .3, ankleY: .07, footL: .2,
+    chest: [.27, .24, .24], belly: [.31, .27, .29], pelvis: [.24, .15, .21], trap: .9, delt: .085, uarm: [.068, .054], farm: [.056, .044], thigh: [.1, .075], shin: [.072, .054], neckR: .13, head: 1.05,
+    eye: [0, .13, .118, .066], eyeN: 1, eyeShape: [1, 1, .8], eyeTilt: 0, ant: [.06, .24, -.03, .06, .14, .02], fur: { body: 0, head: 0, arm: 0, hand: 0 } }
 };
 
 /* ---------- skeleton ---------- */
@@ -57,7 +67,7 @@ AN.skeleton = function (P) {
     const hw = P.handW, kn = mad(wr, along, P.palmL * s), fingers = [];
     const offs = [.034, .012, -.01, -.03], lens = [.1, .112, .105, .086];
     for (let f = 0; f < 4; f++) {
-      const base = add(mad(kn, fwd, offs[f] * s * hw), mul(along, (f === 0 || f === 3 ? -.008 : 0) * s)), L = lens[f] * s * hw, segs = [.45, .31, .24];
+      const base = add(mad(kn, fwd, offs[f] * s * hw), mul(along, (f === 0 || f === 3 ? -.008 : 0) * s)), L = lens[f] * s * hw * (P.fingL || 1), segs = [.45, .31, .24];
       const dirF = nrm(add(along, mul(fwd, (f - 1.5) * -.04))); let p = base; const j = [];
       for (let q = 0; q < 3; q++) { B('f' + f + q + k, q ? 'f' + f + (q - 1) + k : 'hand' + k, p); j.push(p); p = mad(p, dirF, L * segs[q]) } j.push(p); fingers.push(j);
     }
@@ -81,8 +91,14 @@ AN.skeleton = function (P) {
   B('throat', 'head', S([0, P.headY - .07, P.headZ + .08]), { jiggle: 1 });
   B('hemF', 'hips', S([0, P.hipY + .04, .16]), { jiggle: 1 });
   B('hemB', 'hips', S([0, P.hipY + .04, -.15]), { jiggle: 1 });
-  const head = bones[idx.head].pos;
-  return { bones, idx, hands, legs, P, s, head, top: add(head, mul([0, .33, 0], s * P.head)) };
+  const head = bones[idx.head].pos, hs = s * P.head;
+  /* aliens: a wobbling cranium and two antennae (rigid base bone + spring tip bone, so the stalk bends) */
+  let ant = null;
+  if (P.face === 'alien') {
+    B('crown', 'head', add(head, mul([0, .26, -.05], hs)), { jiggle: 1 });
+    if (P.ant) { ant = {}; const A = P.ant; for (const side of [1, -1]) { const k = side > 0 ? 'L' : 'R', base = add(head, mul([side * A[0], A[1], A[2]], hs)), tip = add(base, mul([side * A[3], A[4], A[5]], hs)); B('ant' + k, 'head', base); B('antT' + k, 'ant' + k, tip, { jiggle: 1 }); ant[k] = { base, tip } } }
+  }
+  return { bones, idx, hands, legs, P, s, head, ant, top: add(head, mul([0, .33, 0], s * P.head)) };
 };
 
 /* ---------- body sculpt ---------- */
@@ -126,6 +142,12 @@ AN.body = function (K) {
     Cn(L.kn, L.an, P.shin[0], P.shin[1], { bone: I['shin' + k], k: .04 * s, fur: F.body });
     pr.push(SC.box(lerp(L.an, L.ball, .5), mul([.05 * kb, .035 * kb, .1], s), .03 * s * kb, { rot: SC.basisY([0, 1, 0], nrm(sub(L.ball, L.an))), bone: I['foot' + k], k: .03 * s, mat: M.SKIN }));
     Cn(L.ball, L.tip, .035 * kb, .03 * kb, { bone: I['toe' + k], k: .02 * s, mat: M.SKIN });
+  }
+  if (P.face === 'alien') {   /* skin-tight suit (channel 0) on torso, upper arms, legs and boots; neck, forearms and hands are bare skin */
+    const skinB = new Set([I.neck, I.head, I.jaw]), feet = new Set([I.footL, I.footR, I.toeL, I.toeR]);
+    for (const k of ['L', 'R']) { skinB.add(I['farm' + k]); skinB.add(I['hand' + k]); for (let q = 0; q < 3; q++) { skinB.add(I['t' + q + k]); for (let f = 0; f < 4; f++) skinB.add(I['f' + f + q + k]) } }
+    for (const p of pr) { p.fur = 0; if (feet.has(p.bone)) p.mat = M.FUR; else if (p.mat === M.FUR && (skinB.has(p.bone) || skinB.has(p.bone2))) p.mat = M.SKIN }
+    for (const k of ['L', 'R']) { const H = K.hands[k]; H.fingers.forEach((j, f) => pr.push(SC.sph(j[3], (f === 3 ? .012 : .014) * P.handW * s, { bone: I['f' + f + 2 + k], k: .006 * s, mat: M.SKIN }))) }   // round fingertip pads
   }
   AN.headPrims(K, pr);
   if (P.bare) for (const p of pr) { if (p.mat === M.FUR) p.mat = M.SKIN; p.fur = 0 }
@@ -180,6 +202,34 @@ AN.headPrims = function (K, pr) {
     Cp([-.025, .0065, .1], [.025, .0065, .1], .0018, { op: 'sub', k: .003 * s });
     for (const x of [-.032, .032]) Sp([x, .066, .089], .017, { op: 'sub', k: .008 * s });
     for (const x of [-1, 1]) { pr.push(SC.ell(at([x * .08, .058, -.005]), mul([.011, .03, .02], s), { rot: SC.basisEuler(0, x * .35, 0), bone: hb, k: .008 * s, mat: SKIN })); Sp([x * .086, .058, .0], .011, { op: 'sub', k: .006 * s }) }
+  } else if (P.face === 'alien') {
+    const o = (x) => Object.assign({ mat: SKIN }, x), Ey = P.eye, one = P.eyeN === 1, orbo = P.alien === 'orbo';
+    if (orbo) {   /* Orbo: a wide round head that melts into the body, one huge eye, a wide grin */
+      E([0, .13, -.01], [.165, .15, .155], o({ k: .06 * s }));
+      E([0, .06, .06], [.13, .085, .1], o({ k: .06 * s }));
+      E([0, .015, .07], [.09, .04, .07], o({ bone: jb, k: .04 * s }));                                      // lower jaw
+      Cp([-.06, .045, .148], [.06, .045, .148], .007, { op: 'sub', k: .01 * s });                             // grin
+      for (const x of [-1, 1]) Cp([x * .06, .045, .148], [x * .085, .06, .128], .006, { op: 'sub', k: .008 * s });
+      E([0, .043, .14], [.07, .01, .02], o({ bone: jb, k: .01 * s, mat: DARK }));
+      E([0, .205, .09], [.1, .035, .05], o({ k: .05 * s }));                                               // brow over the eye
+    } else {      /* Zib: big swept-back cranium, narrow face, tiny chin */
+      E([0, .17, -.035], [.155, .165, .16], o({ k: .06 * s }));
+      E([0, .215, -.085], [.125, .125, .125], o({ k: .07 * s }));
+      E([0, .08, .045], [.1, .095, .085], o({ k: .06 * s }));
+      E([0, .02, .07], [.052, .045, .048], o({ bone: jb, k: .045 * s }));                                   // chin
+      for (const x of [-1, 1]) E([x * .07, .07, .07], [.04, .03, .04], o({ k: .035 * s }));                   // cheekbones
+      for (const x of [-1, 1]) Sp([x * .011, .052, .132], .0055, { op: 'sub', k: .004 * s });                // nostril slits
+      Cp([-.028, .026, .118], [.028, .026, .118], .0045, { op: 'sub', k: .006 * s });                         // mouth
+      E([0, .025, .113], [.032, .007, .012], o({ bone: jb, k: .008 * s, mat: DARK }));
+    }
+    /* eye sockets: the eyeballs (separate meshes, see chars_real) sit in these */
+    const sh = P.eyeShape || [1, 1, 1], R = Ey[3] * 1.12;
+    for (const x of one ? [0] : [-1, 1]) pr.push(SC.ell(at([x * Ey[0], Ey[1], Ey[2] - Ey[3] * .15]), mul([R * sh[0], R * sh[1], R * sh[2] * 1.3], s), { rot: SC.basisEuler(0, x * .3, x * (P.eyeTilt || 0)), op: 'sub', k: .014 * s }));
+    if (one) pr.push(SC.ell(at([0, Ey[1], Ey[2] + .004]), mul([R * 1.18, R * 1.18, .02], s), { bone: hb, k: .02 * s, mat: DARK }));   // dark rim around the cyclops eye
+    /* antennae: bendy stalk (base bone -> spring tip bone) with a glowing bulb */
+    if (K.ant) for (const k of ['L', 'R']) { const A = K.ant[k];
+      pr.push(SC.cone(A.base, A.tip, .013 * s, .007 * s, { bone: I['ant' + k], bone2: I['antT' + k], t0: .15, t1: 1, k: .014 * s, mat: SKIN }));
+      pr.push(SC.sph(A.tip, .024 * s, { bone: I['antT' + k], k: .008 * s, mat: M.NAIL })) }
   } else {   /* chimp */
     E([0, .15, -.03], [.152, .145, .16], { k: .05 * s, fur: F.head });
     E([0, .1, -.1], [.13, .12, .1], { k: .05 * s, fur: F.head });
@@ -200,6 +250,7 @@ AN.headPrims = function (K, pr) {
 /* eye placement (head-relative, for eyeball meshes) */
 AN.eyes = function (K) {
   const P = K.P, s = K.s * P.head, f = P.face;
+  if (f === 'alien') { const E = P.eye, e = [[E[0] * s, E[1] * s, E[2] * s], [-E[0] * s, E[1] * s, E[2] * s], E[3] * s]; e.n = P.eyeN || 2; e.shape = P.eyeShape || [1, 1, 1]; e.tilt = P.eyeTilt || 0; return e }
   if (f === 'human') return [[.032 * s, .066 * s, .08 * s], [-.032 * s, .066 * s, .08 * s], .0125 * s];
   const x = f === 'gorilla' ? .05 : f === 'orang' ? .043 : .046, y = f === 'chimp' ? .128 : .13, z = f === 'orang' ? .139 : .146, r = f === 'orang' ? .02 : .021;
   return [[x * s, y * s, z * s], [-x * s, y * s, z * s], r * s];
@@ -214,6 +265,10 @@ AN.jiggle = function (K, kind) {
   J.push({ bone: I.cheekR, c: b('cheekR'), r: mul(P.face === 'orang' ? [.16, .2, .12] : [.07, .07, .07], s * P.head), s: .8 });
   if (P.face === 'orang') { J[2].c = add(b('head'), mul([.17, .09, .035], s * P.head)); J[3].c = add(b('head'), mul([-.17, .09, .035], s * P.head)) }
   J.push({ bone: I.throat, c: b('throat'), r: mul([.14, .1, .12], s * P.head), s: P.face === 'orang' ? .9 : .4 });
+  if (P.face === 'alien') {   /* belly only on the torso (Orbo's arms hang right beside it); a soft, wobbling cranium */
+    J[0].only = [I.hips, I.spine, I.chest]; J[0].s = P.alien === 'orbo' ? 1 : .6;
+    J.push({ bone: I.crown, c: b('crown'), r: mul([.17, .15, .17], s * P.head), s: .5, only: [I.head] });
+  }
   return J;
 };
 AN.hemJiggle = function (K) { const I = K.idx, b = n => K.bones[I[n]].pos, s = K.s; return [{ bone: I.hemF, c: b('hemF'), r: mul([.4, .14, .22], s), s: .7 }, { bone: I.hemB, c: b('hemB'), r: mul([.4, .14, .22], s), s: .7 }] };
@@ -304,6 +359,27 @@ AN.hat = function (K, style) {
   return { prims: pr, offset: 0 };
 };
 
+/* ---------- alien suit trims, painted onto the meshed body by position: glow (channel 3) belt, chest emblem, cuffs and
+   toe lights, dark (channel 2) soles. Only suit vertices are touched. ---------- */
+AN.alienPaint = function (K, m) {
+  const P = K.P, s = K.s, pos = m.pos, nor = m.nor, mat = m.mat, chest = K.bones[K.idx.chest].pos, orbo = P.alien === 'orbo';
+  const beltY = (P.hipY + (P.chestY - P.hipY) * .2) * s, bw = .011 * s, emY = chest[1] + (orbo ? .02 : .05) * s, em = (orbo ? .04 : .026) * s;
+  const sm = (a, c, x) => { const t = Math.min(1, Math.max(0, (x - a) / (c - a))); return t * t * (3 - 2 * t) };
+  const set = (v, ch, w) => { if (w <= 0) return; for (let q = 0; q < 4; q++) mat[v * 4 + q] = mat[v * 4 + q] * (1 - w) + (q === ch ? w : 0) };
+  const toes = ['L', 'R'].map(k => { const t = K.legs[k].tip; return [t[0], .05 * s, t[2] - .025 * s] });
+  for (let v = 0; v < m.nv; v++) {
+    if (mat[v * 4] < .5) continue;
+    const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+    let g = Math.abs(x) < P.pelvis[0] * 1.8 * s ? 1 - sm(bw * .55, bw, Math.abs(y - beltY)) : 0;
+    if (nor[v * 3 + 2] > .35 && z > 0) g = Math.max(g, 1 - sm(em * .8, em, Math.abs(x) + Math.abs(y - emY)));
+    for (const k of ['L', 'R']) { const H = K.hands[k], dx = x - H.sh[0], dy = y - H.sh[1], dz = z - H.sh[2], L = dx * H.d1[0] + dy * H.d1[1] + dz * H.d1[2], px = dx - H.d1[0] * L, py = dy - H.d1[1] * L, pz = dz - H.d1[2] * L;
+      if (Math.hypot(px, py, pz) < P.uarm[0] * 2.2 * s) g = Math.max(g, 1 - sm(bw * .45, bw * .9, Math.abs(L - P.arm1 * s * .86))) }
+    for (const t of toes) g = Math.max(g, 1 - sm(.012 * s, .017 * s, Math.hypot(x - t[0], y - t[1], z - t[2])));
+    set(v, 3, g);
+    if (y < .02 * s) set(v, 2, 1 - sm(.011 * s, .017 * s, y));
+  }
+};
+
 /* ---------- one buildable part (runs inside the Web Worker) ----------
    d = { sp, ov, part: body|shirt|pants|shoes|hat, o, style, cover: [part descs] }
    For the body, every garment in d.cover is evaluated as a distance field: skin hidden deep under cloth is dropped
@@ -326,6 +402,7 @@ AN.part = function (d) {
     for (let v = 0; v < m.nv; v++) { if (cov[v] < .003 * s) m.fur[v] = 0; else if (cov[v] < .02 * s) m.fur[v] *= .35 + .65 * (cov[v] - .003 * s) / (.017 * s) }
     if (fields.length) { const keep = v => cov[v] > -.0085 * s; const st = m.stages, ms = m.ms; m = SC.subset(m, keep); m.stages = st; m.ms = ms }
     for (let v = 0; v < m.nv; v++) { const f = Math.min(1, Math.max(0, (m.mat[v * 4] - .45) / .35)); m.fur[v] *= f * f * (3 - 2 * f) }   // no fur on bare skin
+    if (K.P.face === 'alien') AN.alienPaint(K, m);
     m.shell = SC.subset(m, v => m.fur[v] > .0015);
   }
   return m;

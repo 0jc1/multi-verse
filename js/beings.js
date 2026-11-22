@@ -124,11 +124,15 @@ function hint() {
   if (pl.length) { const p = pl[Math.floor(Math.random() * pl.length)], n = Array.isArray(p.name) ? p.name : [p.name, p.name]; return L('Have you been to ' + n[0] + ' yet? Worth it.', '¿Ya fuiste a ' + n[1] + '? Merece la pena.') }
   return L('Follow the music. It always knows the way.', 'Sigue la música. Siempre sabe el camino.');
 }
+BE.chatOpen = () => AV.modals.some(m => m.id === 'cmp');
 BE.chat = function (b) {
   const say = l => AV.tr(l[0], l[1]), g = GREET[b.kind] || GREET.human, first = say(g[Math.floor(Math.random() * g.length)]) + ' ' + say(contextLine(b));
   b.play('Wave', .25); b.talkT = AV.now();
   const p = AV.panel('cmp', '<b>' + b.name + '</b><div class="note" id="bln">' + first + '</div><div class="grid">' +
     '<button data-r="w">' + tr('Tell me something weird', 'Cuéntame algo raro') + '</button><button data-r="t">' + tr('Any tips around here?', '¿Algún consejo por aquí?') + '</button><button data-r="j">' + tr('Dance with me!', '¡Baila conmigo!') + '</button><button data-close>' + tr('Catch you later', 'Nos vemos') + '</button></div>');
+  /* lock the view onto their face while the pop-up is open (they keep facing you, see BE.spawn update) */
+  BE.talkTo = b; const v = new THREE.Vector3();
+  AV.focus = () => { if (BE.talkTo !== b || !BE.chatOpen()) return null; if (b.headB) b.headB.getWorldPosition(v).y += b.faceY; else v.copy(b.h.position).y += 1.6; return v };
   p.querySelectorAll('[data-r]').forEach(x => x.onclick = () => { const k = x.dataset.r, el = AV.$('bln');
     if (k === 'w') el.textContent = say(WEIRD[Math.floor(Math.random() * WEIRD.length)]);
     else if (k === 't') el.textContent = say(hint());
@@ -143,7 +147,8 @@ BE.spawn = function (ctx, specs) {
     const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over), h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
     F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
     const mixer = new THREE.AnimationMixer(made.root), acts = {}; made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
-    const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10 };
+    const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10,
+      headB: made.root.getObjectByName('head') || null, faceY: ((made.S && made.S.head && made.S.head[1]) || .15) * .85 };
     b.play = (n, f) => { if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');
     const tg = { x: s.x, z: s.z, r: 2.4, label: () => tr('Talk to ', 'Hablar con ') + b.name, fn: () => BE.chat(b) }; ctx.T.push(tg); b.tg = tg;
@@ -154,8 +159,8 @@ BE.spawn = function (ctx, specs) {
     const P = AV.P, on = AV.audio && AV.audio.on && (AV.audio.ok || (AV.audio.track && AV.audio.track.active)), beat = on && AV.audio.beat ? AV.audio.beat : t * 2.07, w = W();
     for (const b of out) {
       const dx = P.x - b.h.position.x, dz = P.z - b.h.position.z, d = Math.hypot(dx, dz); b.h.visible = d < 90; if (d > 45) continue;
-      const talking = AV.now() - b.talkT < 6 && d < 6;
-      if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * 5); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }
+      const locked = BE.talkTo === b && BE.chatOpen() && AV.now() >= b.danceUntil, talking = locked || (AV.now() - b.talkT < 6 && d < 6);
+      if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * (locked ? 9 : 5)); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }
       else if (b.mode === 'dance' || b.mode === 'float' || AV.now() < b.danceUntil) { b.play('Dance', .3); const a = b.acts.Dance; if (a && a.getEffectiveWeight() > .99) a.time = ((((beat + b.off * .25) % 4) + 4) % 4) / 4 * a.getClip().duration; if (b.mode === 'float') b.h.position.y = b.fy + Math.sin(t * .6 + b.off) * .35; if (AV.now() >= b.danceUntil && b.mode === 'wander') b.play('Idle', .3) }
       else if (b.mode === 'idle') { b.play('Idle', .3); if (d < 4) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * 2) }
       else {   /* wander */

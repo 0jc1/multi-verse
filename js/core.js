@@ -99,6 +99,7 @@ AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · S
 /* modal stack: anything that takes over input (chat, pipe, viewer, cinema, map...) */
 AV.modals = [];
 AV.blocking = () => AV.modals.length > 0;
+AV.focus = null;   // optional () => THREE.Vector3 | null : world point the camera locks onto during a conversation (see update)
 AV.pushModal = function (id, closeFn) {
   if (AV.modals.some(m => m.id === id)) return; AV.modals.push({ id, close: closeFn });
   for (const k in keys) keys[k] = 0; T.x = T.y = 0; T.jump = false; try { document.exitPointerLock() } catch (e) { }
@@ -340,6 +341,15 @@ function update(dt) {
   P.y += P.vy * dt; const gy = W.surface(P.x, P.z) || 0;
   { const cy = W.ceilingAt ? W.ceilingAt(P.x, P.z) : null; if (cy != null && P.y > cy) { P.y = cy; if (P.vy > 0) P.vy = -P.vy * .3 } }   // soft ceiling (zero-g dome)
   if (P.y <= gy) { P.y = gy; P.vy = 0; P.on = true } else if (P.on && P.vy <= 0 && P.y - gy < .5) { P.y = gy } else P.on = false;
+  /* conversation framing: while AV.focus() returns a world point (the face of whoever you are talking to), the view eases onto it.
+     Cleared automatically once the getter returns null or no modal is open. */
+  if (AV.focus) {
+    const f = AV.blocking() ? AV.focus() : null;
+    if (!f) AV.focus = null;
+    else { const dx = f.x - P.x, dy = f.y - (P.y + 1.7), dz = f.z - P.z, hd = Math.hypot(dx, dz);
+      if (hd > .2) { const k = 1 - Math.exp(-7 * dt), ty = Math.atan2(-dx, -dz), tp = cl(Math.atan2(dy, hd), -1.45, 1.45);
+        P.yaw += Math.atan2(Math.sin(ty - P.yaw), Math.cos(ty - P.yaw)) * k; P.pitch += (tp - P.pitch) * k } }
+  }
   const bob = !S.set.reduce && Math.hypot(P.vx, P.vz) > 1 && P.on ? Math.sin(t * 9) * .04 : 0;
   cam.position.set(P.x, P.y + 1.7 + bob, P.z); cam.rotation.set(P.pitch, P.yaw, 0); AV.STAR.position.copy(cam.position);
   S.time += dt * 2; if (S.time >= 1440) { S.time -= 1440; S.day++ } hudT -= dt; if (hudT <= 0) { hudT = 2; AV.hud() }

@@ -422,7 +422,7 @@ AV.registerWorld({
     spawn('dino', C.crew.dino(), 29.4, 49.6, Math.PI, (n, dt, t, d, talking) => { if (isSeated(n)) sitPose(n, n.seat.yaw, t, d); else if (!n.moving) n.g.position.y = 0; if (!n.path) smokeAnim(n, t, 7, 1) });
     spawn('zape', C.crew.zape(), 13.6, 49.35, Math.PI, (n, dt, t, d, talking) => { if (isSeated(n)) sitPose(n, n.seat.yaw, t, d); else if (!n.moving) n.g.position.y = 0; if (!n.path && !talking) smokeAnim(n, t, 8, 1) });
     spawn('nunyin', C.crew.nunyin(), 27, 56.9, Math.PI);
-    spawn('golf', C.crew.golf(), 18.6, 50.9, Math.PI, (n, dt, t, d) => { const u = n.g.userData; if (isSeated(n)) sitPose(n, n.seat.yaw, t, d); u.aR.rotation.x = -1.2; u.aL.rotation.x = -1.1; u.head.rotation.x = .35 });
+    spawn('golf', C.crew.golf(), 18.6, 50.9, Math.PI, (n, dt, t, d, talking) => { const u = n.g.userData; if (isSeated(n)) sitPose(n, n.seat.yaw, t, d); u.aR.rotation.x = -1.2; u.aL.rotation.x = -1.1; if (!talking) u.head.rotation.x = .35 });
     crew.steve.seat = { x: 12, z: 66.4, yaw: Math.PI }; crew.dino.seat = { x: 29.4, z: 49.6, yaw: Math.PI }; crew.zape.seat = { x: 13.6, z: 49.35, yaw: Math.PI }; crew.golf.seat = { x: 18.6, z: 50.9, yaw: Math.PI };
     /* routes that respect walls: through the hostel door when crossing the front wall */
     const insideH = (x, z) => x > H.x0 && x < H.x1 && z > H.z0 && z < 70;

@@ -34,7 +34,21 @@ NP.spawn = function (ctx, id, o) {
 };
 NP.bark = function (n, text) { setBubble(n, text); n.bubT = AV.now() + 4.5 };
 
-const lerp = (a, b, k) => a + (b - a) * k;
+const lerp = (a, b, k) => a + (b - a) * k, wrap = a => Math.atan2(Math.sin(a), Math.cos(a)), clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const _m3 = new THREE.Matrix3(), _o = new THREE.Vector3(), _f = new THREE.Vector3();
+/* world position between the NPC's eyes. Realistic rig: head bone + eye offset carried by the body (so talking nods don't shake the camera).
+   Classic pivot bodies: the head pivot sits at eye level. */
+NP.face = function (n, out) {
+  const g = n.g, u = g.userData, st = u.st;
+  if (st && st.R) {
+    if (!n.eyeOff) { n.eyeOff = new THREE.Vector3(); if (st.eyes.length) { for (const e of st.eyes) n.eyeOff.add(e.position); n.eyeOff.multiplyScalar(1 / st.eyes.length) } }
+    st.R.bones[st.I.head].getWorldPosition(out);
+    return out.add(_o.copy(n.eyeOff).applyMatrix3(_m3.setFromMatrix4(g.matrixWorld)));
+  }
+  return (u.head || g).getWorldPosition(out);
+};
+/* the spawned NPC behind a chat id in the current world */
+NP.find = function (who) { const W = AV.W; if (!W) return null; for (const t of W.T) if (t.npc && t.npc.id === who) return t.npc; return null };
 function update(list, dt, t) {
   const P = AV.P, ch = AV.chat, red = AV.S.set.reduce;
   for (const n of list) {
@@ -47,7 +61,8 @@ function update(list, dt, t) {
     }
     n.moving = moving;
     if (n.follow) { n.tgt.x = g.position.x; n.tgt.z = g.position.z }
-    const want = (d < 7 || talking) ? Math.atan2(dx, dz) : moving ? n.wantYaw : n.yaw; let dy = want - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * Math.min(1, (moving ? 6 : 4) * dt);
+    u.chatting = talking;                                                          // read by the realistic rig (chars_real brain) to lock its gaze on you
+    const want = (d < 7 || talking) ? Math.atan2(dx, dz) : moving ? n.wantYaw : n.yaw; let dy = want - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * Math.min(1, (talking ? 9 : moving ? 6 : 4) * dt);
     /* body animation */
     n.walk = moving ? n.walk + dt * 7.5 : n.walk; const sw = moving ? Math.sin(n.walk) : 0;
     u.lL.rotation.x = lerp(u.lL.rotation.x, sw * .55, .3); u.lR.rotation.x = lerp(u.lR.rotation.x, -sw * .55, .3);
@@ -57,7 +72,16 @@ function update(list, dt, t) {
       if (speaking && !red) { u.aR.rotation.x = lerp(u.aR.rotation.x, -.7 + Math.sin(t * 4.2) * .35, .2); u.aL.rotation.x = lerp(u.aL.rotation.x, -.25 + Math.sin(t * 3.1 + 1) * .15, .2) }
       else { u.aR.rotation.x = lerp(u.aR.rotation.x, -sw * .45 + Math.sin(t * 1.7 + g.position.z) * .05, .2); u.aL.rotation.x = lerp(u.aL.rotation.x, sw * .45, .2) }
     }
-    u.head.rotation.x = speaking && !red ? Math.sin(t * 8.5) * .07 : lerp(u.head.rotation.x, 0, .1); u.head.rotation.z = Math.sin(t * 1.4 + g.position.x) * .04;
+    n.nod = speaking && !red ? Math.sin(t * 8.5) * .07 : lerp(n.nod || 0, 0, .1);
+    /* classic pivot bodies: the head itself tracks your eyes during a chat (the realistic rig does this in its own look-at solver) */
+    let lookP = 0;
+    if (!u.st && u.head) {
+      const lk = n.lk || (n.lk = { y: 0, p: 0 }); let ty = 0, tp = 0;
+      if (talking) { const cp = AV.cam.position; NP.face(n, _f); const hx = cp.x - _f.x, hz = cp.z - _f.z; ty = clamp(wrap(Math.atan2(hx, hz) - g.rotation.y), -1, 1); tp = clamp(Math.atan2(_f.y - cp.y, Math.hypot(hx, hz)), -.5, .5) }
+      const k = 1 - Math.exp(-(talking ? 9 : 4) * dt); lk.y += (ty - lk.y) * k; lk.p += (tp - lk.p) * k;
+      if (talking || Math.abs(lk.y) > .002) u.head.rotation.y = lk.y; lookP = lk.p;
+    }
+    u.head.rotation.x = n.nod + lookP; u.head.rotation.z = Math.sin(t * 1.4 + g.position.x) * .04;
     if (moving) g.position.y = n.H(g.position.x, g.position.z) + Math.abs(Math.sin(n.walk)) * .04;
     if (n.anim) n.anim(n, dt, t, d, talking, moving);                          // V0.9.4: character-specific actions (smoking, ukulele, pool...)
     /* tags + barks */
@@ -95,8 +119,12 @@ Q.listHtml = function () {
   const items = Object.keys(S.items).filter(k => S.items[k] > 0).map(k => k + ' ×' + S.items[k]);
   return '<p><b>' + tr('Tasks', 'Tareas') + '</b></p>' + (rows.join('') || '<div style="opacity:.7">' + tr('None yet — ask people if they need a favour.', 'Ninguna todavía: pregunta a la gente si necesita un favor.') + '</div>') + '<p><b>' + tr('Items', 'Objetos') + '</b>: ' + (items.join(', ') || tr('none', 'ninguno')) + '</p>';
 };
-/* hook: complete quests right after the NPC greets you */
-const openChat0 = AV.openChat; AV.openChat = function (who) { openChat0(who); if (AV.chat.open && AV.chat.who === who) setTimeout(() => Q.onTalk(who), 600) };
+/* hook: lock the player's view onto the NPC's face for the conversation, and complete quests right after the NPC greets you */
+const openChat0 = AV.openChat; AV.openChat = function (who) {
+  openChat0(who); if (!(AV.chat.open && AV.chat.who === who)) return;
+  const n = NP.find(who); if (n) { const v = new THREE.Vector3(); AV.focus = () => AV.chat.open && AV.chat.who === who ? NP.face(n, v) : null }
+  setTimeout(() => Q.onTalk(who), 600);
+};
 
 /* high jump detector (orbit hop) */
 let air = false;

@@ -354,7 +354,7 @@ function solve(st, P, dt) {
   /* look-at: yaw / pitch of the target seen from the chest, split between neck and head */
   let yaw = 0, pitch = 0;
   if (P.look) { _v.subVectors(P.look, R.P[I.head]).applyQuaternion(_q.copy(R.Q[I.chest]).conjugate()); const y = Math.atan2(_v.x, _v.z), p = Math.atan2(-_v.y, Math.hypot(_v.x, _v.z)) - .08; if (Math.abs(y) < 1.45) { yaw = clamp(y, -1.1, 1.1); pitch = clamp(p, -.45, .6) } }
-  st.ly = damp(st.ly, yaw, 3.2, dt); st.lp = damp(st.lp, pitch, 3.2, dt);
+  st.ly = damp(st.ly, yaw, st.lookK || 3.2, dt); st.lp = damp(st.lp, pitch, st.lookK || 3.2, dt);
   eul(R.q[I.neck], [P.neck[0] + st.lp * .35, P.neck[1] + st.ly * .4, P.neck[2]]); eul(R.q[I.head], [P.head[0] + st.lp * .6, P.head[1] + st.ly * .6, P.head[2]]);
   st.jaw = damp(st.jaw, P.jaw, 18, dt); R.q[I.jaw].setFromAxisAngle(_u.set(1, 0, 0), st.jaw);
   R.fk();
@@ -495,7 +495,10 @@ C.brain = function (g, o) {
       dt = Math.min(dt, .05); B.t += dt; const red = AV.S && AV.S.set && AV.S.set.reduce ? .5 : 1;
       if (!B.feet) initFeet();
       const pp = AV.P, dx = pp ? pp.x - g.position.x : 99, dz = pp ? pp.z - g.position.z : 99, pd = Math.hypot(dx, dz);
-      const talking = o.external ? !!(AV.chat && AV.chat.open && AV.now() < (AV.chat.speakUntil || 0) && pd < 5) : !!(AV.chat && AV.chat.open && o.id && AV.chat.who === o.id), attend = talking || (!o.ambient && pd < 4.2);
+      /* external puppets are told by npc.js which one is in the chat (userData.chatting); only that one talks and locks its gaze on you */
+      const chatting = o.external ? !!g.userData.chatting : !!(AV.chat && AV.chat.open && o.id && AV.chat.who === o.id);
+      const talking = o.external ? chatting && AV.now() < ((AV.chat && AV.chat.speakUntil) || 0) : chatting, attend = talking || chatting || (!o.ambient && pd < 4.2);
+      st.lookK = chatting ? 10 : 3.2;
       if (o.external) {   /* puppet: npc.js / the world moves and turns the body; we only animate it */
         B.yaw = g.rotation.y; B.state = 'idle'; const y = g.position.y; B.gy = B.gy == null ? y : (y < B.gy ? y : B.gy + Math.min(y - B.gy, .6 * dt));
         const W = AV.W, sf = W && W.surface ? W.surface(g.position.x, g.position.z) : null; B.gOff = sf == null ? null : B.gy - sf;
@@ -538,7 +541,7 @@ C.brain = function (g, o) {
       /* arm swing opposes the legs */
       P.swing = P.swing || {}; for (const k of ['L', 'R']) { const other = F[k === 'L' ? 'R' : 'L']; st.R.toChar(_v, other.w); P.swing[k] = clamp((_v.z - other.rest.z) / s * .55, -.25, .25) }
       P.hands.L = P.hands.R = null; P.curl.L = [.3, .35, .4, .45, .2]; P.curl.R = [.3, .35, .4, .45, .2];
-      P.look = (pd < 9 || talking) ? camTarget(st, st.lookV || (st.lookV = new V())) : null;
+      P.look = (pd < 9 || chatting) ? camTarget(st, st.lookV || (st.lookV = new V())) : null;
       P.jaw = talking ? Math.max(0, Math.sin(B.t * 11) * Math.sin(B.t * 2.3)) * .12 : 0;
       if (o.external && st.px) proxyPose(st, P);
       if (talking && !o.external) { const gw = Math.sin(B.t * 1.3); P.hands.R = { p: _w.set(-.18 * s, (st.K.P.hipY + .3 + gw * .05) * s, .38 * s).clone(), pole: st.R.P[st.I.uarmR].clone().add(_u.set(-.7, -.6, -.4)), q: null }; P.curl.R = [.15, .2, .25, .3, .1] }

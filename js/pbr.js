@@ -33,7 +33,7 @@ function hsl(h, s, l) { h = ((h % 1) + 1) % 1; const q = l < .5 ? l * (1 + s) : 
 
 /* ---------- texture library (built lazily, cached forever) ---------- */
 const T = {};
-PBR.tex = function (name) { if (!T[name]) { T[name] = MAKE[name](); if (name === 'iris') T[name].wrapS = T[name].wrapT = THREE.ClampToEdgeWrapping } return T[name] };
+PBR.tex = function (name) { if (!T[name]) { T[name] = MAKE[name](); if (name === 'iris' || name === 'alienIris') T[name].wrapS = T[name].wrapT = THREE.ClampToEdgeWrapping } return T[name] };
 const MAKE = {
   /* greyscale variation around 0.5 (multiplied x2 in the shader): clumps + streaks */
   furVar: () => { const L = [lattice(8, 11), lattice(16, 12), lattice(32, 13), lattice(64, 14)], S = [lattice(64, 15)];
@@ -78,6 +78,13 @@ const MAKE = {
     const t = tex(c, true); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t },
   wood: () => { const L = [lattice(8, 81), lattice(16, 82), lattice(64, 83)]; return paint(512, (u, v) => { const w = fbm([L[0], L[1]], 8, u, v, 2), ring = .5 + .5 * Math.sin((u * 30 + w * 6) * TAU / 3), flame = .5 + .5 * Math.sin(v * 90 + w * 8 + Math.sin(u * 12) * 2), fine = pn(L[2], 64, u * 64, v * 4);
     const g = cl(.45 + ring * .18 + (flame - .5) * .22 + (fine - .5) * .12, 0, 1); return [g * .95, g * .55, g * .22] }, true) },
+  /* alien skin: soft mottling + freckle spots (greyscale around .5, multiplied x2 in the shader) */
+  spots: () => { const L = [lattice(8, 91), lattice(16, 92)], C = [lattice(32, 93)];
+    return paint(256, (u, v) => { const m = fbm(L, 8, u, v, 2), sp = sm(.7, .82, pn(C[0], 32, u * 32, v * 32)); const g = .5 + (m - .5) * .35 - sp * .16; return [g, g, g] }) },
+  /* alien eye: glossy near-black sclera, a bright fibrous iris ring (tinted by the material colour) and a slit pupil */
+  alienIris: () => paint(128, (u, v) => { const x = u * 2 - 1, y = v * 2 - 1, r = Math.hypot(x, y), a = Math.atan2(y, x), fib = .55 + .45 * Math.sin(a * 46 + Math.sin(a * 9) * 2.5);
+    if (r > .96) return [.05, .05, .07]; const slit = Math.abs(x) < .1 * Math.sqrt(Math.max(0, 1 - (y / .62) * (y / .62))); if (slit) return [0, 0, 0];
+    const ring = sm(.18, .34, r) * (1 - sm(.82, .96, r)); const g = .05 + ring * (.45 + .5 * fib) + sm(.7, .9, r) * (1 - sm(.9, .96, r)) * .3; return [g, g, g] }, true),
   iris: () => paint(128, (u, v) => { const x = u * 2 - 1, y = v * 2 - 1, r = Math.hypot(x, y), a = Math.atan2(y, x), fib = .5 + .5 * Math.sin(a * 40 + Math.sin(a * 7) * 2);
     if (r > .98) return [.93, .91, .88]; if (r < .44) return [.02, .015, .01]; const t = (r - .44) / .54, lim = sm(.8, 1, t); const b = [.45 + .2 * fib, .25 + .14 * fib, .07]; return b.map(q => q * (1 - lim * .7) * (1 - sm(.0, .12, .12 - Math.abs(t - .3)) * .3)) }, true)
 };
@@ -116,7 +123,7 @@ varying vec3 vRest; varying vec3 vRestN; varying vec4 vMat; varying float vAO; v
 attribute float aShell; uniform float uFurK; uniform vec3 uGrav; uniform vec3 uLag; varying float vShell;
 #endif`;
 const FPARS = `
-uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uC3; uniform vec4 uRough; uniform vec4 uMetal; uniform vec3 uSheenK;
+uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uC3; uniform vec4 uRough; uniform vec4 uMetal; uniform vec4 uEmit; uniform vec3 uSheenK;
 uniform sampler2D tAlb; uniform float uAlbS; uniform vec4 uAlbMask; uniform float uAlbMode;
 uniform sampler2D tH; uniform float uHS; uniform vec4 uHMask; uniform sampler2D tH2; uniform float uH2S; uniform vec4 uH2Mask; uniform float uBump;
 #ifdef DECAL
@@ -133,7 +140,7 @@ vec3 avPerturb(vec3 sp, vec3 sn, vec2 dH, float fd){ vec3 sx = dFdx(sp), sy = dF
 function patch(m, cfg) {
   const U = m.userData.u = {
     uC0: { value: new THREE.Color() }, uC1: { value: new THREE.Color() }, uC2: { value: new THREE.Color() }, uC3: { value: new THREE.Color() },
-    uRough: { value: new THREE.Vector4(...(cfg.rough || [.6, .55, .45, .35])) }, uMetal: { value: new THREE.Vector4(...(cfg.metal || [0, 0, 0, 0])) }, uSheenK: { value: new THREE.Vector3() },
+    uRough: { value: new THREE.Vector4(...(cfg.rough || [.6, .55, .45, .35])) }, uMetal: { value: new THREE.Vector4(...(cfg.metal || [0, 0, 0, 0])) }, uEmit: { value: new THREE.Vector4(...(cfg.emit || [0, 0, 0, 0])) }, uSheenK: { value: new THREE.Vector3() },
     tAlb: { value: cfg.alb || PBR.tex('furVar') }, uAlbS: { value: cfg.albS || 3 }, uAlbMask: { value: new THREE.Vector4(...(cfg.albMask || [1, .6, .3, 0])) }, uAlbMode: { value: cfg.albMode || 0 },
     tH: { value: cfg.h || PBR.tex('furH') }, uHS: { value: cfg.hS || 6 }, uHMask: { value: new THREE.Vector4(...(cfg.hMask || [1, 0, 0, 0])) },
     tH2: { value: cfg.h2 || PBR.tex('skinH') }, uH2S: { value: cfg.h2S || 9 }, uH2Mask: { value: new THREE.Vector4(...(cfg.h2Mask || [0, 1, 1, .3])) }, uBump: { value: cfg.bump == null ? .0012 : cfg.bump },
@@ -181,6 +188,7 @@ function patch(m, cfg) {
   { float hh = avTri(tH, vRest * uHS, avTw).r * dot(uHMask, vMat) + avTri(tH2, vRest * uH2S, avTw).r * dot(uH2Mask, vMat);
     normal = avPerturb(-vViewPosition, normal, vec2(dFdx(hh), dFdy(hh)) * uBump, faceDirection); }
 #endif`)
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n  totalEmissiveRadiance += avCol * dot(uEmit, vMat);')
       .replace('#include <aomap_fragment>', `
   { float ambientOcclusion = vAO; reflectedLight.indirectDiffuse *= ambientOcclusion;
   #if defined( USE_ENVMAP ) && defined( STANDARD )
@@ -190,7 +198,7 @@ function patch(m, cfg) {
   };
   return m;
 }
-/* cfg: { cols[4], rough[4], metal[4], alb, albS, albMask[4], albMode, h, hS, hMask, h2, h2S, h2Mask, bump, decal{tex,rect,side}, sheen, env, shell, furK, strandF, tip } */
+/* cfg: { cols[4], rough[4], metal[4], emit[4] (self-glow per channel, e.g. alien suit trims), alb, albS, albMask[4], albMode, h, hS, hMask, h2, h2S, h2Mask, bump, decal{tex,rect,side}, sheen, env, shell, furK, strandF, tip } */
 PBR.charMat = function (cfg) {
   const p = { roughness: 1, metalness: 0, envMap: cfg.env === false ? null : PBR.env() };
   const m = new THREE.MeshPhysicalMaterial(p);

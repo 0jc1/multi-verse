@@ -204,25 +204,10 @@ AV.evolve = function (id) {
   else AV.news(AV.pick(['The crowds changed while you were away.', 'New lights appeared overhead.']));
 };
 
-/* ---------------- sky / time of day ---------------- */
-const SKY = [[0x151030, 0x0c0820], [0xf0a070, 0xe8b98a], [0x8fc4ff, 0xcfe0ff], [0xf08a60, 0xe0906a]], c1 = new THREE.Color(), c2 = new THREE.Color(), c3 = new THREE.Color(), tmpA = new THREE.Color();
-AV.STAR = (() => { const n = 600, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const t = Math.random() * TAU, y = Math.random() * .9 + .1, r = Math.sqrt(1 - y * y); a[i * 3] = Math.cos(t) * r * 300; a[i * 3 + 1] = y * 300; a[i * 3 + 2] = Math.sin(t) * r * 300 }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); p.frustumCulled = false; scene.add(p); return p })();
+/* ---------------- sky / time of day (js/sky.js) ---------------- */
 AV.FAC = [];   // building facade materials whose emissive follows the night
 AV.nightK = 0;
-function skyAt(m) {
-  const W = AV.W, h = m / 60; let a, b, f;
-  if (h < 5) { a = b = 0; f = 0 } else if (h < 8) { a = 0; b = 1; f = (h - 5) / 3 } else if (h < 10) { a = 1; b = 2; f = (h - 8) / 2 } else if (h < 17) { a = b = 2; f = 0 } else if (h < 19.5) { a = 2; b = 3; f = (h - 17) / 2.5 } else if (h < 21.5) { a = 3; b = 0; f = (h - 19.5) / 2 } else { a = b = 0; f = 0 }
-  const day = cl(Math.sin((h - 6) / 12 * Math.PI), 0, 1);
-  if (W && W.sky && W.sky.fixed) {
-    const F = W.sky.fixed; c1.setHex(F.bg); c2.setHex(F.fog); scene.background = c1; scene.fog.color.copy(c2).convertSRGBToLinear(); SUN.intensity = F.sun; HS.intensity = F.hs; AV.STAR.material.opacity = F.stars; AV.nightK = F.night == null ? 1 : F.night; AV.FAC.forEach(m => m.emissiveIntensity = 1.3 * AV.nightK);
-    SUN.position.set(P.x + 40, 70, P.z + 30); SUN.target.position.set(P.x, 0, P.z); return;
-  }
-  c1.setHex(SKY[a][0]).lerp(tmpA.setHex(SKY[b][0]), f); c2.setHex(SKY[a][1]).lerp(tmpA.setHex(SKY[b][1]), f);
-  if (W && W.sky && W.sky.tint) { const t = W.sky.tint; c1.lerp(c3.setHex(t[0]), t[2]); c2.lerp(c3.setHex(t[1]), t[3]) }
-  scene.background = c1; scene.fog.color.copy(c2).convertSRGBToLinear(); SUN.intensity = .1 + 1.4 * day; HS.intensity = .2 + .5 * day; AV.nightK = 1 - day; AV.FAC.forEach(m => m.emissiveIntensity = 1.3 * (1 - day)); AV.STAR.material.opacity = Math.max(0, 1 - day * 2.2);
-  const ang = (h - 6) / 12 * Math.PI; SUN.position.set(P.x + Math.cos(ang) * 60, Math.max(8, Math.sin(ang) * 70), P.z + 20); SUN.target.position.set(P.x, 0, P.z);
-}
+function skyAt(m, dt) { if (AV.sky && AV.sky.tick) AV.sky.tick(m, dt) }
 
 /* ---------------- interaction ---------------- */
 let near = null;
@@ -270,6 +255,7 @@ AV.cycleQuality = function () { const o = ['Low', 'Medium', 'High'], S = AV.S; S
 AV.applyQuality = function () {
   if (!R) return; const g = AV.S.set.gq; R.setPixelRatio(g === 'High' ? Math.min(devicePixelRatio || 1, 1.5) : g === 'Medium' ? Math.min(devicePixelRatio || 1, 1.15) : 1);
   R.shadowMap.enabled = g === 'High'; SUN.castShadow = g === 'High'; scene.traverse(o => { if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => m.needsUpdate = true) } }); AV.resize();
+  if (AV.sky && AV.sky.quality) AV.sky.quality();
 };
 AV.toggleSettings = function () {
   if ($('set').style.display === 'block') return AV.closePanel('set'); const S = AV.S.set;
@@ -366,9 +352,9 @@ function update(dt) {
         P.yaw += Math.atan2(Math.sin(ty - P.yaw), Math.cos(ty - P.yaw)) * k; P.pitch += (tp - P.pitch) * k } }
   }
   const bob = !S.set.reduce && Math.hypot(P.vx, P.vz) > 1 && P.on ? Math.sin(t * 9) * .04 : 0;
-  cam.position.set(P.x, P.y + 1.7 + bob, P.z); cam.rotation.set(P.pitch, P.yaw, 0); AV.STAR.position.copy(cam.position);
+  cam.position.set(P.x, P.y + 1.7 + bob, P.z); cam.rotation.set(P.pitch, P.yaw, 0);
   S.time += dt * 2; if (S.time >= 1440) { S.time -= 1440; S.day++ } hudT -= dt; if (hudT <= 0) { hudT = 2; AV.hud() }
-  skyAt(S.time);
+  skyAt(S.time, dt);
   for (const f of W.upd) f(dt, t); if (W.update) W.update(dt, t); for (const f of AV.frameFns) f(dt, t);
   findNear(); if ((sav += dt) > 20) { sav = 0; AV.save() }
   document.body.classList.toggle('nm', AV.modals.some(m => m.id === 'chat'));

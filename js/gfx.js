@@ -15,8 +15,11 @@ X.hdr = !!(R.capabilities.isWebGL2 && gl.getExtension('EXT_color_buffer_float'))
 const Q = () => ({ Low: 0, Medium: 1, High: 2 }[AV.S && AV.S.set && AV.S.set.gq] ?? 2);
 X.opt = () => { const s = AV.S.set, d = { post: 'auto', bloom: 1, refl: 'auto' }; if (!s.gfx) s.gfx = {}; for (const k in d) if (s.gfx[k] == null) s.gfx[k] = d[k]; return s.gfx };   /* same object every call (settings keep a reference) */
 X.supported = () => !!(THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass && THREE.ShaderPass);
-X.postWanted = () => { const o = X.opt(); return !!(X.world && X.world.post) && X.supported() && (o.post === 'auto' ? Q() > 0 : o.post === 'on') };
+X.postWanted = () => { const o = X.opt(); return X.supported() && (o.post === 'auto' ? Q() > 0 : o.post === 'on') };
 X.reflWanted = () => { const o = X.opt(); return o.refl === 'auto' ? Q() > 0 : o.refl === 'on' };
+/* default look for worlds that do not declare their own `post` (V0.10: every world gets bloom) */
+const DP = X.defPost = { bloom: [.5, .55, 1.55], ldrThreshold: .88, grade: { exp: null, con: 1.02, sat: 1.05, lift: [0, 0, 0], gain: [1, 1, 1], vig: .1, grain: .009 } };
+X.nightK = 0;
 
 /* ---------- colour grading pass ---------- */
 const GradeShader = {
@@ -69,15 +72,23 @@ X.debug = () => ({ C, bloom, grade, rebuild() { dispose(); build(); X.resize(); 
 addEventListener('resize', () => setTimeout(X.resize, 0));
 
 function params() {
-  const P = X.world && X.world.post || {}, g = P.grade || {}, b = P.bloom || [.8, .5, .9], o = X.opt();
-  bloom.strength = b[0] * o.bloom; bloom.radius = b[1]; bloom.threshold = X.hdr ? b[2] : (P.ldrThreshold || .72);
-  const u = grade.uniforms; u.uHdr.value = X.hdr ? 1 : 0; u.uExp.value = g.exp || 1.05; u.uCon.value = g.con || 1; u.uSat.value = g.sat || 1; u.uVig.value = AV.S.set.reduce ? 0 : (g.vig || 0);
+  const Wp = X.world && X.world.post, P = Wp || DP, g = P.grade || {}, b = P.bloom || DP.bloom, o = X.opt(), nt = Wp ? 0 : (X.nightK || 0);
+  bloom.strength = b[0] * (1 + .45 * nt) * o.bloom; bloom.radius = b[1];
+  bloom.threshold = X.hdr ? b[2] * (1 - .48 * nt) : (P.ldrThreshold || .88) * (1 - .32 * nt);
+  const u = grade.uniforms; u.uHdr.value = X.hdr ? 1 : 0; u.uExp.value = g.exp || R.toneMappingExposure; u.uCon.value = g.con || 1; u.uSat.value = g.sat || 1; u.uVig.value = AV.S.set.reduce ? 0 : (g.vig || 0);
   u.uLift.value.fromArray(g.lift || [0, 0, 0]); u.uGain.value.fromArray(g.gain || [1, 1, 1]); u.uGrain.value = g.grain == null ? .012 : g.grain;
 }
+/* day/night adaptation for the default look (worlds with their own `post` keep it) */
+X.night = function (k) {
+  if (Math.abs(k - X.nightK) < 1e-3) return; X.nightK = k;
+  if (!X.active || !bloom || !grade || (X.world && X.world.post)) return;
+  const o = X.opt();
+  bloom.strength = DP.bloom[0] * (1 + .45 * k) * o.bloom;
+  bloom.threshold = X.hdr ? DP.bloom[2] * (1 - .48 * k) : DP.ldrThreshold * (1 - .32 * k);
+  grade.uniforms.uExp.value = R.toneMappingExposure;
+};
 function setToneMapping(t) {
   if (R.toneMapping === t) return; R.toneMapping = t;
-  /* the sky dome shader writes display colours directly; in the linear HDR path it must output linear light */
-  const d = AV.kit && AV.kit.dome; if (d) { const m = d.material, df = Object.assign({}, m.defines); if (t === THREE.NoToneMapping) df.LIN_OUT = 1; else delete df.LIN_OUT; m.defines = df; m.needsUpdate = true }
   scene.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true) }) }
 
 /* ---------- environment (HDRI or procedural) ---------- */
@@ -126,6 +137,7 @@ X.apply = function () {
 };
 X.render = function () {
   if (!X.active || !C) return false;
+  if (grade) { const g = X.world && X.world.post && X.world.post.grade; grade.uniforms.uExp.value = (g && g.exp) || R.toneMappingExposure }
   grade.uniforms.uTime.value = (performance.now() % 10000) / 10000; C.render(); return true;
 };
 X.status = function () {
@@ -133,7 +145,7 @@ X.status = function () {
 };
 X.statusText = function () {
   const s = X.status(), a = s.assets || {};
-  return tr('Post-processing: ', 'Postprocesado: ') + (s.post ? tr('on', 'activo') + ' (' + (s.hdr ? 'HDR' : '8-bit') + (s.aa ? ', ' + s.aa : '') + ')' : tr('off', 'apagado')) +
+  return (AV.sky && AV.sky.statusText ? AV.sky.statusText() + ' · ' : '') + tr('Post-processing: ', 'Postprocesado: ') + (s.post ? tr('on', 'activo') + ' (' + (s.hdr ? 'HDR' : '8-bit') + (s.aa ? ', ' + s.aa : '') + ')' : tr('off', 'apagado')) +
     ' · ' + tr('Reflections: ', 'Reflejos: ') + (s.env === 'hdri' ? 'Poly Haven HDRI' : s.env === 'procedural' ? tr('procedural', 'procedural') : s.env) +
     (a.tower ? ' · ' + tr('Tower: ', 'Torre: ') + a.tower + ' · ' + tr('Aliens: ', 'Alienígenas: ') + a.aliens.join(' / ') : '');
 };
@@ -149,7 +161,7 @@ X.glb = function (url) {
 /* ---------- settings panel section ---------- */
 X.settingsHtml = function () {
   const o = X.opt(), sel = (id, v) => '<select id="' + id + '">' + [['auto', tr('Auto (Medium/High)', 'Auto (Medio/Alto)')], ['on', tr('On', 'Activo')], ['off', tr('Off', 'Apagado')]].map(a => '<option value="' + a[0] + '"' + (v === a[0] ? ' selected' : '') + '>' + a[1] + '</option>').join('') + '</select>';
-  return '<p style="margin-top:12px"><b>' + tr('Cinematic graphics (prototype: Astro-9)', 'Gráficos cinemáticos (prototipo: Astro-9)') + '</b></p>' +
+  return '<p style="margin-top:12px"><b>' + tr('Lighting & post-processing', 'Iluminación y posprocesado') + '</b></p>' +
     '<p>' + tr('Bloom + colour grading', 'Resplandor + gradación de color') + ' ' + sel('gPost', o.post) + '</p>' +
     '<p>' + tr('Bloom strength', 'Intensidad del resplandor') + ' <input id="gBloom" type="range" min="0" max="2" step=".1" value="' + o.bloom + '"></p>' +
     '<p>' + tr('HDRI reflections', 'Reflejos HDRI') + ' ' + sel('gRefl', o.refl) + '</p>' +

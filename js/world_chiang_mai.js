@@ -162,7 +162,7 @@ function facadeAtlas() {
         if (t === 6) { c.fillStyle = 'rgba(230,240,245,.35)'; for (let k = iy; k < iy + ih; k += 10) c.fillRect(ix, k, iw, 2) }
         c.fillStyle = fc; c.fillRect(x + 61, y, 6, 128);
         if (t === 1 || t === 3) { c.strokeStyle = '#2a2a2a'; c.lineWidth = 3; for (let k = ix + 6; k < ix + iw; k += 13) { c.beginPath(); c.moveTo(k, iy); c.lineTo(k, iy + ih); c.stroke() } for (const f of [.33, .66]) { c.beginPath(); c.moveTo(ix, iy + ih * f); c.lineTo(ix + iw, iy + ih * f); c.stroke() } c.beginPath(); c.arc(x + 64, iy + ih * .5, 18, 0, TAU); c.stroke() } }
-      grime(x, y, 128, 22, .0); { const g = c.createLinearGradient(0, y + 8, 0, y + 24); g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(ix, iy, iw, 16) }
+      { const g = c.createLinearGradient(0, y + 8, 0, y + 24); g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(ix, iy, iw, 16) }
     }
     /* ---- railings (transparent gaps, alpha-tested) ---- */
     R.rail0 = [0, 768, 256, 64]; c.fillStyle = '#dcd6cc'; c.fillRect(0, 768, 256, 9); c.fillRect(0, 824, 256, 8); for (let k = 4; k < 256; k += 16) { c.fillRect(k + 2, 777, 6, 47); c.beginPath(); c.ellipse(k + 5, 802, 6, 11, 0, 0, TAU); c.fill() } grime(0, 768, 256, 64, .18);
@@ -189,7 +189,8 @@ AV.registerWorld({
   id: 'chiang_mai',
   build(ctx) {
     const S = AV.S, q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk(), md = mode();
-    const SKY = { tint: [0xffc890, 0xffe0b0, .12, .18], dome: { s1: md === 'lantern' ? 0xffb04a : 0xff8ad8, s2: md === 'lantern' ? 0xff6a3a : 0x6ab8ff, swirl: md === 'lantern' ? .5 : .22, cloud: .8, glow: .6 } };
+    /* V1.0: natural tropical sky outside festival nights (no psychedelic swirl bands; soft white cumulus) */
+    const SKY = { tint: [0xffc890, 0xffe0b0, .12, .18], dome: md === 'lantern' ? { s1: 0xffb04a, s2: 0xff6a3a, swirl: .5, cloud: .8, glow: .6 } : { s1: 0xdde6ee, s2: 0xa8c8e8, swirl: .02, cloud: .8, glow: .6 } };
     S.cm = S.cm || { met: {}, bed: 0, scooter: -1, weather: 'clear', soak: 0, hooks: 0 }; S.items = S.items || {};
     const B = { oc: K.batch(), east: K.batch(), temple: K.batch(), hostel: K.batch(), decor: K.batch(), night: K.batch(), sky: K.batch(), fest: K.batch() };
     const brick = K.floraMat(0, { map: brickTex(), rough: .9, double: true }), ROOF = MT.tile, glassM = new THREE.MeshStandardMaterial({ color: 0x9ad8ff, roughness: .1, metalness: .3, transparent: true, opacity: .25, depthWrite: false });
@@ -220,9 +221,10 @@ AV.registerWorld({
       ctx.upd.push(() => { glow.material.opacity = (AV.nightK || 0) * .7; mm.material.color.setScalar(1 - (AV.nightK || 0) * .72) }) }
 
     /* ---------- moat, wall, gates, river ---------- */
-    const wopt = { deep: 0x1a4a5a, shallow: 0x3ab8b0, sky: md === 'lantern' ? 0xffb070 : 0xb0d8ff, iri: .18, opacity: .9, scale: .6 };
+    /* V1.0: the real moat is still, olive-green water; the Ping runs silty brown-green (no iridescence outside the lantern festival) */
+    const wopt = { deep: 0x1e3a30, shallow: 0x4a6a48, sky: md === 'lantern' ? 0xffb070 : 0xa8c0cc, iri: md === 'lantern' ? .12 : .02, opacity: .92, scale: .6 };
     for (const s of [-1, 1]) { const w1 = K.waterPlane(ctx, new THREE.PlaneGeometry(2 * MOAT1, MOAT1 - MOAT0), WY, wopt); w1.position.z = s * (MOAT0 + MOAT1) / 2; const w2 = K.waterPlane(ctx, new THREE.PlaneGeometry(MOAT1 - MOAT0, 2 * MOAT0), WY, wopt); w2.position.x = s * (MOAT0 + MOAT1) / 2 }
-    { const rw = K.waterPlane(ctx, new THREE.PlaneGeometry(RIV1 - RIV0, GD), WY, Object.assign({}, wopt, { deep: 0x3a5a4a, shallow: 0x6a8a6a })); rw.position.x = (RIV0 + RIV1) / 2; rw.position.z = GCZ }
+    { const rw = K.waterPlane(ctx, new THREE.PlaneGeometry(RIV1 - RIV0, GD), WY, Object.assign({}, wopt, { deep: 0x3a3a28, shallow: 0x6a6a4a })); rw.position.x = (RIV0 + RIV1) / 2; rw.position.z = GCZ }
     for (const s of [-1, 1]) for (const r of [MOAT0, MOAT1]) { box(B.oc, brick, 0xffffff, -r - .4, r + .4, -1.8, .25, s * r - .4, s * r + .4); box(B.oc, brick, 0xffffff, s * r - .4, s * r + .4, -1.8, .25, -r, r) }
     for (const x of [RIV0, RIV1]) box(B.east, MT.stone, 0xd8c8a8, x - .5, x + .5, -1.8, .3, ZMIN, ZMAX);
     /* city wall with gaps at the gates, crenellations, corner bastions, gate towers */
@@ -272,7 +274,7 @@ AV.registerWorld({
       const sf = lanna ? 'fwood' : SHOP[r() * SHOP.length | 0];
       P(facM, cell(sf), 0xffffff, L / 2, 1.58, .03, L - .55, 3.15, .06, OPEN[sf] ? .75 : 0);
       P(wallM, BG.box, sh(.94), L / 2, 3.25, .06, L - .3, .2, .14);
-      if (!lanna || r() < .6) { const sw = Math.min(L - .9, 4.6), shh = Math.min(.95, sw / 4.4); P(facM, cell('s' + (r() * 16 | 0)), 0xffffff, L / 2, 3.38 + shh / 2, .16, sw, shh, .1, .9) }
+      if (!lanna || r() < .6) { const sw = Math.min(L - .9, 4.6), shh = Math.min(lanna ? .52 : .95, sw / 4.4); P(facM, cell('s' + (r() * 16 | 0)), 0xffffff, L / 2, 3.38 + shh / 2, .16, sw, shh, .1, .9) }
       if (!lanna && r() < .75) { const ac = AWN[r() * AWN.length | 0], dep = 1.3 + r() * .5; P(awnM, BG.box, ac, L / 2, 3.0, dep / 2, L - .3, .04, dep, 0, .2); P(awnM, BG.box, ac, L / 2, 3.0 - Math.sin(.2) * dep / 2 - .07, dep * Math.cos(.2) - .02, L - .3, .14, .03);
         if (!lo) for (const u of [.4, L - .4]) P(MT.v, BG.box, 0x3a3a3a, u, 2.92, dep / 2 - .05, .04, .04, dep, 0, .2) }
       if (!lo && !lanna && nF > 1 && r() < .28) P(facM, cell('v' + (r() * 8 | 0)), 0xffffff, L - .45, G0 + 1.6, .5, .08, 2.2, .55, .9);   // blade sign
@@ -281,7 +283,7 @@ AV.registerWorld({
       for (let k = 1; k < nF; k++) {
         const y0 = G0 + (k - 1) * FH, nW = Math.max(1, Math.round(L / 2.4)), ww = Math.min(1.35, L / nW - .55);
         if (!lanna) P(wallM, BG.box, sh(.88), L / 2, y0, .1, L, .22, .2);
-        if (lanna) { for (let i = 0; i < nW; i++) P(facM, cell('wshut'), 0xffffff, (i + .5) * L / nW, y0 + 1.5, .24, ww, 1.2, .06); continue }
+        if (lanna) { for (let i = 0; i < nW; i++) P(facM, cell('wshut'), 0xffffff, (i + .5) * L / nW, y0 + 1.5, .43, ww, 1.2, .06); continue }
         if (!lo && r() < .3 && L > 4) {   // balcony: slab, railing, sliding door
           const rl = r() < .5 ? 'rail0' : 'rail1'; P(wallM, BG.box, sh(.92), L / 2, y0 + .02, .6, L - .5, .16, 1.2); P(facM, cell(rl), 0xffffff, L / 2, y0 + .6, 1.17, L - .5, 1.0, .05);
           for (const u of [.27, L - .27]) P(facM, cell(rl), 0xffffff, u, y0 + .6, .6, .05, 1.0, 1.15);
@@ -327,7 +329,10 @@ AV.registerWorld({
     /* ---------- electric poles + tangled wires, street lamps ---------- */
     { const wire = [], poles = []; for (const rd of ROADS) { if (rd[4] < 6.5) continue; const L = Math.hypot(rd[2] - rd[0], rd[3] - rd[1]), n = Math.floor(L / 24), ux = (rd[2] - rd[0]) / L, uz = (rd[3] - rd[1]) / L, off = rd[4] / 2 + 1.6; let prev = null;
         for (let i = 0; i <= n; i++) { const x = rd[0] + ux * i * L / n - uz * off, z = rd[1] + uz * i * L / n + ux * off; if (inMoat(x, z) || inRiver(x, z) || inWall(x, z) || occ.some(o => inRect(o, x, z, .4))) { prev = null; continue } poles.push([x, z]); if (prev) for (let k = 0; k < 4; k++) { const y = 6.6 - k * .3, s = .5 + k * .15; for (let t = 0; t < 6; t++) { const f0 = t / 6, f1 = (t + 1) / 6; wire.push(prev[0] + (x - prev[0]) * f0, y - Math.sin(f0 * Math.PI) * s, prev[1] + (z - prev[1]) * f0, prev[0] + (x - prev[0]) * f1, y - Math.sin(f1 * Math.PI) * s, prev[1] + (z - prev[1]) * f1) } } prev = [x, z] } }
-      poles.forEach(([x, z], i) => { B.decor.add(MT.stone, A.geo('cyl6'), 0xb8b0a0, M(x, 3.5, z, .14, 7, .14)); B.decor.add(MT.v, BG.box, 0x5a5a5a, M(x, 6.6, z, 1.4, .1, .1)); if (i % 2 === 0) { B.decor.add(MT.v, BG.box, 0x3a3a3a, M(x, 5.2, z, .6, .08, .08)); B.night.add(MT.v, BG.sph, 0xfff0c0, M(x + .3, 5.05, z, .2, .12, .2), 1) } ctx.circles.push([x, z, .2]) });
+      poles.forEach(([x, z], i) => { B.decor.add(MT.stone, A.geo('cyl6'), 0xb8b0a0, M(x, 3.5, z, .14, 7, .14)); B.decor.add(MT.v, BG.box, 0x5a5a5a, M(x, 6.6, z, 1.4, .1, .1)); if (i % 2 === 0) { B.decor.add(MT.v, BG.box, 0x3a3a3a, M(x, 5.2, z, .6, .08, .08)); B.night.add(MT.v, BG.sph, 0xfff0c0, M(x + .3, 5.05, z, .2, .12, .2), 1) }
+        if (q > 0 && i % 5 === 2) { B.decor.add(MT.shiny, A.geo('cyl'), 0x8a9098, M(x, 5.6, z + .45, .32, .8, .32)); B.decor.add(MT.v, BG.box, 0x4a4a4a, M(x, 5.6, z + .22, .08, .5, .3)); for (const s of [-1, 1]) B.decor.add(MT.v, A.geo('cyl6'), 0xd8d0c0, M(x + s * .12, 6.12, z + .45, .04, .2, .04)) }   // pole-top transformer
+        if (q > 0 && i % 3 === 1) B.decor.add(MT.v, BG.box, 0x8a8a84, M(x, 2.2, z, .3, .4, .3));   // junction box
+        ctx.circles.push([x, z, .2]) });
       const wl = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(wire, 3)), new THREE.LineBasicMaterial({ color: 0x1a1a1a })); grp.add(wl) }
 
     /* =======================================================================================
@@ -543,7 +548,29 @@ AV.registerWorld({
     /* traffic (drives on the left) */
     const loops = [{ pts: [[-94, -94], [94, -94], [94, 94], [-94, 94]], off: -1.6 }, { pts: [[-RING, -RING], [RING, -RING], [RING, RING], [-RING, RING]], off: -2 }, { pts: [[RING, 0], [244, 0]], off: -2.4 }, { pts: [[0, -92], [0, 92]], off: -2 }, { pts: [[246, -150], [246, 150]], off: -2 }];
     if (md !== 'lantern') loops.push({ pts: [[-92, 0], [92, 0]], off: -2.4 });
-    const traffic = CY.traffic(ctx, loops, [{ type: 'tuktuk', col: 0x2a9a7a, n: [4, 7, 10][q], speed: 6 }, { type: 'scooter', col: 0xd83a3a, n: [6, 12, 18][q], speed: 8 }, { type: 'songthaew', col: 0xc8282a, n: [2, 4, 6][q], speed: 5.5 }, { type: 'bicycle', col: 0x2a6ad8, n: [2, 4, 6][q], speed: 3.5 }], { density: () => md === 'lantern' ? .5 : traffic.density() });
+    /* V1.0 fleet: real-world paint palettes (white/silver/grey/black dominate Thai car colours; Chiang Mai songthaews are mostly red) */
+    const CARC = [0xf2f2f0, 0xf2f2f0, 0xe8e6e0, 0xf2f2f0, 0xb8bcc0, 0xb8bcc0, 0xa0a4a8, 0x6a6e72, 0x5a5e62, 0x15171a, 0x15171a, 0x9a1a1a, 0x1f3e72, 0x7a6a52, 0x2a4a3a];
+    const SCOC = [0x15171a, 0x15171a, 0xf0f0ec, 0xb01e1e, 0x1f4e9a, 0x8a8e92, 0xe8c8c8, 0x6a7a5a, 0xd8c8a0, 0x2a2c30];
+    const TUKC = [0x2a7a5a, 0x1f5aa8, 0xd8a81a, 0xb82a2a, 0x2a8a9a, 0x2a7a5a];
+    const SONC = [0xb81e1e, 0xb81e1e, 0xb81e1e, 0xb81e1e, 0xa81a1a, 0xe8c020, 0xe8e8e4, 0x2a6ac8, 0x3a8a4a];
+    const traffic = CY.traffic(ctx, loops, [{ type: 'tuktuk', cols: TUKC, n: [3, 5, 7][q], speed: 6 }, { type: 'scooter', cols: SCOC, n: [8, 14, 20][q], speed: 8 }, { type: 'songthaew', cols: SONC, n: [2, 4, 5][q], speed: 5.5 },
+      { type: 'car', cols: CARC, n: [3, 6, 9][q], speed: 7 }, { type: 'pickup', cols: CARC, n: [2, 3, 5][q], speed: 6.5 }, { type: 'bicycle', cols: [0x2a6ad8, 0x1a1a1a, 0xe8e8e0, 0x3a7a4a, 0xc83a3a], n: [1, 3, 4][q], speed: 3.5 }], { density: () => md === 'lantern' ? .5 : traffic.density() });
+    /* parked cars, pickups and scooter rows on the quiet sois (no traffic loops): x = ±60, z = -60, z = 44 (not in front of the hostel / bars) */
+    { const pr = AV.rng(4242), list = [], keep = [[-24, 64]], dens = [.45, .75, 1][q], STANDS0 = [[-5.5, 46.8], [-64, 6.4], [-14, 6.6], [-65.5, 48.6]];   // tuk-tuk stands near the sois
+      const quiet = [['x', -60], ['x', 60], ['z', -60], ['z', 44]];
+      for (const [ax, c0] of quiet) { const w = RW(ax, c0), cross = (ax === 'x' ? ZS : XS).map(v => [v, RW(ax === 'x' ? 'z' : 'x', v) / 2 + 5]);
+        for (const sd of [-1, 1]) { let t = -92;
+          while (t < 92) {
+            const k = pr(), type = k < .42 ? 'car' : k < .55 ? 'pickup' : k < .85 ? 'scooters' : null, len = type === 'car' ? 4.6 : type === 'pickup' ? 5.5 : type ? 1 + (2 + pr() * 4 | 0) * .8 : 3 + pr() * 6;
+            const a0 = t, a1 = t + len; t = a1 + .8 + pr() * 1.4;
+            if (!type || pr() > dens || cross.some(([v, hw]) => a1 > v - hw && a0 < v + hw) || (ax === 'z' && c0 === 44 && keep.some(([u0, u1]) => a1 > u0 && a0 < u1)) || STANDS0.some(([sx, sz]) => Math.hypot((ax === 'x' ? c0 : (a0 + a1) / 2) - sx, (ax === 'x' ? (a0 + a1) / 2 : c0) - sz) < 6)) continue;
+            const off = c0 + sd * (w / 2 - (type === 'scooters' ? .95 : 1.0)), mid = (a0 + a1) / 2, pos = (along, across) => ax === 'x' ? [across, along] : [along, across];
+            if (type !== 'scooters') { const [x, z] = pos(mid, off), yaw = ax === 'x' ? (sd < 0 ? Math.PI : 0) : (sd < 0 ? Math.PI / 2 : -Math.PI / 2); list.push({ type, x, z, yaw, col: CARC[pr() * CARC.length | 0] });
+              const hl = type === 'car' ? 2.25 : 2.7, hw = .9; ctx.cols.push(ax === 'x' ? [x - hw, x + hw, z - hl, z + hl] : [x - hl, x + hl, z - hw, z + hw]) }
+            else { for (let u = a0 + .5; u < a1 - .3; u += .8) { const [x, z] = pos(u, off), yaw = (ax === 'x' ? (sd < 0 ? -Math.PI / 2 : Math.PI / 2) : (sd < 0 ? Math.PI : 0)) + (pr() - .5) * .3; list.push({ type: pr() < .9 ? 'scooter' : 'bicycle', x, z, yaw, col: SCOC[pr() * SCOC.length | 0] }) }
+              const [x0, z0] = pos(a0 + .2, off - .95), [x1, z1] = pos(a1 - .2, off + .95); ctx.cols.push([Math.min(x0, x1), Math.max(x0, x1), Math.min(z0, z1), Math.max(z0, z1)]) }
+          } } }
+      CY.parked(ctx, list) }
     CY.birds(ctx, [{ x: -28, z: 24, r: 18, y: 26, n: 10 }, { x: -77, z: 66, r: 14, y: 14, n: 8 }, { x: 270, z: 0, r: 30, y: 12, n: 10 }, { x: -77, z: -30, r: 16, y: 20, n: 7 }]);
     /* dogs: Bobo (street dog, adopted by Giant), Frenchie (French bulldog), and strays */
     const bobo = CY.dog(0xc8945a, { s: 1.05, c2: 0xe8c890 }); bobo.position.set(17, 0, 51.2); bobo.rotation.y = .4; grp.add(bobo); ctx.circles.push([17, 51.2, .4]);
@@ -781,7 +808,7 @@ AV.registerWorld({
       const p = panel('<b>' + tr('Tuk-tuk', 'Tuk-tuk') + '</b><div class="note">' + tr('30 credits per ride. The driver knows a shortcut. Probably.', '30 créditos por viaje. El conductor conoce un atajo. Probablemente.') + '</div><div class="grid">' + STANDS.filter(s => s[0] !== from).map(s => '<button data-s="' + s[0] + '">' + s[3] + (s[0] === 'pool' && withNuni ? '<small>' + tr('with Nuni — free!', 'con Nuni: ¡gratis!') + '</small>' : '') + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
       p.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const s = STANDS.find(x => x[0] === b.dataset.s), free = s[0] === 'pool' && withNuni; if (!free && !AV.txn(-30, 'Tuk-tuk to ' + s[3])) return; AV.closePanel('cmp'); startRide(s, free) }) };
     /* ---------- V0.9.7: REAL tuk-tuk rides — you sit in the back while it drives the street graph to the stop; E / Act skips ---------- */
-    const rideMat = K.floraMat(0, { rough: .55 }); let ride = null;
+    const rideMat = CY.vehMat(ctx); let ride = null;
     const navPath = (a, b) => { const n = nodes.length, dist = new Float64Array(n).fill(1e9), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n); dist[a] = 0;
       for (;;) { let u = -1, bd = 1e9; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < bd) { bd = dist[i]; u = i } if (u < 0 || u === b) break; done[u] = 1;
         for (const v of NAV.links[u]) { const d = bd + Math.hypot(nodes[u][0] - nodes[v][0], nodes[u][1] - nodes[v][1]); if (d < dist[v]) { dist[v] = d; prev[v] = u } } }
@@ -792,7 +819,7 @@ AV.registerWorld({
     const startRide = (s, free) => {
       const P = AV.P, raw = [[P.x, P.z]].concat(navPath(NAV.near(P.x, P.z), NAV.near(s[4], s[5])), [[s[4], s[5]]]), pts = [];
       raw.forEach(p => { if (!pts.length || Math.hypot(p[0] - pts[pts.length - 1][0], p[1] - pts[pts.length - 1][1]) > 1.5) pts.push(p) }); if (pts.length < 2) { arrive(s, free); return }
-      const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], 0, p[1])), false, 'centripetal', .5), tk = new THREE.Mesh(CY.VB.tuktuk(0x2a9a7a), rideMat);
+      const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], 0, p[1])), false, 'centripetal', .5), tk = new THREE.Mesh(CY.VB.tuktuk(0x2a7a5a), rideMat);
       tk.castShadow = q === 2; grp.add(tk); const t0 = curve.getTangentAt(0); P.yaw = Math.atan2(t0.x, t0.z) + Math.PI;
       ride = AV.cm.ride = { curve, len: curve.getLength(), s: 0, v: 0, tk, dest: s, free }; AV.audio && AV.audio.blip(330, .3, 'square', .05);
       AV.toast(tr('Hop in! The driver takes the streets to ', '¡Sube! El conductor va por las calles hasta ') + s[3] + ' (' + Math.round(ride.len) + ' m)' + tr(' — E / Act to skip.', ' — E / Act para saltar.')) };

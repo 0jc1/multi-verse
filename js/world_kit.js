@@ -177,46 +177,12 @@ K.field = function (ctx, geo, mat, n, area, opt) {
   return K.scatter(ctx, geo, mat, items, opt);
 };
 
-/* ---------------- sky dome (global, follows camera) ---------------- */
+/* ---------------- sky (js/sky.js owns the dome, clouds and air) ---------------- */
 const NOISE = '\n#ifndef OCT\n#define OCT 4\n#endif\nfloat hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x),f.y);}float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<OCT;i++){v+=a*vn(p);p*=2.03;a*=.5;}return v;}';
-const SKYU = { t: { value: 0 }, top: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, bot: { value: new THREE.Color() }, s1: { value: new THREE.Color(0xff6ad5) }, s2: { value: new THREE.Color(0x7a5cff) },
-  sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color(0xfff0c0) }, swirl: { value: .35 }, cloud: { value: .8 }, night: { value: 0 }, moon: { value: new THREE.Vector3(-.4, .5, -.75).normalize() } };
-const dome = new THREE.Mesh(new THREE.SphereGeometry(360, 48, 24), new THREE.ShaderMaterial({
-  uniforms: SKYU, side: THREE.BackSide, depthWrite: false, fog: false,
-  vertexShader: 'varying vec3 vD;void main(){vD=normalize(position);vec4 p=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_Position=p;gl_Position.z=p.w*.99999;}',
-  fragmentShader: 'uniform vec3 top,hor,bot,s1,s2,sunCol,sunDir,moon;uniform float t,swirl,cloud,night;varying vec3 vD;' + NOISE + `
-    void main(){ vec3 d=normalize(vD); float h=d.y;
-      vec3 col=mix(hor,top,smoothstep(0.0,.6,h)); col=mix(col,bot,smoothstep(0.0,-.3,h));
-      float a=atan(d.z,d.x); float band=sin(a*5.+h*16.-t*.05+sin(a*3.+t*.03)*2.2);
-      float hz=exp(-abs(h-.06)*6.); col=mix(col,mix(s1,s2,band*.5+.5),swirl*hz*(.45+.55*band));
-      float sw2=sin(length(d.xz/(h+.4))*6.-t*.08+a*2.)*.5+.5; col+= (s2-col)*swirl*.12*sw2*smoothstep(.1,.7,h);
-      #if OCT > 0
-      if(h>.02&&cloud>0.){ vec2 p=d.xz/(h+.28); float n=fbm(p*1.25+vec2(t*.006,t*.003));
-        float cm=smoothstep(.48,.78,n)*smoothstep(.02,.28,h)*cloud; vec3 cc=mix(mix(vec3(1.,.96,.98),s1,.28),vec3(.25,.18,.4),night*.8);
-        col=mix(col,cc,cm*.8); }
-      #endif
-      float sd=max(dot(d,sunDir),0.); col+=sunCol*(smoothstep(.9985,.9992,sd)*1.2+pow(sd,40.)*.35+pow(sd,6.)*.12)*(1.-night*.9);
-      float md=max(dot(d,moon),0.); col+=vec3(1.,.95,.85)*smoothstep(.9993,.9996,md)*night+vec3(.5,.45,.9)*pow(md,40.)*.25*night;
-      #ifdef LIN_OUT
-      col=pow(max(col,vec3(0.)),vec3(2.2));
-      #endif
-      gl_FragColor=vec4(col,1.);}`
-}));
-dome.frustumCulled = false; dome.renderOrder = -10; dome.material.userData.lin = 1; AV.scene.add(dome); K.dome = dome; K.skyU = SKYU;
-/* sky cloud detail follows the graphics setting (Low: no clouds, Medium: 3 noise octaves, High: 5) */
-let domeQ = -1; K.skyQuality = () => { const q = K.q(); if (q === domeQ) return; domeQ = q; dome.material.defines = Object.assign({}, dome.material.defines, { OCT: [0, 3, 5][q] });   /* V0.9.6: keep LIN_OUT (gfx.js HDR path) */ dome.material.needsUpdate = true };
-const tmp = new THREE.Color(), tmpV = new THREE.Vector3();
+/* night glow for the instanced flora (the sky keeps its own uniforms now) */
 AV.frameFns.push((dt, t) => {
-  U.time.value = t; const W = AV.W; if (!W) return; K.skyQuality(); const nk = AV.nightK || 0, D = (W.sky && W.sky.dome) || {};
+  U.time.value = t; const W = AV.W; if (!W) return; const nk = AV.nightK || 0, D = (W.sky && W.sky.dome) || {};
   U.glow.value = (D.glow == null ? .12 + .9 * nk : D.glow * (.4 + .6 * nk)) * (W.glowScale == null ? 1 : W.glowScale);
-  dome.position.copy(AV.cam.position); SKYU.t.value = t;
-  const bg = AV.scene.background && AV.scene.background.isColor ? AV.scene.background : tmp.setHex(0x8fc4ff);
-  SKYU.top.value.copy(bg); if (D.top != null) SKYU.top.value.lerp(tmp.setHex(D.top), D.mix == null ? .6 : D.mix);
-  SKYU.hor.value.copy(AV.scene.fog.color).convertLinearToSRGB(); if (D.hor != null) SKYU.hor.value.lerp(tmp.setHex(D.hor), (D.mix == null ? .6 : D.mix) * .5);
-  SKYU.bot.value.copy(SKYU.hor.value).multiplyScalar(.7);
-  SKYU.s1.value.setHex(D.s1 == null ? 0xff6ad5 : D.s1); SKYU.s2.value.setHex(D.s2 == null ? 0x7a5cff : D.s2);
-  SKYU.swirl.value = (D.swirl == null ? .3 : D.swirl) * (AV.S.set.reduce ? .5 : 1) * (.55 + .45 * Math.max(nk, .35)); SKYU.cloud.value = D.cloud == null ? .8 : D.cloud; SKYU.night.value = nk;
-  tmpV.copy(AV.SUN.position).sub(AV.SUN.target.position).normalize(); SKYU.sunDir.value.copy(tmpV);
 });
 
 /* ---------------- water (fogged, iridescent, animated) ---------------- */
@@ -229,7 +195,7 @@ K.water = function (opt) {
       'float r1=sin(q.x*.8+t*1.3+sin(q.y*.5+t*.7)*1.5),r2=sin(q.y*1.1-t*1.1+sin(q.x*.6-t*.5)*1.2),rip=(r1+r2)*.25+.5;' +
       'vec3 ir=.5+.5*cos(6.2831*(vec3(0.,.33,.67)+rip*.5+t*.04+q.x*.015));vec3 col=mix(deep,shallow,rip*.8);col=mix(col,ir*mix(deep,shallow,.6)*1.6,iri);' +
       'vec3 V=normalize(cameraPosition-vW);float fr=pow(1.-clamp(V.y,0.,1.),3.);col=mix(col,skyc,fr*.55);col+=vec3(1.)*pow(max(r1*r2,0.),10.)*.55;' +
-      'gl_FragColor=vec4(col,op);\n#include <fog_fragment>\n#include <encodings_fragment>\n}',
+      'gl_FragColor=vec4(col,op);\n#include <encodings_fragment>\n#include <fog_fragment>\n}',
     transparent: true, fog: true, depthWrite: false, side: THREE.DoubleSide
   });
   m.uniforms.uT = U.time; m.userData.lin = 1; return m;

@@ -451,7 +451,10 @@ for (const name in RS) K.species[name] = function () {
 const _scatter = K.scatter;
 K.scatter = function (ctx, geo, mat, items, opt) {
   const r = geo && geo.userData && geo.userData.real;
-  if (r === 'rock') mat = R.rockMat(true); else if (r === 'plant') R.plantify(mat);
+  /* rocks share one material with the instanced boulders, which always carry instance colours; r128 does not switch programs on
+     that difference, so give every scattered rock an instance colour too */
+  if (r === 'rock') { mat = R.rockMat(true); items = items.map(it => it.tint == null ? Object.assign({}, it, { tint: 1 }) : it) }
+  else if (r === 'plant') R.plantify(mat);
   return _scatter.call(this, ctx, geo, mat, items, opt);
 };
 /* the low-poly CC0 GLB versions of these species are replaced by the detailed procedural ones */

@@ -9,7 +9,11 @@
   (tipped the band, finished a shift, travelled, bought a bissap, watched the cinema).
 * Quests (`js/npc.js`, `AV.quests`): Zil → *Bissap for Luma*, Luma → *A slow gallery walk*, Grakk → *The moss rhythm*,
   Bongo → *Feel the one-drop*, Nix → *Orbit hop*. Rewards are paid by game code only (`AV.txn`), never by dialogue text.
-* Add an NPC: add an entry to `AV.NPCS` in `data/npcs.js`, then in a world: `AV.npc.spawn(ctx, 'id', { x, z, yaw })`.
+* Residents of the other worlds live in `data/npcs_worlds.js`: Verdalux — Vela (*Listen to the glow-trees*) and Old Tuk (*The traveller’s logbook*);
+  Astro-9 — Captain Rook (*Station tour*) and Lyra (casino host, no task); Jungle Dub — Auntie Pearl (*Coconut for the stew*) and Riverman Tosh (*Hidden Falls*).
+  Their progress is recorded by the worlds with `AV.quests.mark(task, key, flavourText)` and survives reloads.
+* Add an NPC: add an entry to `AV.NPCS` in `data/npcs.js` (or `data/npcs_worlds.js`), then in a world: `AV.npc.spawn(ctx, 'id', { x, z, yaw })`.
+  `look.fur` builds an ape; `look.human` (a `js/chars_soft.js` look) builds a human.
 
 ## Optional AI backend (later)
 The browser never holds an API key. You host a small endpoint (any language) that calls the model with **your** key.

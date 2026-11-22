@@ -57,7 +57,8 @@ const DECAL = {
 function shirtCfg(sh, K) {
   const s = K.s, chestY = K.bones[K.idx.chest].pos[1], o = { rough: [.86, .7, .86, .86], h: PBR.tex('jersey'), hS: 14, hMask: [1, 1, 1, 1], h2: PBR.tex('furVar'), h2S: 5, h2Mask: [.35, .35, .35, .35], bump: .0007, sheen: 0x3a3a3a, envI: .35 };
   if (sh.fab) Object.assign(o, { cols: [0xffffff, 0xffffff, 0xffffff, 0xffffff], alb: FAB[sh.fab](), albS: sh.albS || 2.6, albMask: [1, 1, 1, 1], albMode: 1 });
-  else Object.assign(o, { cols: [sh.col, sh.col, sh.col, sh.col], alb: PBR.tex('furVar'), albS: 6, albMask: [.25, .25, .25, .25] });
+  else Object.assign(o, { cols: sh.cols || [sh.col, sh.col, sh.col, sh.col], alb: PBR.tex('furVar'), albS: 6, albMask: [.25, .25, .25, .25] });
+  if (sh.fab && sh.cols) o.cols = sh.cols, o.albMask = sh.albMask || [1, 0, 0, 1];   // printed shirt under a plain vest
   if (sh.decal) o.decal = { tex: DECAL[sh.decal](), rect: [0, chestY + .02 * s, .24 * s, .24 * s], side: 1 };
   return o;
 }
@@ -72,7 +73,7 @@ const hairMat = col => PBR.charMat({ skinning: false, cols: [col, col, col, col]
 /* the build hook: patterned / printed garments replace the plain ones before any mesh is created */
 function matHook(L) {
   return (mats, K, st) => {
-    if (L.shirt.fab || L.shirt.decal) { mats.shirt.dispose(); mats.shirt = PBR.charMat(shirtCfg(L.shirt, K)) }
+    if (L.shirt.fab || L.shirt.decal || L.shirt.cols) { mats.shirt.dispose(); mats.shirt = PBR.charMat(shirtCfg(L.shirt, K)) }
     if (L.pants.fab) { mats.pants.dispose(); mats.pants = PBR.charMat(pantsCfg(L.pants)) }
   };
 }
@@ -88,13 +89,14 @@ function look(o) {
   const hs = STYLE[o.style || 'short'], shoe = hexN(o.shoe == null ? 0x2a2a2c : o.shoe), flip = o.foot === 'flip';
   const L = { kind: 'human', human: true, sp, skin, eye: hexN(o.eye || 0x4a2a10), shells: 0, shadow: o.shadow,
     dark: new THREE.Color(skin).multiplyScalar(.72).lerp(new THREE.Color(0xa04a4a), .25).getHex(), nail: new THREE.Color(skin).lerp(new THREE.Color(0xffe8e0), .45).getHex(),
-    shirt: { o: { loose: sh.loose || 1.08, sleeve: sh.sleeveless ? .07 : .5 }, col: hexN(sh.col == null ? 0xe8e4da : sh.col), fab: sh.fab, decal: sh.decal },
+    shirt: { o: Object.assign({ loose: sh.loose || 1.08, sleeve: sh.sleeveless ? .07 : .5 }, sh.o || {}), col: hexN(sh.col == null ? 0xe8e4da : sh.col), fab: sh.fab, decal: sh.decal },
     pants: { o: Object.assign({ loose: pt.loose || (pt.shorts ? 1.14 : 1.06) }, pt.shorts ? { shorts: true } : {}), col: hexN(pt.col == null ? 0x3a3a52 : pt.col), kind: pt.kind || 'twill', fab: pt.fab },
-    shoes: { o: flip ? { flip: true } : {}, cols: flip ? [shoe, 0x2a2622, shoe, new THREE.Color(shoe).multiplyScalar(.7).getHex()] : [shoe, 0xf0ece4, 0xe8e4da, new THREE.Color(shoe).multiplyScalar(.75).getHex()] },
+    shoes: { o: flip ? { flip: true } : o.boots ? { high: true } : {}, cols: flip ? [shoe, 0x2a2622, shoe, new THREE.Color(shoe).multiplyScalar(.7).getHex()] : o.boots ? [shoe, new THREE.Color(shoe).multiplyScalar(.55).getHex(), new THREE.Color(shoe).multiplyScalar(.8).getHex(), shoe] : [shoe, 0xf0ece4, 0xe8e4da, new THREE.Color(shoe).multiplyScalar(.75).getHex()] },
     hat: hs ? { style: hs, cols: hs === 'cap' ? [hexN(o.capCol || 0x2a6a3a), hexN(o.capCol || 0x2a6a3a)] : [hair, hair] } : null,
     hairCol: hair, beard: !!o.beard, glasses: o.glasses, flower: o.flower, redEye: !!o.redEye, height: o.height };
   if (o.lod) L.ov = { h: .011 };
   L.matHook = matHook(L);
+  if (o.tweak) o.tweak(L);   // chars_regional.js: fabric scale, vest colours...
   return L;
 }
 const D = (L, p) => Object.assign({ sp: L.sp }, L.ov ? { ov: L.ov } : {}, p);
@@ -273,7 +275,8 @@ C.softActor = function (kind, seed, opt) {
   opt = opt || {};
   let st;
   if (kind === 'ape') { const L = randomApe(seed, opt); st = SO.build(L); st.npc = true; st.g.userData.kind = undefined; st.g.scale.setScalar(L.size) }
-  else st = buildHuman(randomHuman(seed, opt), { puppet: false });
+  else st = buildHuman(opt.look ? look(Object.assign({ lod: opt.lod, shadow: opt.shadow }, typeof opt.look === 'function' ? opt.look(seed) : opt.look)) : randomHuman(seed, opt), { puppet: false });
+  if (opt.dress) opt.dress(st);   // chars_regional.js: hats, props, uniform materials
   const g = st.g, ctrl = C.brain(g, { external: true, beat: opt.beat || SO.defBeat }), R = st.R, I = st.I;
   const clip = d => ({ timeScale: 1, time: 0, getEffectiveWeight: () => 1, getClip: () => ({ duration: d }), reset() { return this }, play() { return this }, stop() { return this } });
   const A = { root: g, st, ctrl, cur: null, acts: { Idle: clip(3), Walk: clip(1), Dance: clip(4 * 60 / 124), Wave: clip(2) }, faceY: AN.eyes(st.K)[0][1] + .01 * st.s, kb: -1 };
@@ -287,9 +290,12 @@ C.softActor = function (kind, seed, opt) {
     if (ctrl.mode === 'dance') { const b = Math.floor(beat()); if (b !== A.kb) { A.kb = b; const e = red() * st.s, sp = st.springs; sp[0] && sp[0].kick(0, -.35 * e, 0); sp[1] && sp[1].kick(0, -.15 * e, 0); sp[5] && sp[5].kick(0, .2 * e, .05 * e); sp[6] && sp[6].kick(0, .2 * e, -.05 * e) } }
   };
   A.mixer = { update: A.update, stopAllAction() { }, uncacheRoot() { } };
-  const ch = st.K.legs.L, name = NAMES[kind === 'ape' ? 'ape' : 'human'][Math.floor(rng(seed + 5)() * 12) % NAMES[kind === 'ape' ? 'ape' : 'human'].length];
+  const ch = st.K.legs.L, name = opt.name || NAMES[kind === 'ape' ? 'ape' : 'human'][Math.floor(rng(seed + 5)() * 12) % NAMES[kind === 'ape' ? 'ape' : 'human'].length];
   return { actor: A, root: g, name, S: { thigh: Math.hypot(ch.hj[1] - ch.kn[1], ch.hj[2] - ch.kn[2]) * g.scale.y, shin: Math.hypot(ch.kn[1] - ch.an[1], ch.kn[2] - ch.an[2]) * g.scale.y } };
 };
+
+/* internals for wardrobe extensions (js/chars_regional.js): register fabrics / decals / props, build custom humans */
+C.softKit = { FAB, DECAL, PROP, canvasTex, wrapStamp, rng, look, buildHuman, giveProp, attach, placed, mesh, handFrame, shirtCfg, pantsCfg, hairMat, D, GEN, SH };
 
 /* warm the sculpt cache in the background (after the band / villager prefetch): the crew and the common crowd shapes */
 C.prefetchSoft = function () {

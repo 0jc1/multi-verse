@@ -157,6 +157,10 @@ AV.registerWorld({
     B.misc.add(MT.shiny, A.geo('cyl6'), 0x2a1a3a, K.M(CZX + 2.4, 1.1, CZZ + 9.4, .35, 2.2, .35)); B.misc.add(MT.v, A.geo('ico'), 0x7ff0ff, K.M(CZX + 2.4, 2.6, CZZ + 9.4, .35, .5, .35), 1); ctx.circles.push([CZX + 2.4, CZZ + 9.4, .45]);
     ctx.T.push({ x: CZX + 1, z: CZZ + 8.5, r: 2.4, label: () => tr('Gravity Points: ', 'Puntos de Gravedad: ') + S.gp, fn: () => AV.toast(tr('Gravity Points are fictional play-money for the casino only. Never real money, never credits.', 'Los Puntos de Gravedad son dinero ficticio solo para el casino. Nunca dinero real ni créditos.')) });
     ctx.sign('CASINO (fictional points)', CZX + 5.4, 6.4, CZZ, -Math.PI / 2, 5, '#ff8ac0');                // stands above the canopy
+    AV.npc.spawn(ctx, 'lyra', { x: CZX - 3, z: CZZ - 2, yaw: -Math.PI / 2, r: 3 });
+
+    /* ======================= Captain Rook: dock master, patrols between the arrival arch and the club ======================= */
+    AV.npc.spawn(ctx, 'rook', { x: 5, z: 24, yaw: Math.PI, r: 3, speed: 1.1, path: [[5, 24, 6], [6, 12, 3], [-6, 12, 4], [-5, 24, 3]] });
 
     /* ======================= ARTWORK BAY (no files supplied for Astro-9) ======================= */
     const pl = MD.placementsFor('astro9'); pl.forEach((p, i) => MD.frame(ctx, p, -26 + i * 4.6, 2.6, 20, Math.PI, 3.2));
@@ -259,6 +263,8 @@ AV.registerWorld({
 
     /* ---------- V0.9.8: the districts beyond the dome ---------- */
     const ext = AV.astro9x ? AV.astro9x.build(ctx, { MT, ship }) : null;
+    /* Captain Rook's station tour: the dock beacons log each district platform you walk onto */
+    if (ext) ctx.upd.push(() => { if ((S.quests || {}).station_tour !== 'active') return; for (const d of AV.astro9x.DIST) if (Math.hypot(AV.P.x - d.c[0], AV.P.z - d.c[1]) < d.r - 2) AV.quests.mark('station_tour', d.id) });
 
     /* ---------- flush ---------- */
     for (const k of ['sky', 'glass']) { B[k].flush(ctx, { noShadow: true }).forEach(m => m.renderOrder = 2); delete B[k] } for (const k in B) B[k].flush(ctx);

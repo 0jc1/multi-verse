@@ -31,7 +31,7 @@ BE.make = function (kind, seed, over, opt) {
   const softOK = AV.chars && (AV.chars.softActor || AV.chars.alienActor);
   /* humans + apes, soft body (chars_soft.js C.softActor) */
   if (softOK && (kind === 'human' || kind === 'ape') && AV.chars.softActor) {
-    const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false }); return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
+    const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false, look: opt.look, dress: opt.dress, name: opt.name }); return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
   }
   /* every other species (alien, robot, frog, spirit) is a soft-body alien build too: sculpted Zib / Orbo bodies with
      spring-bone belly + antennae; the species stays readable through its colour palette and suit trim */
@@ -124,6 +124,7 @@ const WEIRD = [L('There is a planet where the rain falls upwards and everyone ca
   L('Geckos in Chiang Mai are secretly DJs. Listen at 3 a.m.', 'Los gecos de Chiang Mai son DJs en secreto. Escucha a las 3 de la mañana.'), L('My cousin tried to trade a moon for a mango. Bad deal. For the mango.', 'Mi primo intentó cambiar una luna por un mango. Mal trato. Para el mango.')];
 function contextLine(b) {
   const W = AV.W, h = (AV.S.time / 60) % 24, fx = AV.fx, out = [];
+  if (W && W.chatLines && W.chatLines.length) out.push(W.chatLines[Math.floor(Math.random() * W.chatLines.length)]);
   if (fx && fx.level('drink') > .35) out.push(L('Whoa, you’re wobbling. Water helps, trust me.', 'Uf, te tambaleas. El agua ayuda, créeme.'));
   if (fx && fx.level('smoke') > .3) out.push(L('Your eyes are doing the sunset thing. Nice.', 'Tus ojos hacen lo del atardecer. Guay.'));
   if (AV.vitals && AV.vitals.get().energy < 25) out.push(L('You look hungry. Go eat something, champ.', 'Pareces hambriento. Ve a comer algo, campeón.'));
@@ -144,15 +145,15 @@ function hint() {
 }
 BE.chatOpen = () => AV.modals.some(m => m.id === 'cmp');
 BE.chat = function (b) {
-  const say = l => AV.tr(l[0], l[1]), g = GREET[b.kind] || GREET.human, first = say(g[Math.floor(Math.random() * g.length)]) + ' ' + say(contextLine(b));
+  const say = l => AV.tr(l[0], l[1]), g = b.greet || GREET[b.kind] || GREET.human, first = say(g[Math.floor(Math.random() * g.length)]) + ' ' + say(contextLine(b));
   b.play('Wave', .25); b.talkT = AV.now(); if (b.actor) b.actor.talk(2.6);
   const p = AV.panel('cmp', '<b>' + b.name + '</b><div class="note" id="bln">' + first + '</div><div class="grid">' +
-    '<button data-r="w">' + tr('Tell me something weird', 'Cuéntame algo raro') + '</button><button data-r="t">' + tr('Any tips around here?', '¿Algún consejo por aquí?') + '</button><button data-r="j">' + tr('Dance with me!', '¡Baila conmigo!') + '</button><button data-close>' + tr('Catch you later', 'Nos vemos') + '</button></div>');
+    '<button data-r="w">' + (b.lines ? tr('What’s your story?', '¿Cuál es tu historia?') : tr('Tell me something weird', 'Cuéntame algo raro') )+ '</button><button data-r="t">' + tr('Any tips around here?', '¿Algún consejo por aquí?') + '</button><button data-r="j">' + tr('Dance with me!', '¡Baila conmigo!') + '</button><button data-close>' + tr('Catch you later', 'Nos vemos') + '</button></div>');
   /* lock the view onto their face while the pop-up is open (they keep facing you, see BE.spawn update) */
   BE.talkTo = b; const v = new THREE.Vector3();
   AV.focus = () => { if (BE.talkTo !== b || !BE.chatOpen()) return null; if (b.headB) b.headB.getWorldPosition(v).y += b.faceY; else v.copy(b.h.position).y += 1.6; return v };
   p.querySelectorAll('[data-r]').forEach(x => x.onclick = () => { const k = x.dataset.r, el = AV.$('bln');
-    if (k === 'w') el.textContent = say(WEIRD[Math.floor(Math.random() * WEIRD.length)]);
+    if (k === 'w') { const pool = b.lines || WEIRD; el.textContent = say(pool[Math.floor(Math.random() * pool.length)]) }
     else if (k === 't') el.textContent = say(hint());
     if (b.actor && k !== 'j') b.actor.talk(2.2);
     else { el.textContent = say(L('Yesss! Show me your moves!', '¡Síii! ¡Enséñame tus pasos!')); b.danceUntil = AV.now() + 12; b.play('Dance', .3); AV.vitals && AV.vitals.add(0, 6) }
@@ -164,11 +165,12 @@ BE.spawn = function (ctx, specs) {
   const W = () => AV.W, out = [], shadow = false;   /* V0.9.8: no shadow pass for crowds (halves their draw calls) */
   specs.forEach((s, i) => {
     /* soft bodies everywhere, every species, every quality level */
-    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: true, lod: ctx.q === 0 ? undefined : true, shells: ctx.q === 2 ? 6 : 0 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
+    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: true, lod: ctx.q === 0 ? undefined : true, shells: ctx.q === 2 ? 6 : 0, look: s.look, dress: s.dress, name: s.name }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
     if (!A) F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
     const mixer = A ? A.mixer : new THREE.AnimationMixer(made.root), acts = A ? A.acts : {}; if (!A) made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
     if (A && s.mode === 'float') A.air = true;   // zero g: legs dangle instead of planting
     const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10,
+      greet: s.greet || null, lines: s.lines || null, role: s.role || null,
       headB: made.root.getObjectByName('head') || null, faceY: A ? A.faceY * made.root.scale.y : ((made.S && made.S.head && made.S.head[1]) || .15) * .85, actor: A || null };
     b.play = (n, f) => { if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');

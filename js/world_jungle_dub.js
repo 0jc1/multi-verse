@@ -383,7 +383,10 @@ AV.registerWorld({
       K.scatter(ctx, K.species.lotus(0xffa0d8, 0x2f8a4a), K.floraMat(0, { double: true }), lil, { shadow: false });
       const s0 = polar(deg(150), LAG.r + 4); ctx.sign('LOTUS LAGOON · floating bungalows', LAG.x + s0[0] + 6, H(LAG.x + s0[0] + 6, LAG.z + s0[1]) + 3.6, LAG.z + s0[1], Math.atan2(-(LAG.x + s0[0] + 6), -(LAG.z + s0[1])), 5, '#ffa0d8', { posts: true });
       shop(LAG.x + polar(deg(110), LAG.r + 3)[0], LAG.z + polar(deg(110), LAG.r + 3)[1], ['Lagoon bar: coconut', 'Bar de la laguna: coco'], 12, 'coconut', ['Fresh coconut, straw, sunset. Perfect.', 'Coco fresco, pajita, atardecer. Perfecto.']);
-      ZB.push({ kind: 'frog', x: LAG.x + 3, z: LAG.z - LAG.r - 2, mode: 'idle', name: 'Lady Croak' }, { kind: 'human', x: LAG.x - LAG.r - 3, z: LAG.z, area: { x: LAG.x, z: LAG.z, r: LAG.r + 5 } }) }
+      ZB.push({ kind: 'frog', x: LAG.x + 3, z: LAG.z - LAG.r - 2, mode: 'idle', name: 'Lady Croak' }, { kind: 'human', x: LAG.x - LAG.r - 3, z: LAG.z, area: { x: LAG.x, z: LAG.z, r: LAG.r + 5 } });
+      /* Riverman Tosh strolls the open shore where the trail from the dance floor arrives */
+      const shore = [-40, -20, 0, 20].map((a, i) => { const p = polar(deg(a), LAG.r + 4); return [LAG.x + p[0], LAG.z + p[1], i % 2 ? 3 : 6] });
+      AV.npc.spawn(ctx, 'tosh', { x: shore[1][0], z: shore[1][1], yaw: npcYaw(shore[1][0], shore[1][1], LAG.x, LAG.z), H, r: 3, speed: .7, path: shore }) }
     /* --- Roots Village: Rasta community, bonfire drum circle, ital kitchen, flags --- */
     { const Z = ZONES.roots, [cx, cz] = Z.c, gy = H(cx, cz);
       for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + .3, x = cx + Math.cos(a) * 9.5, z = cz + Math.sin(a) * 9.5; hut(x, z, 1.8, Math.atan2(cx - x, cz - z)) }
@@ -395,7 +398,9 @@ AV.registerWorld({
       shop(cx + 4, cz - 3, ['Ital kitchen: mango + coconut stew', 'Cocina ital: guiso de mango y coco'], 20, 'mango', ['One love, one pot. Energy restored.', 'Un amor, una olla. Energía recuperada.']);
       ctx.sign('ROOTS VILLAGE · one love', cx - 8, gy + 4, cz - 12, Math.atan2(8, 12), 5, '#ffd23a', { posts: true });
       for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + .5; ZB.push({ kind: i % 3 === 1 ? 'human' : 'ape', x: cx + Math.cos(a) * 4, z: cz + Math.sin(a) * 4, yaw: Math.atan2(-Math.cos(a), -Math.sin(a)), mode: 'dance' }) }
-      ZB.push({ kind: 'ape', x: cx + 6, z: cz + 6, area: { x: cx, z: cz, r: 12 }, name: 'Elder Irie' }) }
+      ZB.push({ kind: 'ape', x: cx + 6, z: cz + 6, area: { x: cx, z: cz, r: 12 }, name: 'Elder Irie' });
+      /* Auntie Pearl greets you in the gap between two huts where the trail comes in, outside the dancers' ring */
+      { const a = 3.965, px = cx + Math.cos(a) * 6.5, pz = cz + Math.sin(a) * 6.5, te = AP(30, 66); AV.npc.spawn(ctx, 'pearl', { x: px, z: pz, yaw: npcYaw(px, pz, te[0], te[1]), H, r: 3 }) } }
     /* --- Treehouse Lounge: giant tree, hammocks, a little performance stage --- */
     { const Z = ZONES.tree, [cx, cz] = Z.c, gy = H(cx, cz);
       B.misc.add(MT.wood, A.geo('cyl'), 0x6a4a2a, K.M(cx, gy + 6, cz, 1.9, 12, 1.9)); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; B.misc.add(MT.wood, A.geo('cyl'), 0x5a3a1a, K.M(cx + Math.cos(a) * 2.2, gy + .5, cz + Math.sin(a) * 2.2, .5, 1.4, .5, Math.sin(a) * .6, 0, -Math.cos(a) * .6)) }
@@ -421,7 +426,7 @@ AV.registerWorld({
       ctx.upd.push((dt, t) => fall.material.opacity = .45 + Math.sin(t * 6) * .08);
       K.scatter(ctx, K.species.mushroom(0x7ff0ff, 0xf4e8d0, 0xff4ad2), K.floraMat(0), Array.from({ length: [6, 10, 14][q] }, () => { const a = rng() * TAU, r0 = P0.r + 1 + rng() * 4, x = P0.x + Math.cos(a) * r0, z = P0.z + Math.sin(a) * r0; return { x, y: H(x, z), z, s: .8 + rng() * 1.4, ry: rng() * TAU } }));
       for (const [dx, dz, c] of [[4, 3, 0xff4ad2], [5.5, .5, 0x7ff0ff], [3, 5, 0xffd23a]]) B.misc.add(MT.v, A.geo('cyl'), c, K.M(Z.c[0] + dx, gy + .2, Z.c[1] + dz, .7, .4, .7));
-      ctx.T.push({ x: Z.c[0] + 4, z: Z.c[1] + 3, r: 2, label: () => tr('Chill on the cushions', 'Relajarse en los cojines'), fn: () => { AV.vitals && AV.vitals.add(4, 10); AV.toast(tr('The waterfall hums. Your shoulders drop two inches. Hidden Falls found!', 'La cascada zumba. Tus hombros bajan cinco centímetros. ¡Encontraste Hidden Falls!')) } });
+      ctx.T.push({ x: Z.c[0] + 4, z: Z.c[1] + 3, r: 2, label: () => tr('Chill on the cushions', 'Relajarse en los cojines'), fn: () => { AV.vitals && AV.vitals.add(4, 10); AV.dlg && AV.dlg.event('hidden_falls'); const m = tr('The waterfall hums. Your shoulders drop two inches. Hidden Falls found!', 'La cascada zumba. Tus hombros bajan cinco centímetros. ¡Encontraste Hidden Falls!'); if (AV.quests) AV.quests.mark('hidden_falls', 'falls', m); else AV.toast(m) } });
       ZB.push({ kind: 'spirit', x: P0.x + 2, y: 1.6, z: P0.z + 2, mode: 'float', name: 'Waterfall Whisper' }, { kind: 'spirit', x: P0.x - 2, y: 2.4, z: P0.z + 3, mode: 'float' }) }
     /* outer jungle vegetation (trees, bamboo, flowers) + birds + the zone residents */
     const okOut = (x, z) => free(x, z, 1.8) && Math.hypot(x, z) > 56 && zoneFlat(x, z) < .2;

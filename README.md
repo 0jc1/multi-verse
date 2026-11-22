@@ -34,9 +34,9 @@ Press **P** (or the Pipe button). A holographic list of all 25 registry worlds a
 | World | Status |
 |---|---|
 | Ape Town (hub) | Playable: plaza, lotus stage + Stone Ape Band, Gallery Gardens, outdoor cinema, Zil's Café, Bissap kiosk, eco-lodge, Portal Grove |
-| Verdalux | Playable (legacy V0.8 jungle moon: Grakk, Drum Log, growing glow-trees) |
-| Astro-9 · Club Graviton | Playable first slice (low-gravity dance floor, DJ Nix, fictional-points casino) |
-| Jungle Dub Party Planet | Playable first slice (positional dub sound system, Bongo, bamboo village, river) |
+| Verdalux | Playable (legacy V0.8 jungle moon: Grakk, Drum Log, growing glow-trees; Vela the glow-tree gardener, Old Tuk the gate warden) |
+| Astro-9 · Club Graviton | Playable first slice (low-gravity dance floor, DJ Nix, fictional-points casino with host Lyra, dock master Captain Rook) |
+| Jungle Dub Party Planet | Playable first slice (positional dub sound system, Bongo, bamboo village, river; Auntie Pearl in Roots Village, Riverman Tosh at Lotus Lagoon) |
 | 21 other roadmap worlds | In `data/worlds.json`, shown in the Pipe as Under construction |
 
 ## Data-driven content

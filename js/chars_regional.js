@@ -139,6 +139,14 @@ RG.actor = function (role, seed) { const r = SK.rng((seed | 0) * 2654435761 + ro
 /* puppet body with the classic pivots (AV.npc.spawn) */
 RG.body = function (role, seed, over) { const a = RG.actor(role, seed), st = SK.buildHuman(SK.look(Object.assign({}, a.look, over || {}))); st.g.userData.human = true; a.dress(st); return st.g };
 SK.PROP.briefcase = PROPS.briefcase; SK.PROP.coffee = PROPS.coffee; SK.PROP.bag = PROPS.bag; SK.PROP.beads = PROPS.beads; SK.PROP.staff = PROPS.staff;
+/* colours for the instanced walker variants */
+RG.walkCols = function (v, r) {
+  const P = a => a[Math.floor(r() * a.length) % a.length], skin = P(PAL.skin), hair = P(PAL.hair);
+  const c = { suit: [P(PAL.suit), P(PAL.suit)], orthodox: [0x141416, 0x141416], soldier: [0xb8a27a, 0xa8946c], hijab: [P([0x2a2a34, 0x5a4a6a, 0x3a5a6a, 0x8a6a5a, 0xd8d0c0]), 0x2a2a2e], keff: [P([0xf2eee4, 0xe8e0d0, 0xc8b898, 0x8a7a6a]), 0xe8e0d0],
+    nun: [P([0x1a1a1e, 0xe8e6e0, 0x5a5a62]), 0x1a1a1e], monk: [0x4a3424, 0x2a2a2a], robe: [P([0xf2eee4, 0xc8b898, 0x6a5a4a, 0x3a3a42]), 0x3a3a3a] }[v];
+  if (!c) return null;
+  return { skin, hair: v === 'hijab' ? P(PAL.scarf) : v === 'nun' ? 0x16161a : v === 'orthodox' ? P([0x14100c, 0x2a1a10, 0x8a8a8a]) : v === 'monk' ? c[0] : hair, shirt: c[0], pants: c[1] };
+};
 RG.gear = GEAR; RG.headPart = headPart; RG.clothMat = clothMat;
 
 /* ======================= instanced street crowd variants ======================= */
@@ -176,5 +184,6 @@ if (CY && CY.VB && K) {
     [B.box, 0x3a3a32, M(-.82, 1.55, -.4, .08, .7, .08)], [B.box, 0x3a3a32, M(.82, 1.55, -.4, .08, .7, .08)], [B.box, 0x2a2a26, M(0, .95, -1.95, 1.0, .5, .1)], [B.cyl, TY, M(0, 1.15, -2.1, .4, .25, .4, Math.PI / 2, 0, 0)],
     [B.box, 0xffe8a0, M(-.6, 1.0, 2.31, .22, .14, .04), 1], [B.box, 0xffe8a0, M(.6, 1.0, 2.31, .22, .14, .04), 1], [B.box, 0x1a1a1a, M(0, .7, 2.32, 1.5, .25, .05)], [B.cyl, 0x2a2a26, M(.7, 2.3, -1.2, .015, 1.8, .015)]];
     wheels(o, [-1.3, 1.45], .92, .42); return K.merge(o) };
+  if (CY.VLEN) Object.assign(CY.VLEN, { bus: 12, jeep: 4.4 });
 }
 })(window.AV);

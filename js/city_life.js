@@ -180,6 +180,7 @@ CY.vehMat = function (ctx) {
 };
 const _c = new THREE.Color(), pick = a => a[Math.random() * a.length | 0];
 const TWO = { scooter: 1, bicycle: 1 }, VLEN = { tuktuk: 3, scooter: 1.9, bicycle: 1.8, songthaew: 6.1, car: 4.5, pickup: 5.4, tram: 15 };
+CY.VLEN = VLEN;   /* regional vehicles (chars_regional.js) register their lengths here */
 /* parked vehicles (static): list [{type, x, z, yaw, col, chunk?}] -> one instanced draw call per type and chunk (e.g. per street).
    Each chunk's geometry gets a bounding sphere around all of its instances, so whole streets are frustum-culled. Lights are off. */
 CY.parked = function (ctx, list) {

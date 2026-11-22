@@ -21,8 +21,8 @@ function setBubble(n, text) { const m = n.bub.material; if (m.map) m.map.dispose
 NP.spawn = function (ctx, id, o) {
   const N = AV.NPCS[id]; o = o || {}; const L = Object.assign({}, N.look, o.look || {}), H = o.H || (() => 0);
   const g = o.body || NP.softBody(id, L); g.position.set(o.x, o.y != null ? o.y : H(o.x, o.z), o.z); g.rotation.y = o.yaw || 0; if (o.scale) g.scale.setScalar(o.scale); ctx.group.add(g);
-  const sc = o.scale || 1, tag = K.tag(N.name, AV.ui === 'es' ? N.title[1] : N.title[0], N.col); tag.position.set(0, 2.95, 0); tag.scale.multiplyScalar(1 / sc); g.add(tag);
-  const bub = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, fog: false })); bub.scale.set(3.0 / sc, 1.12 / sc, 1); bub.position.set(0, 3.75, 0); bub.visible = false; bub.material.userData.lin = 1; g.add(bub);
+  const sc = o.scale || 1, human = !o.body && !!L.human, tag = K.tag(N.name, AV.ui === 'es' ? N.title[1] : N.title[0], N.col); tag.position.set(0, human ? 2.32 : 2.95, 0); tag.scale.multiplyScalar(1 / sc); g.add(tag);
+  const bub = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, fog: false })); bub.scale.set(3.0 / sc, 1.12 / sc, 1); bub.position.set(0, human ? 3.05 : 3.75, 0); bub.visible = false; bub.material.userData.lin = 1; g.add(bub);
   const n = { id, g, yaw: o.yaw || 0, tag, bub, path: o.path || null, pi: 0, walk: 0, pause: 0, barkT: 3 + Math.random() * 6, bubT: 0, near: false, H, arms: o.arms !== false, wantYaw: o.yaw || 0,
     speed: o.speed || 1.15, loop: o.loop !== false, lead: !!o.lead, anim: o.anim || null, onArrive: null, sitY: 0 };
   /* V0.9.4: walk a new route (loop or one-way, optional leading = waits for the player), callback on arrival */
@@ -40,7 +40,8 @@ NP.bark = function (n, text) { setBubble(n, text); n.bubT = AV.now() + 4.5 };
    Falls back to the classic C.npc() ape only if the realistic pipeline is not loaded at all. */
 NP.softBody = function (id, L) {
   const C = AV.chars || {}, soft = C.softHuman && C.softLook;
-  if (!soft) return C.npc(L.fur, L.shirt, L.hat);                       // realistic pipeline missing: classic build
+  if (!soft) return C.npc(L.fur || 0x8a6a4a, L.shirt, L.hat);           // realistic pipeline missing: classic build
+  if (L.human) { const g = C.softHuman(L.human); g.userData.npcLook = L; g.userData.human = true; return g }   // data-defined human look (data/npcs_worlds.js)
   let seed = 0; for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
   const pick = a => a[(seed = (seed * 2654435761 + 1013904223) >>> 0) % a.length];
   const isApe = !!L.fur;                                                // ape NPCs carry a fur colour, humans/apes from npcs_cm don't
@@ -136,7 +137,18 @@ const QD = {
   one_drop: { giver: 'bongo', turnIn: 'bongo', title: ['Feel the one-drop', 'Siente el one-drop'], hint: ['Feel the one-drop at the sound system 3 times, then talk to Bongo.', 'Siente el one-drop en el sistema de sonido 3 veces y habla con Bongo.'],
     ready: () => AV.dlg.did('one_drop') >= 3, reward() { AV.txn(10, 'Quest: one-drop'); return tr('Bongo laughs: “Now yuh have it.” +10 credits.', 'Bongo ríe: “Ahora sí lo tienes.” +10 créditos.') } },
   orbit_hop: { giver: 'nix', turnIn: 'nix', title: ['Orbit hop', 'Salto orbital'], hint: ['Jump at least 2.5 m high on the low-gravity dance floor, then talk to Nix.', 'Salta al menos 2,5 m en la pista de poca gravedad y habla con Nix.'],
-    ready: () => AV.dlg.did('big_jump') >= 1, reward(S) { S.gp = (S.gp == null ? 100 : S.gp) + 30; return tr('Nix gives you 30 Gravity Points (fictional casino points).', 'Nix te da 30 Puntos de Gravedad (puntos ficticios del casino).') } }
+    ready: () => AV.dlg.did('big_jump') >= 1, reward(S) { S.gp = (S.gp == null ? 100 : S.gp) + 30; return tr('Nix gives you 30 Gravity Points (fictional casino points).', 'Nix te da 30 Puntos de Gravedad (puntos ficticios del casino).') } },
+  /* worlds beyond Ape Town (data/npcs_worlds.js). Progress is recorded with Q.mark(id, key) by the worlds, so it survives reloads. */
+  glow_listen: { giver: 'vela', turnIn: 'vela', need: 3, prog: ['Glow-trees', 'Árboles luminosos'], title: ['Listen to the glow-trees', 'Escucha a los árboles luminosos'], hint: ['Press E under 3 different glow-trees on Verdalux, then talk to Vela.', 'Pulsa E bajo 3 árboles luminosos distintos de Verdalux y habla con Vela.'],
+    ready: () => Q.progress('glow_listen') >= 3, reward() { AV.txn(10, 'Quest: glow-trees'); return tr('Vela beams: “They said you listen well.” +10 credits.', 'Vela sonríe: “Dicen que escuchas bien.” +10 créditos.') } },
+  traveller_log: { giver: 'tuk', turnIn: 'tuk', need: 2, prog: ['Worlds logged', 'Mundos registrados'], title: ['The traveller’s logbook', 'El cuaderno del viajero'], hint: ['Visit 2 other worlds, then come back to Verdalux and talk to Old Tuk.', 'Visita otros 2 mundos y vuelve a Verdalux para hablar con el viejo Tuk.'],
+    ready: () => Q.progress('traveller_log') >= 2, reward() { AV.txn(15, 'Quest: traveller’s logbook'); return tr('Old Tuk writes you into the logbook in ink. +15 credits.', 'El viejo Tuk te apunta en el cuaderno con tinta. +15 créditos.') } },
+  station_tour: { giver: 'rook', turnIn: 'rook', need: 3, prog: ['Districts logged', 'Distritos registrados'], title: ['Station tour', 'Visita a la estación'], hint: ['Walk out to 3 of the 4 Astro-9 districts, then report to Captain Rook.', 'Camina hasta 3 de los 4 distritos de Astro-9 e informa a la capitana Rook.'],
+    ready: () => Q.progress('station_tour') >= 3, reward() { AV.txn(15, 'Quest: station tour'); return tr('Captain Rook signs your clipboard. +15 credits.', 'La capitana Rook firma tu hoja. +15 créditos.') } },
+  coconut_pearl: { giver: 'pearl', turnIn: 'pearl', title: ['Coconut for the stew', 'Coco para el guiso'], hint: ['Bring a fresh coconut to Auntie Pearl in Roots Village (the Lotus Lagoon bar sells them).', 'Lleva un coco fresco a la tía Pearl en la Aldea Roots (el bar de la Laguna del Loto los vende).'],
+    ready: S => ((S.items || {}).coconut || 0) > 0, reward(S) { S.items.coconut--; AV.txn(14, 'Quest: coconut for the stew'); return tr('Auntie Pearl cracks the coconut into the pot and hugs you. +14 credits.', 'La tía Pearl echa el coco a la olla y te abraza. +14 créditos.') } },
+  hidden_falls: { giver: 'tosh', turnIn: 'tosh', need: 1, title: ['Hidden Falls', 'La cascada escondida'], hint: ['Find Hidden Falls (south-west, behind the rocks), rest on the cushions, then talk to Riverman Tosh.', 'Encuentra la cascada escondida (al suroeste, tras las rocas), descansa en los cojines y habla con Tosh el barquero.'],
+    ready: () => Q.progress('hidden_falls') >= 1, reward() { AV.txn(12, 'Quest: Hidden Falls'); return tr('Tosh nods slowly: “Still hums, eh?” +12 credits.', 'Tosh asiente despacio: “Sigue zumbando, ¿eh?” +12 créditos.') } }
 };
 Q.defs = QD;
 Q.define = (id, def) => { QD[id] = def };                                       // V0.9.4: worlds add their own tasks (Chiang Mai)
@@ -147,6 +159,16 @@ Q.check = function () { const S = st(); for (const id in S.quests) { if (S.quest
 Q.onTalk = function (who) { const S = st(); for (const id in S.quests) { const d = QD[id]; if (S.quests[id] === 'active' && d.turnIn === who && d.ready(S)) { S.quests[id] = 'done'; const msg = d.reward(S); AV.toast(tr('Task complete: ', 'Tarea completada: ') + tr(d.title[0], d.title[1]) + '. ' + msg); AV.audio && AV.audio.blip(988, .3, 'triangle', .2); AV.save(); AV.hud() } } };
 Q.notePainting = function (file) { const S = st(); if (S.quests.gallery_walk !== 'active') return; const s = S.qd.gallery_walk.seen; if (s.indexOf(file) < 0) { s.push(file); if (s.length <= 3) AV.toast(tr('Gallery walk: ', 'Paseo por la galería: ') + Math.min(3, s.length) + ' / 3'); Q.check() } };
 Q.seenCount = () => { const S = st(); return (S.qd.gallery_walk && S.qd.gallery_walk.seen.length) || 0 };
+/* generic progress for an active task: record a distinct key (a tree, a world, a district...) once */
+Q.progress = id => { const d = st().qd[id]; return (d && d.seen && d.seen.length) || 0 };
+Q.mark = function (id, key, lead) {             // lead = the world's own flavour text, shown in the same toast
+  const S = st(), def = QD[id], on = def && S.quests[id] === 'active', d = on ? S.qd[id] || (S.qd[id] = { seen: [], told: 0 }) : null; if (d) d.seen = d.seen || [];
+  if (!on || d.seen.indexOf(key) >= 0) { if (lead) AV.toast(lead); return }
+  d.seen.push(key); const msg = lead ? [lead] : [];
+  if (def.prog && def.need > 1 && d.seen.length <= def.need) msg.push(tr(def.prog[0], def.prog[1]) + ': ' + d.seen.length + ' / ' + def.need + '.');
+  if (def.ready(S) && !d.told) { d.told = 1; msg.push(tr('Task ready: talk to ', 'Tarea lista: habla con ') + AV.NPCS[def.turnIn].name + '.') }
+  if (msg.length) AV.toast(msg.join(' ')); AV.save(); Q.check();
+};
 Q.listHtml = function () {
   const S = st(), rows = Object.keys(S.quests).map(id => '<div>' + (S.quests[id] === 'done' ? '✔ ' : '◆ ') + tr(QD[id].title[0], QD[id].title[1]) + (S.quests[id] === 'done' ? '' : '<br><small style="opacity:.8">' + tr(QD[id].hint[0], QD[id].hint[1]) + '</small>') + '</div>');
   const items = Object.keys(S.items).filter(k => S.items[k] > 0).map(k => k + ' ×' + S.items[k]);
@@ -158,6 +180,9 @@ const openChat0 = AV.openChat; AV.openChat = function (who) {
   const n = NP.find(who); if (n) { const v = new THREE.Vector3(); AV.focus = () => AV.chat.open && AV.chat.who === who ? NP.face(n, v) : null }
   setTimeout(() => Q.onTalk(who), 600);
 };
+
+/* Old Tuk's logbook: every other world you enter while the task is active */
+const prevEnter = AV.onWorldEnter; AV.onWorldEnter = W => { if (prevEnter) prevEnter(W); if (W && W.id !== 'verdalux') Q.mark('traveller_log', W.id) };
 
 /* high jump detector (orbit hop) */
 let air = false;

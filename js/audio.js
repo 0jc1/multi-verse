@@ -113,6 +113,11 @@ function stepFn(i, t) {
     if (st % 4 === 0) kick(t, dest); if (st % 8 === 4) noise(t, .12, .25, 2000, dest); if (st % 2 === 1) noise(t, .03, .09, 7500, dest);
     if (st % 4 === 2) note(t, mf(root - 12 + sc[deg % sc.length]), spb * 1.7, 'sawtooth', .16, dest, 700);
     note(t, mf(root + 12 + sc[(st + bar) % sc.length]), spb * .9, 'triangle', .07, st % 3 === 0 ? delay : dest);
+  } else if (p.style === 'sky') {    // nimbus sky city: airy lounge, soft thump, warm pads, shimmering arp through the delay
+    if (st === 0 || st === 10) note(t, 55, .28, 'sine', .4, dest, 300); if (st === 4 || st === 12) noise(t, .09, .1, 2800, dest); if (st % 2 === 1) noise(t, .02, .035, 9000, dest);
+    if (st === 0) for (const k of [0, 2, 4]) note(t, mf(root + sc[(deg + k) % sc.length]), spb * 15, 'sine', .055, dest);
+    if (st === 0 || st === 7) note(t, mf(root - 12 + sc[deg % sc.length]), spb * 3, 'sine', .32, dest, 420);
+    if (st % 3 === 0) note(t, mf(root + 12 + sc[(st / 3 + bar * 2) % sc.length]), spb * 2, 'triangle', .04, delay);
   } else if (p.style === 'amb') {    // verdalux: soft pads
     if (st === 0) { for (const k of [0, 2, 4]) note(t, mf(root + sc[(deg + k) % sc.length]), spb * 14, 'sine', .08, dest) } if (st % 8 === 0) note(t, mf(root + 24 + sc[(bar + st / 8) % sc.length]), spb * 4, 'triangle', .05, delay);
   } else {                            // boom-bap + tuba bass + rhodes (Ape Town)

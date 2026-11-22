@@ -47,7 +47,7 @@ C.human = function (o) {
 const redEye = !!o.redEye, eyeK = redEye ? 1.16 : 1;
 const white = redEye ? 0xff3a30 : 0xf6f2ea, iris = redEye ? 0xff0d05 : (o.eye || 0x4a2e18),
   glint = redEye ? 0xffb0a0 : 0xffffff;
-const redMats = redEye ? { w: std(white, .3), i: std(iris, .2), g: std(glint, .2) } : null;
+const eyeM = redEye ? { w: std(white, .3), i: std(iris, .2), g: std(glint, .2) } : { w: std(white, .3), i: std(iris, .35), g: std(glint, .2, 0, 0xffffff, 1) };
 const dark = std(0x16100c, .45), sole = std(0xf0ece4, .7);
   const shirt = o.shirt || std(0x4a8ad8, .85), pants = o.pants || std(0x3a3a52, .9);
   const sleeveM = o.sleeve === 'skin' ? skin : (o.sleeve || shirt), sleeveRole = o.sleeve === 'skin' ? 'skin' : 'shirt';
@@ -62,12 +62,12 @@ const dark = std(0x16100c, .45), sole = std(0xf0ece4, .7);
   part(head, Gx.sph, skin, 0, -.14 * k, .06 * k, .18 * k, .14 * k, .17 * k, 'skin');                       // jaw
   part(head, Gx.sph, skinD, 0, -.03 * k, .255 * k, .04 * k, .065 * k, .055 * k, 'skin');                     // nose
   for (const sx of [-1, 1]) {
-    part(head, Gx.sph, redEye ? redMats.w : white, sx * .085 * k, .04 * k, .205 * k, .04 * k * eyeK, .036 * k * eyeK, .03 * k * eyeK, 'fixed');
-    part(head, Gx.dot, redEye ? redMats.i : iris, sx * .085 * k, .04 * k, .228 * k, .024 * k * eyeK, .024 * k * eyeK, .012 * k * eyeK, 'fixed');
+    part(head, Gx.sph, eyeM.w, sx * .085 * k, .04 * k, .205 * k, .04 * k * eyeK, .036 * k * eyeK, .03 * k * eyeK, 'fixed');
+    part(head, Gx.dot, eyeM.i, sx * .085 * k, .04 * k, .228 * k, .024 * k * eyeK, .024 * k * eyeK, .012 * k * eyeK, 'fixed');
     if (!redEye) part(head, Gx.dot, dark, sx * .085 * k, .04 * k, .236 * k, .013 * k * eyeK, .013 * k * eyeK, .008 * k * eyeK, 'fixed');
-    part(head, Gx.dot, redEye ? redMats.g : glint, sx * .085 * k + .01 * k, .05 * k, .241 * k, .006 * k, .006 * k, .004 * k, 'fixed');
+    part(head, Gx.dot, eyeM.g, sx * .085 * k + .01 * k, .05 * k, .241 * k, .006 * k, .006 * k, .004 * k, 'fixed');
     /* bloodshot streaks: thin red tendrils on the sclera (baked into the merge via colour) */
-    if (redEye) for (let bl = 0; bl < 3; bl++) part(head, Gx.dot, redMats.i, sx * .085 * k + (bl - 1) * .014 * k, (.04 + (bl % 2 ? .012 : -.014)) * k, .208 * k, .007 * k, .02 * k, .006 * k, 'fixed');
+    if (redEye) for (let bl = 0; bl < 3; bl++) part(head, Gx.dot, eyeM.i, sx * .085 * k + (bl - 1) * .014 * k, (.04 + (bl % 2 ? .012 : -.014)) * k, .208 * k, .007 * k, .02 * k, .006 * k, 'fixed');
     part(head, Gx.box, hair, sx * .085 * k, .1 * k, .235 * k, .075 * k, .016 * k, .02 * k, 'hair', [0, 0, -sx * .12]);   // brows
     part(head, Gx.sph, skin, sx * .255 * k, .01 * k, 0, .045 * k, .075 * k, .04 * k, 'skin');                  // ears
   }
@@ -151,11 +151,18 @@ C.stoner = function (seed) {
 
 /* ---------------- instanced pedestrians: baked per-pivot geometry ---------------- */
 const SLOT = { skin: 1, shirt: 2, pants: 3, hair: 4 };
+/* Vietnamese street-vendor props (used through the VAR extra hook) */
+function nonLa(u) { const straw = std(0xe8d8a8, .85); part(u.head, AV.kit.BG.cone, straw, 0, .2 * u.k, 0, .46 * u.k, .26 * u.k, .46 * u.k, 'fixed'); part(u.head, GU.cyl, straw, 0, .07 * u.k, 0, .46 * u.k, .012 * u.k, .46 * u.k, 'fixed') }
+function shoulderPole(g, u) { const s = u.s, bam = std(0xb89a5a, .8), bsk = std(0x8a6a3a, .9); part(g, GU.cyl, bam, .2 * s, 1.86 * s, 0, .02 * s, 1.9 * s, .02 * s, 'fixed', [Math.PI / 2, 0, 0]);
+  for (const sz of [-1, 1]) { part(g, GU.cyl, bsk, .2 * s, .95 * s, sz * .86 * s, .24 * s, .26 * s, .24 * s, 'fixed'); part(g, GU.cyl, std(sz > 0 ? 0xe8b830 : 0x3a8a3a, .7), .2 * s, 1.1 * s, sz * .86 * s, .2 * s, .06 * s, .2 * s, 'fixed'); part(g, GU.cyl, bam, .2 * s, 1.45 * s, sz * .86 * s, .008 * s, .8 * s, .008 * s, 'fixed') } }
 const VAR = {
   man: { style: 'short', shorts: false }, woman: { style: 'long', slim: true, shorts: true, foot: 'flip' }, tourist: { style: 'cap', shorts: true, foot: 'flip' },
   monk: { style: 'bald', shorts: false, foot: 'flip' }, dancer: { style: 'bun', slim: true, shorts: false, crown: true }, drummer: { style: 'short', drum: true },
-  splasher: { style: 'messy', shorts: true, foot: 'flip', gun: true }
+  splasher: { style: 'messy', shorts: true, foot: 'flip', gun: true },
+  /* Da Nang: street vendor (nón lá conical hat + đòn gánh shoulder pole with two baskets), beachgoer in shorts */
+  vendor: { style: 'long', slim: true, shorts: false, foot: 'flip', extra: (g, u) => { nonLa(u); shoulderPole(g, u) } }, beach: { style: 'short', shorts: true, foot: 'flip' }, nonla: { style: 'long', slim: true, shorts: false, foot: 'flip', extra: (g, u) => nonLa(u) }
 };
+C.walkerVar = VAR;
 const walkCache = {};
 C.walkerKit = function (v, lo) {
   /* V0.9.8: tried the medium-detail body for the street crowd: 2–3× the triangles (Chiang Mai 0.7M → 1.4–2.1M) for little visible gain, so the
@@ -166,6 +173,7 @@ C.walkerKit = function (v, lo) {
   if (o.crown) part(u.head, u.Gx.cyl, std(0xe8b830, .3, .7), 0, .28 * u.k, 0, .09 * u.k, .3 * u.k, .09 * u.k, 'fixed');
   if (o.drum) { part(g, u.Gx.cyl, std(0xc83a2a, .6), 0, 1.2 * s, .3 * s, .2 * s, .28 * s, .2 * s, 'fixed', [Math.PI / 2, 0, 0]); part(g, u.Gx.cyl, std(0xf0e8d0, .6), 0, 1.2 * s, .45 * s, .19 * s, .02 * s, .19 * s, 'fixed', [Math.PI / 2, 0, 0]) }
   if (o.gun) C.props.gun(u, 0x2ab8e8);
+  if (o.extra) o.extra(g, u, KK);   /* regional outfits (js/chars_regional.js): hats, robes, briefcases... */
   g.updateMatrixWorld(true);
   const pivots = { root: g, head: u.head, aL: u.aL, aR: u.aR, lL: u.lL, lR: u.lR }, out = {};
   const hexOf = m => { const c = m.color.clone(); if (m.userData.lin) c.convertLinearToSRGB(); return c.getHex() };

@@ -36,7 +36,7 @@ function begin(S) {
   $('start').style.display = 'none'; AV.running = true; AV.applyQuality(); AV.resize();
   if (AV.audio) AV.audio.init(AV.musicOn);
   /* start downloading CC0 models (http only); on Low graphics skip the heaviest ones (procedural stand-ins are used instead) */
-  if (AV.assets) AV.assets.preload(k => S.set.gq !== 'Low' || !/twisted_tree|fern|flower_group|mushroom_b/.test(k));
+  if (AV.assets) AV.assets.preload(k => (S.set.gq !== 'Low' || !/twisted_tree|fern|flower_group|mushroom_b/.test(k)) && !(AV.kit.real && AV.kit.real.prefersProcedural(k)));
   AV.startLoop();
   AV.enterWorld(AV.worldDefs[S.world] ? S.world : 'ape_town', 'default', { instant: true });
   AV.lock();

@@ -2,7 +2,10 @@
    Loaded AFTER chars.js / chars_human.js. It keeps the classic builders in C.classic (humans, crowds, statues and the
    city-life animals still use them) and swaps in high-poly, skinned, PBR characters for:
      C.gorilla(), C.ztone(), C.orangutan()  - the band (C.animate drives them with IK on the instruments)
-     C.npc(fur, shirt, hat)                 - every ape villager (Zil, Sol, Kiko, Pip, Luma, Nix, Bongo, Grakk, aliens)
+     C.npc(fur, shirt, hat)                 - every ape villager (Zil, Sol, Kiko, Pip, Luma, Nix, Bongo, Grakk)
+     C.alien(o) / C.alienActor(o)           - soft-body aliens (Zib + Orbo builds): wobbling belly and cranium, springy antennae,
+                                              glowing suit trims. alienActor speaks the forge-alien clip API (Idle/Walk/Dance/Wave)
+                                              so beings.js crowds and the Astro-9 plaza drive it unchanged.
    Compatibility: villagers expose the classic pivots userData.head / aL / aR / lL / lR / torso as invisible proxies.
    Whatever npc.js, the worlds or quest code write into them (arm swings, talking gestures, head nods) becomes IK
    targets; when npc.js walks a body along its path, procedural stepping plants the feet. Meshes are sculpted in Web
@@ -109,6 +112,13 @@ function skinMat(L) { return PBR.charMat({ cols: [L.skin, L.skin, L.dark, L.nail
 function hairMat(H) { return PBR.charMat({ skinning: false, cols: [H.cols[0], H.cols[1], H.cols[0], H.cols[0]], rough: [.5, .8, .5, .5], alb: PBR.tex('furH'), albS: 9, albMask: [.6, .2, .6, .6], h: PBR.tex('furH'), hS: 14, hMask: [1, .2, 1, 1], h2: PBR.tex('twill'), h2S: 20, h2Mask: [0, 1, 0, 0], bump: .0009, sheen: new THREE.Color(H.cols[0]).multiplyScalar(.8).getHex(), envI: .5 }) }
 function hatMat(H) { return PBR.charMat({ skinning: false, cols: [H.cols[0], H.cols[1], H.cols[0], H.cols[0]], rough: [.92, .92, .92, .92], alb: PBR.tex('furVar'), albS: 5, albMask: [.4, .4, .4, .4], h: PBR.tex(H.style === 'beanie' ? 'rib' : 'twill'), hS: H.style === 'beanie' ? 7 : 12, hMask: [1, 1, 1, 1], h2: PBR.tex('furVar'), h2S: 4, h2Mask: [.3, .3, .3, .3], bump: .0012, sheen: 0x404040, envI: .3 }) }
 
+/* alien: one body sculpt, channels = 0 slick suit, 1 mottled skin, 2 dark (lips, soles, eye rim), 3 glowing trim + antenna bulbs */
+function alienMat(L) {
+  return PBR.charMat({ cols: [L.suit, L.skin, L.dark, L.glow], rough: [.3, .4, .45, .3], metal: [.35, 0, 0, 0], emit: [0, 0, 0, L.glowK || 2.2],
+    alb: PBR.tex('spots'), albS: 3.5, albMask: [.1, .55, .3, 0], h: PBR.tex('rib'), hS: 10, hMask: [.3, 0, 0, 0], h2: PBR.tex('skinH'), h2S: 13, h2Mask: [0, .5, .4, 0], bump: .00035,
+    clearcoat: .45, clearcoatRoughness: .3, envI: .8 });   // no sheen: that velvet term reads as fur
+}
+
 /* ======================= character assembly ======================= */
 function build(L) {
   const g = new THREE.Group(), K = AN.skeleton(Object.assign({}, AN.SPECIES[L.sp], L.ov || {})), R = new RG.Rig(K).mount(g), I = K.idx, s = K.s;
@@ -123,22 +133,30 @@ function build(L) {
     st['hand' + k] = { along: new V(...H.along), inward: new V(...H.inward), fwd: new V(...H.fwd) } }
   /* soft-body springs */
   const big = L.sp === 'orangutan' ? 1.4 : L.sp === 'gorilla' ? 1.15 : 1;
-  st.springs.push(new RG.Spring(R, 'belly', { k: 110, c: 7, max: .05 * s * big, gain: 1 }), new RG.Spring(R, 'chestJ', { k: 190, c: 11, max: .03 * s }),
+  if (L.alien) {   /* aliens: a heavy wobbling belly (Orbo) / lean one (Zib), soft cranium, antennae that whip with every move */
+    const orbo = L.type === 'orbo', sp = st.sp = {
+      belly: new RG.Spring(R, 'belly', { k: orbo ? 75 : 140, c: orbo ? 4 : 8, max: (orbo ? .07 : .035) * s }), chest: new RG.Spring(R, 'chestJ', { k: 170, c: 10, max: .025 * s }),
+      throat: new RG.Spring(R, 'throat', { k: 160, c: 9, max: .02 * s }), crown: new RG.Spring(R, 'crown', { k: 110, c: 5, max: .024 * s }),
+      antL: new RG.Spring(R, 'antTL', { k: 65, c: 3.2, max: .08 * s, lift: 1.1 }), antR: new RG.Spring(R, 'antTR', { k: 65, c: 3.2, max: .08 * s, lift: 1.1 }) };
+    for (const k in sp) st.springs.push(sp[k]);
+  } else st.springs.push(new RG.Spring(R, 'belly', { k: 110, c: 7, max: .05 * s * big, gain: 1 }), new RG.Spring(R, 'chestJ', { k: 190, c: 11, max: .03 * s }),
     new RG.Spring(R, 'cheekL', { k: 240, c: 9, max: .018 * s * big }), new RG.Spring(R, 'cheekR', { k: 240, c: 9, max: .018 * s * big }),
     new RG.Spring(R, 'throat', { k: L.sp === 'orangutan' ? 70 : 150, c: L.sp === 'orangutan' ? 5 : 9, max: .04 * s * big }),
     new RG.Spring(R, 'hemF', { k: 130, c: 6, max: .045 * s }), new RG.Spring(R, 'hemB', { k: 130, c: 6, max: .045 * s }));
   /* meshes (async) */
-  const mats = st.mats = { body: L.human ? skinMat(L) : bodyMat(L, false), fur: L.shells ? bodyMat(L, true) : null, shirt: shirtMat(L, K), pants: pantsMat(L), shoes: shoeMat(L) };
+  const mats = st.mats = L.alien ? { body: alienMat(L) } : { body: L.human ? skinMat(L) : bodyMat(L, false), fur: L.shells ? bodyMat(L, true) : null, shirt: shirtMat(L, K), pants: pantsMat(L), shoes: shoeMat(L) };
   const D = p => Object.assign({ sp: L.sp }, L.ov ? { ov: L.ov } : {}, p);
-  const parts = [D({ part: 'shirt', o: L.shirt.o }), D({ part: 'pants', o: L.pants.o }), D({ part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D({ part: 'hat', style: L.hat.style })] : []);
+  const parts = L.alien ? [] : [D({ part: 'shirt', o: L.shirt.o }), D({ part: 'pants', o: L.pants.o }), D({ part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D({ part: 'hat', style: L.hat.style })] : []);
   const skinned = (desc, mat, shellMat, shells) => GEN.geo(desc, shells).then(G => {
-    const m = new THREE.SkinnedMesh(G.main, mat); m.bind(R.skeleton, IDM); m.castShadow = true; m.receiveShadow = true; g.add(m); C.stats.tris += G.tris;
+    const m = new THREE.SkinnedMesh(G.main, mat); m.bind(R.skeleton, IDM); m.castShadow = L.shadow !== false; m.receiveShadow = true; g.add(m); C.stats.tris += G.tris;
     if (G.shell && shellMat) { const f = new THREE.SkinnedMesh(G.shell, shellMat); f.bind(R.skeleton, IDM); f.castShadow = false; f.receiveShadow = true; f.renderOrder = 1; g.add(f); C.stats.tris += G.shellTris; st.furMesh = f }
-    st.loaded = (st.loaded || 0) + 1;
+    st.loaded = (st.loaded || 0) + 1; if (L.alien) st.eyes.forEach(e => e.visible = true);   // no floating eyeballs while the body sculpts
   });
-  skinned(D({ part: 'body', cover: L.human ? parts.slice(0, 3) : parts }), mats.body, mats.fur, L.shells || 0);
-  skinned(parts[0], mats.shirt); skinned(parts[1], mats.pants); skinned(parts[2], mats.shoes);
+  if (L.alien) st.ready = skinned(D({ part: 'body' }), mats.body);
+  else { skinned(D({ part: 'body', cover: L.human ? parts.slice(0, 3) : parts }), mats.body, mats.fur, L.shells || 0);
+    skinned(parts[0], mats.shirt); skinned(parts[1], mats.pants); skinned(parts[2], mats.shoes) }
   if (L.hat) GEN.geo(parts[3]).then(G => { const m = new THREE.Mesh(G.main, L.human ? hairMat(L.hat) : hatMat(L.hat)); m.castShadow = true; m.receiveShadow = true; R.attach('head', m); C.stats.tris += G.tris; st.loaded = (st.loaded || 0) + 1 });
+  if (L.alien) { alienEyes(st); return st }
   /* eyes + blinking lids */
   const E3 = AN.eyes(K), eyeG = eyeGeo(L.human ? 1.12 : .62), lidG = new THREE.SphereGeometry(1, 20, 10, 0, TAU, 0, Math.PI * .55), eyeM = PBR.propMat({ color: L.eye, map: PBR.tex('iris'), roughness: .06, clearcoat: 1, clearcoatRoughness: .03, envI: L.human ? .8 : 1.3 }), lidM = PBR.propMat({ color: L.skin, roughness: .6, envI: .3 });
   const hp = R.rest[I.head];
@@ -147,6 +165,16 @@ function build(L) {
     const lid = new THREE.Mesh(lidG, lidM); lid.scale.setScalar(E3[2] * 1.12); lid.position.set(hp.x + ep[0], hp.y + ep[1], hp.z + ep[2]); R.attach('head', lid); lid.rotation.x = -.6; st.lids.push(lid);
   }
   return st;
+}
+/* alien eyes: big glossy almond (Zib) or one cyclops eye (Orbo) seated in the sculpted sockets; they blink by squashing */
+function alienEyes(st) {
+  const L = st.L, E3 = AN.eyes(st.K), hp = st.R.rest[st.I.head], sh = E3.shape, r = E3[2];
+  const m = PBR.propMat({ color: L.eye, map: PBR.tex('alienIris'), emissive: L.eye, emissiveMap: PBR.tex('alienIris'), emissiveIntensity: .35, roughness: .04, clearcoat: 1, clearcoatRoughness: .02, envI: 1.5 });
+  st.alienEyes = true;
+  for (const ep of E3.n === 1 ? [[0, E3[0][1], E3[0][2]]] : [E3[0], E3[1]]) {
+    const sd = Math.sign(ep[0]), e = new THREE.Mesh(eyeGeo(.5), m); e.scale.set(r * sh[0], r * sh[1], r * sh[2]); e.userData.sy = e.scale.y;
+    e.position.set(hp.x + ep[0], hp.y + ep[1], hp.z + ep[2] - r * .1); e.rotation.set(0, sd * .3, sd * E3.tilt); e.visible = false; st.R.attach('head', e); st.eyes.push(e);
+  }
 }
 /* eyeball: sphere with a planar-projected iris on the +z pole */
 const EYEG = {};
@@ -344,6 +372,41 @@ C.realHuman = function (seed) {
   const st = build(L); st.npc = true; st.human = true; st.g.userData.kind = undefined; st.g.scale.setScalar(.94 + r() * .12); return st.g;
 };
 
+/* ======================= soft-body aliens ======================= */
+/* o: { type: 'zib' | 'orbo', skin, suit, glow, eye (any THREE colour: hex number or '#rrggbb'), shadow, glowK }. Default colours
+   are the forge aliens' (gfx_forge.js F.ALIENS) so Zib and Orbo keep their identity. */
+const ALIEN = { zib: { skin: '#86d0b4', suit: '#262a4a', glow: '#7ff0ff', eye: '#3ad8ff' }, orbo: { skin: '#b07aff', suit: '#ff6ad5', glow: '#ffd84a', eye: '#ff4ad2' } };
+const hex = c => new THREE.Color(c).getHex();
+function alienLook(o) {
+  o = o || {}; const type = o.type === 'orbo' ? 'orbo' : 'zib', D = ALIEN[type], skin = hex(o.skin || D.skin);
+  return { kind: 'alien', alien: true, type, sp: 'alien_' + type, skin, suit: hex(o.suit || D.suit), glow: hex(o.glow || D.glow), eye: hex(o.eye || o.glow || D.eye),
+    dark: new THREE.Color(skin).multiplyScalar(.28).getHex(), glowK: o.glowK, shadow: o.shadow, shells: 0 };
+}
+const defBeat = () => { const A = AV.audio; return A && A.on && A.beat && (A.ok || (A.track && A.track.active)) ? A.beat : AV.now() * 2.07 };
+function alienBody(o) { const st = build(alienLook(o)); st.npc = true; st.alien = true; st.g.userData.kind = undefined; st.g.userData.alien = st.L.type; return st }
+/* puppet alien for code written against the classic pivots (userData.head / aL / aR / lL / lR / torso), like the villagers.
+   o.gesture ('dance' | 'drum' | 'dj') + o.beat add a beat-synced overlay. */
+C.alien = function (o) {
+  o = o || {}; const st = alienBody(o); addProxies(st);
+  const ctrl = C.brain(st.g, { external: true, gesture: o.gesture, beat: o.beat || defBeat }); ctrl.wait = 0; PUPPETS.add(ctrl); return st.g;
+};
+/* actor alien: the same clip API as the forge aliens + an AnimationMixer, so crowd / plaza code can drive it unchanged:
+   play('Idle' | 'Walk' | 'Dance' | 'Wave', fade), cur, acts[name] (timeScale / time / getEffectiveWeight / getClip are accepted and ignored:
+   walking is planted procedural stepping from the body's real motion, dancing follows the music beat), update(dt).
+   Move and turn root (its position is in its parent's space, keep the parent at the world origin). air = true: zero-g float. */
+C.alienActor = function (o) {
+  o = o || {}; const st = alienBody(o), g = st.g, ctrl = C.brain(g, { external: true, beat: o.beat || defBeat });
+  const clip = d => ({ timeScale: 1, time: 0, getEffectiveWeight: () => 1, getClip: () => ({ duration: d }), reset() { return this }, play() { return this }, stop() { return this } });
+  const A = { root: g, st, ctrl, cur: null, acts: { Idle: clip(3), Walk: clip(1), Dance: clip(4 * 60 / 124), Wave: clip(2) }, faceY: AN.eyes(st.K)[0][1] + .01 * st.s };
+  A.play = n => { if (A.cur === n || !A.acts[n]) return; A.cur = n; ctrl.mode = n === 'Dance' ? 'dance' : n === 'Wave' ? 'wave' : null };
+  A.talk = (sec, lock) => { ctrl.talkUntil = AV.now() + (sec == null ? 2.5 : sec); if (lock != null) g.userData.chatting = !!lock };
+  Object.defineProperty(A, 'air', { get: () => !!ctrl.air, set: v => { ctrl.air = !!v } });
+  A.update = dt => { if (dt > 0) ctrl.update(dt, AV.now()) };
+  A.mixer = { update: A.update, stopAllAction() { }, uncacheRoot() { } }; A.ready = st.ready;
+  return A;
+};
+C.alienLooks = ALIEN;
+
 /* ======================= pose solver ======================= */
 function newPose() { return { hip: new V(), hipR: [0, 0, 0], spine: [0, 0, 0], chest: [0, 0, 0], neck: [0, 0, 0], head: [0, 0, 0], clavL: [0, 0, 0], clavR: [0, 0, 0], feet: { L: { p: new V(), q: new Q() }, R: { p: new V(), q: new Q() } }, hands: { L: null, R: null }, curl: { L: [.25, .3, .35, .4, .2], R: [.25, .3, .35, .4, .2] }, look: null, jaw: 0 } }
 const eul = (q, a) => q.setFromEuler(_e.set(a[0], a[1], a[2]));
@@ -376,9 +439,10 @@ function solve(st, P, dt) {
   for (const sp of st.springs) sp.update(dt);
   R.apply();
   /* eyes follow the look target (clamped), lids blink */
-  if (P.look) { const hq = _q.copy(R.Q[I.head]).conjugate(), hp = R.rest[I.head]; for (const e of st.eyes) { _v.copy(e.position).add(hp).sub(R.rest[I.head]).applyQuaternion(R.Q[I.head]).add(R.P[I.head]); _v.subVectors(P.look, _v).applyQuaternion(hq).normalize(); if (_v.z < .55) _v.lerp(ZV, .6).normalize(); e.quaternion.setFromUnitVectors(ZV, _v) } }
+  if (P.look && !st.alienEyes) { const hq = _q.copy(R.Q[I.head]).conjugate(), hp = R.rest[I.head]; for (const e of st.eyes) { _v.copy(e.position).add(hp).sub(R.rest[I.head]).applyQuaternion(R.Q[I.head]).add(R.P[I.head]); _v.subVectors(P.look, _v).applyQuaternion(hq).normalize(); if (_v.z < .55) _v.lerp(ZV, .6).normalize(); e.quaternion.setFromUnitVectors(ZV, _v) } }
   st.blinkT -= dt; if (st.blinkT < 0) { st.blink = .14; st.blinkT = 2 + Math.random() * 4.5 } st.blink = Math.max(0, st.blink - dt); const bl = st.blink > 0 ? Math.sin(st.blink / .14 * Math.PI) : 0;
   for (const l of st.lids) l.rotation.x = -.62 + bl * 1.75 + st.lp * .3;
+  if (st.alienEyes) for (const e of st.eyes) e.scale.y = e.userData.sy * (1 - bl * .88);
   /* ropes + beads */
   for (const r of st.ropes) r.update(dt, st.g);
   for (const b of st.beads) b.rope.sample(b.m.position, b.f);
@@ -485,23 +549,26 @@ C.brain = function (g, o) {
     } return null;
   }
   function initFeet() {
-    g.updateMatrixWorld(); B.feet = {};
-    for (const k of ['L', 'R']) { const rest = st.R.rest[st.I['foot' + k]], f = B.feet[k] = { rest: rest.clone(), w: new V(), from: new V(), to: new V(), t: 1, yaw: g.rotation.y, yawFrom: g.rotation.y }; st.R.toWorld(f.w, rest) }
+    g.updateMatrixWorld(); B.feet = {}; B.prev.copy(o.external ? g.getWorldPosition(_w) : g.position);
+    for (const k of ['L', 'R']) { const rest = st.R.rest[st.I['foot' + k]], f = B.feet[k] = { rest: rest.clone(), w: new V(), from: new V(), to: new V(), t: 1, yaw: B.yaw, yawFrom: B.yaw }; st.R.toWorld(f.w, rest) }
   }
   function ideal(out, f, lead) { out.copy(f.rest).applyMatrix4(g.matrixWorld).addScaledVector(B.vel, lead); out.y = ground(out.x, out.z) + f.rest.y * g.scale.y; return out }
   const ctrl = {
     st, B,
     update(dt, t) {
       dt = Math.min(dt, .05); B.t += dt; const red = AV.S && AV.S.set && AV.S.set.reduce ? .5 : 1;
-      if (!B.feet) initFeet();
-      const pp = AV.P, dx = pp ? pp.x - g.position.x : 99, dz = pp ? pp.z - g.position.z : 99, pd = Math.hypot(dx, dz);
+      /* external bodies may sit inside a moved holder group (beings.js, the Astro-9 plaza): sense in world space */
+      const gp = o.external ? g.getWorldPosition(B.gp || (B.gp = new V())) : g.position; if (o.external) { const e = g.matrixWorld.elements; B.yaw = Math.atan2(e[8], e[10]) }
+      const air = !!ctrl.air, gest = ctrl.mode || o.gesture;   // air: floating in zero g (feet dangle); mode: set by an actor's play()
+      if (air) B.feet = null; else if (!B.feet) initFeet();
+      const pp = AV.P, dx = pp ? pp.x - gp.x : 99, dz = pp ? pp.z - gp.z : 99, pd = Math.hypot(dx, dz);
       /* external puppets are told by npc.js which one is in the chat (userData.chatting); only that one talks and locks its gaze on you */
       const chatting = o.external ? !!g.userData.chatting : !!(AV.chat && AV.chat.open && o.id && AV.chat.who === o.id);
-      const talking = o.external ? chatting && AV.now() < ((AV.chat && AV.chat.speakUntil) || 0) : chatting, attend = talking || chatting || (!o.ambient && pd < 4.2);
+      const talking = AV.now() < (ctrl.talkUntil || 0) || (o.external ? chatting && AV.now() < ((AV.chat && AV.chat.speakUntil) || 0) : chatting), attend = talking || chatting || (!o.ambient && pd < 4.2);
       st.lookK = chatting ? 10 : 3.2;
       if (o.external) {   /* puppet: npc.js / the world moves and turns the body; we only animate it */
-        B.yaw = g.rotation.y; B.state = 'idle'; const y = g.position.y; B.gy = B.gy == null ? y : (y < B.gy ? y : B.gy + Math.min(y - B.gy, .6 * dt));
-        const W = AV.W, sf = W && W.surface ? W.surface(g.position.x, g.position.z) : null; B.gOff = sf == null ? null : B.gy - sf;
+        B.state = 'idle'; const y = gp.y; B.gy = B.gy == null ? y : (y < B.gy ? y : B.gy + Math.min(y - B.gy, .6 * dt));
+        const W = AV.W, sf = W && W.surface ? W.surface(gp.x, gp.z) : null; B.gOff = sf == null ? null : B.gy - sf;
       } else {
       /* ---- decide ---- */
       let want = B.yaw0, spd = 0;
@@ -519,38 +586,47 @@ C.brain = function (g, o) {
       B.speed = damp(B.speed, spd, 5, dt); g.position.x += Math.sin(B.yaw) * B.speed * dt; g.position.z += Math.cos(B.yaw) * B.speed * dt;
       g.position.y = ground(g.position.x, g.position.z);
       }
-      if (B.prev.distanceTo(g.position) > 2) { B.prev.copy(g.position); initFeet() }                       // teleported / just placed
-      B.vel.subVectors(g.position, B.prev).multiplyScalar(1 / Math.max(dt, 1e-3)); B.vel.y = 0; B.prev.copy(g.position);
+      if (B.prev.distanceTo(gp) > 2) { B.prev.copy(gp); if (!air) initFeet() }                       // teleported / just placed
+      B.vel.subVectors(gp, B.prev).multiplyScalar(1 / Math.max(dt, 1e-3)); B.vel.y = 0; B.prev.copy(gp);
       if (o.interact && tOff) { o.interact.x = g.position.x + tOff.x; o.interact.z = g.position.z + tOff.z }
       g.updateMatrixWorld();
       /* ---- feet: one foot swings at a time, toward where it should land ---- */
       const F = B.feet, v = B.vel.length(), dur = Math.max(.3, .48 - v * .14), lift = (.07 + .05 * Math.min(1, v)) * s;
+      if (F) {
       for (const k of ['L', 'R']) { const f = F[k]; if (f.t < 1) { ideal(f.to, f, dur * .5); f.t = Math.min(1, f.t + dt / dur); const q = ease(f.t); f.w.lerpVectors(f.from, f.to, q); f.w.y += Math.sin(f.t * Math.PI) * lift; f.yaw = f.yawFrom + Math.atan2(Math.sin(B.yaw - f.yawFrom), Math.cos(B.yaw - f.yawFrom)) * q; if (f.t >= 1) B.steps++ } }
       if (F.L.t >= 1 && F.R.t >= 1) {
         let best = null, be = 0; for (const k of ['L', 'R']) { const f = F[k]; ideal(_v, f, dur * .5); const err = Math.hypot(_v.x - f.w.x, _v.z - f.w.z) + Math.abs(Math.atan2(Math.sin(B.yaw - f.yaw), Math.cos(B.yaw - f.yaw))) * .18 * s; if (err > be) { be = err; best = k } }
         const thr = (v > .05 ? .06 : .1) * s; if (best && be > thr && !(B.last === best && be < thr * 2.5)) { const f = F[best]; f.from.copy(f.w); f.yawFrom = f.yaw; f.t = 0; B.last = best }
       }
+      }
       /* ---- pose ---- */
-      const sw = F.L.t < 1 ? 'L' : F.R.t < 1 ? 'R' : null, swT = sw ? F[sw].t : 0, stance = sw === 'L' ? -1 : sw === 'R' ? 1 : 0;
-      for (const k of ['L', 'R']) { const f = F[k]; st.R.toChar(P.feet[k].p, f.w); const rel = Math.atan2(Math.sin(f.yaw - B.yaw), Math.cos(f.yaw - B.yaw)); let pitch = 0; if (f.t < 1) pitch = f.t < .35 ? .35 * Math.sin(f.t / .35 * Math.PI) : -.25 * Math.sin((f.t - .35) / .65 * Math.PI); P.feet[k].q.setFromEuler(_e.set(pitch, rel, 0)) }
+      const sw = !F ? null : F.L.t < 1 ? 'L' : F.R.t < 1 ? 'R' : null, swT = sw ? F[sw].t : 0, stance = sw === 'L' ? -1 : sw === 'R' ? 1 : 0;
+      if (!F) for (const k of ['L', 'R']) {   /* floating: legs dangle and paddle slowly, toes pointed */
+        const sd = k === 'L' ? 1 : -1, ph = B.t * 2.1 + (k === 'L' ? 0 : 1.7) + B.shift;
+        P.feet[k].p.copy(st.R.rest[st.I['foot' + k]]).add(_u.set(sd * .03 * s, (.1 + Math.sin(ph) * .05) * s, Math.sin(ph) * .08 * s)); P.feet[k].q.setFromEuler(_e.set(.55 + Math.sin(ph) * .2, 0, 0)) }
+      else for (const k of ['L', 'R']) { const f = F[k]; st.R.toChar(P.feet[k].p, f.w); const rel = Math.atan2(Math.sin(f.yaw - B.yaw), Math.cos(f.yaw - B.yaw)); let pitch = 0; if (f.t < 1) pitch = f.t < .35 ? .35 * Math.sin(f.t / .35 * Math.PI) : -.25 * Math.sin((f.t - .35) / .65 * Math.PI); P.feet[k].q.setFromEuler(_e.set(pitch, rel, 0)) }
       const breath = Math.sin(B.t * 1.6 + B.shift), shiftW = Math.sin(B.t * .35 + B.shift) * (B.state === 'walk' ? 0 : 1);
       P.hip.set(stance * .022 * s + shiftW * .025 * s * red, (-.03 - (sw ? -.02 * Math.sin(swT * Math.PI) : .012) - (v > .05 ? .015 : 0)) * s, 0);
       const twist = sw ? (sw === 'L' ? 1 : -1) * Math.sin(swT * Math.PI) * .1 * Math.min(1, v * 1.5) : 0;
       P.hipR = [.02, twist, -stance * .04 - shiftW * .035 * red]; P.spine = [.02 + v * .04, -twist * .6, stance * .02 + shiftW * .02]; P.chest = [breath * .015 + v * .03, -twist * .5, shiftW * .015];
       P.neck = [0, 0, 0]; P.head = [Math.sin(B.t * .7 + B.shift) * .03, Math.sin(B.t * .23 + B.shift) * .15 * (attend ? 0 : 1), 0]; P.clavL = [0, 0, -breath * .01]; P.clavR = [0, 0, breath * .01];
       /* arm swing opposes the legs */
-      P.swing = P.swing || {}; for (const k of ['L', 'R']) { const other = F[k === 'L' ? 'R' : 'L']; st.R.toChar(_v, other.w); P.swing[k] = clamp((_v.z - other.rest.z) / s * .55, -.25, .25) }
+      P.swing = P.swing || {}; for (const k of ['L', 'R']) { if (!F) { P.swing[k] = Math.sin(B.t * 1.3 + (k === 'L' ? 0 : 2) + B.shift) * .12; continue } const other = F[k === 'L' ? 'R' : 'L']; st.R.toChar(_v, other.w); P.swing[k] = clamp((_v.z - other.rest.z) / s * .55, -.25, .25) }
       P.hands.L = P.hands.R = null; P.curl.L = [.3, .35, .4, .45, .2]; P.curl.R = [.3, .35, .4, .45, .2];
       P.look = (pd < 9 || chatting) ? camTarget(st, st.lookV || (st.lookV = new V())) : null;
       P.jaw = talking ? Math.max(0, Math.sin(B.t * 11) * Math.sin(B.t * 2.3)) * .12 : 0;
       if (o.external && st.px) proxyPose(st, P);
       if (talking && !o.external) { const gw = Math.sin(B.t * 1.3); P.hands.R = { p: _w.set(-.18 * s, (st.K.P.hipY + .3 + gw * .05) * s, .38 * s).clone(), pole: st.R.P[st.I.uarmR].clone().add(_u.set(-.7, -.6, -.4)), q: null }; P.curl.R = [.15, .2, .25, .3, .1] }
-      if (o.gesture === 'drum' && o.beat) { const bt = o.beat(), pl = Math.exp(-(bt % 1) * 6); P.head[0] += pl * .1 * red; P.hip.y -= pl * .02 * s * red; if (!talking && B.state !== 'walk') { const sd = Math.floor(bt) % 2 ? 1 : -1, k = sd > 0 ? 'L' : 'R'; P.hands[k] = { p: new V(sd * .16 * s, (st.K.P.hipY + .02 + (1 - pl) * .06) * s, .22 * s), pole: st.R.P[st.I['uarm' + k]].clone().add(_u.set(sd * .8, -.4, -.4)), q: null }; P.curl[k] = [.1, .1, .15, .2, .1] } }
-      if (o.gesture === 'dance' && o.beat && !talking) {   /* club / dub dancing: bounce on the beat, sway, alternate raised hands */
+      if (gest === 'drum' && o.beat) { const bt = o.beat(), pl = Math.exp(-(bt % 1) * 6); P.head[0] += pl * .1 * red; P.hip.y -= pl * .02 * s * red; if (!talking && B.state !== 'walk') { const sd = Math.floor(bt) % 2 ? 1 : -1, k = sd > 0 ? 'L' : 'R'; P.hands[k] = { p: new V(sd * .16 * s, (st.K.P.hipY + .02 + (1 - pl) * .06) * s, .22 * s), pole: st.R.P[st.I['uarm' + k]].clone().add(_u.set(sd * .8, -.4, -.4)), q: null }; P.curl[k] = [.1, .1, .15, .2, .1] } }
+      if (gest === 'dance' && o.beat && !talking) {   /* club / dub dancing: bounce on the beat, sway, alternate raised hands */
         const bt = o.beat(), pl = Math.exp(-(bt % 1) * 5), sw = Math.sin(bt * Math.PI + B.shift), Pp = st.K.P; P.hip.y -= pl * .035 * s * red; P.hip.x += sw * .03 * s * red; P.head[0] += pl * .12 * red; P.chest[2] += sw * .06 * red; P.chest[1] += Math.sin(bt * Math.PI * .5 + B.shift) * .15 * red;
         if (B.state !== 'walk') { B.dh = B.dh || { L: new V(), R: new V() }; for (const k of ['L', 'R']) { const sd = k === 'L' ? 1 : -1, up = ((Math.floor(bt / 2) + (k === 'L' ? 0 : 1) + Math.floor(B.shift)) % 2) ? .3 : 0;
           B.dh[k].set(sd * (Pp.shW + .06 + sw * sd * .04) * s, (Pp.shY - .12 + up + pl * .05) * s, (.28 - up * .3) * s); P.hands[k] = { p: B.dh[k], pole: st.R.P[st.I['uarm' + k]].clone().add(_u.set(sd * .8, -.5, -.3)), q: null }; P.curl[k] = up ? [.1, .1, .15, .2, .1] : [.6, .65, .7, .7, .4] } } }
-      if (o.gesture === 'dj' && !talking) { const bt = o.beat ? o.beat() : t * 2, pl = Math.exp(-(bt % 1) * 5); P.head[0] += pl * .12 * red; P.hip.y -= pl * .025 * s * red;
+      if (gest === 'wave') {   /* greeting: right hand up beside the head, waving from the wrist and elbow */
+        const Pp = st.K.P, w = Math.sin(B.t * 9); P.hands.R = { p: new V(-(Pp.shW + .1 + w * .06) * s, (Pp.shY + .34) * s, .1 * s), pole: st.R.P[st.I.uarmR].clone().add(_u.set(-.9, -.5, -.3)), q: null };
+        P.curl.R = [.04, .04, .05, .08, .1]; P.head[2] += .1; P.chest[2] += .04 }
+      if (st.sp) alienKicks(st, B, o, gest, v, F);
+      if (gest === 'dj' && !talking) { const bt = o.beat ? o.beat() : t * 2, pl = Math.exp(-(bt % 1) * 5); P.head[0] += pl * .12 * red; P.hip.y -= pl * .025 * s * red;
         P.hands.L = { p: st.R.P[st.I.head].clone().add(_u.set(.13 * s, .02 * s, -.02 * s)), pole: st.R.P[st.I.uarmL].clone().add(_u.set(.8, -.8, -.2)), q: null }; P.curl.L = [.2, .25, .3, .35, .1];
         P.hands.R = { p: new V(-.22 * s + Math.sin(bt * Math.PI) * .07 * s, (o.deckY || 1.62) / g.scale.y, (o.deckZ || .78) * s), pole: st.R.P[st.I.uarmR].clone().add(_u.set(-.8, -.5, -.4)), q: null }; P.curl.R = [.35, .4, .5, .55, .3] }
       solve(st, P, dt);
@@ -559,6 +635,14 @@ C.brain = function (g, o) {
   return ctrl;
 };
 
+/* soft-body impulses: belly + antennae bounce on dance beats, every footstep jolts them a little */
+function alienKicks(st, B, o, gest, v, F) {
+  const sp = st.sp, s = st.s, red = AV.S && AV.S.set && AV.S.set.reduce ? .4 : 1, y = B.yaw, rx = Math.cos(y), rz = -Math.sin(y);
+  if (gest === 'dance' && o.beat) { const bi = Math.floor(o.beat()); if (bi !== B.kb) { B.kb = bi; const sd = bi % 2 ? 1 : -1, e = red * s;
+    sp.belly.kick(0, -.45 * e, 0); sp.crown.kick(0, -.18 * e, 0); sp.chest.kick(0, -.12 * e, 0); sp.antL.kick(rx * sd * .32 * e, -.12 * e, rz * sd * .32 * e); sp.antR.kick(rx * sd * .32 * e, -.12 * e, rz * sd * .32 * e) } }
+  if (F && B.steps !== B.ks) { B.ks = B.steps; const e = red * s * Math.min(1, v * 1.2); sp.belly.kick(0, -.25 * e, 0); sp.antL.kick(0, -.16 * e, 0); sp.antR.kick(0, -.16 * e, 0); sp.crown.kick(0, -.08 * e, 0) }
+}
+
 /* keep reflections in step with the sky (night worlds should not have bright brass) */
 AV.frameFns && AV.frameFns.push(() => PBR.syncEnv());
 /* warm the cache while the player is on the start screen: band + the shared villager build */
@@ -566,6 +650,7 @@ C.prefetch = function () {
   for (const k of ['gorilla', 'ztone', 'orangutan']) { const L = LOOK[k], D = p => Object.assign({ sp: L.sp }, p), parts = [D({ part: 'shirt', o: L.shirt.o }), D({ part: 'pants', o: L.pants.o }), D({ part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D({ part: 'hat', style: L.hat.style })] : []); GEN.data(D({ part: 'body', cover: parts })); parts.forEach(GEN.data) }
   const V0 = { sp: 'chimp', ov: { s: 1.0 } }, D = p => Object.assign({}, V0, p), vp = [D({ part: 'shirt', o: { loose: 1.04, sleeve: .55 } }), D({ part: 'pants', o: { loose: 1.1 } }), D({ part: 'shoes', o: {} })];
   GEN.data(D({ part: 'body', cover: vp })); GEN.data(D({ part: 'body', cover: vp.concat([D({ part: 'hat', style: 'kufi' })]) })); vp.forEach(GEN.data); GEN.data(D({ part: 'hat', style: 'kufi' }));
+  for (const sp of ['alien_zib', 'alien_orbo']) GEN.data({ sp, part: 'body' });
 };
 setTimeout(() => { try { C.prefetch() } catch (e) { console.warn(e) } }, 50);
 })(window.AV);

@@ -80,7 +80,7 @@ const MAKE = {
     const g = cl(.45 + ring * .18 + (flame - .5) * .22 + (fine - .5) * .12, 0, 1); return [g * .95, g * .55, g * .22] }, true) },
   /* alien skin: soft mottling + freckle spots (greyscale around .5, multiplied x2 in the shader) */
   spots: () => { const L = [lattice(8, 91), lattice(16, 92)], C = [lattice(32, 93)];
-    return paint(256, (u, v) => { const m = fbm(L, 8, u, v, 2), sp = sm(.7, .82, pn(C[0], 32, u * 32, v * 32)); const g = .5 + (m - .5) * .35 - sp * .16; return [g, g, g] }) },
+    return paint(256, (u, v) => { const m = fbm(L, 8, u, v, 2), sp = sm(.7, .82, pn(C[0], 32, u * 32, v * 32)); const g = .5 + (m - .5) * .25 - sp * .08; return [g, g, g] }) },
   /* alien eye: glossy near-black sclera, a bright fibrous iris ring (tinted by the material colour) and a slit pupil */
   alienIris: () => paint(128, (u, v) => { const x = u * 2 - 1, y = v * 2 - 1, r = Math.hypot(x, y), a = Math.atan2(y, x), fib = .55 + .45 * Math.sin(a * 46 + Math.sin(a * 9) * 2.5);
     if (r > .96) return [.05, .05, .07]; const slit = Math.abs(x) < .1 * Math.sqrt(Math.max(0, 1 - (y / .62) * (y / .62))); if (slit) return [0, 0, 0];

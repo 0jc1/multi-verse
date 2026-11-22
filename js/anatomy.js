@@ -228,7 +228,8 @@ AN.headPrims = function (K, pr) {
     if (one) pr.push(SC.ell(at([0, Ey[1], Ey[2] + .004]), mul([R * 1.18, R * 1.18, .02], s), { bone: hb, k: .02 * s, mat: DARK }));   // dark rim around the cyclops eye
     /* antennae: bendy stalk (base bone -> spring tip bone) with a glowing bulb */
     if (K.ant) for (const k of ['L', 'R']) { const A = K.ant[k];
-      pr.push(SC.cone(A.base, A.tip, .013 * s, .007 * s, { bone: I['ant' + k], bone2: I['antT' + k], t0: .15, t1: 1, k: .014 * s, mat: SKIN }));
+      const sr = Math.max(.007, (P.h || .012) * .8);   // the stalk must stay thicker than the sculpt cell or it does not mesh
+      pr.push(SC.cone(A.base, A.tip, sr * 1.7 * s, sr * s, { bone: I['ant' + k], bone2: I['antT' + k], t0: .15, t1: 1, k: .014 * s, mat: SKIN }));
       pr.push(SC.sph(A.tip, .024 * s, { bone: I['antT' + k], k: .008 * s, mat: M.NAIL })) }
   } else {   /* chimp */
     E([0, .15, -.03], [.152, .145, .16], { k: .05 * s, fur: F.head });

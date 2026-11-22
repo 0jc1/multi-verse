@@ -90,18 +90,84 @@ CY.crowd = function (ctx, opt) {
 /* street graph: nodes [[x,z]], links [[i,j]] ; near(x,z) -> nearest node */
 CY.nav = function (nodes, edges) { const links = nodes.map(() => []); edges.forEach(([a, b]) => { links[a].push(b); links[b].push(a) }); return { nodes, links, near(x, z) { let b = 0, bd = 1e9; nodes.forEach((n, i) => { const d = Math.hypot(n[0] - x, n[1] - z); if (d < bd) { bd = d; b = i } }); return b } } };
 
-/* ======================= vehicles ======================= */
-const VB = {};
-function riderParts(x, y, z, col, s) { s = s || 1; const BG = K.BG; return [[BG.sph, col, M(x, y + .35 * s, z, .2 * s, .28 * s, .16 * s)], [BG.sph, 0xd8a47a, M(x, y + .78 * s, z + .02, .12 * s, .14 * s, .13 * s)], [BG.sph, [0x2a2a2a, 0xe8e8e8, 0xd83a3a, 0x3a6ad8][Math.abs(col) % 4], M(x, y + .84 * s, z, .14 * s, .1 * s, .15 * s)], [BG.cyl, 0x3a3a52, M(x - .1 * s, y + .1 * s, z + .18 * s, .07 * s, .4 * s, .07 * s, 1.3, 0, 0)], [BG.cyl, 0x3a3a52, M(x + .1 * s, y + .1 * s, z + .18 * s, .07 * s, .4 * s, .07 * s, 1.3, 0, 0)], [BG.cyl, 0xd8a47a, M(x - .17 * s, y + .45 * s, z + .2 * s, .05 * s, .4 * s, .05 * s, 1.1, 0, 0)], [BG.cyl, 0xd8a47a, M(x + .17 * s, y + .45 * s, z + .2 * s, .05 * s, .4 * s, .05 * s, 1.1, 0, 0)]] }
-const wheel = (x, y, z, r, w) => [K.BG.cyl, 0x1a1a1a, M(x, y, z, r, w, r, 0, 0, Math.PI / 2)];
-VB.tuktuk = col => K.merge([[K.BG.box, col, M(0, .75, -.35, 1.3, .9, 1.5)], [K.BG.box, 0x1a1a22, M(0, 1.7, -.2, 1.45, .1, 2.3)], [K.BG.box, col, M(0, .7, .9, .7, .7, .9)], [K.BG.box, 0x9ad8ff, M(0, 1.25, 1.2, .9, .5, .05), .3],
-  [K.BG.cyl, 0xc0c0c0, M(-.68, 1.25, .95, .03, .9, .03)], [K.BG.cyl, 0xc0c0c0, M(.68, 1.25, .95, .03, .9, .03)], [K.BG.cyl, 0xc0c0c0, M(-.68, 1.25, -1.2, .03, .9, .03)], [K.BG.cyl, 0xc0c0c0, M(.68, 1.25, -1.2, .03, .9, .03)],
-  [K.BG.box, 0x8a2a2a, M(0, .95, -.7, 1.2, .25, .5)], [K.BG.box, 0xffd84a, M(0, 1.78, -.2, 1.5, .08, 2.35), .2], wheel(0, .25, 1.25, .25, .15), wheel(-.62, .25, -.75, .25, .16), wheel(.62, .25, -.75, .25, .16), [K.BG.sph, 0xfff0c0, M(0, .85, 1.36, .1, .1, .05), 1]].concat(riderParts(0, .55, .55, 0x2a6ad8, .9)));
-VB.scooter = col => K.merge([[K.BG.box, col, M(0, .5, 0, .3, .35, 1.1)], [K.BG.box, 0x1a1a1a, M(0, .75, -.15, .3, .1, .6)], [K.BG.cyl, 0x404040, M(0, .85, .5, .04, .8, .04, -.3, 0, 0)], [K.BG.cyl, 0x404040, M(0, 1.2, .6, .03, .6, .03, 0, 0, Math.PI / 2)], wheel(0, .25, .6, .25, .1), wheel(0, .25, -.6, .25, .1), [K.BG.sph, 0xfff0c0, M(0, 1.05, .7, .07, .07, .05), 1]].concat(riderParts(0, .62, -.12, col)));
-VB.bicycle = col => K.merge([[K.BG.cyl, col, M(0, .55, 0, .03, 1.0, .03, 0, 0, 0)], [K.BG.cyl, col, M(0, .45, .25, .03, .8, .03, 1.1, 0, 0)], [K.BG.cyl, col, M(0, .45, -.25, .03, .8, .03, -1.1, 0, 0)], [K.BG.box, 0x1a1a1a, M(0, .95, -.25, .12, .05, .25)], [new THREE.TorusGeometry(.32, .03, 4, 16), 0x1a1a1a, M(0, .32, .55, 1, 1, 1, 0, Math.PI / 2, 0)], [new THREE.TorusGeometry(.32, .03, 4, 16), 0x1a1a1a, M(0, .32, -.55, 1, 1, 1, 0, Math.PI / 2, 0)], [K.BG.cyl, 0x404040, M(0, 1.05, .45, .02, .5, .02, 0, 0, Math.PI / 2)]].concat(riderParts(0, .7, -.1, col)));
-VB.songthaew = col => K.merge([[K.BG.box, col, M(0, .9, 1.4, 1.8, 1.1, 1.3)], [K.BG.box, 0x9ad8ff, M(0, 1.25, 2.06, 1.6, .5, .04), .3], [K.BG.box, col, M(0, .8, -.9, 1.9, .6, 3.2)], [K.BG.box, col, M(0, 2.0, -.9, 1.95, .12, 3.3)],
-  [K.BG.cyl, 0xd0d0d0, M(-.92, 1.45, .55, .03, 1.1, .03)], [K.BG.cyl, 0xd0d0d0, M(.92, 1.45, .55, .03, 1.1, .03)], [K.BG.cyl, 0xd0d0d0, M(-.92, 1.45, -2.4, .03, 1.1, .03)], [K.BG.cyl, 0xd0d0d0, M(.92, 1.45, -2.4, .03, 1.1, .03)], [K.BG.box, 0xffffff, M(0, 1.6, .58, 1.9, .2, .04)],
-  wheel(-.85, .35, 1.4, .35, .2), wheel(.85, .35, 1.4, .35, .2), wheel(-.85, .35, -1.6, .35, .2), wheel(.85, .35, -1.6, .35, .2), [K.BG.sph, 0xfff0c0, M(-.6, .95, 2.06, .1, .1, .05), 1], [K.BG.sph, 0xfff0c0, M(.6, .95, 2.06, .1, .1, .05), 1]]);
+/* ======================= vehicles (V1.0: realistic Thai street fleet) =======================
+   Every builder returns ONE merged geometry (front = +z, ground = y 0). Side silhouettes are extruded profiles (hood, windscreen,
+   roof, boot, wheel arches) instead of stacked boxes. Parts flagged as body paint (5th entry = 1) get an `aPaint` vertex attribute:
+   InstancedMeshes built with CY.vehMat() tint ONLY those parts per instance (instanceColor), so one draw call can show white,
+   silver, black and red cars while glass, tyres, chrome and lights keep their own colours. Called with a colour, paint is baked in. */
+const VB = {}, VG = {}, BX = K.BG.box, CYL12 = new THREE.CylinderGeometry(1, 1, 1, 12), CYL6 = new THREE.CylinderGeometry(1, 1, 1, 6), PI2 = Math.PI / 2;
+const CHROME = 0xc4c8cc, GLASS = 0x26323a, TYRE = 0x141414, RIM = 0xa8acb2, PLATE = 0xf2f2ea, HEAD = 0xe6ecf0, TAIL = 0x9a1010;
+function vmerge(parts) { const g = K.merge(parts), a = new Float32Array(g.attributes.position.count); let o = 0; for (const p of parts) { const k = p[0].index ? p[0].index.count : p[0].attributes.position.count; if (p[4]) a.fill(1, o, o + k); o += k } g.setAttribute('aPaint', new THREE.BufferAttribute(a, 1)); return g }
+/* side profile [[z, y], ...] extruded across the width w (cached per key) */
+function prof(key, pts, w) { return VG[key] || (VG[key] = (() => { const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(q => new THREE.Vector2(q[0], q[1]))), { depth: w, bevelEnabled: false, curveSegments: 1 }); g.translate(0, 0, -w / 2); g.rotateY(-PI2); return g })()) }
+/* wheel-arch cut-out for a profile's lower edge (rear -> front) */
+const arch = (cz, cy, R) => { const o = []; for (let i = 0; i <= 6; i++) { const a = Math.PI - i / 6 * Math.PI; o.push([cz + Math.cos(a) * R, cy + Math.sin(a) * R]) } return o };
+/* tyre + rim + hub, axle along x */
+const wheel = (x, y, z, r, w) => [[CYL12, TYRE, M(x, y, z, r, w, r, 0, 0, PI2)], [K.BG.cyl, RIM, M(x + Math.sign(x || 1) * .012, y, z, r * .62, w * 1.02, r * .62, 0, 0, PI2)], [CYL6, 0x5a5e64, M(x + Math.sign(x || 1) * .02, y, z, r * .18, w * 1.04, r * .18, 0, 0, PI2)]];
+/* seated rider: torso, head, open-face helmet, bent legs, arms reaching forward to the bars */
+function riderParts(x, y, z, shirt, helm, s, reach) {
+  s = s || 1; reach = reach || .5; const B = K.BG, skin = 0xc8946a, pants = 0x2a2c38;
+  const o = [[B.sph, shirt, M(x, y + .34 * s, z, .2 * s, .3 * s, .14 * s)], [B.sph, skin, M(x, y + .74 * s, z + .02 * s, .095 * s, .115 * s, .105 * s)], [B.hem, helm, M(x, y + .77 * s, z - .01 * s, .13 * s, .13 * s, .14 * s)], [BX, 0x1a1a1a, M(x, y + .81 * s, z + .12 * s, .2 * s, .03 * s, .05 * s)]];
+  for (const sd of [-1, 1]) o.push([B.cyl, pants, M(x + sd * .1 * s, y + .04 * s, z + .2 * s, .075 * s, .42 * s, .075 * s, 1.5, 0, 0)], [B.cyl, pants, M(x + sd * .11 * s, y - .2 * s, z + .42 * s, .06 * s, .44 * s, .06 * s, -.15, 0, 0)], [BX, 0x2a2420, M(x + sd * .11 * s, y - .42 * s, z + .48 * s, .09 * s, .06 * s, .2 * s)],
+    [B.cyl, shirt, M(x + sd * .2 * s, y + .5 * s, z + reach * .25 * s, .05 * s, .3 * s, .05 * s, .9, 0, 0)], [B.cyl, skin, M(x + sd * .23 * s, y + .44 * s, z + reach * .72 * s, .04 * s, .32 * s, .04 * s, 1.35, 0, 0)]);
+  return o;
+}
+/* small helpers: o = fixed colour part, p = body-paint part */
+const pk = (col) => ({ o: (g, c, x, y, z, sx, sy, sz, rx, ry, rz, gl) => [g, c, M(x, y, z, sx, sy, sz, rx, ry, rz), gl || 0, 0], p: (g, x, y, z, sx, sy, sz, rx, ry, rz) => [g, col, M(x, y, z, sx, sy, sz, rx, ry, rz), 0, 1] });
+/* Thai three-wheeler: fibreglass nose over the front wheel, raked windscreen, driver bench, passenger tub + bench, chrome posts, canopy */
+VB.tuktuk = col => { const { o, p } = pk(col), out = [
+  o(BX, 0x1e1e20, 0, .38, -.05, .9, .1, 2.2), [prof('tkN', [[.55, .32], [1.2, .36], [1.42, .55], [1.4, .82], [1.25, 1.02], [1.05, 1.06], [.75, .72], [.55, .62]], .82), col, null, 0, 1],
+  o(CYL12, HEAD, 0, .84, 1.41, .1, .05, .1, PI2, 0, 0, 1), o(CYL12, CHROME, 0, .84, 1.39, .13, .05, .13, PI2), o(BX, 0xff9a1a, -.3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4), o(BX, 0xff9a1a, .3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4),
+  o(BX, 0x9fb4be, 0, 1.4, 1.1, 1.05, .6, .03, -.18), o(BX, CHROME, 0, 1.71, 1.05, 1.1, .04, .05), o(CYL6, 0x2a2a2a, 0, 1.08, .9, .022, .8, .022, 0, 0, PI2), p(BX, 0, 1.03, .98, .9, .1, .2),
+  o(BX, 0x1a1a1a, 0, .8, .4, .55, .12, .45), o(BX, 0x1a1a1a, 0, 1.05, .16, .55, .4, .06), p(BX, 0, .6, .4, .72, .38, .7),
+  [prof('tkT', [[-1.45, .45], [.02, .45], [.08, .7], [.02, .98], [-.15, 1.02], [-1.42, 1.02], [-1.5, .8]], 1.34), col, null, 0, 1],
+  o(BX, 0x6a1414, 0, 1.07, -.75, 1.16, .12, .55), o(BX, 0x6a1414, 0, 1.38, -1.1, 1.16, .6, .12), p(BX, 0, 1.25, -1.37, 1.34, .55, .06),
+  o(BX, CHROME, -.68, 1.03, -.7, .03, .04, 1.5), o(BX, CHROME, .68, 1.03, -.7, .03, .04, 1.5), o(BX, CHROME, 0, .5, -1.52, 1.3, .08, .06), o(BX, TAIL, -.5, .82, -1.51, .16, .1, .04, 0, 0, 0, .6), o(BX, TAIL, .5, .82, -1.51, .16, .1, .04, 0, 0, 0, .6), o(BX, PLATE, 0, .66, -1.51, .34, .12, .02),
+  p(BX, 0, 1.94, -.12, 1.46, .07, 2.6), o(BX, 0x1c1c1e, 0, 1.99, -.12, 1.3, .04, 2.4), o(BX, CHROME, 0, 1.9, 1.19, 1.46, .1, .04), o(BX, CHROME, 0, 1.9, -1.43, 1.46, .1, .04)];
+  for (const s of [-1, 1]) { out.push(o(CYL6, CHROME, s * .7, 1.45, 1.08, .025, 1.0, .025), o(CYL6, CHROME, s * .7, 1.47, -.1, .025, .9, .025), o(CYL6, CHROME, s * .7, 1.47, -1.36, .025, .9, .025), o(CYL6, CHROME, s * .7, 1.32, -.72, .02, 1.2, .02, PI2)); out.push(...wheel(s * .6, .27, -.85, .27, .16)) }
+  out.push(...wheel(0, .25, 1.1, .25, .14)); return vmerge(out.concat(riderParts(0, .76, .36, 0xe8e4da, 0x1a1a1a, .92, .55))) };
+/* automatic scooter (Click / Wave / Fino class): leg shield, footboard, under-seat body, bar cowl with headlight, mirrors */
+VB.scooter = (col, opt) => { const { o, p } = pk(col), out = [
+  [prof('scA', [[.32, .4], [.55, .52], [.72, .78], [.74, 1.02], [.62, 1.08], [.48, .98], [.3, .6]], .44), col, null, 0, 1],
+  o(BX, 0x2a2a2c, 0, .36, .08, .36, .08, .55), [prof('scB', [[-.15, .32], [.1, .32], [.18, .5], [.12, .78], [-.25, .84], [-.88, .86], [-1.0, .78], [-.85, .55], [-.45, .42]], .38), col, null, 0, 1],
+  o(BX, 0x3a3a3c, .1, .38, -.45, .16, .2, .6), o(BX, 0x161616, 0, .92, -.42, .32, .1, .74), o(BX, 0x3a3a3c, 0, .92, -.86, .3, .04, .12), o(BX, TAIL, 0, .8, -.99, .18, .07, .05, 0, 0, 0, .7), o(BX, PLATE, 0, .6, -1.0, .18, .12, .02, -.3),
+  o(CYL6, 0x9a9ea4, -.06, .7, .6, .025, .7, .025, -.3), o(CYL6, 0x9a9ea4, .06, .7, .6, .025, .7, .025, -.3), p(BX, 0, 1.1, .56, .46, .13, .2), o(BX, HEAD, 0, 1.08, .665, .22, .08, .03, 0, 0, 0, 1),
+  o(CYL6, 0x1a1a1a, 0, 1.13, .5, .02, .7, .02, 0, 0, PI2), p(BX, 0, .56, .66, .12, .04, .42, -.1), o(CYL6, 0x8a8e94, .16, .34, -.62, .05, .5, .05, PI2)];
+  for (const s of [-1, 1]) out.push(o(CYL6, 0x2a2a2a, s * .2, 1.25, .5, .01, .25, .01), o(BX, 0x1a1a1a, s * .22, 1.38, .5, .1, .06, .02));
+  out.push(...wheel(0, .27, .64, .27, .1), ...wheel(0, .27, -.6, .27, .1));
+  return vmerge(opt && opt.rider === false ? out : out.concat(riderParts(0, .9, -.28, 0x3a5a8a, 0xe8e8e8, 1, .55))) };
+/* city bicycle with a front basket */
+VB.bicycle = (col, opt) => { const { o, p } = pk(col), T = new THREE.TorusGeometry(.32, .025, 4, 18), out = [
+  p(CYL6, 0, .55, 0, .025, .95, .025, PI2 - .25), p(CYL6, 0, .45, .25, .025, .8, .025, 1.1), p(CYL6, 0, .45, -.25, .025, .8, .025, -1.1), p(CYL6, 0, .62, -.3, .025, .6, .025, -.25), o(BX, 0x1a1a1a, 0, .95, -.3, .12, .05, .25),
+  [T, TYRE, M(0, .32, .55, 1, 1, 1, 0, PI2, 0), 0, 0], [T, TYRE, M(0, .32, -.55, 1, 1, 1, 0, PI2, 0), 0, 0], o(CYL6, 0x404040, 0, 1.05, .45, .018, .55, .018, 0, 0, PI2), o(BX, 0x8a6a3a, 0, .9, .68, .3, .2, .25)];
+  return vmerge(opt && opt.rider === false ? out : out.concat(riderParts(0, .95, -.25, 0xd8d0c0, 0x2a6ad8, .95, .6))) };
+/* compact sedan (Vios / City class) */
+VB.car = col => { const { o, p } = pk(col), out = [
+  [prof('carB', [[-2.2, .34], ...arch(-1.26, .31, .38), ...arch(1.32, .31, .38), [2.2, .34], [2.25, .52], [2.2, .7], [2.02, .8], [1.0, .9], [-1.45, .94], [-1.62, .97], [-2.16, .95], [-2.25, .75], [-2.24, .5]], 1.72), col, null, 0, 1],
+  [prof('carG', [[1.05, .86], [.22, 1.38], [-.9, 1.42], [-1.58, .96], [-1.58, .86]], 1.5), GLASS, null, 0, 0],
+  p(BX, 0, 1.415, -.33, 1.52, .06, 1.18), o(BX, 0x15171a, 0, .58, 2.22, .8, .14, .06), o(BX, 0x15171a, 0, .4, 2.2, 1.1, .1, .06), o(BX, PLATE, 0, .47, 2.255, .44, .13, .02), o(BX, PLATE, 0, .6, -2.26, .44, .13, .02)];
+  for (const s of [-1, 1]) { out.push(p(BX, s * .74, 1.12, .635, .06, .06, .98, .55), p(BX, s * .74, 1.19, -1.24, .06, .06, .82, -.595), p(BX, s * .745, 1.14, -.3, .06, .5, .1), p(BX, s * .88, .98, .92, .12, .09, .14),
+    o(BX, HEAD, s * .6, .72, 2.17, .42, .12, .1, 0, 0, 0, 1), o(BX, TAIL, s * .62, .8, -2.2, .4, .12, .1, 0, 0, 0, .5), o(BX, 0x2a2a2a, s * .86, .36, 0, .04, .06, 2.4)); out.push(...wheel(s * .76, .31, -1.26, .31, .2), ...wheel(s * .76, .31, 1.32, .31, .2)) }
+  return vmerge(out) };
+/* double-cab pickup (Hilux / D-Max class) - the most common vehicle in northern Thailand */
+VB.pickup = col => { const { o, p } = pk(col), out = [
+  [prof('puB', [[-2.65, .42], ...arch(-1.45, .38, .45), ...arch(1.6, .38, .45), [2.62, .42], [2.68, .7], [2.62, 1.0], [2.45, 1.08], [1.25, 1.16], [-.75, 1.2], [-.75, .92], [-2.65, .92]], 1.82), col, null, 0, 1],
+  [prof('puG', [[1.25, 1.12], [.45, 1.72], [-.62, 1.74], [-.78, 1.62], [-.78, 1.12]], 1.64), GLASS, null, 0, 0],
+  p(BX, 0, 1.75, -.08, 1.66, .06, 1.12), p(BX, 0, 1.07, -2.62, 1.82, .3, .06), o(BX, 0x2a2a2a, 0, .93, -1.7, 1.7, .02, 1.85), o(BX, 0x1a1c1f, 0, .86, 2.66, 1.1, .32, .06), o(BX, CHROME, 0, .92, 2.695, 1.12, .05, .04),
+  o(BX, 0x8a8e94, 0, .55, 2.66, 1.84, .2, .14), o(BX, 0x8a8e94, 0, .5, -2.68, 1.8, .14, .14), o(BX, PLATE, 0, .55, 2.74, .44, .13, .02), o(BX, PLATE, 0, .78, -2.66, .44, .13, .02)];
+  for (const s of [-1, 1]) { out.push(p(BX, s * .88, 1.07, -1.7, .06, .3, 1.9), p(BX, s * .81, 1.42, .85, .06, .06, 1.0, .6435), p(BX, s * .815, 1.43, .05, .06, .6, .1), p(BX, s * .815, 1.43, -.7, .06, .6, .14), p(BX, s * .96, 1.22, 1.1, .12, .12, .14),
+    o(BX, HEAD, s * .7, .95, 2.6, .36, .14, .1, 0, 0, 0, 1), o(BX, TAIL, s * .9, 1.02, -2.6, .06, .32, .08, 0, 0, 0, .5), o(BX, 0x2a2a2a, s * .95, .45, .3, .14, .05, 1.6)); out.push(...wheel(s * .78, .38, -1.45, .38, .26), ...wheel(s * .78, .38, 1.6, .38, .26)) }
+  return vmerge(out) };
+/* Chiang Mai "rot daeng" songthaew: pickup cab + long covered bed, open window band, side benches, roof rails, rear step */
+VB.songthaew = col => { const { o, p } = pk(col), out = [
+  [prof('stB', [[-2.95, .42], ...arch(-1.45, .38, .45), ...arch(1.6, .38, .45), [2.62, .42], [2.68, .7], [2.62, 1.0], [2.45, 1.08], [1.25, 1.16], [.1, 1.2], [.1, .92], [-2.95, .92]], 1.82), col, null, 0, 1],
+  [prof('stG', [[1.25, 1.12], [.45, 1.72], [.12, 1.72], [.12, 1.12]], 1.64), GLASS, null, 0, 0], p(BX, 0, 1.74, .3, 1.66, .05, .42), p(BX, 0, 1.92, .1, 1.84, .36, .05),
+  p(BX, 0, 2.12, -1.14, 1.98, .08, 3.68), o(BX, 0xf4f0e0, 0, 2.3, .55, 1.3, .24, .08, 0, 0, 0, .3), o(BX, 0x3a2a24, 0, .93, -1.42, 1.78, .02, 3.0),
+  o(BX, CHROME, 0, .62, -3.05, 1.5, .05, .3), o(BX, 0x1a1c1f, 0, .86, 2.66, 1.1, .32, .06), o(BX, CHROME, 0, .92, 2.695, 1.12, .05, .04), o(BX, 0x8a8e94, 0, .55, 2.66, 1.84, .2, .14), o(BX, PLATE, 0, .55, 2.74, .44, .13, .02), o(BX, PLATE, 0, .8, -2.97, .44, .13, .02)];
+  for (const s of [-1, 1]) { out.push(p(BX, s * .92, 1.14, -1.42, .06, .44, 3.06), p(BX, s * .92, 2.02, -1.42, .06, .14, 3.06), o(BX, 0x5a2a20, s * .62, 1.12, -1.5, .4, .1, 2.6), o(BX, CHROME, s * .95, 2.22, -1.14, .04, .08, 3.6), o(CYL6, CHROME, s * .78, 1.55, -2.95, .025, 1.2, .025),
+    p(BX, s * .81, 1.42, .85, .06, .06, 1.0, .6435), o(BX, HEAD, s * .7, .95, 2.6, .36, .14, .1, 0, 0, 0, 1), o(BX, TAIL, s * .88, 1.1, -2.96, .1, .3, .06, 0, 0, 0, .5), p(BX, s * .96, 1.22, 1.1, .12, .12, .14));
+    for (const z of [-.05, -1.0, -1.95, -2.9]) out.push(p(BX, s * .92, 1.68, z, .06, .64, .08)); out.push(...wheel(s * .78, .38, -1.45, .38, .26), ...wheel(s * .78, .38, 1.6, .38, .26)) }
+  return vmerge(out) };
 /* V0.9.9: red Viennese tram (front = +z) */
 VB.tram = col => K.merge([[K.BG.box, col, M(0, 1.6, 0, 2.4, 2.6, 15)], [K.BG.box, 0xf4f0e8, M(0, 1.05, 0, 2.42, .5, 15.02)], [K.BG.box, 0x9ad8ff, M(0, 2.25, 0, 2.44, .9, 14.2), .25], [K.BG.box, 0x2a2a2a, M(0, .25, 0, 2.2, .3, 14.4)],
   [K.BG.box, col, M(0, 2.98, 0, 2.2, .14, 14.6)], [K.BG.box, 0x3a3a3a, M(0, 3.3, 2, .08, .6, 1.6, .6, 0, 0)], [K.BG.box, 0x3a3a3a, M(0, 3.62, 2.3, 1.4, .05, .06)], [K.BG.box, 0x9ad8ff, M(0, 2.1, 7.52, 2.1, 1.2, .04), .3], [K.BG.sph, 0xfff0c0, M(-.8, 1.0, 7.52, .12, .12, .05), 1], [K.BG.sph, 0xfff0c0, M(.8, 1.0, 7.52, .12, .12, .05), 1]]);
@@ -166,8 +232,8 @@ CY.rain = function (ctx, n) {
   return api;
 };
 /* smoke puffs (joints, food stalls) */
-CY.smoke = function (ctx, n) {
-  n = n || 90; const im = new THREE.InstancedMesh(new THREE.SphereGeometry(.07, 6, 4), new THREE.MeshBasicMaterial({ color: 0xd8d8e0, transparent: true, opacity: .35, depthWrite: false }), n); im.frustumCulled = false; im.material.userData.lin = 1; ctx.group.add(im);
+CY.smoke = function (ctx, n, opt) {
+  opt = opt || {}; n = n || 90; const im = new THREE.InstancedMesh(new THREE.SphereGeometry(.07, 6, 4), new THREE.MeshBasicMaterial({ color: opt.color == null ? 0xd8d8e0 : opt.color, transparent: true, opacity: opt.opacity == null ? .35 : opt.opacity, depthWrite: false }), n); im.frustumCulled = false; im.material.userData.lin = 1; ctx.group.add(im);
   const P = []; for (let i = 0; i < n; i++) { P.push({ life: 0 }); im.setMatrixAt(i, ZERO) } let head = 0;
   ctx.upd.push(dt => { for (let i = 0; i < n; i++) { const p = P[i]; if (p.life <= 0) continue; p.life -= dt; p.y += .35 * dt; p.x += Math.sin(p.life * 3 + i) * .05 * dt; const s = 1 + (2.6 - p.life) * 1.6; if (p.life <= 0) { im.setMatrixAt(i, ZERO); continue } _m.makeScale(s, s, s); _m.setPosition(p.x, p.y, p.z); im.setMatrixAt(i, _m) } im.instanceMatrix.needsUpdate = true });
   return { puff(x, y, z) { const p = P[head]; head = (head + 1) % n; p.x = x; p.y = y; p.z = z; p.life = 2.6 } };

@@ -186,7 +186,8 @@ AV.registerWorld({
     K.motes(ctx, { n: 110, x: 0, z: 0, r: 44, y0: 1, y1: 12, cols: [0xff4ad2, 0x4ac8ff, 0xffd84a, 0xffffff], size: 2.2, alpha: .8 });
 
     /* ======================= V0.9.6 GAUDÍ SPIRAL PLAZA : cinematic graphics prototype =======================
-       spiral tower GLB (procedural fallback), trencadís mosaic PBR, HDRI reflections, two rigged alien NPCs (GLB, fallback) */
+       spiral tower GLB (procedural fallback), trencadís mosaic PBR, HDRI reflections, two alien NPCs: soft-body characters
+       (chars_real.js C.alienActor), or the rigged forge / GLB aliens if the realistic character pipeline is not loaded */
     const FG = AV.forge, GX = AV.gfx, PX = -25, PZ = -12, info = { tower: 'procedural', aliens: ['procedural', 'procedural'] };
     let zib = null, orbo = null, plazaUpd = null;
     if (FG && GX) {
@@ -215,13 +216,20 @@ AV.registerWorld({
         const a = { h, key, cur: null, acts: {}, mixer: null, src: 'procedural' };
         a.play = (n, f) => { if (a.cur === n || !a.acts[n]) return; const nx = a.acts[n], old = a.cur && a.acts[a.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } a.cur = n };
         a.use = (obj, clips) => { if (a.obj) { h.remove(a.obj); drop(a.obj) } a.obj = dress(obj); h.add(obj); a.mixer = new THREE.AnimationMixer(obj); a.acts = {}; clips.forEach(c => a.acts[c.name] = a.mixer.clipAction(c)); const n = a.cur || 'Idle'; a.cur = null; a.play(n) };
+        const SA = AV.chars && AV.chars.alienActor;
+        if (SA) {   /* soft-body Zib / Orbo (chars_real.js): sculpted, IK-planted feet, spring-bone belly + cranium + antennae; same play / acts / mixer API */
+          const A = SA({ type: key, shadow }); h.add(A.root); Object.assign(a, { obj: A.root, actor: A, acts: A.acts, mixer: A.mixer, src: 'soft-body' });
+          a.play = n => { A.play(n); a.cur = A.cur }; a.play('Idle');
+          if (A.ready) A.ready.then(() => { if (h.parent) info.aliens[key === 'zib' ? 0 : 1] = 'soft-body' });
+          return a;
+        }
         const p = FG.alien(key); a.use(p.root, p.clips);
         GX.glb(url).then(g => { if (!h.parent) return; a.use(g.scene, g.animations); a.src = 'GLB'; info.aliens[key === 'zib' ? 0 : 1] = 'GLB'; GX.apply() }).catch(() => { });
         return a;
       };
       zib = actor('zib', 'assets/models/astro9/alien_zib.glb', PX + 6.6, PZ, 0); orbo = actor('orbo', 'assets/models/astro9/alien_orbo.glb', PX + 8, PZ - .6, -Math.PI / 2);
       ctx.leave.push(() => [zib, orbo].forEach(a => { if (!a.obj) return; a.mixer.stopAllAction(); a.mixer.uncacheRoot(a.obj); a.obj.traverse(o => { if (o.isSkinnedMesh && o.skeleton && o.skeleton.dispose) o.skeleton.dispose() }) }));
-      const say = (who, L) => { const i = (L.i = ((L.i == null ? -1 : L.i) + 1) % L.length); AV.toast(who + ': ' + (AV.ui === 'es' ? L[i][1] : L[i][0])) };
+      const say = (who, L) => { const i = (L.i = ((L.i == null ? -1 : L.i) + 1) % L.length); AV.toast(who + ': ' + (AV.ui === 'es' ? L[i][1] : L[i][0])); const a = who === 'Zib' ? zib : orbo; if (a.actor) a.actor.talk(2.6) };
       const ZL = [["I'm Zib. Your spiral is the only thing on this station that twists the right way.", 'Soy Zib. Tu espiral es lo único en esta estación que gira hacia el lado correcto.'],
         ['The mosaic is made of broken tiles. On my planet we break things on purpose too.', 'El mosaico está hecho de azulejos rotos. En mi planeta también rompemos cosas a propósito.'],
         ['The neon helix hums at 124 beats a minute. Orbo says it is the station’s heartbeat.', 'La hélice de neón zumba a 124 pulsos por minuto. Orbo dice que es el latido de la estación.'],

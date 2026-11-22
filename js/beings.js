@@ -22,8 +22,10 @@ const SP = {
 };
 const SHIRTS = ['#ff4ad2', '#ffd84a', '#3ad8ff', '#7aff8a', '#ff8a3a', '#e83a30', '#ffffff', '#2a2a3a', '#8a3ab8', '#2a6ad8'], PANTS = ['#2a3a6a', '#2a2a2a', '#c8b088', '#5a3a2a', '#3a6a3a', '#6a2a4a'];
 
-/* ---------- build one being (SkinnedMesh) ---------- */
-BE.make = function (kind, seed, over) {
+/* ---------- build one being (SkinnedMesh) ----------
+   opt.soft: aliens become soft-body characters (chars_real.js C.alienActor: sculpted Zib / Orbo builds with spring-bone belly,
+   cranium and antennae, IK feet). They return { root, clips, actor } instead of a forge mesh; spawn() drives them the same way. */
+BE.make = function (kind, seed, over, opt) {
   const r = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(Math.max(1, (seed * 7919) | 0)), base = SP[kind] || SP.human, sc = .88 + r() * .26;
   const S = Object.assign({}, base); ['thigh', 'shin', 'uarm', 'farm', 'spine', 'chest'].forEach(k => S[k] = base[k] * sc); S.body = base.body.map(v => v * (.85 + r() * .35)); S.head = base.head.map(v => v * (.92 + r() * .16)); Object.assign(S, over || {}); S.hip = S.thigh + S.shin + .07;
   const B = {}, list = [], bone = (n, p, x, y, z) => { const b = new THREE.Bone(); b.name = n; b.position.set(x, y, z); if (p) B[p].add(b); B[n] = b; b.userData.i = list.length; list.push(b) };
@@ -87,6 +89,10 @@ BE.make = function (kind, seed, over) {
     sph('head', skin, wp('head', 0, S.head[1] * .9, 0), S.head); sph('head', eye, wp('head', 0, S.head[1] * 1.0, S.head[2] * .85), [.07, .1, .03]); sph('head', glow, wp('head', 0, S.head[1] * 1.0, S.head[2] * .9), .025);
     for (const a of ['antL', 'antR']) { const s = a === 'antL' ? -1 : 1, top = wp(a, s * .12, .34, 0); seg(a, skin, wp(a, 0, -.05, 0), top, .02, .012); sph(a, glow, top, .05) }
     limb(skin, skin, glow, glow, false); name = pick(r, ['Mind Jelly', 'The Entity', 'Glimmer', 'Fractal Fred', 'Aura Ann', 'Machine Elf']);
+  } else if (opt && opt.soft && AV.chars.alienActor) {   /* alien, soft body: same palette draws as the forge alien below */
+    const A = AV.chars.alienActor({ type: r() < .6 ? 'zib' : 'orbo', skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), shadow: false });
+    A.root.scale.setScalar(.9 + (sc - .88) * .75); const ch = A.st.K.legs.L;
+    return { root: A.root, clips: [], actor: A, name: pick(r, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']), kind, S: { thigh: Math.hypot(ch.hj[1] - ch.kn[1], ch.hj[2] - ch.kn[2]), shin: Math.hypot(ch.kn[1] - ch.an[1], ch.kn[2] - ch.an[2]) } };
   } else {   /* alien: the forge alien with random palette + head shape */
     const a = F.alien(Object.assign({}, F.ALIENS[r() < .6 ? 'zib' : 'orbo'], { skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), head: SP.alien.head.map(v => v * (.85 + r() * .3)) })); a.name = pick(r, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']); a.kind = kind; a.S = F.ALIENS.zib; return a;
   }
@@ -127,7 +133,7 @@ function hint() {
 BE.chatOpen = () => AV.modals.some(m => m.id === 'cmp');
 BE.chat = function (b) {
   const say = l => AV.tr(l[0], l[1]), g = GREET[b.kind] || GREET.human, first = say(g[Math.floor(Math.random() * g.length)]) + ' ' + say(contextLine(b));
-  b.play('Wave', .25); b.talkT = AV.now();
+  b.play('Wave', .25); b.talkT = AV.now(); if (b.actor) b.actor.talk(2.6);
   const p = AV.panel('cmp', '<b>' + b.name + '</b><div class="note" id="bln">' + first + '</div><div class="grid">' +
     '<button data-r="w">' + tr('Tell me something weird', 'Cuéntame algo raro') + '</button><button data-r="t">' + tr('Any tips around here?', '¿Algún consejo por aquí?') + '</button><button data-r="j">' + tr('Dance with me!', '¡Baila conmigo!') + '</button><button data-close>' + tr('Catch you later', 'Nos vemos') + '</button></div>');
   /* lock the view onto their face while the pop-up is open (they keep facing you, see BE.spawn update) */
@@ -136,6 +142,7 @@ BE.chat = function (b) {
   p.querySelectorAll('[data-r]').forEach(x => x.onclick = () => { const k = x.dataset.r, el = AV.$('bln');
     if (k === 'w') el.textContent = say(WEIRD[Math.floor(Math.random() * WEIRD.length)]);
     else if (k === 't') el.textContent = say(hint());
+    if (b.actor && k !== 'j') b.actor.talk(2.2);
     else { el.textContent = say(L('Yesss! Show me your moves!', '¡Síii! ¡Enséñame tus pasos!')); b.danceUntil = AV.now() + 12; b.play('Dance', .3); AV.vitals && AV.vitals.add(0, 6) }
     AV.dlg && AV.dlg.event && AV.dlg.event('chat') });
 };
@@ -144,12 +151,14 @@ BE.chat = function (b) {
 BE.spawn = function (ctx, specs) {
   const W = () => AV.W, out = [], shadow = false;   /* V0.9.8: no shadow pass for crowds (halves their draw calls) */
   specs.forEach((s, i) => {
-    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over), h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
-    F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
-    const mixer = new THREE.AnimationMixer(made.root), acts = {}; made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
+    /* soft-body aliens on Medium / High; Low keeps the light forge aliens for weak devices */
+    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: ctx.q > 0 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
+    if (!A) F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
+    const mixer = A ? A.mixer : new THREE.AnimationMixer(made.root), acts = A ? A.acts : {}; if (!A) made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
+    if (A && s.mode === 'float') A.air = true;   // zero g: legs dangle instead of planting
     const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10,
-      headB: made.root.getObjectByName('head') || null, faceY: ((made.S && made.S.head && made.S.head[1]) || .15) * .85 };
-    b.play = (n, f) => { if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
+      headB: made.root.getObjectByName('head') || null, faceY: A ? A.faceY * made.root.scale.y : ((made.S && made.S.head && made.S.head[1]) || .15) * .85, actor: A || null };
+    b.play = (n, f) => { if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');
     const tg = { x: s.x, z: s.z, r: 2.4, label: () => tr('Talk to ', 'Hablar con ') + b.name, fn: () => BE.chat(b) }; ctx.T.push(tg); b.tg = tg;
     out.push(b);
@@ -160,6 +169,7 @@ BE.spawn = function (ctx, specs) {
     for (const b of out) {
       const dx = P.x - b.h.position.x, dz = P.z - b.h.position.z, d = Math.hypot(dx, dz); b.h.visible = d < 90; if (d > 45) continue;
       const locked = BE.talkTo === b && BE.chatOpen() && AV.now() >= b.danceUntil, talking = locked || (AV.now() - b.talkT < 6 && d < 6);
+      if (b.actor) b.actor.root.userData.chatting = locked;   // soft body: snap its gaze onto you during the chat
       if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * (locked ? 9 : 5)); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }
       else if (b.mode === 'dance' || b.mode === 'float' || AV.now() < b.danceUntil) { b.play('Dance', .3); const a = b.acts.Dance; if (a && a.getEffectiveWeight() > .99) a.time = ((((beat + b.off * .25) % 4) + 4) % 4) / 4 * a.getClip().duration; if (b.mode === 'float') b.h.position.y = b.fy + Math.sin(t * .6 + b.off) * .35; if (AV.now() >= b.danceUntil && b.mode === 'wander') b.play('Idle', .3) }
       else if (b.mode === 'idle') { b.play('Idle', .3); if (d < 4) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * 2) }

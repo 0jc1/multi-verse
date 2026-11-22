@@ -24,7 +24,12 @@ const T = {
     for (let y = 16; y < 128; y += 32) for (let x = 12; x < 128; x += 34) ele(x + (y / 32 % 2) * 14, y) }),
   hawaii: () => fab('haw', c => { c.fillStyle = '#2a7ac8'; c.fillRect(0, 0, 128, 128); const r = AV.rng(8); for (let i = 0; i < 16; i++) { const x = r() * 128, y = r() * 128; c.fillStyle = i % 2 ? '#ffffff' : '#ffd84a'; for (let p = 0; p < 5; p++) { const a = p / 5 * TAU; c.beginPath(); c.ellipse(x + Math.cos(a) * 5, y + Math.sin(a) * 5, 5, 3, a, 0, TAU); c.fill() } c.fillStyle = '#e8603a'; c.beginPath(); c.arc(x, y, 2, 0, TAU); c.fill() } c.strokeStyle = '#2a9a5a'; c.lineWidth = 3; for (let i = 0; i < 8; i++) { const x = r() * 128, y = r() * 128; c.beginPath(); c.ellipse(x, y, 10, 3, r() * 3, 0, TAU); c.stroke() } }),
   tank: () => fab('tank', c => { c.fillStyle = '#c83a3a'; c.fillRect(0, 0, 128, 128); c.fillStyle = 'rgba(255,255,255,.15)'; for (let y = 0; y < 128; y += 8) c.fillRect(0, y, 128, 2) }),
-  reggae: () => fab('reg', c => { ['#2a9a4a', '#ffd23a', '#e8303a'].forEach((col, i) => { c.fillStyle = col; c.fillRect(0, i * 43, 128, 43) }); c.fillStyle = '#1a1a1a'; c.font = 'bold 14px Georgia'; c.textAlign = 'center'; c.fillText('ONE LOVE', 64, 70) })
+  reggae: () => fab('reg', c => { ['#2a9a4a', '#ffd23a', '#e8303a'].forEach((col, i) => { c.fillStyle = col; c.fillRect(0, i * 43, 128, 43) }); c.fillStyle = '#1a1a1a'; c.font = 'bold 14px Georgia'; c.textAlign = 'center'; c.fillText('ONE LOVE', 64, 70) }),
+  tieDye: () => fab('tie', c => {
+    c.fillStyle = '#f0e8d0'; c.fillRect(0, 0, 128, 128); const r = AV.rng(12), cols = ['#ff4ad2', '#ffd84a', '#4ac8ff', '#7aff8a', '#ff8a3a', '#9a5cff'];
+    for (let i = 0; i < 5; i++) { const cx = 12 + r() * 104, cy = 12 + r() * 104; for (let k = 0; k < 7; k++) { c.strokeStyle = cols[(i + k) % cols.length]; c.lineWidth = 5.4 - k * .5; c.beginPath(); c.arc(cx, cy, 4 + k * 7, 0, TAU); c.stroke() } }
+    for (let i = 0; i < 70; i++) { c.fillStyle = cols[i % cols.length]; c.globalAlpha = .35; c.beginPath(); c.arc(r() * 128, r() * 128, 1.5 + r() * 2.5, 0, TAU); c.fill() } c.globalAlpha = 1;
+  })
 };
 const mat = (k, rough) => { const m = new THREE.MeshStandardMaterial({ map: T[k](), roughness: rough || .85 }); return m };
 
@@ -35,7 +40,12 @@ C.human = function (o) {
   const lowQ = AV.kit && AV.kit.q && AV.kit.q() === 0, Gx = o.ultra ? GU : o.lod || lowQ ? GL : GH; KK.setLite(!!o.lite);
   const g = new THREE.Group(), s = o.s || .8, big = o.slim ? .8 : (o.big || .92), k = s * 1.12;
   const skin = std(o.skin || 0xd8a47a, .7), skinD = std(shade(o.skin || 0xd8a47a, .85), .7), hair = std(o.hair == null ? 0x3a2416 : o.hair, .9), lip = std(mix(o.skin || 0xd8a47a, 0x8a3a3a, .45), .6);
-  const dark = std(0x16100c, .45), white = std(0xf6f2ea, .3), iris = std(o.eye || 0x4a2e18, .35), glint = std(0xffffff, .2, 0, 0xffffff, 1), sole = std(0xf0ece4, .7);
+  /* redEye: bloodshot sclera + glowing red iris (the multiverse's professional cloud-watchers) */
+  const redEye = !!o.redEye, eyeK = redEye ? 1.18 : 1;
+  const white = redEye ? std(0xff5a48, .25, 0, 0xff2a1a, .7) : std(0xf6f2ea, .3),
+    iris = redEye ? std(0xff1408, .15, 0, 0xff2a10, 1.8) : std(o.eye || 0x4a2e18, .35),
+    glint = redEye ? std(0xffd8c8, .2, 0, 0xff8a6a, 1) : std(0xffffff, .2, 0, 0xffffff, 1);
+  const dark = std(0x16100c, .45), sole = std(0xf0ece4, .7);
   const shirt = o.shirt || std(0x4a8ad8, .85), pants = o.pants || std(0x3a3a52, .9);
   const sleeveM = o.sleeve === 'skin' ? skin : (o.sleeve || shirt), sleeveRole = o.sleeve === 'skin' ? 'skin' : 'shirt';
   part(g, Gx.sph, pants, 0, 1.0 * s, 0, .3 * s * big, .19 * s, .2 * s * big, 'pants');
@@ -49,9 +59,9 @@ C.human = function (o) {
   part(head, Gx.sph, skin, 0, -.14 * k, .06 * k, .18 * k, .14 * k, .17 * k, 'skin');                       // jaw
   part(head, Gx.sph, skinD, 0, -.03 * k, .255 * k, .04 * k, .065 * k, .055 * k, 'skin');                     // nose
   for (const sx of [-1, 1]) {
-    part(head, Gx.sph, white, sx * .085 * k, .04 * k, .205 * k, .04 * k, .036 * k, .03 * k, 'fixed');
-    part(head, Gx.dot, iris, sx * .085 * k, .04 * k, .228 * k, .024 * k, .024 * k, .012 * k, 'fixed');
-    part(head, Gx.dot, dark, sx * .085 * k, .04 * k, .236 * k, .013 * k, .013 * k, .008 * k, 'fixed');
+    part(head, Gx.sph, white, sx * .085 * k, .04 * k, .205 * k, .04 * k * eyeK, .036 * k * eyeK, .03 * k * eyeK, 'fixed');
+    part(head, Gx.dot, iris, sx * .085 * k, .04 * k, .228 * k, .024 * k * eyeK, .024 * k * eyeK, .012 * k * eyeK, 'fixed');
+    part(head, Gx.dot, dark, sx * .085 * k, .04 * k, .236 * k, .013 * k * eyeK, .013 * k * eyeK, .008 * k * eyeK, 'fixed');
     part(head, Gx.dot, glint, sx * .085 * k + .01 * k, .05 * k, .241 * k, .006 * k, .006 * k, .004 * k, 'fixed');
     part(head, Gx.box, hair, sx * .085 * k, .1 * k, .235 * k, .075 * k, .016 * k, .02 * k, 'hair', [0, 0, -sx * .12]);   // brows
     part(head, Gx.sph, skin, sx * .255 * k, .01 * k, 0, .045 * k, .075 * k, .04 * k, 'skin');                  // ears
@@ -103,12 +113,35 @@ C.crew = {
   /* Steve: blond ukulele player (no reference supplied: generic look) */
   steve() { const g = C.human({ skin: 0xf0c0a0, hair: 0xe8c860, style: 'blond', s: .82, shirt: mat('hawaii'), pants: std(0xc8b088, .9), shorts: true, foot: 'flip', shoe: 0x6a4a2a, eye: 0x3a6ab8 }); C.props.ukulele(g.userData); g.userData.kind = 'steve'; return C.compact(g) },
   /* Dino: laid-back resident stoner (no reference supplied: generic look) */
-  dino() { const g = C.human({ skin: 0xd8a47a, hair: 0x5a5048, style: 'cap', capCol: 0x2a8a4a, beard: true, s: .8, big: 1.02, shirt: mat('reggae'), pants: std(0x6a6a5a, .9), shorts: true, foot: 'flip', shoe: 0x2a2a2a }); C.props.joint(g.userData, 1); g.userData.kind = 'dino'; return C.compact(g) },
+  dino() { const g = C.human({ skin: 0xd8a47a, hair: 0x5a5048, style: 'cap', capCol: 0x2a8a4a, beard: true, redEye: true, s: .8, big: 1.02, shirt: mat('reggae'), pants: std(0x6a6a5a, .9), shorts: true, foot: 'flip', shoe: 0x2a2a2a }); C.props.joint(g.userData, 1); g.userData.kind = 'dino'; return C.compact(g) },
   /* ZtonedApe: messy brown hair, glasses, beard, dark printed tee, red elephant shorts, olive slides (reference: "Glasses at the Giant Hostel") */
-  zape() { const g = C.human({ skin: 0xdca47c, hair: 0x4a2c18, style: 'messy', beard: true, glasses: true, s: .82, shirt: std(0x2a1c1c, .85), pants: mat('elephant'), shorts: true, foot: 'flip', shoe: 0x4a5a2a, eye: 0x5a3a1a }); chestPrint(g, 'ztonedTee', .34); C.props.joint(g.userData, 1); g.userData.kind = 'zape'; return C.compact(g) },
+  zape() { const g = C.human({ skin: 0xdca47c, hair: 0x4a2c18, style: 'messy', beard: true, glasses: true, redEye: true, s: .82, shirt: std(0x2a1c1c, .85), pants: mat('elephant'), shorts: true, foot: 'flip', shoe: 0x4a5a2a }); chestPrint(g, 'ztonedTee', .34); C.props.joint(g.userData, 1); g.userData.kind = 'zape'; return C.compact(g) },
   nunyin() { const g = C.human({ skin: 0xc89068, hair: 0x18120e, style: 'bun', slim: true, s: .74, shirt: std(0x1a1a1a, .85), sleeve: 'skin', pants: std(0x3a3a4a, .9) }); g.userData.kind = 'nunyin'; return C.compact(g) },
   golf() { const g = C.human({ skin: 0xd09a70, hair: 0x14100c, style: 'short', glasses: true, s: .72, big: 1.1, shirt: std(0x22222a, .85), pants: std(0x3a3a3a, .9), shorts: true, shoe: 0x202020 }); C.props.phone(g.userData); g.userData.kind = 'golf'; return C.compact(g) },
   guest(seed) { const r = AV.rng(seed * 31 + 7), pick = a => a[Math.floor(r() * a.length)]; const g = C.human({ skin: pick([0xf0c8a8, 0xd8a47a, 0xb07a50, 0x8a5a3a, 0xe8b890]), hair: pick([0x2a1a10, 0xd8b860, 0x8a4a20, 0x14100c, 0xb0b0b0]), style: pick(['short', 'long', 'messy', 'cap', 'bun']), beard: r() < .3, glasses: r() < .25, s: .74 + r() * .1, slim: r() < .4, shirt: std(pick([0xe8603a, 0x3a8ad8, 0xf2e8d8, 0x2a9a6a, 0xd84a8a, 0x2a2a2a, 0xffd84a]), .85), pants: std(pick([0x3a3a52, 0xc8b088, 0x2a2a2a, 0x6a8ab8]), .9), shorts: r() < .6, foot: r() < .5 ? 'flip' : 'sneaker', shoe: pick([0x2a2a2a, 0xe8e8e8, 0x8a5a3a]) }); if (r() < .35) C.props.beer(g.userData, -1); return C.compact(g) }
+};
+/* ---------------- multiverse cloud-watchers (js/stoners.js spawns them in every world) ----------------
+   A red-eyed, joint-smoking human in mismatched festival clothes. Wild hair, no two alike, always mid-thought. */
+C.stoner = function (seed) {
+  const r = AV.rng((seed || 1) * 131 + 17), pick = a => a[Math.floor(r() * a.length) % a.length];
+  const style = pick(['messy', 'messy', 'long', 'bun', 'blond', 'cap']);
+  const o = {
+    skin: pick([0xf0c8a8, 0xd8a47a, 0xc8946a, 0xb07a50, 0x8a5a3a, 0x6a4028]),
+    hair: pick([0x14100c, 0x4a2c18, 0xd8b860, 0xb0b0b0, 0xa83a1a, 0xe8e0d0]),
+    style, redEye: true, beard: r() < .32,
+    flower: style === 'long' && r() < .5 ? pick([0xff6ad5, 0xffd84a, 0x7ff0ff]) : null,
+    capCol: pick([0x2a8a4a, 0xe8303a, 0xffd84a, 0x7a4ac8]),
+    s: .76 + r() * .12, big: .92 + r() * .16,
+    shirt: pick([mat('reggae'), mat('hawaii'), mat('tieDye'), std(0xff6a3a, .85), std(0x7a4ac8, .85), std(0x2a9a6a, .85)]),
+    pants: std(pick([0x3a3a52, 0x6a6a5a, 0xc8b088, 0x2a2a2a, 0x4a6a3a, 0x6a2a4a]), .9),
+    shorts: r() < .7, foot: r() < .65 ? 'flip' : 'sneaker',
+    shoe: pick([0x2a2a2a, 0xe8e8e8, 0xe8303a, 0x3a6ad8, 0x8a5a3a])
+  };
+  if (r() < .45) o.sleeve = 'skin';
+  const g = C.human(o);
+  C.props.joint(g.userData, r() < .5 ? 1 : -1);
+  g.userData.kind = 'stoner';
+  return C.compact(g);
 };
 
 /* ---------------- instanced pedestrians: baked per-pivot geometry ---------------- */

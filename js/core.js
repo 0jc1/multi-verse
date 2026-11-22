@@ -93,8 +93,8 @@ AV.hud = function () {
   $('top').innerHTML = '<b>' + tr('Credits', 'Créditos') + ': ' + S.money + '</b> · ' + (W ? W.name : '') + '<br>' + tr('Day', 'Día') + ' ' + S.day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '<br>' +
     (S.job ? tr('Job: café helper', 'Trabajo: ayudante de café') : tr('Unemployed', 'Sin trabajo')) + '<br>' + (S.rentDays > 0 ? tr('Rented: ', 'Alquilado: ') + S.rentDays + tr(' days left', ' días restantes') : tr('No home yet', 'Sin casa'));
 };
-AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T travel map · I inventory · O settings · M mute · R unstuck · Esc menu/mouse',
-  'WASD mover · Shift correr · Espacio saltar · E interactuar · P Pipa-Portal · T mapa · I inventario · O ajustes · M silencio · R desbloquear · Esc menú/ratón');
+AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T travel map · I inventory · O settings · M mute · R unstuck · F3 FPS · Esc menu/mouse',
+  'WASD mover · Shift correr · Espacio saltar · E interactuar · P Pipa-Portal · T mapa · I inventario · O ajustes · M silencio · R desbloquear · F3 FPS · Esc menú/ratón');
 
 /* modal stack: anything that takes over input (chat, pipe, viewer, cinema, map...) */
 AV.modals = [];
@@ -239,6 +239,7 @@ function findNear() {
 addEventListener('keydown', e => {
   if (!AV.running || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; const k = e.code;
   if (k === 'Escape') { if (!AV.closeTop()) { try { document.exitPointerLock() } catch (_) { } } return }
+  if (k === 'F3') { e.preventDefault(); AV.S.set.fps = AV.S.set.fps === false; AV.save(); return }
   if (k === 'KeyP' && AV.modals.some(m => m.id === 'pipe')) { AV.keymap.KeyP(); return }
   if (AV.blocking()) return;
   keys[k] = 1;
@@ -279,12 +280,15 @@ AV.toggleSettings = function () {
     '<p>' + tr('Graphics', 'Gráficos') + ' <select id="sGq"><option>Low</option><option>Medium</option><option>High</option></select></p>' +
     '<p>' + tr('Look sensitivity', 'Sensibilidad') + ' <input id="sSens" type="range" min=".4" max="2.2" step=".1" value="' + S.sens + '"></p>' +
     '<p><label><input id="sRed" type="checkbox" ' + (S.reduce ? 'checked' : '') + '> ' + tr('Reduced motion (no head-bob, fewer flashing lights)', 'Movimiento reducido (sin vaivén, menos luces parpadeantes)') + '</label></p>' +
+    '<p><label><input id="sReal" type="checkbox" ' + (S.realFlora !== false ? 'checked' : '') + '> ' + tr('Realistic plants & rocks (Medium/High; applies when you enter a world)', 'Plantas y rocas realistas (Medio/Alto; se aplica al entrar en un mundo)') + '</label></p>' +
+    '<p><label><input id="sFps" type="checkbox" ' + (S.fps !== false ? 'checked' : '') + '> ' + tr('Show FPS counter (F3)', 'Mostrar contador de FPS (F3)') + '</label></p>' +
     (AV.gfx && AV.gfx.settingsHtml ? AV.gfx.settingsHtml() : '') +
     '<p style="font-size:12px;opacity:.7">' + tr('Subtitles: not applicable yet (no subtitle files were supplied).', 'Subtítulos: todavía no aplica (no se entregaron archivos de subtítulos).') + '</p><button data-close>' + tr('Close', 'Cerrar') + '</button>');
   $('sGq').value = S.gq;
   $('sEn').onclick = () => { AV.setLang('en'); AV.closePanel('set') }; $('sEs').onclick = () => { AV.setLang('es'); AV.closePanel('set') };
   $('sVm').oninput = e => { S.vm = +e.target.value; AV.audio && AV.audio.applyVol() }; $('sVs').oninput = e => { S.vs = +e.target.value; AV.audio && AV.audio.applyVol() };
   $('sGq').onchange = e => { S.gq = e.target.value; AV.applyQuality(); AV.save() }; $('sSens').oninput = e => S.sens = +e.target.value; $('sRed').onchange = e => { S.reduce = e.target.checked; AV.save() };
+  $('sReal').onchange = e => { S.realFlora = e.target.checked; AV.save() }; $('sFps').onchange = e => { S.fps = e.target.checked; AV.save() };
   if (AV.gfx && AV.gfx.bindSettings) AV.gfx.bindSettings();
 };
 AV.setLang = function (l) { AV.ui = l; AV.S.set.lang = l; AV.hud(); $('hint').textContent = AV.hintText(); AV.save(); AV.toast(l === 'es' ? 'Idioma: Español' : 'Language: English') };
@@ -313,7 +317,18 @@ let last = performance.now(), sav = 0; AV.now = () => performance.now() / 1000; 
 AV.startLoop = function () { last = performance.now(); requestAnimationFrame(loop) };
 function loop(now) {
   requestAnimationFrame(loop); const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now; fa += raw; fn++; if (fa > 1) { AV.fps = fn / fa; fa = 0; fn = 0 }
+  if (R) { R.info.autoReset = false; R.info.reset() }   // count every render pass of this frame (post-processing renders several times)
   try { update(dt); if (!(AV.gfx && AV.gfx.render())) R.render(scene, cam) } catch (e) { AV.fail('Runtime: ' + e.message); console.error(e) }
+  fpsTick(raw * 1000);
+}
+/* on-screen frame stats (Settings > Show FPS, or F3): FPS + average ms per frame, worst frame, triangles and draw calls */
+let fpsT = 0, fpsN = 0, fpsMax = 0, fpsShown = null;
+function fpsTick(ms) {
+  fpsT += ms; fpsN++; if (ms > fpsMax) fpsMax = ms; if (fpsT < 250) return;
+  const el = $('fps'), on = AV.running && AV.S.set.fps !== false;
+  if (on !== fpsShown) { el.style.display = on ? 'block' : 'none'; fpsShown = on }
+  if (on && R) { const avg = fpsT / fpsN, i = R.info.render; el.textContent = Math.round(1000 / avg) + ' FPS · ' + avg.toFixed(1) + ' ms/frame\n' + tr('worst ', 'peor ') + fpsMax.toFixed(1) + ' ms · ' + (i.triangles / 1000).toFixed(0) + 'k tris · ' + i.calls + ' draws' }
+  fpsT = fpsN = fpsMax = 0;
 }
 AV.gravityScale = 1; let hudT = 0;
 function update(dt) {

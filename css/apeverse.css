@@ -18,6 +18,8 @@ h3{margin:18px 0 6px;color:var(--ac2);font-weight:normal;letter-spacing:.04em}
 #heroImg{width:100%;max-width:260px;border-radius:12px;border:2px solid var(--ac);margin:0 auto 8px;display:block}
 .hud{position:fixed;pointer-events:none;text-shadow:0 1px 3px #000}
 #top{left:12px;top:calc(10px + env(safe-area-inset-top,0px));line-height:1.5}
+#fps{right:12px;top:calc(10px + env(safe-area-inset-top,0px));display:none;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;background:rgba(10,4,20,.55);padding:4px 8px;border-radius:6px;text-align:right;white-space:pre;z-index:4}
+.touch #fps{top:calc(84px + env(safe-area-inset-top,0px))}
 #hint{left:12px;bottom:10px;font-size:12px;opacity:.7;max-width:70vw}
 #prompt{left:50%;bottom:24%;transform:translateX(-50%);background:var(--pn);padding:7px 16px;border-radius:10px;display:none;border:1px solid var(--ac);text-align:center}
 #toast{left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--pn);padding:8px 16px;border-radius:10px;opacity:0;transition:opacity .4s;max-width:84vw;text-align:center;z-index:12}

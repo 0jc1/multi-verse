@@ -126,8 +126,8 @@ AV.registerWorld({
     K.waterfall(ctx, POOL.x, WY, POOL.z - POOL.r + 2.6, 4.4, FY + 8.6, 0, { c1: 0x7ff0e0, c2: 0xffffff });          // falls in front of the cliff, into the pool
     const cliff = []; for (let a = -70; a <= 70; a += 9) { const p = polar(deg(-90 + a), 9.4); cliff.push([POOL.x + p[0], POOL.z + p[1]]) }
     A.boulders(B.rim, MT, cliff, H, rng, { step: 2.6, s0: 2.6, s1: 4.4, lift: 1.6 });
-    for (const sx of [-1, 1]) B.rim.add(MT.stone, A.geo('ico'), 0x8a8a9a, K.M(POOL.x + sx * 3.4, FY + 4, POOL.z - POOL.r - 1.2, 2.2, 6, 2.2, .2, sx, 0));
-    B.rim.add(MT.stone, A.geo('ico'), 0x7a7a8a, K.M(POOL.x, FY + 8.8, POOL.z - POOL.r - 1.6, 4.4, 1.6, 2.4));
+    for (const sx of [-1, 1]) A.rock(B.rim, MT, 0x8a8a9a, K.M(POOL.x + sx * 3.4, FY + 4, POOL.z - POOL.r - 1.2, 2.2, 6, 2.2, .2, sx, 0));
+    A.rock(B.rim, MT, 0x7a7a8a, K.M(POOL.x, FY + 8.8, POOL.z - POOL.r - 1.6, 4.4, 1.6, 2.4));
     const crystals = []; for (let i = 0; i < [4, 7, 10][q]; i++) { const a = deg(-160 + rng() * 140), r = POOL.r + 1.4 + rng() * 1.6, x = POOL.x + Math.cos(a) * r, z = POOL.z - Math.abs(Math.sin(a)) * r; crystals.push({ x, y: H(x, z), z, s: 1.4 + rng() * 1.6, ry: rng() * TAU, tint: [0xffffff, 0xb0fff0, 0xd0b0ff][i % 3] }); ctx.circles.push([x, z, .8]) }
     K.instModel(ctx, 'quaternius/crystal_big', crystals, it => K.scatter(ctx, K.species.crystal(0x7ff0e0, 0xb07aff), K.floraMat(0), it.map(o => Object.assign({}, o, { s: o.s * .9 }))));
     const pl2 = new THREE.PointLight(0x7ff0e0, 1.2, 18); pl2.position.set(POOL.x, 2.5, POOL.z); grp.add(pl2);

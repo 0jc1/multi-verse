@@ -334,9 +334,9 @@ const RS = {
     return m.build();
   },
   bush(c1, c2) {
-    const q = K.q(), rng = AV.rng(hseed(2, c1, c2)), m = new MB(), nL = q > 1 ? 230 : 120, sT = q > 1 ? 2 : 1, wood = lin(0x4a3424);
+    const q = K.q(), rng = AV.rng(hseed(2, c1, c2)), m = new MB(), nL = q > 1 ? 280 : 150, sT = q > 1 ? 2 : 1, wood = lin(0x4a3424);
     const lobes = [[0, .55, 0, .8, .62, .8], [.55, .42, .2, .55, .45, .55], [-.5, .4, -.15, .55, .42, .55]], vol = lobes.map(l => l[3] * l[4] * l[5]), vs = vol[0] + vol[1] + vol[2];
-    for (const lb of lobes) m.blob([lb[0], lb[1], lb[2]], [lb[3] * .8, lb[4] * .78, lb[5] * .8], 1, CELL.leaf, mul(lin(c1), .36), .05, rng);   /* inner mass hides gaps */
+    for (const lb of lobes) m.blob([lb[0], lb[1], lb[2]], [lb[3] * .62, lb[4] * .6, lb[5] * .62], 1, CELL.leaf, mul(lin(c1), .3), .05, rng);   /* inner mass hides gaps */
     for (let i = 0; i < 7; i++) {
       const lb = lobes[i % 3], a = rng() * TAU, tip = [lb[0] + Math.cos(a) * lb[3] * .6, lb[1] + lb[4] * (.1 + rng() * .5), lb[2] + Math.sin(a) * lb[5] * .6], pts = [];
       for (let k = 0; k <= 5; k++) { const t = k / 5; pts.push([tip[0] * t + Math.sin(t * 3 + i) * .03, tip[1] * Math.pow(t, .8), tip[2] * t]) }
@@ -346,7 +346,7 @@ const RS = {
       do { d = [rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1] } while (dot(d, d) > 1 || dot(d, d) < .05 || nrm(d)[1] < minY); d = nrm(d);
       return { d, lb } };
     for (let i = 0; i < nL; i++) {
-      const { d, lb } = onHull(-.45), rf = .78 + rng() * .26, o = [lb[0] + d[0] * lb[3] * rf, lb[1] + d[1] * lb[4] * rf, lb[2] + d[2] * lb[5] * rf]; if (o[1] < .05) continue;
+      const { d, lb } = onHull(-.45), rf = .68 + rng() * .36, o = [lb[0] + d[0] * lb[3] * rf, lb[1] + d[1] * lb[4] * rf, lb[2] + d[2] * lb[5] * rf]; if (o[1] < .05) continue;
       const L = nrm(add(sc(d, .55), [rng() - .5, rng() - .25, rng() - .5])), len = .2 + rng() * .1, st = m.n;
       leaf(m, o, L, d, len, len * .55, PROF.broad, .25, .18, sT, CELL.leaf, lin(c1, rng, .05, .2, .32), .12);
       m.bend.push([st, m.n, d, .55]);
@@ -423,10 +423,10 @@ const RS = {
       while (y < h - .05) {
         const seg = Math.min(h - y, .45 + .06 * k + rng() * .1), y1 = y + seg, R0 = .07 - .025 * (y / h), R1 = .07 - .025 * (y1 / h);
         tube(m, [0, .5, .9, 1].map(t => P(y + seg * t)), t => lerp(R0, R1, t) * (1 + .14 * smooth(.85, 1, t)), nr, CELL.culm, t => mixc(cc, nodeC, smooth(.8, 1, t)), 0);
-        if (y1 > h * .45 && (q > 1 || k % 2)) {   /* leafy twig at the node */
+        if (y1 > h * .38) {   /* leafy twig at the node */
           const az = rng() * TAU, o = add(P(y1), [Math.cos(az) * .12, .05, Math.sin(az) * .12]);
           tube(m, [P(y1), o], () => .008, 3, CELL.stem, () => nodeC, 0);
-          for (let j = 0; j < 3 + (rng() * 2 | 0); j++) { const b = az + (j - 1.5) * .5; leaf(m, o, nrm([Math.cos(b) * .9, -.2 + rng() * .35, Math.sin(b) * .9]), [0, 1, 0], .3 + rng() * .1, .05, PROF.lance, .45, .15, sT, CELL.blade, lin(lc, rng, .04, .15, .25), .1) }
+          for (let j = 0, nl = (q > 1 ? 5 : 3) + (rng() * 3 | 0); j < nl; j++) { const b = az + (j - (nl - 1) / 2) * .45; leaf(m, o, nrm([Math.cos(b) * .9, -.25 + rng() * .4, Math.sin(b) * .9]), [0, 1, 0], .34 + rng() * .14, .05, PROF.lance, .45, .15, sT, CELL.blade, lin(lc, rng, .04, .15, .25), .1) }
         }
         y = y1; k++;
       }

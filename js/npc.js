@@ -20,7 +20,7 @@ function setBubble(n, text) { const m = n.bub.material; if (m.map) m.map.dispose
 
 NP.spawn = function (ctx, id, o) {
   const N = AV.NPCS[id]; o = o || {}; const L = Object.assign({}, N.look, o.look || {}), H = o.H || (() => 0);
-  const g = o.body || AV.chars.npc(L.fur, L.shirt, L.hat); g.position.set(o.x, o.y != null ? o.y : H(o.x, o.z), o.z); g.rotation.y = o.yaw || 0; if (o.scale) g.scale.setScalar(o.scale); ctx.group.add(g);
+  const g = o.body || NP.softBody(id, L); g.position.set(o.x, o.y != null ? o.y : H(o.x, o.z), o.z); g.rotation.y = o.yaw || 0; if (o.scale) g.scale.setScalar(o.scale); ctx.group.add(g);
   const sc = o.scale || 1, tag = K.tag(N.name, AV.ui === 'es' ? N.title[1] : N.title[0], N.col); tag.position.set(0, 2.95, 0); tag.scale.multiplyScalar(1 / sc); g.add(tag);
   const bub = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, fog: false })); bub.scale.set(3.0 / sc, 1.12 / sc, 1); bub.position.set(0, 3.75, 0); bub.visible = false; bub.material.userData.lin = 1; g.add(bub);
   const n = { id, g, yaw: o.yaw || 0, tag, bub, path: o.path || null, pi: 0, walk: 0, pause: 0, barkT: 3 + Math.random() * 6, bubT: 0, near: false, H, arms: o.arms !== false, wantYaw: o.yaw || 0,
@@ -33,6 +33,36 @@ NP.spawn = function (ctx, id, o) {
   ctx.npcList.push(n); return n;
 };
 NP.bark = function (n, text) { setBubble(n, text); n.bubT = AV.now() + 4.5 };
+
+/* soft-body body for every quest/story NPC (chars_soft.js / chars_real.js realistic rigs).
+   Deterministic look per NPC id, seeded from data/npcs.js colours, so the cast stays recognisable
+   while every body is the new soft-body build (spring jiggle, IK feet, cloth garments).
+   Falls back to the classic C.npc() ape only if the realistic pipeline is not loaded at all. */
+NP.softBody = function (id, L) {
+  const C = AV.chars, soft = C.softHuman && C.softLook;
+  if (!soft) return C.npc(L.fur, L.shirt, L.hat);                       // realistic pipeline missing: classic build
+  let seed = 0; for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
+  const pick = a => a[(seed = (seed * 2654435761 + 1013904223) >>> 0) % a.length];
+  const isApe = !!L.fur;                                                // ape NPCs carry a fur colour, humans/apes from npcs_cm don't
+  const o = {
+    skin: isApe ? L.fur : pick([0xf0c8a8, 0xe0ac69, 0xd8a47a, 0xc68642, 0xa86a3c, 0x8d5524]),
+    hair: pick([0x14100c, 0x2a1a10, 0x4a2c18, 0x7a5230, 0xd8b860, 0xb0b0b0]),
+    style: pick(['short', 'messy', 'bun', 'long', 'cap', 'afro']),
+    capCol: L.hat || 0x2a2a3a, eye: 0x4a2a10,
+    shirt: { col: L.shirt == null ? 0xe8e4da : L.shirt },
+    pants: { col: pick([0x3a3a52, 0x2c3a5a, 0x2a2a2c, 0x5a6a3a, 0xc8b088]) }
+  };
+  if (isApe) {                                                          // ape villagers: chimp soft build, fur recoloured
+    o.sp = 'chimp'; o.fur = L.fur; o.style = undefined; o.hair = undefined;
+    o.shirt = { o: { loose: 1.04, sleeve: .55 }, col: L.shirt == null ? 0xe8e4da : L.shirt };
+    o.pants = { o: { loose: 1.1 }, col: 0x3a3a52, kind: 'twill' };
+    o.shoes = { o: {}, cols: [0x2a2a2c, 0xe8e4da, 0x2a2a2c, 0x5a5a62] };
+    o.size = 1.0; o.shadow = true;
+  } else if (L.hat) o.capCol = L.hat;
+  const g = C.softHuman(o);
+  g.userData.npcLook = L;
+  return g;
+};
 
 const lerp = (a, b, k) => a + (b - a) * k, wrap = a => Math.atan2(Math.sin(a), Math.cos(a)), clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const _m3 = new THREE.Matrix3(), _o = new THREE.Vector3(), _f = new THREE.Vector3();

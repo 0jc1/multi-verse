@@ -107,9 +107,9 @@ const wheel = (x, y, z, r, w) => [[CYL12, TYRE, M(x, y, z, r, w, r, 0, 0, PI2)],
 /* seated rider: torso, head, open-face helmet, bent legs, arms reaching forward to the bars */
 function riderParts(x, y, z, shirt, helm, s, reach) {
   s = s || 1; reach = reach || .5; const B = K.BG, skin = 0xc8946a, pants = 0x2a2c38;
-  const o = [[B.sph, shirt, M(x, y + .34 * s, z, .2 * s, .3 * s, .14 * s)], [B.sph, skin, M(x, y + .74 * s, z + .02 * s, .095 * s, .115 * s, .105 * s)], [B.hem, helm, M(x, y + .77 * s, z - .01 * s, .13 * s, .13 * s, .14 * s)], [BX, 0x1a1a1a, M(x, y + .81 * s, z + .12 * s, .2 * s, .03 * s, .05 * s)]];
-  for (const sd of [-1, 1]) o.push([B.cyl, pants, M(x + sd * .1 * s, y + .04 * s, z + .2 * s, .075 * s, .42 * s, .075 * s, 1.5, 0, 0)], [B.cyl, pants, M(x + sd * .11 * s, y - .2 * s, z + .42 * s, .06 * s, .44 * s, .06 * s, -.15, 0, 0)], [BX, 0x2a2420, M(x + sd * .11 * s, y - .42 * s, z + .48 * s, .09 * s, .06 * s, .2 * s)],
-    [B.cyl, shirt, M(x + sd * .2 * s, y + .5 * s, z + reach * .25 * s, .05 * s, .3 * s, .05 * s, .9, 0, 0)], [B.cyl, skin, M(x + sd * .23 * s, y + .44 * s, z + reach * .72 * s, .04 * s, .32 * s, .04 * s, 1.35, 0, 0)]);
+  const o = [[B.sphL, shirt, M(x, y + .34 * s, z, .2 * s, .3 * s, .14 * s)], [B.sphL, skin, M(x, y + .74 * s, z + .02 * s, .095 * s, .115 * s, .105 * s)], [B.hemL, helm, M(x, y + .77 * s, z - .01 * s, .13 * s, .13 * s, .14 * s)], [BX, 0x1a1a1a, M(x, y + .81 * s, z + .12 * s, .2 * s, .03 * s, .05 * s)]];
+  for (const sd of [-1, 1]) o.push([B.cylL, pants, M(x + sd * .1 * s, y + .04 * s, z + .2 * s, .075 * s, .42 * s, .075 * s, 1.5, 0, 0)], [B.cylL, pants, M(x + sd * .11 * s, y - .2 * s, z + .42 * s, .06 * s, .44 * s, .06 * s, -.15, 0, 0)], [BX, 0x2a2420, M(x + sd * .11 * s, y - .42 * s, z + .48 * s, .09 * s, .06 * s, .2 * s)],
+    [B.cylL, shirt, M(x + sd * .2 * s, y + .5 * s, z + reach * .25 * s, .05 * s, .3 * s, .05 * s, .9, 0, 0)], [B.cylL, skin, M(x + sd * .23 * s, y + .44 * s, z + reach * .72 * s, .04 * s, .32 * s, .04 * s, 1.35, 0, 0)]);
   return o;
 }
 /* small helpers: o = fixed colour part, p = body-paint part */
@@ -180,12 +180,15 @@ CY.vehMat = function (ctx) {
 };
 const _c = new THREE.Color(), pick = a => a[Math.random() * a.length | 0];
 const TWO = { scooter: 1, bicycle: 1 }, VLEN = { tuktuk: 3, scooter: 1.9, bicycle: 1.8, songthaew: 6.1, car: 4.5, pickup: 5.4, tram: 15 };
-/* parked vehicles (static, one instanced draw call per type): list [{type, x, z, yaw, col}] */
+/* parked vehicles (static): list [{type, x, z, yaw, col, chunk?}] -> one instanced draw call per type and chunk (e.g. per street).
+   Each chunk's geometry gets a bounding sphere around all of its instances, so whole streets are frustum-culled. Lights are off. */
 CY.parked = function (ctx, list) {
-  const by = {}, mat = CY.vehMat(ctx), out = []; list.forEach(v => (by[v.type] = by[v.type] || []).push(v));
-  for (const t in by) { const a = by[t], im = new THREE.InstancedMesh(VB[t](0xffffff, { rider: false }), mat, a.length);
-    a.forEach((v, i) => { _q.setFromAxisAngle(_v.set(0, 1, 0), v.yaw); _m.compose(_v.set(v.x, 0, v.z), _q, _s); im.setMatrixAt(i, _m); im.setColorAt(i, _c.setHex(v.col).convertSRGBToLinear()) });
-    im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.castShadow = K.q() === 2; im.receiveShadow = true; ctx.group.add(im); out.push(im) }
+  const by = {}, mat = CY.vehMat(ctx), out = []; list.forEach(v => { const k = v.type + '|' + (v.chunk || 0); (by[k] = by[k] || []).push(v) });
+  for (const k in by) { const a = by[k], g = VB[a[0].type](0xffffff, { rider: false }), im = new THREE.InstancedMesh(g, mat, a.length), box = new THREE.Box3();
+    g.attributes.aGlow.array.fill(0);   // parked: headlights / tail lights off
+    a.forEach((v, i) => { _q.setFromAxisAngle(_v.set(0, 1, 0), v.yaw); _m.compose(_v.set(v.x, 0, v.z), _q, _s); im.setMatrixAt(i, _m); im.setColorAt(i, _c.setHex(v.col).convertSRGBToLinear()); box.expandByPoint(_v.set(v.x, 1, v.z)) });
+    g.boundingSphere = box.getBoundingSphere(new THREE.Sphere()); g.boundingSphere.radius += 3.5;
+    im.instanceColor.needsUpdate = true; im.castShadow = K.q() === 2; im.receiveShadow = true; im.name = 'parked_' + a[0].type; ctx.group.add(im); out.push(im) }
   return out;
 };
 /* loops: [{pts:[[x,z],...], closed}] ; spec: [{type, col, n, speed, cols?}] (cols = paint palette, one colour picked per vehicle)
@@ -193,7 +196,7 @@ CY.parked = function (ctx, list) {
 CY.traffic = function (ctx, loops, spec, opt) {
   opt = opt || {}; const cars = [], meshes = [], mat = CY.vehMat(ctx);
   const L = loops.map(lp => { const p = lp.pts, cum = [0]; for (let i = 1; i <= p.length; i++) { const a = p[i - 1], b = p[i % p.length]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])) } return { p, cum, len: cum[cum.length - 1], off: lp.off == null ? 1.7 : lp.off } });
-  spec.forEach((sp, si) => { const n = sp.n; if (!n) return; const tint = !!sp.cols, im = new THREE.InstancedMesh(VB[sp.type](tint ? 0xffffff : sp.col), mat, n); im.frustumCulled = false; im.castShadow = K.q() === 2; im.receiveShadow = true; ctx.group.add(im); meshes.push(im);
+  spec.forEach((sp, si) => { const n = sp.n; if (!n) return; const tint = !!sp.cols, im = new THREE.InstancedMesh(VB[sp.type](tint ? 0xffffff : sp.col), mat, n); im.name = 'traffic_' + sp.type; im.frustumCulled = false; im.castShadow = K.q() === 2; im.receiveShadow = true; ctx.group.add(im); meshes.push(im);
     for (let i = 0; i < n; i++) { const li = (si + i) % L.length; if (tint) im.setColorAt(i, _c.setHex(pick(sp.cols)).convertSRGBToLinear()); cars.push({ im, i, li, s: (i / n + si * .13) * L[li].len, v: sp.speed * (.85 + Math.random() * .3), vmax: sp.speed * (.9 + Math.random() * .2), honkT: 0, type: sp.type, wake: i / n, two: !!TWO[sp.type], len: VLEN[sp.type] || 4 }) }
     if (im.instanceColor) im.instanceColor.needsUpdate = true });
   const at = (lp, s, kerb) => { s = ((s % lp.len) + lp.len) % lp.len; let i = 1; while (lp.cum[i] < s) i++; const a = lp.p[i - 1], b = lp.p[i % lp.p.length], f = (s - lp.cum[i - 1]) / (lp.cum[i] - lp.cum[i - 1]), dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), off = lp.off + (kerb ? Math.sign(lp.off || 1) * .8 : 0); return [a[0] + dx * f - dz / l * off, a[1] + dz * f + dx / l * off, Math.atan2(dx, dz)] };

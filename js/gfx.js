@@ -177,4 +177,5 @@ X.bindSettings = function () {
 /* hooks: world entry (chained) + quality changes */
 const prevEnter = AV.onWorldEnter; AV.onWorldEnter = W => { if (prevEnter) prevEnter(W); X.setWorld(W) };
 const prevQ = AV.applyQuality; AV.applyQuality = function () { prevQ.apply(this, arguments); X.apply() };
+X.apply();
 })(window.AV);

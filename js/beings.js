@@ -156,7 +156,7 @@ BE.spawn = function (ctx, specs) {
   const W = () => AV.W, out = [], shadow = false;   /* V0.9.8: no shadow pass for crowds (halves their draw calls) */
   specs.forEach((s, i) => {
     /* soft-body aliens on Medium / High; Low keeps the light forge aliens for weak devices */
-    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: ctx.q > 0, lod: ctx.q < 2, shells: ctx.q === 2 ? 12 : 6 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
+    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: ctx.q > 0, lod: true, shells: ctx.q === 2 ? 6 : 0 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
     if (!A) F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
     const mixer = A ? A.mixer : new THREE.AnimationMixer(made.root), acts = A ? A.acts : {}; if (!A) made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
     if (A && s.mode === 'float') A.air = true;   // zero g: legs dangle instead of planting

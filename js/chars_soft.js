@@ -241,7 +241,7 @@ const APE = { furs: [0x3a2a20, 0x5a3a22, 0x2a2a2a, 0x7a4a2a, 0xc8682a, 0x4a3a30]
 /* chimp townsfolk: exactly the villagers' sculpts (already cached), new colours */
 function randomApe(seed, o) {
   const r = rng((seed | 0) * 2246822519 + 3266489917), pick = a => a[Math.floor(r() * a.length) % a.length], skin = pick(APE.skins), hat = r() < .4 ? pick(APE.shirt) : null;
-  return { kind: 'npc', sp: 'chimp', ov: { s: 1.0 }, fur: pick(APE.furs), skin, dark: new THREE.Color(skin).multiplyScalar(.45).getHex(), nail: 0xd8b090, tip: 0xffffff, eye: 0x6a3a14, strandF: 250, shells: o.shells == null ? 12 : o.shells, shadow: o.shadow,
+  return { kind: 'npc', sp: 'chimp', ov: o.lod ? { s: 1.0, h: .016 } : { s: 1.0 }, fur: pick(APE.furs), skin, dark: new THREE.Color(skin).multiplyScalar(.45).getHex(), nail: 0xd8b090, tip: 0xffffff, eye: 0x6a3a14, strandF: 250, shells: o.shells == null ? 12 : o.shells, shadow: o.shadow,
     shirt: { o: { loose: 1.04, sleeve: .55 }, col: pick(APE.shirt) }, pants: { o: { loose: 1.1 }, col: pick([0x3a3a52, 0x2a2a2a, 0x5a3a2a, 0x3a5a3a]), kind: 'twill' }, shoes: { o: {}, cols: [pick([0x2a2a2c, 0xe8e4da, 0xd84a3a]), 0xe8e4da, 0x2a2a2c, 0x5a5a62] },
     hat: hat != null ? { style: 'kufi', cols: [hat, hat] } : null, size: .88 + r() * .16 };
 }
@@ -277,7 +277,9 @@ C.prefetchSoft = function () {
     { sp: 'human_a', style: 'messy', beard: true, pants: { shorts: true }, foot: 'flip' }, { sp: 'human_b', style: 'bun', shirt: { sleeveless: true, loose: 1.02 } }, { sp: 'human_a', style: 'short', shirt: { loose: 1.14 }, pants: { shorts: true } }];
   crew.forEach(o => prefetchLook(look(o)));
   const q = AV.kit && AV.kit.q ? AV.kit.q() : 2; if (q === 0) return;   // Low keeps the classic crowd beings: nothing to warm
-  for (const lod of [q < 2]) for (const sp of ['human_a', 'human_b']) for (const shorts of [false, true]) for (const flip of shorts ? [false, true] : [false]) prefetchLook(look({ sp, style: 'short', pants: { shorts }, foot: flip ? 'flip' : 'sneaker', lod }));
+  /* crowd actors (beings.js) always use the coarse sculpts: chimps (with / without a kufi) and the human shape combos */
+  for (const hat of [false, true]) { const L = randomApe(1, { lod: true }); L.hat = hat ? { style: 'kufi', cols: [0, 0] } : null; const P = [D(L, { part: 'shirt', o: L.shirt.o }), D(L, { part: 'pants', o: L.pants.o }), D(L, { part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D(L, { part: 'hat', style: 'kufi' })] : []); GEN.data(D(L, { part: 'body', cover: P })); P.forEach(GEN.data) }
+  for (const lod of [true]) for (const sp of ['human_a', 'human_b']) for (const shorts of [false, true]) for (const flip of shorts ? [false, true] : [false]) prefetchLook(look({ sp, style: 'short', pants: { shorts }, foot: flip ? 'flip' : 'sneaker', lod }));
 };
 setTimeout(() => { try { C.ready().then(() => C.prefetchSoft()) } catch (e) { console.warn(e) } }, 400);
 })(window.AV);

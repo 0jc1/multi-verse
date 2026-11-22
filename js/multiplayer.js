@@ -24,10 +24,18 @@ function status() {
   el.style.color = MP.on ? '#9aff9a' : '#c8c8d8';
 }
 
+/* soft-body remote avatar: the chars_soft chimp villager look (NP.softBody shape) keyed from the peer hash;
+   falls back to the classic villager only if the soft pipeline is missing */
+function NP_softAvatar(h) {
+  const C = AV.chars;
+  if (C.npc) return C.npc(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null);   // chars_real villager = soft body
+  return C.classic.npc(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null);
+}
+
 /* ---------- remote avatars ---------- */
 function makeAvatar(p) {
-  const C = AV.chars, build = (C.classic && C.classic.npc) || C.npc, h = hash(p.id);
-  const g = build(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null); AV.lin(g);
+  const C = AV.chars, h = hash(p.id);                                       // soft-body remote avatars: chimp build, fur/shirt from the peer id
+  const g = NP_softAvatar(h); AV.lin(g);
   const tag = AV.kit.tag(p.name, null, '#9aff9a'); tag.position.set(0, 2.95, 0); g.add(tag);
   g.position.set(p.x, p.y, p.z); g.rotation.y = p.yaw + Math.PI; AV.scene.add(g);
   return { g, tag, name: p.name, tx: p.x, ty: p.y, tz: p.z, tyaw: p.yaw + Math.PI, moving: false, ph: 0 };

@@ -216,7 +216,7 @@
       const [x, z] = findSpot(W, a[0], a[1], rng), y = W.surface(x, z) || 0;
       const prof = PROFILES[(start + i) % PROFILES.length], H = (px, pz) => { const s = W.surface(px, pz); return s == null ? 0 : s };
       const npc = AV.npc.spawn(ctx, prof.id, {
-        x, z, y, H, body: C.stoner(hash(W.id) + i * 97 + 1),
+        x, z, y, H, body: C.softStoner ? C.softStoner(hash(W.id) + i * 97 + 1) : C.stoner(hash(W.id) + i * 97 + 1),
         yaw: Math.atan2(AV.P.x - x, AV.P.z - z), r: 3.2, speed: .75,
         anim: makeAnim((hash(W.id) % 23) + i * 3.7, i % 2 ? -1 : 1)
       });

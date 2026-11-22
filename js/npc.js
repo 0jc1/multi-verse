@@ -39,7 +39,7 @@ NP.bark = function (n, text) { setBubble(n, text); n.bubT = AV.now() + 4.5 };
    while every body is the new soft-body build (spring jiggle, IK feet, cloth garments).
    Falls back to the classic C.npc() ape only if the realistic pipeline is not loaded at all. */
 NP.softBody = function (id, L) {
-  const C = AV.chars, soft = C.softHuman && C.softLook;
+  const C = AV.chars || {}, soft = C.softHuman && C.softLook;
   if (!soft) return C.npc(L.fur, L.shirt, L.hat);                       // realistic pipeline missing: classic build
   let seed = 0; for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
   const pick = a => a[(seed = (seed * 2654435761 + 1013904223) >>> 0) % a.length];
@@ -52,12 +52,14 @@ NP.softBody = function (id, L) {
     shirt: { col: L.shirt == null ? 0xe8e4da : L.shirt },
     pants: { col: pick([0x3a3a52, 0x2c3a5a, 0x2a2a2c, 0x5a6a3a, 0xc8b088]) }
   };
-  if (isApe) {                                                          // ape villagers: chimp soft build, fur recoloured
-    o.sp = 'chimp'; o.fur = L.fur; o.style = undefined; o.hair = undefined;
+  if (isApe) {                                                          // ape NPCs: chimp soft build, fur recoloured (same shape as chars_soft randomApe)
+    o.sp = 'chimp'; o.fur = L.fur; o.skin = 0xc79a6e; o.style = undefined; o.hair = undefined; o.capCol = undefined;
+    o.dark = new THREE.Color(L.fur).multiplyScalar(.45).getHex(); o.nail = 0xd8b090; o.tip = 0xffffff; o.eye = 0x6a3a14;
+    o.strandF = 250; o.shells = 12; o.size = 1.0; o.shadow = true;
     o.shirt = { o: { loose: 1.04, sleeve: .55 }, col: L.shirt == null ? 0xe8e4da : L.shirt };
     o.pants = { o: { loose: 1.1 }, col: 0x3a3a52, kind: 'twill' };
     o.shoes = { o: {}, cols: [0x2a2a2c, 0xe8e4da, 0x2a2a2c, 0x5a5a62] };
-    o.size = 1.0; o.shadow = true;
+    if (L.hat != null) o.hat = { style: 'kufi', cols: [L.hat, L.hat] };
   } else if (L.hat) o.capCol = L.hat;
   const g = C.softHuman(o);
   g.userData.npcLook = L;

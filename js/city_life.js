@@ -118,7 +118,7 @@ const pk = (col) => ({ o: (g, c, x, y, z, sx, sy, sz, rx, ry, rz, gl) => [g, c, 
 VB.tuktuk = col => { const { o, p } = pk(col), out = [
   o(BX, 0x1e1e20, 0, .38, -.05, .9, .1, 2.2), [prof('tkN', [[.55, .32], [1.2, .36], [1.42, .55], [1.4, .82], [1.25, 1.02], [1.05, 1.06], [.75, .72], [.55, .62]], .82), col, null, 0, 1],
   o(CYL12, HEAD, 0, .84, 1.41, .1, .05, .1, PI2, 0, 0, 1), o(CYL12, CHROME, 0, .84, 1.39, .13, .05, .13, PI2), o(BX, 0xff9a1a, -.3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4), o(BX, 0xff9a1a, .3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4),
-  o(BX, 0x9fb4be, 0, 1.4, 1.1, 1.05, .6, .03, -.18), o(BX, CHROME, 0, 1.71, 1.05, 1.1, .04, .05), o(CYL6, 0x2a2a2a, 0, 1.08, .9, .022, .8, .022, 0, 0, PI2), p(BX, 0, 1.03, .98, .9, .1, .2),
+  o(BX, 0x46586a, 0, 1.4, 1.1, 1.05, .6, .03, -.18), o(BX, CHROME, 0, 1.71, 1.05, 1.1, .04, .05), o(CYL6, 0x2a2a2a, 0, 1.08, .9, .022, .8, .022, 0, 0, PI2), p(BX, 0, 1.03, .98, .9, .1, .2),
   o(BX, 0x1a1a1a, 0, .8, .4, .55, .12, .45), o(BX, 0x1a1a1a, 0, 1.05, .16, .55, .4, .06), p(BX, 0, .6, .4, .72, .38, .7),
   [prof('tkT', [[-1.45, .45], [.02, .45], [.08, .7], [.02, .98], [-.15, 1.02], [-1.42, 1.02], [-1.5, .8]], 1.34), col, null, 0, 1],
   o(BX, 0x6a1414, 0, 1.07, -.75, 1.16, .12, .55), o(BX, 0x6a1414, 0, 1.38, -1.1, 1.16, .6, .12), p(BX, 0, 1.25, -1.37, 1.34, .55, .06),
@@ -176,7 +176,7 @@ CY.VB = VB;   /* V0.9.7: vehicle meshes reused by the tuk-tuk rides */
 CY.vehMat = function (ctx) {
   const m = K.floraMat(0, { rough: .42, metal: .1 }), ob = m.onBeforeCompile;
   m.onBeforeCompile = sh => { ob(sh); sh.vertexShader = 'attribute float aPaint;\n' + sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\n  vColor.xyz = color.xyz * mix(vec3(1.0), instanceColor.xyz, aPaint);\n#endif') };
-  m.customProgramCacheKey = () => 'veh'; if (ctx && AV.gfx && AV.gfx.reg) AV.gfx.reg(ctx, m, 'env', .45); return m;
+  m.customProgramCacheKey = () => 'veh'; if (ctx && AV.gfx && AV.gfx.reg) AV.gfx.reg(ctx, m, 'env', .25); return m;
 };
 const _c = new THREE.Color(), pick = a => a[Math.random() * a.length | 0];
 const TWO = { scooter: 1, bicycle: 1 }, VLEN = { tuktuk: 3, scooter: 1.9, bicycle: 1.8, songthaew: 6.1, car: 4.5, pickup: 5.4, tram: 15 };
@@ -191,15 +191,15 @@ CY.parked = function (ctx, list) {
     im.instanceColor.needsUpdate = true; im.castShadow = K.q() === 2; im.receiveShadow = true; im.name = 'parked_' + a[0].type; ctx.group.add(im); out.push(im) }
   return out;
 };
-/* loops: [{pts:[[x,z],...], closed}] ; spec: [{type, col, n, speed, cols?}] (cols = paint palette, one colour picked per vehicle)
+/* loops: [{pts:[[x,z],...], off, w?}] ; spec: [{type, col, n, speed, cols?}] (cols = paint palette, one colour picked per vehicle)
    V1.0: vehicles keep their distance (queue behind the one ahead), scooters and bicycles ride kerbside and filter past cars */
 CY.traffic = function (ctx, loops, spec, opt) {
   opt = opt || {}; const cars = [], meshes = [], mat = CY.vehMat(ctx);
-  const L = loops.map(lp => { const p = lp.pts, cum = [0]; for (let i = 1; i <= p.length; i++) { const a = p[i - 1], b = p[i % p.length]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])) } return { p, cum, len: cum[cum.length - 1], off: lp.off == null ? 1.7 : lp.off } });
+  const L = loops.map(lp => { const p = lp.pts, cum = [0]; for (let i = 1; i <= p.length; i++) { const a = p[i - 1], b = p[i % p.length]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1])) } const off = lp.off == null ? 1.7 : lp.off, kerb = lp.w ? Math.min(1.5, Math.max(0, lp.w / 2 - Math.abs(off) - .55)) : .8; return { p, cum, len: cum[cum.length - 1], off, kerb, mixed: !!lp.w && kerb < 1.25 } });   /* w = road width: wide roads give two-wheelers their own kerbside strip, narrow ones make everybody queue */
   spec.forEach((sp, si) => { const n = sp.n; if (!n) return; const tint = !!sp.cols, im = new THREE.InstancedMesh(VB[sp.type](tint ? 0xffffff : sp.col), mat, n); im.name = 'traffic_' + sp.type; im.frustumCulled = false; im.castShadow = K.q() === 2; im.receiveShadow = true; ctx.group.add(im); meshes.push(im);
     for (let i = 0; i < n; i++) { const li = (si + i) % L.length; if (tint) im.setColorAt(i, _c.setHex(pick(sp.cols)).convertSRGBToLinear()); cars.push({ im, i, li, s: (i / n + si * .13) * L[li].len, v: sp.speed * (.85 + Math.random() * .3), vmax: sp.speed * (.9 + Math.random() * .2), honkT: 0, type: sp.type, wake: i / n, two: !!TWO[sp.type], len: VLEN[sp.type] || 4 }) }
     if (im.instanceColor) im.instanceColor.needsUpdate = true });
-  const at = (lp, s, kerb) => { s = ((s % lp.len) + lp.len) % lp.len; let i = 1; while (lp.cum[i] < s) i++; const a = lp.p[i - 1], b = lp.p[i % lp.p.length], f = (s - lp.cum[i - 1]) / (lp.cum[i] - lp.cum[i - 1]), dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), off = lp.off + (kerb ? Math.sign(lp.off || 1) * .8 : 0); return [a[0] + dx * f - dz / l * off, a[1] + dz * f + dx / l * off, Math.atan2(dx, dz)] };
+  const at = (lp, s, kerb) => { s = ((s % lp.len) + lp.len) % lp.len; let i = 1; while (lp.cum[i] < s) i++; const a = lp.p[i - 1], b = lp.p[i % lp.p.length], f = (s - lp.cum[i - 1]) / (lp.cum[i] - lp.cum[i - 1]), dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), off = lp.off + (kerb ? Math.sign(lp.off || 1) * lp.kerb : 0); return [a[0] + dx * f - dz / l * off, a[1] + dz * f + dx / l * off, Math.atan2(dx, dz)] };
   const api = { cars, density: () => { const h = hourNow(); return h < 5 ? .25 : h < 7 ? .6 : h < 22 ? 1 : .55 }, stopAt: null };
   ctx.upd.push((dt, t) => {
     const P = AV.P, dens = opt.density ? opt.density() : api.density();
@@ -207,7 +207,7 @@ CY.traffic = function (ctx, loops, spec, opt) {
     for (const c of cars) {
       const lp = L[c.li]; if (!c.active) { c.im.setMatrixAt(c.i, ZERO); continue }
       const p = at(lp, c.s, c.two), ahead = at(lp, c.s + 3.2, c.two), dP = Math.hypot(ahead[0] - P.x, ahead[1] - P.z), stop = dP < 2.4 || (api.stopAt && api.stopAt(p[0], p[1]));
-      let gap = 1e9; for (const o of cars) { if (o === c || !o.active || o.li !== c.li || o.two !== c.two) continue; const d = (((o.s - c.s) % lp.len) + lp.len) % lp.len - (o.len + c.len) / 2; if (d < gap) gap = d }   // bumper-to-bumper distance to the vehicle ahead
+      let gap = 1e9; for (const o of cars) { if (o === c || !o.active || o.li !== c.li || (!lp.mixed && o.two !== c.two)) continue; const d = (((o.s - c.s) % lp.len) + lp.len) % lp.len - (o.len + c.len) / 2; if (d < gap) gap = d }   // bumper-to-bumper distance to the vehicle ahead
       const want = stop ? 0 : Math.min(c.vmax, gap < 1.8 ? 0 : gap < 9 ? c.vmax * (gap - 1.8) / 7.2 : c.vmax);
       c.v += (want - c.v) * Math.min(1, dt * (want < c.v ? 4 : 1.2)); c.s += c.v * dt;
       if (dP < 2.4 && t > c.honkT && AV.audio) { c.honkT = t + 3; AV.audio.blip(c.type === 'scooter' ? 660 : 420, .18, 'square', .06); setTimeout(() => AV.audio.blip(c.type === 'scooter' ? 660 : 420, .14, 'square', .05), 200) }

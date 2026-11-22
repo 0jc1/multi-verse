@@ -19,6 +19,7 @@ Ape Town now follows the illustrated masterplan: La Finca gateway and market lan
 * **Recommended (Windows):** double-click `start_server.bat`. It uses Python if installed, otherwise the built-in PowerShell server (`tools/serve.ps1`), and opens `http://localhost:8000/index.html`. Close the black window to stop. Cinema screens and paintings play in-world only this way (http).
 * **Easiest:** double-click `index.html` (works from `file://`). Paintings and the cinema play in a pop-up video viewer instead of on the 3D screens.
 * Mac/Linux: `./start_server.sh`.
+* **Multiplayer (LAN prototype):** start the game with `start_server.sh` / `start_server.bat` (Python needed; they run `tools/mp_server.py`). The console prints a `http://<your-ip>:8000/index.html` address that other people on the same network can open. Everyone in the same world sees each other as an ape with a name tag (your name from NPC chat, otherwise `Guest ####`). The bottom-right badge shows `Online · N here`. Only positions are shared; NPCs, quests, credits and inventory stay per player. Movement is trusted from clients, so don't expose this server to the public internet. Without the relay (double-clicked `index.html`, the PowerShell server, static hosting) the game is single-player as before.
 * Tests: `powershell -ExecutionPolicy Bypass -File tools\tests\run_tests.ps1` (see `docs/TESTING.md`).
 * **Deploy:** upload the whole folder to any static host (GitHub Pages, Netlify, itch.io HTML5, an S3 bucket). No build step, no dependencies besides the bundled `lib/three.min.js` (three.js r128).
 

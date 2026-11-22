@@ -198,6 +198,26 @@ function giveProp(st, name, side) {
 C.softHuman = function (o) { const st = buildHuman(look(o || {})); return st.g };
 C.softLook = look;
 
+/* soft-body stoner: red-eyed cloud-watcher for js/stoners.js, same job as the classic C.stoner().
+   Deterministic per seed: wild hair, mismatched festival clothes, joint in hand, joints always half-lit. */
+C.softStoner = function (seed) {
+  const r = rng((seed | 0) * 131 + 17), pick = a => a[Math.floor(r() * a.length) % a.length];
+  const style = pick(['messy', 'messy', 'long', 'bun', 'blond', 'cap']);
+  const st = buildHuman(look({
+    sp: r() < .5 ? 'human_a' : 'human_b', height: 1.62 + r() * .16,
+    skin: pick([0xf0c8a8, 0xd8a47a, 0xc8946a, 0xb07a50, 0x8a5a3a, 0x6a4028]),
+    hair: pick([0x14100c, 0x4a2c18, 0xd8b860, 0xb0b0b0, 0xa83a1a, 0xe8e0d0]),
+    style, capCol: pick([0x2a8a4a, 0xe8303a, 0xffd84a, 0x7a4ac8]), redEye: true, beard: r() < .32,
+    flower: style === 'long' && r() < .5 ? pick([0xff6ad5, 0xffd84a, 0x7ff0ff]) : null,
+    shirt: r() < .5 ? { fab: pick(['reggae', 'hawaii', 'tiedye']), loose: 1.12 } : { col: pick([0xff6a3a, 0x7a4ac8, 0x2a9a6a, 0xffd84a, 0x2a2a2a]) },
+    pants: { col: pick([0x3a3a52, 0x6a6a5a, 0xc8b088, 0x2a2a2a, 0x4a6a3a, 0x6a2a4a]), shorts: r() < .7 },
+    foot: r() < .65 ? 'flip' : 'sneaker', shoe: pick([0x2a2a2a, 0xe8e8e8, 0xe8303a, 0x3a6ad8, 0x8a5a3a])
+  }));
+  giveProp(st, 'joint', r() < .5 ? 1 : -1);
+  st.g.userData.kind = 'stoner';
+  return st.g;
+};
+
 /* the Giant Hostel crew: same people, same props, now soft-body (classic builders kept in C.classicCrew) */
 C.classicCrew = C.crew;
 const crewSt = (kind, o, props) => { const st = buildHuman(look(o)); st.g.userData.kind = kind; st.g.userData.human = true; (props || []).forEach(p => p(st)); return st.g };
@@ -217,6 +237,7 @@ C.crew = {
   golf: () => crewSt('golf', { sp: 'human_a', height: 1.66, skin: 0xd09a70, hair: 0x14100c, style: 'short', glasses: true, shirt: { col: 0x22222a, loose: 1.14 }, pants: { col: 0x3a3a3a, shorts: true }, shoe: 0x202020 }, [st => giveProp(st, 'phone', 1)]),
   guest: seed => { const L = randomHuman(seed * 31 + 7, {}), st = buildHuman(L); if ((seed * 7) % 3 === 0) giveProp(st, 'beer', -1); st.g.userData.human = true; return st.g }
 };
+
 
 /* ======================= random townsfolk + crowd actors ======================= */
 const HUM = {
@@ -276,10 +297,10 @@ C.prefetchSoft = function () {
     { sp: 'human_a', style: 'blond', shirt: { loose: 1.12 }, pants: { shorts: true }, foot: 'flip' }, { sp: 'human_a', style: 'cap', beard: true, shirt: { loose: 1.14 }, pants: { shorts: true }, foot: 'flip' },
     { sp: 'human_a', style: 'messy', beard: true, pants: { shorts: true }, foot: 'flip' }, { sp: 'human_b', style: 'bun', shirt: { sleeveless: true, loose: 1.02 } }, { sp: 'human_a', style: 'short', shirt: { loose: 1.14 }, pants: { shorts: true } }];
   crew.forEach(o => prefetchLook(look(o)));
-  const q = AV.kit && AV.kit.q ? AV.kit.q() : 2; if (q === 0) return;   // Low keeps the classic crowd beings: nothing to warm
-  /* crowd actors (beings.js) always use the coarse sculpts: chimps (with / without a kufi) and the human shape combos */
-  for (const hat of [false, true]) { const L = randomApe(1, { lod: true }); L.hat = hat ? { style: 'kufi', cols: [0, 0] } : null; const P = [D(L, { part: 'shirt', o: L.shirt.o }), D(L, { part: 'pants', o: L.pants.o }), D(L, { part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D(L, { part: 'hat', style: 'kufi' })] : []); GEN.data(D(L, { part: 'body', cover: P })); P.forEach(GEN.data) }
-  for (const lod of [true]) for (const sp of ['human_a', 'human_b']) for (const shorts of [false, true]) for (const flip of shorts ? [false, true] : [false]) prefetchLook(look({ sp, style: 'short', pants: { shorts }, foot: flip ? 'flip' : 'sneaker', lod }));
+  /* crowd actors (beings.js): coarse sculpts on Medium / High, full sculpts on Low (beings.js passes lod: undefined there) */
+  const q = AV.kit && AV.kit.q ? AV.kit.q() : 2, crowdLod = q !== 0;
+  for (const hat of [false, true]) { const L = randomApe(1, { lod: crowdLod }); L.hat = hat ? { style: 'kufi', cols: [0, 0] } : null; const P = [D(L, { part: 'shirt', o: L.shirt.o }), D(L, { part: 'pants', o: L.pants.o }), D(L, { part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D(L, { part: 'hat', style: 'kufi' })] : []); GEN.data(D(L, { part: 'body', cover: P })); P.forEach(GEN.data) }
+  for (const lod of [crowdLod]) for (const sp of ['human_a', 'human_b']) for (const shorts of [false, true]) for (const flip of shorts ? [false, true] : [false]) prefetchLook(look({ sp, style: 'short', pants: { shorts }, foot: flip ? 'flip' : 'sneaker', lod }));
 };
 setTimeout(() => { try { C.ready().then(() => C.prefetchSoft()) } catch (e) { console.warn(e) } }, 400);
 })(window.AV);

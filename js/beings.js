@@ -22,12 +22,15 @@ const SP = {
 };
 const SHIRTS = ['#ff4ad2', '#ffd84a', '#3ad8ff', '#7aff8a', '#ff8a3a', '#e83a30', '#ffffff', '#2a2a3a', '#8a3ab8', '#2a6ad8'], PANTS = ['#2a3a6a', '#2a2a2a', '#c8b088', '#5a3a2a', '#3a6a3a', '#6a2a4a'];
 
-/* ---------- build one being (SkinnedMesh) ----------
-   opt.soft: aliens become soft-body characters (chars_real.js C.alienActor: sculpted Zib / Orbo builds with spring-bone belly,
-   cranium and antennae, IK feet). They return { root, clips, actor } instead of a forge mesh; spawn() drives them the same way. */
+/* ---------- build one being ----------
+   Every species is a soft-body character now: humans + apes via chars_soft.js C.softActor (realistic townsfolk /
+   chimp villager builds, spring-bone jiggle, IK feet), aliens via chars_real.js C.alienActor (sculpted Zib / Orbo
+   builds with spring-bone belly, cranium and antennae). The forge SkinnedMesh remains only as an emergency
+   fallback if the soft pipeline is missing. */
 BE.make = function (kind, seed, over, opt) {
-  /* humans + apes, soft body (chars_soft.js C.softActor): the realistic townsfolk / chimp villager builds, same actor API as the aliens */
-  if (opt && opt.soft && (kind === 'human' || kind === 'ape') && AV.chars.softActor) {
+  const softOK = AV.chars && (AV.chars.softActor || AV.chars.alienActor);
+  /* humans + apes, soft body (chars_soft.js C.softActor) */
+  if (softOK && (kind === 'human' || kind === 'ape') && AV.chars.softActor) {
     const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false }); return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
   }
   const r = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(Math.max(1, (seed * 7919) | 0)), base = SP[kind] || SP.human, sc = .88 + r() * .26;
@@ -93,7 +96,7 @@ BE.make = function (kind, seed, over, opt) {
     sph('head', skin, wp('head', 0, S.head[1] * .9, 0), S.head); sph('head', eye, wp('head', 0, S.head[1] * 1.0, S.head[2] * .85), [.07, .1, .03]); sph('head', glow, wp('head', 0, S.head[1] * 1.0, S.head[2] * .9), .025);
     for (const a of ['antL', 'antR']) { const s = a === 'antL' ? -1 : 1, top = wp(a, s * .12, .34, 0); seg(a, skin, wp(a, 0, -.05, 0), top, .02, .012); sph(a, glow, top, .05) }
     limb(skin, skin, glow, glow, false); name = pick(r, ['Mind Jelly', 'The Entity', 'Glimmer', 'Fractal Fred', 'Aura Ann', 'Machine Elf']);
-  } else if (opt && opt.soft && AV.chars.alienActor) {   /* alien, soft body: same palette draws as the forge alien below */
+  } else if (softOK && AV.chars.alienActor) {   /* alien / robot / frog / spirit, soft body: sculpted Zib / Orbo builds, species shows in palette + suit trim */
     const A = AV.chars.alienActor({ type: r() < .6 ? 'zib' : 'orbo', skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), shadow: false });
     A.root.scale.setScalar(.9 + (sc - .88) * .75); const ch = A.st.K.legs.L;
     return { root: A.root, clips: [], actor: A, name: pick(r, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']), kind, S: { thigh: Math.hypot(ch.hj[1] - ch.kn[1], ch.hj[2] - ch.kn[2]), shin: Math.hypot(ch.kn[1] - ch.an[1], ch.kn[2] - ch.an[2]) } };
@@ -155,8 +158,8 @@ BE.chat = function (b) {
 BE.spawn = function (ctx, specs) {
   const W = () => AV.W, out = [], shadow = false;   /* V0.9.8: no shadow pass for crowds (halves their draw calls) */
   specs.forEach((s, i) => {
-    /* soft-body aliens on Medium / High; Low keeps the light forge aliens for weak devices */
-    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: ctx.q > 0, lod: true, shells: ctx.q === 2 ? 6 : 0 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
+    /* soft bodies everywhere, every species, every quality level */
+    const made = BE.make(s.kind, (s.seed || 1) * 31 + i * 7 + ctx.id.length, s.over, { soft: true, lod: ctx.q === 0 ? undefined : true, shells: ctx.q === 2 ? 6 : 0 }), A = made.actor, h = new THREE.Group(); h.position.set(s.x, s.y || 0, s.z); h.rotation.y = s.yaw || 0; ctx.group.add(h);
     if (!A) F.dress(made.root, { shadow }).forEach(m => { if (m.userData.glowBase && AV.gfx) AV.gfx.reg(ctx, m, 'glow', m.userData.glowK) }); h.add(made.root);
     const mixer = A ? A.mixer : new THREE.AnimationMixer(made.root), acts = A ? A.acts : {}; if (!A) made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
     if (A && s.mode === 'float') A.air = true;   // zero g: legs dangle instead of planting

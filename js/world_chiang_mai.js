@@ -547,8 +547,8 @@ AV.registerWorld({
     /* V0.9.7: rigged locals + backpackers (more detailed than the instanced street crowd): hostel street, Night Bazaar, Tha Phae Gate */
     AV.beings.spawn(ctx, [[30, 44, 12], [6, 44, 10], [194, 30, 12], [188, 14, 9], [132, 8, 10], [60, 44, 10], [200, 42, 10], [-20, 44, 10], [150, 4, 8]].slice(0, AV.beings.n(ctx, 3, 6, 9)).map(([x, z, r], i) => ({ kind: 'human', x, z, area: { x, z, r }, seed: 90 + i })));
     /* traffic (drives on the left) */
-    const loops = [{ pts: [[-94, -94], [94, -94], [94, 94], [-94, 94]], off: -1.6 }, { pts: [[-RING, -RING], [RING, -RING], [RING, RING], [-RING, RING]], off: -2 }, { pts: [[RING, 0], [244, 0]], off: -2.4 }, { pts: [[0, -92], [0, 92]], off: -2 }, { pts: [[246, -150], [246, 150]], off: -2 }];
-    if (md !== 'lantern') loops.push({ pts: [[-92, 0], [92, 0]], off: -2.4 });
+    const loops = [{ pts: [[-94, -94], [94, -94], [94, 94], [-94, 94]], off: -1.6, w: 6 }, { pts: [[-RING, -RING], [RING, -RING], [RING, RING], [-RING, RING]], off: -2, w: 8 }, { pts: [[RING, 0], [244, 0]], off: -2.4, w: 10 }, { pts: [[0, -92], [0, 92]], off: -2, w: 8 }, { pts: [[246, -150], [246, 150]], off: -2, w: 8 }];
+    if (md !== 'lantern') loops.push({ pts: [[-92, 0], [92, 0]], off: -2.4, w: 10 });
     /* V1.0 fleet: real-world paint palettes (white/silver/grey/black dominate Thai car colours; Chiang Mai songthaews are mostly red) */
     const CARC = [0xf2f2f0, 0xf2f2f0, 0xe8e6e0, 0xf2f2f0, 0xb8bcc0, 0xb8bcc0, 0xa0a4a8, 0x6a6e72, 0x5a5e62, 0x15171a, 0x15171a, 0x9a1a1a, 0x1f3e72, 0x7a6a52, 0x2a4a3a];
     const SCOC = [0x15171a, 0x15171a, 0xf0f0ec, 0xb01e1e, 0x1f4e9a, 0x8a8e92, 0xe8c8c8, 0x6a7a5a, 0xd8c8a0, 0x2a2c30];

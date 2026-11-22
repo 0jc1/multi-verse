@@ -75,3 +75,16 @@ Honest list. Nothing here is hidden behind a "coming soon" that looks like a fea
 - Jungle Dub is about twice as wide; on High the centre view is ~0.9M triangles (incl. the shadow pass) — fine on the Iris Xe in earlier measurements at that size, but not re-measured on the real GPU this stage.
 - The instanced Chiang Mai street crowd keeps its light geometry (a heavier version was tried and reverted, see DEVELOPMENT_PROGRESS).
 - Headless test timings were relaxed (travel 30 s, hostel walk 60 s) because SwiftShader renders the bigger worlds at ~1.5 fps; this is a test-harness limit, not in-game behaviour.
+
+## V0.9.9 Vienna
+- Buildings are stylised boxes with painted facades and gable roofs (no ornament geometry, no interiors except the bar fronts, Flex and the market stalls). Stephansdom, Karlskirche, Schönbrunn and Belvedere are simplified silhouettes, not detailed replicas.
+- The canal / Danube are not swimmable; the beaches are for lounging. The Kahlenberg vineyards are painted rows.
+- Night windows do not light up individually (only shopfronts glow).
+- Not yet measured on the real laptop GPU or a real phone.
+
+## V1.0 kit pass (Jungle Dub slice)
+* **Places from the kit map are stylised, not copies of the painting:** the River Bar, Bazaar, Dub Lab, Temple and Mushroom Grove are built from simple shapes, consistent with the rest of Jungle Dub. The Temple's carved face is a simple stone head, not a sculpted model.
+* **The band on the Jungle Rave stage is the same trio as Ape Town's Lotus Stage:** gorilla bass, Ztonedape, orangutan **sax**. The kit describes the orangutan with a tuba/keys; the existing game's character data (sax) was kept because it takes precedence.
+* **Not built yet from the kit:** Lumina Festival (2 maps), Atlantis, Madrid. Vienna 2000s already exists (V0.9.9) and was built from the same map as the kit's `vienna_2000s.png`.
+* **The kit's own checks were not run:** `tools/validate_content.py` and `starter/tests` need Python and Node, which are not installed. They only check the kit's standalone data and logic, not the game.
+* **Alien roommates (5 working labels in the kit) are not built,** because the kit says their looks are not approved yet.

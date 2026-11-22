@@ -18,7 +18,16 @@ const AP = (a, r) => polar(a * Math.PI / 180, r);
 const ZONES = { lagoon: { c: AP(150, 82), r: 16 }, roots: { c: AP(30, 78), r: 14 }, tree: { c: AP(95, 74), r: 11 }, heal: { c: AP(-60, 75), r: 12 }, falls: { c: AP(210, 88), r: 10 } };
 const LAG = { x: ZONES.lagoon.c[0], z: ZONES.lagoon.c[1], r: 15 };
 const PONDS = [{ x: ZONES.heal.c[0] + 5, z: ZONES.heal.c[1] - 4, r: 4.5 }, { x: ZONES.falls.c[0] - 3, z: ZONES.falls.c[1] - 2, r: 5 }, { x: ZONES.roots.c[0] + 10, z: ZONES.roots.c[1] + 9, r: 3.5 }, { x: AP(-10, 62)[0], z: AP(-10, 62)[1], r: 4 }];
-const TRAILS = [[AP(90, 33), AP(95, 48), AP(95, 64)], [AP(90, 33), AP(60, 44), AP(30, 56), AP(30, 66)], [AP(200, 33), AP(170, 45), AP(150, 56), AP(150, 64)], [AP(200, 33), AP(215, 48), AP(210, 60), AP(210, 79)], [AP(-40, 37), AP(-55, 52), AP(-60, 64)]];
+const TRAILS = [[AP(90, 33), AP(95, 48), AP(95, 64)], [AP(90, 33), AP(60, 44), AP(30, 56), AP(30, 66)], [AP(200, 33), AP(170, 45), AP(150, 56), AP(150, 64)], [AP(200, 33), AP(215, 48), AP(210, 60), AP(210, 79)], [AP(-40, 37), AP(-55, 52), AP(-60, 64)],
+  /* V1.0 kit map: cinema bridge -> Mushroom Grove -> Dub Lab; waterfall pool -> Jungle Temple; south bridge -> River Bar */
+  [AP(-40, 33), AP(-18, 39), AP(10, 36)], [[0, -37], AP(-112, 40)], [AP(90, 27.5), AP(118, 26.6)]];
+/* V1.0 kit map places (polar degrees / radius from the dance floor) */
+const V1 = { bar: AP(125, 29.5), bazaarA: AP(90, 33), bazaarB: AP(60, 44), lab: AP(10, 40), temple: AP(-115, 46), grove: AP(-18, 44.5) };
+/* V1.0 Bass Check quest (kit data/quests.json dub_soundcheck): talk to the gorilla bassist -> fetch the dub plate at the Dub Lab -> bring it to the stage */
+AV.quests.define('dub_bass_check', { giver: 'jd_gorilla', turnIn: 'jd_gorilla', turnName: ['the gorilla bassist at the Jungle Rave stage', 'el gorila bajista en el escenario Jungle Rave'], title: ['Bass Check', 'Prueba de bajo'],
+  hint: ['Fetch the fresh dub plate from the Dub Lab (cross the cinema bridge, follow the trail past the Mushroom Grove) and bring it to the gorilla bassist on the Jungle Rave stage.', 'Recoge el dub plate en el Dub Lab (cruza el puente del cine y sigue el sendero junto a la Arboleda de Setas) y llévaselo al gorila bajista del escenario Jungle Rave.'],
+  ready: S => ((S.items || {}).dub_plate || 0) > 0,
+  reward() { AV.bag.remove('dub_plate'); AV.txn(45, 'Quest: Bass Check'); AV.jd && (AV.jd.cheer = AV.now() + 20); AV.vitals && AV.vitals.add(0, 15); return tr('The plate drops, the sub-bass rolls in like thunder and the whole jungle bounces. +45 credits.', 'El plato suena, el subgrave entra como un trueno y toda la jungla rebota. +45 créditos.') } });
 const GAPS = [95, 30, 150, 210, -55];                                         // rim boulders leave these angles open for the trails
 const faceYaw = (fx, fz, tx, tz) => Math.atan2(-(tx - fx), -(tz - fz));      // player yaw looking from f to t
 const npcYaw = (fx, fz, tx, tz) => Math.atan2(tx - fx, tz - fz);            // model rotation facing t
@@ -218,6 +227,112 @@ AV.registerWorld({
     ctx.T.push({ x: 0, z: 28, r: 3, label: () => tr('Portal arch: back to Ape Town', 'Arco: volver a Ape Town'), fn: () => AV.travel('ape_town', 'jungle_dub') });
     occ.push([0, 30, 4]);
 
+    /* =======================================================================================
+       V1.0 (Expansion Kit, reference_maps/jungle_dub_world.png): River Bar, Bamboo Bazaar, Dub Lab, Jungle Temple, Mushroom Grove,
+       the Stone Ape Band on the Jungle Rave main stage + the Bass Check quest. Built before the vegetation so plants keep clear (occ).
+       ======================================================================================= */
+    const jd = AV.jd = { cheer: 0 };
+    const loc = (x, z, ry, lx, lz) => [x + lx * Math.cos(ry) + lz * Math.sin(ry), z - lx * Math.sin(ry) + lz * Math.cos(ry)];
+    const C = AV.chars, S0 = () => AV.S;
+    /* --- Stone Ape Band on the main stage (same trio + look as Ape Town's Lotus Stage) --- */
+    const band = [[C.gorilla(), -3.6, SZ + .5, 0, 'jd_gorilla'], [C.ztone(), 0, SZ + 2.05, .5, 'jd_ztone'], [C.orangutan(), 3.6, SZ + .5, 1, 'jd_orangutan']].map(b => { const hold = new THREE.Group(); hold.position.set(SX + b[1], SY + .9, b[2]); b[0].userData.baseY = 0; hold.add(b[0]); grp.add(hold); return b });
+    const bandTalk = {
+      jd_ztone: { id: 'jd_ztone', name: ['Ztonedape · Stone Ape Band', 'Ztonedape · Stone Ape Band'], first: ['Yo! Welcome to the Jungle Rave. Stone Ape Band in the house — dub, reggae, hip-hop, live.', '¡Yo! Bienvenido al Jungle Rave. La Stone Ape Band en la casa: dub, reggae, hip-hop, en directo.'],
+        back: ['You again! The jungle likes you.', '¡Tú otra vez! A la jungla le caes bien.'],
+        opts: [{ label: ['What’s playing tonight?', '¿Qué suena esta noche?'], say: ['The sound system runs till sunrise. We jump on when the bass is right — ask our bassist, he’s fussy.', 'El sound system suena hasta el amanecer. Subimos cuando el bajo está bien: pregúntale a nuestro bajista, es muy exigente.'] },
+          { label: ['Play one for me!', '¡Tocad una para mí!'], say: ['One for the people! Hands up!', '¡Una para la gente! ¡Manos arriba!'], fn: () => { jd.cheer = AV.now() + 10; AV.vitals && AV.vitals.add(0, 6) } },
+          { label: ['Where are you from?', '¿De dónde sois?'], say: ['Ape Town’s Lotus Stage is home. Here is where we get loud.', 'El Escenario de Loto de Ape Town es nuestra casa. Aquí es donde subimos el volumen.'] }] },
+      jd_gorilla: { id: 'jd_gorilla', name: ['Gorilla bassist · Stone Ape Band', 'Gorila bajista · Stone Ape Band'], first: ['(tunes the upright bass) …The low end ain’t right tonight.', '(afina el contrabajo) …El grave no está bien esta noche.'],
+        back: S => (S.quests || {}).dub_bass_check === 'done' ? ['Felt that drop? That’s your plate, friend.', '¿Sentiste ese drop? Es tu plato, amigo.'] : ['Still waiting on that dub plate.', 'Sigo esperando ese dub plate.'],
+        opts: [{ label: ['Need a hand with the bass?', '¿Te ayudo con el bajo?'], say: S => { const q = (S.quests || {}).dub_bass_check; return !q ? ['The Dub Lab cut us a fresh plate. Bring it here and I’ll pay you. Lab’s past the cinema bridge, by the glowing mushrooms.', 'El Dub Lab nos grabó un plato nuevo. Tráelo y te pago. El Lab está pasando el puente del cine, junto a las setas brillantes.'] : q === 'done' ? ['All good now. Bass is fat, crowd is happy.', 'Todo bien. El bajo suena gordo y la gente está feliz.'] : ['The plate, from the Dub Lab. Past the cinema bridge.', 'El plato, del Dub Lab. Pasando el puente del cine.'] }, fn: () => { if (AV.quests.canStart('dub_bass_check', 'jd_gorilla')) AV.quests.start('dub_bass_check'); else AV.quests.onTalk('jd_gorilla') } },
+          { label: ['What makes good dub?', '¿Qué hace bueno al dub?'], say: ['Space. Leave room for the echo. The silence is part of the bassline.', 'Espacio. Deja sitio al eco. El silencio es parte de la línea de bajo.'] }] },
+      jd_orangutan: { id: 'jd_orangutan', name: ['Orangutan sax · Stone Ape Band', 'Orangután saxo · Stone Ape Band'], first: ['(lowers the sax) Ah, an audience! Tell your friends. Tell your enemies.', '(baja el saxo) ¡Ah, público! Díselo a tus amigos. Y a tus enemigos.'],
+        back: ['My favourite listener returns.', 'Vuelve mi oyente favorito.'],
+        opts: [{ label: ['Tell me a joke', 'Cuéntame un chiste'], say: () => AV.pick([['Why do orangutans love brass? Long arms, longer notes.', '¿Por qué a los orangutanes les encanta el metal? Brazos largos, notas más largas.'], ['I tried playing quietly once. Worst three seconds of my life.', 'Una vez intenté tocar bajito. Los peores tres segundos de mi vida.']]) },
+          { label: ['Any tips for the jungle?', '¿Algún consejo para la jungla?'], say: ['River Bar for a cold one, the Temple to slow down, and never eat the glowing mushrooms. Look, don’t taste.', 'El River Bar para algo frío, el Templo para bajar el ritmo y nunca te comas las setas brillantes. Mira, no pruebes.'] }] } };
+    band.forEach(b => { const x = SX + b[1], z = SZ + 3.4; ctx.T.push({ x, z, r: 1.9, label: () => tr('Talk to ', 'Hablar con ') + tr(bandTalk[b[4]].name[0], bandTalk[b[4]].name[1]), fn: () => { AV.talk.open(bandTalk[b[4]]); if (b[4] === 'jd_gorilla') setTimeout(() => AV.quests.onTalk('jd_gorilla'), 500) } }) });
+    ctx.upd.push((dt, t) => { const on = AV.audio && AV.audio.on && (AV.audio.ok || (AV.audio.track && AV.audio.track.active)), beat = on ? AV.audio.beat : t * 1.2, d = Math.hypot(AV.P.x - SX, AV.P.z - SZ);
+      if (d > 70) return; const energy = jd.cheer > AV.now() ? 1.5 : 1; band.forEach(b => C.animate(b[0], t, beat, energy, b[3] * .5)) });
+
+    /* --- River Bar: thatched riverside bar (south-west bank), bartender Ras Mo, real menu --- */
+    { const [bx, bz] = V1.bar, by = H(bx, bz), ry = npcYaw(bx, bz, 0, 0), P = (lx, lz) => loc(bx, bz, ry, lx, lz);
+      B.misc.add(MT.wood, A.geo('box'), 0xb08a5a, K.M(bx, by + .12, bz, 7.6, .3, 5.2, 0, ry, 0));
+      { const [x, z] = P(0, 1.2); B.misc.add(MT.wood, A.geo('box'), 0x8a5a32, K.M(x, by + .55, z, 5, .9, .7, 0, ry, 0)); B.misc.add(MT.wood, A.geo('box'), 0xd8b080, K.M(x, by + 1.02, z, 5.3, .08, .9, 0, ry, 0)) }
+      { const [x, z] = P(0, -1.7); B.misc.add(MT.wood, A.geo('box'), 0x6a4a2a, K.M(x, by + 1.1, z, 5, 2, .4, 0, ry, 0)); for (let k = 0; k < 9; k++) { const [px, pz] = P(-2 + k * .5, -1.45); B.misc.add(MT.v, A.geo('cyl'), [0x2a7a3a, 0x9ad8ff, 0x5a2a14, 0xffd23a][k % 4], K.M(px, by + 1.55, pz, .08, .3, .08), .6) } }
+      for (const [lx, lz] of [[-3.4, -2.3], [3.4, -2.3], [-3.4, 2.3], [3.4, 2.3]]) { const [x, z] = P(lx, lz); B.misc.add(MT.v, A.geo('cyl6'), 0x8aa83a, K.M(x, by + 1.9, z, .16, 3.6, .16)); ctx.circles.push([x, z, .25]) }
+      B.misc.add(thatch, A.geo('tent'), 0xffffff, K.M(bx, by + 3.9, bz, 5, 1.6, 3.6, 0, ry, 0));
+      for (const lx of [-1.8, 0, 1.8]) { const [x, z] = P(lx, 2.15); B.misc.add(MT.wood, A.geo('cyl'), 0xe8c030, K.M(x, by + .45, z, .28, .7, .28)) }
+      for (let k = -2; k <= 2; k++) { const [x, z] = P(k * 1.1, 1.2); ctx.circles.push([x, z, .55]) } for (let k = -2; k <= 2; k++) { const [x, z] = P(k * 1.1, -1.7); ctx.circles.push([x, z, .5]) }
+      { const [a0, a1] = [P(-3.4, 2.3), P(3.4, 2.3)]; K.lanterns(ctx, [[a0[0], by + 3.4, a0[1]], [a1[0], by + 3.4, a1[1]]], { cols: [0xe83a30, 0xffd23a, 0x30c060, 0xff4ad2], per: 10, sag: .35 }) }
+      { const [sx, sz] = P(-4.6, 2.8); ctx.sign('RIVER BAR · drinks · chill · sunset jams', sx, H(sx, sz) + 3.2, sz, ry, 4.8, '#ffd23a', { posts: true }) }
+      occ.push([bx, bz, 6]);
+      const [mx, mz] = P(0, -.35), mo = AV.beings.spawn(ctx, [{ kind: 'ape', x: mx, y: by + .27, z: mz, yaw: ry, mode: 'idle', name: 'Ras Mo', seed: 901 }])[0];
+      const [cx, cz] = P(0, 2.6);
+      const barV = jd.barVendor = { id: 'dub_riverbar', name: ['River Bar', 'River Bar'], x: cx, z: cz, reach: 6, greet: ['Ras Mo: “Cold drinks, warm river. What can I get you?”', 'Ras Mo: “Bebidas frías, río templado. ¿Qué te pongo?”'], again: ['Ras Mo: “Another %i? I remember my regulars.”', 'Ras Mo: “¿Otro %i? Me acuerdo de mis clientes.”'],
+        items: [['water', 8], ['beer', 14], ['rum_cola', 30], ['coconut', 12], ['veggie_burger', 22]] };
+      const barTalk = jd.barTalk = { id: 'ras_mo', name: ['Ras Mo · River Bar', 'Ras Mo · River Bar'], first: ['Welcome to the River Bar! First time in the jungle? Sit, breathe, the river does the rest.', '¡Bienvenido al River Bar! ¿Primera vez en la jungla? Siéntate, respira; el río hace el resto.'],
+        back: S => { const v = (S.v1.vend.dub_riverbar || {}); return v.last ? ['Ras Mo: “Back for another ' + (AV.ITEMS[v.last] ? AV.ITEMS[v.last].n[0] : v.last) + '? Ha!”', 'Ras Mo: “¿Vienes a por otro ' + (AV.ITEMS[v.last] ? AV.ITEMS[v.last].n[1] : v.last) + '? ¡Ja!”'] : ['Ras Mo: “Good to see you again, bredren.”', 'Ras Mo: “Me alegra verte otra vez, hermano.”'] },
+        opts: [{ label: ['What’s happening tonight?', '¿Qué pasa esta noche?'], say: () => (AV.nightK || 0) > .3 ? ['The sound system is cooking and the Stone Ape Band is on the main stage. Go dance!', 'El sound system está a tope y la Stone Ape Band está en el escenario principal. ¡Ve a bailar!'] : ['Sunset jam on the deck later. The band warms up on the main stage all day.', 'Más tarde, jam al atardecer en el muelle. La banda calienta en el escenario principal todo el día.'] },
+          { label: ['Show me the menu', 'Enséñame la carta'], fn: () => AV.shop.open(barV) },
+          { label: ['Any jobs?', '¿Hay algún trabajo?'], say: S => { const q = (S.quests || {}).dub_bass_check; return !q ? ['The gorilla bassist on the main stage is grumbling about his low end. Go ask him — he pays.', 'El gorila bajista del escenario principal se queja de sus graves. Pregúntale: paga bien.'] : q === 'done' ? ['Heard the drop after your Bass Check. My glasses are still rattling.', 'Escuché el drop después de tu Prueba de bajo. Mis vasos siguen temblando.'] : ['Dub Lab’s past the cinema bridge. Bring the plate to the band.', 'El Dub Lab está pasando el puente del cine. Lleva el plato a la banda.'] } }] };
+      if (mo && mo.tg) { mo.tgFixed = true; mo.tg.x = cx; mo.tg.z = cz; mo.tg.r = 2.4; mo.tg.label = () => tr('River Bar: talk to Ras Mo (menu)', 'River Bar: hablar con Ras Mo (carta)'); mo.tg.fn = () => { AV.visit('dub_river_bar'); AV.talk.open(barTalk) } }
+      else ctx.T.push({ x: cx, z: cz, r: 2.4, label: () => tr('River Bar: talk to Ras Mo (menu)', 'River Bar: hablar con Ras Mo (carta)'), fn: () => { AV.visit('dub_river_bar'); AV.talk.open(barTalk) } }) }
+
+    /* --- Bamboo Bazaar: craft stalls along the trail to Roots Village --- */
+    { const [ax, az] = V1.bazaarA, [bx2, bz2] = V1.bazaarB, dx = bx2 - ax, dz = bz2 - az, l = Math.hypot(dx, dz), px = -dz / l, pz = dx / l, cloth = [0xff4ad2, 0x30c060, 0xffd23a, 0xe83a30, 0x7ff0ff];
+      const stall = (t, side, i) => { const x = ax + dx * t + px * 3.6 * side, z = az + dz * t + pz * 3.6 * side, y = H(x, z), ry = npcYaw(x, z, x - px * side, z - pz * side), P = (lx, lz) => loc(x, z, ry, lx, lz);
+        { const [cx, cz] = P(0, .5); B.misc.add(MT.wood, A.geo('box'), 0xb08a5a, K.M(cx, y + .5, cz, 2.4, 1, .7, 0, ry, 0)); for (let k = 0; k < 4; k++) { const [ix, iz] = P(-.8 + k * .53, .5); B.misc.add(MT.v, A.geo(k % 2 ? 'sph' : 'box'), cloth[(i + k) % 5], K.M(ix, y + 1.12, iz, .2, .2, .2), .3) } }
+        for (const [lx, lz] of [[-1.3, -.6], [1.3, -.6], [-1.3, 1], [1.3, 1]]) { const [qx, qz] = P(lx, lz); B.misc.add(MT.v, A.geo('cyl6'), 0x8aa83a, K.M(qx, y + 1.25, qz, .09, 2.5, .09)) }
+        B.misc.add(MT.v, A.geo('box'), cloth[i % 5], K.M(x, y + 2.55, z, 3, .08, 2, .12, ry, 0), .15); ctx.circles.push([x, z, 1.4]); occ.push([x, z, 2.6]); return P };
+      const P0 = stall(.42, 1, 0); stall(.64, 1, 1); stall(.86, 1, 2); stall(.5, -1, 3); stall(.78, -1, 4);
+      const mid = [ax + dx * .64 + px * 1.4, az + dz * .64 + pz * 1.4];
+      const [sx, sz] = [ax + dx * .3 + px * 4.6, az + dz * .3 + pz * 4.6]; ctx.sign('THE BAMBOO BAZAAR · art · crafts · clothes', sx, H(sx, sz) + 3.2, sz, npcYaw(sx, sz, ax, az), 4.6, '#ff8ac0', { posts: true });
+      const [vx, vz] = P0(0, -.3), lua = AV.beings.spawn(ctx, [{ kind: 'human', x: vx, y: H(vx, vz), z: vz, yaw: npcYaw(vx, vz, mid[0], mid[1]), mode: 'idle', name: 'Maker Lua', seed: 902 }])[0];
+      const bazV = jd.bazaarVendor = { id: 'dub_bazaar', name: ['Bamboo Bazaar', 'Bazar de Bambú'], x: ax + dx * .42 + px * 1.6, z: az + dz * .42 + pz * 1.6, reach: 6, greet: ['Maker Lua: “All handmade in the village. Have a look!”', 'Maker Lua: “Todo hecho a mano en la aldea. ¡Echa un vistazo!”'],
+        items: [['flower_garland', 15], ['beads', 18], ['bamboo_flute', 35], ['elephant_pants', 45]] };
+      const open = () => { AV.visit('dub_bazaar'); AV.shop.open(bazV) };
+      if (lua && lua.tg) { lua.tgFixed = true; lua.tg.x = bazV.x; lua.tg.z = bazV.z; lua.tg.r = 2.4; lua.tg.label = () => tr('Bamboo Bazaar: browse crafts (Maker Lua)', 'Bazar de Bambú: ver artesanía (Maker Lua)'); lua.tg.fn = open } else ctx.T.push({ x: bazV.x, z: bazV.z, r: 2.4, label: () => tr('Bamboo Bazaar: browse crafts', 'Bazar de Bambú: ver artesanía'), fn: open }) }
+
+    /* --- Dub Lab: studio hut with ON AIR light, mixing desk, the dub plate for the Bass Check --- */
+    { const [lx0, lz0] = V1.lab, y = H(lx0, lz0), ry = npcYaw(lx0, lz0, 0, 0), P = (a, b) => loc(lx0, lz0, ry, a, b);
+      B.misc.add(MT.wood, A.geo('box'), 0xc8a070, K.M(lx0, y + 1.5, lz0, 6, 3.2, 5, 0, ry, 0)); B.misc.add(thatch, A.geo('tent'), 0xffffff, K.M(lx0, y + 3.6, lz0, 4.4, 1.8, 3.8, 0, ry, 0));
+      { const [x, z] = P(0, 2.52); B.misc.add(MT.v, A.geo('box'), 0x2a1a10, K.M(x, y + 1.05, z, 1.2, 2.1, .1, 0, ry, 0)) }
+      { const [x, z] = P(1.9, 2.55); B.misc.add(MT.v, A.geo('box'), 0xff2a2a, K.M(x, y + 2.5, z, 1.1, .35, .08, 0, ry, 0), 1.2) }
+      for (const s of [-1, 1]) { const [x, z] = P(s * 2.4, 3); B.misc.add(MT.v, A.geo('box'), 0x16141a, K.M(x, y + .8, z, .9, 1.6, .8, 0, ry, 0)); B.misc.add(MT.v, A.geo('cyl'), 0x3a3a44, K.M(x, y + .9, z + 0, .3, .05, .3, Math.PI / 2, ry, 0)); ctx.circles.push([x, z, .55]) }
+      ctx.circles.push([lx0, lz0, 3.1]); occ.push([lx0, lz0, 5.5]);
+      { const [sx, sz] = P(-3.6, 4); ctx.sign('DUB LAB · studio · mixing · sound system', sx, H(sx, sz) + 3, sz, ry, 4.4, '#7ff0c8', { posts: true }) }
+      const [tx, tz] = P(0, 4.1);
+      ctx.T.push({ x: tx, z: tz, r: 2.3, label: () => (AV.S.quests || {}).dub_bass_check === 'active' && !AV.bag.count('dub_plate') ? tr('Dub Lab: collect the fresh dub plate', 'Dub Lab: recoger el dub plate') : tr('Dub Lab: listen at the mixing desk', 'Dub Lab: escuchar en la mesa de mezclas'),
+        fn: () => { AV.visit('dub_lab'); const S = AV.S; if ((S.quests || {}).dub_bass_check === 'active' && !AV.bag.count('dub_plate')) { AV.bag.add('dub_plate'); AV.toast(tr('The engineer hands you a warm acetate: “Careful, one-off cut. Take it to the band.”', 'El ingeniero te da un acetato caliente: “Cuidado, es único. Llévaselo a la banda.”')) }
+          else { AV.audio && [55, 82, 55, 110].forEach((f, i) => setTimeout(() => AV.audio.blip(f, .35, 'sine', .3), i * 260)); AV.toast(AV.pick([tr('Spring reverb, tape delay, a bassline that loops forever. Pure dub science.', 'Reverb de muelle, delay de cinta, un bajo que se repite para siempre. Ciencia dub pura.'), tr('The engineer drops the drums out. Only bass and echo. Your chest hums.', 'El ingeniero quita la batería. Solo bajo y eco. Te vibra el pecho.')])); AV.vitals && AV.vitals.add(0, 4) } } }) }
+
+    /* --- Jungle Temple: stepped stone temple with the carved ape face, sound-healing ceremony --- */
+    { const [tx0, tz0] = V1.temple, y = H(tx0, tz0), ry = npcYaw(tx0, tz0, 0, -30), P = (a, b) => loc(tx0, tz0, ry, a, b);
+      [[9, 2.4, 0], [7, 1.3, 1.85], [5, 1.3, 3.15]].forEach(([w, h, yy]) => B.rim.add(MT.stone, A.geo('box'), 0x8a8a6a, K.M(tx0, y + yy - (yy ? 0 : .6), tz0, w, h, w, 0, ry, 0)));
+      { const [x, z] = P(0, -.6); B.rim.add(MT.stone, A.geo('sph'), 0xa8a07a, K.M(x, y + 5.6, z, 1.6, 2.1, 1.5)); B.rim.add(MT.stone, A.geo('cone'), 0xc8a040, K.M(x, y + 7.9, z, 1.1, 1.4, 1.1));
+        for (const s of [-1, 1]) { const [ex, ez] = P(s * .55, .62); B.misc.add(MT.v, A.geo('sph'), 0x7ff0ff, K.M(ex, y + 5.9, ez, .18, .12, .1), 1.3); const [rx2, rz2] = P(s * 1.55, -.6); B.rim.add(MT.stone, A.geo('sph'), 0x9a926e, K.M(rx2, y + 5.8, rz2, .45, .6, .3)) }
+        { const [mx2, mz2] = P(0, .75); B.rim.add(MT.stone, A.geo('sph'), 0xb8b08a, K.M(mx2, y + 5.05, mz2, .95, .7, .7)); const [nx2, nz2] = P(0, 1.38); B.misc.add(MT.v, A.geo('box'), 0x3a3428, K.M(nx2, y + 4.85, nz2, .6, .07, .05, 0, ry, 0)) } }
+      for (const s of [-1, 1]) { const [x, z] = P(s * 2.6, 4.9); B.misc.add(MT.stone, A.geo('cyl6'), 0x7a7a5a, K.M(x, y + 1, z, .3, 2, .3)); B.misc.add(MT.v, A.geo('sph'), 0xffa040, K.M(x, y + 2.15, z, .22, .3, .22), 1.2); ctx.circles.push([x, z, .35]) }
+      const tl = new THREE.PointLight(0x7ff0ff, 1, 12); { const [x, z] = P(0, 3); tl.position.set(x, y + 4, z) } grp.add(tl);
+      ctx.circles.push([tx0, tz0, 4.9]); occ.push([tx0, tz0, 7.5]);
+      { const [sx, sz] = P(-4, 6); ctx.sign('THE JUNGLE TEMPLE · music · healing · ceremony', sx, H(sx, sz) + 3.2, sz, ry, 4.8, '#ffd23a', { posts: true }) }
+      const [qx, qz] = P(0, 5.9);
+      ctx.T.push({ x: qx, z: qz, r: 2.4, label: () => tr('Jungle Temple: join the sound-healing ceremony', 'Templo de la Jungla: unirse a la ceremonia de sonido'), fn: () => { AV.visit('dub_temple'); AV.audio && [196, 247, 294, 392].forEach((f, i) => setTimeout(() => AV.audio.blip(f, 1.2, 'sine', .12), i * 380)); AV.vitals && AV.vitals.add(6, 12); AV.toast(tr('Singing bowls hum, the stone face seems to smile. You feel lighter. Energy + vibe up.', 'Los cuencos cantan y el rostro de piedra parece sonreír. Te sientes más ligero. Energía y vibra arriba.')) } });
+      ctx.upd.push((dt, t) => tl.intensity = AV.calm() ? .9 : .8 + Math.sin(t * .8) * .3) }
+
+    /* --- Mushroom Grove: giant glowing mushrooms, spores, a look-don't-taste walk --- */
+    { const [gx, gz] = V1.grove, list = [];
+      for (let i = 0; i < [6, 9, 12][q]; i++) { const a = i / [6, 9, 12][q] * TAU + rng() * .3, r0 = 2.5 + rng() * 4, x = gx + Math.cos(a) * r0, z = gz + Math.sin(a) * r0; if (pathDist(x, z) < 1) continue; const s = 4 + rng() * 4; list.push({ x, y: H(x, z), z, s: s * .45, ry: rng() * TAU }); ctx.circles.push([x, z, .12 * s]) }
+      K.scatter(ctx, K.species.mushroom(0xff4ad2, 0xf4e8d0, 0x7ff0ff), K.floraMat(0), list);
+      K.motes(ctx, { n: 70, x: gx, z: gz, r: 8, y0: .4, y1: 4, cols: [0xff4ad2, 0x7ff0ff, 0xffd84a], size: 2.4, H, night: false });
+      const gl = new THREE.PointLight(0xff4ad2, 1.2, 14); gl.position.set(gx, H(gx, gz) + 3, gz); grp.add(gl); ctx.upd.push((dt, t) => gl.intensity = AV.calm() ? 1 : 1 + Math.sin(t * 1.3) * .35);
+      occ.push([gx, gz, 8]);
+      ctx.sign('MUSHROOM GROVE · art · trippy walks', gx - 6, H(gx - 6, gz + 2) + 3, gz + 2, npcYaw(gx - 6, gz + 2, 0, 0), 4.2, '#ff8ac0', { posts: true });
+      ctx.T.push({ x: gx, z: gz, r: 7.6, label: () => tr('Mushroom Grove: slow trippy walk (look, don’t taste)', 'Arboleda de Setas: paseo lento y psicodélico (mirar, no probar)'), fn: () => { AV.visit('dub_grove'); AV.fx.add('glow', .25); AV.toast(tr('Spores glitter in the air and the caps pulse with the bass. Just looking is enough.', 'Las esporas brillan en el aire y los sombreros laten con el bajo. Con mirar basta.')) } }) }
+    /* walking into a place counts as visiting it (journal / quests) */
+    { const VP = [['dub_river_bar', V1.bar, 7], ['dub_bazaar', [(V1.bazaarA[0] + V1.bazaarB[0]) / 2, (V1.bazaarA[1] + V1.bazaarB[1]) / 2], 9], ['dub_lab', V1.lab, 7], ['dub_temple', V1.temple, 9], ['dub_grove', V1.grove, 8], ['dub_stage', [SX, SZ + 6], 8]]; let acc = 0;
+      ctx.upd.push(dt => { acc += dt; if (acc < 1) return; acc = 0; for (const [id, p, r] of VP) if (Math.hypot(AV.P.x - p[0], AV.P.z - p[1]) < r) AV.visit(id) }) }
+
     /* ---------- vegetation: CC0 models where available, procedural elsewhere ---------- */
     const outer = { r0: 27.5, r1: 49 }, inner = { r0: 11, r1: 18.5 };
     const palms = pick([6, 14, 22][q], outer, (x, z) => free(x, z, 1.4), 2.2, 3.1).concat(pick([2, 4, 6][q], inner, (x, z) => free(x, z, 1.2), 2, 2.6));
@@ -289,7 +404,7 @@ AV.registerWorld({
       for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + .8, x0 = cx + Math.cos(a) * 5, z0 = cz + Math.sin(a) * 5, x1 = cx + Math.cos(a + .7) * 7.5, z1 = cz + Math.sin(a + .7) * 7.5;
         for (const [x, z] of [[x0, z0], [x1, z1]]) { B.misc.add(MT.wood, A.geo('cyl6'), 0x7a5a3a, K.M(x, H(x, z) + 1, z, .1, 2, .1)); ctx.circles.push([x, z, .2]) }
         const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, l = Math.hypot(x1 - x0, z1 - z0); B.misc.add(MT.v, A.geo('box'), [0xe83a30, 0x30c060, 0xffd23a][k], K.M(mx, H(mx, mz) + .75, mz, l * .9, .06, .9, 0, Math.atan2(z1 - z0, x1 - x0) * -1, 0)) }
-      const sx = cx + 6, sz = cz - 5; B.misc.add(MT.wood, A.geo('box'), 0xb08a5a, K.M(sx, H(sx, sz) + .3, sz, 4, .6, 3)); walk.pad(sx, sz, 1.8, H(sx, sz) + .6); ctx.sign('TREEHOUSE LOUNGE · open mic', cx - 6, gy + 4, cz - 6, Math.atan2(6, 6), 4.6, '#7aff8a', { posts: true });
+      const sx = cx + 6, sz = cz - 5; B.misc.add(MT.wood, A.geo('box'), 0xb08a5a, K.M(sx, H(sx, sz) + .3, sz, 4, .6, 3)); walk.pad(sx, sz, 1.8, H(sx, sz) + .6); ctx.sign('HIGH CANOPY CAMP · treehouse lounge', cx - 6, gy + 4, cz - 6, Math.atan2(6, 6), 4.6, '#7aff8a', { posts: true });
       ZB.push({ kind: 'human', x: sx, y: H(sx, sz) + .6, z: sz, mode: 'dance', name: 'Open-Mic Jules' }, { kind: 'spirit', x: cx - 3, z: cz + 4, mode: 'idle' }, { kind: 'ape', x: cx + 3, z: cz + 6, area: { x: cx, z: cz, r: 9 } }) }
     /* --- Healing Garden: raised herb beds, pond, tea hut --- */
     { const Z = ZONES.heal, [cx, cz] = Z.c, gy = H(cx, cz);
@@ -297,7 +412,7 @@ AV.registerWorld({
       const herbs = []; for (let row = 0; row < 4; row++) for (let k = 0; k < 6; k++) herbs.push({ x: cx - 6 + row * 3 + (rng() - .5) * .5, y: gy + .62, z: cz + 2 - 3 + k * 1.15, s: .8 + rng() * .4, ry: rng() * TAU });
       K.scatter(ctx, K.species.fern(0x3aa83a), K.floraMat(.04, { double: true }), herbs, { shadow: false });
       hut(cx + 7, cz + 7, 2, Math.atan2(-7, -7)); shop(cx + 4.6, cz + 4.6, ['Healing tea hut: herbal tea', 'Cabaña de té curativo: té de hierbas'], 12, 'thai_tea', ['Lemongrass, ginger, a pinch of jungle magic. Vibe up.', 'Hierba limón, jengibre y una pizca de magia de la jungla. Más vibra.']);
-      ctx.sign('HEALING GARDEN', cx - 7, gy + 3.6, cz - 6, Math.atan2(7, 6), 4, '#7aff8a', { posts: true });
+      ctx.sign('HERBAL GARDEN · healing plants', cx - 7, gy + 3.6, cz - 6, Math.atan2(7, 6), 4, '#7aff8a', { posts: true });
       ZB.push({ kind: 'human', x: cx - 2, z: cz - 3, area: { x: cx, z: cz, r: 9 }, name: 'Herbalist Noi' }, { kind: 'frog', x: PONDS[0].x - PONDS[0].r - 1, z: PONDS[0].z, mode: 'idle' }) }
     /* --- Hidden Falls: a secret pool behind the rocks, glowing mushrooms, floating spirits --- */
     { const Z = ZONES.falls, P0 = PONDS[1], gy = H(Z.c[0], Z.c[1]);
@@ -335,11 +450,15 @@ AV.registerWorld({
     });
     ctx.leave.push(() => MD.resetFrames());
 
+    /* V1.0 places (stand in front, facing the venue) */
+    const V1P = [['river_bar', 'River Bar', 'River Bar', V1.bar, 25.3], ['bazaar', 'Bamboo Bazaar', 'Bazar de Bambú', AP(73, 38.5), 0], ['dub_lab', 'Dub Lab', 'Dub Lab', V1.lab, 35], ['temple', 'Jungle Temple', 'Templo de la Jungla', V1.temple, 0], ['grove', 'Mushroom Grove', 'Arboleda de Setas', V1.grove, 37.5], ['band', 'Jungle Rave stage (Stone Ape Band)', 'Escenario Jungle Rave (Stone Ape Band)', [SX, SZ], 0]].map(([id, en, es, c, r]) => {
+      let p; if (id === 'temple') p = loc(c[0], c[1], npcYaw(c[0], c[1], 0, -30), 0, 7.6); else if (id === 'band') p = [SX, SZ + 3.9]; else if (id === 'bazaar') { const B0 = V1.bazaarA, B1 = V1.bazaarB, dx = B1[0] - B0[0], dz = B1[1] - B0[1], l = Math.hypot(dx, dz); p = [B0[0] + dx * .36 - dz / l * 1.2, B0[1] + dz * .36 + dx / l * 1.2]; c = [B0[0] + dx * .42 - dz / l * 3.6, B0[1] + dz * .42 + dx / l * 3.6] } else p = AP(Math.atan2(c[1], c[0]) * 180 / Math.PI, r);
+      const tc = c; return { id, name: [en, es], x: p[0], z: p[1], yaw: faceYaw(p[0], p[1], tc[0], tc[1]) } });
     const artFront = polar(deg(36), 12.6), artMid = polar(deg(29), 15.5);    // between two dance-floor poles, facing the middle of the arc
     return { name: 'Jungle Dub Party Planet', fog: [36, 210], sky: { tint: [0x2a7a60, 0x3a8a50, .55, .5], dome: { s1: 0xe8c030, s2: 0x30c060, swirl: .4, cloud: .9 } },
       surface: (x, z) => { if (Math.hypot(x, z) >= R) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return Math.max(b, H(x, z)); if (waterDepth(x, z) > -.25) return WY; const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) },
       arrivals: { default: { x: 0, z: 22, yaw: 0 }, pipe: { x: 0, z: 14, yaw: 0 }, ape_gate: { x: 0, z: 24, yaw: 0 } },
-      places: [{ id: 'sound', name: ['Sound system', 'Sistema de sonido'], x: 0, z: 1, yaw: 0 }, { id: 'bongo', name: ['Bongo', 'Bongo'], x: -6, z: 6, yaw: .6 }, { id: 'art', name: ['Bamboo art wall', 'Muro de arte de bambú'], x: artFront[0], z: artFront[1], yaw: faceYaw(artFront[0], artFront[1], artMid[0], artMid[1]) }, { id: 'arch', name: ['Gold arch', 'Arco dorado'], x: 0, z: 25, yaw: 0 }].concat([['lagoon', 'Lotus Lagoon', 'Laguna del Loto', 150, 64], ['roots', 'Roots Village', 'Aldea Roots', 30, 64], ['tree', 'Treehouse Lounge', 'Salón del Árbol', 95, 62], ['heal', 'Healing Garden', 'Jardín Curativo', -60, 62], ['falls', 'Hidden Falls', 'Cascada Escondida', 210, 77]].map(([id, en, es, a, r]) => { const p = AP(a, r), c = ZONES[id].c; return { id, name: [en, es], x: p[0], z: p[1], yaw: faceYaw(p[0], p[1], c[0], c[1]) } })),
+      places: [{ id: 'sound', name: ['Sound system', 'Sistema de sonido'], x: 0, z: 1, yaw: 0 }, { id: 'bongo', name: ['Bongo', 'Bongo'], x: -6, z: 6, yaw: .6 }, { id: 'art', name: ['Bamboo art wall', 'Muro de arte de bambú'], x: artFront[0], z: artFront[1], yaw: faceYaw(artFront[0], artFront[1], artMid[0], artMid[1]) }, { id: 'arch', name: ['Gold arch', 'Arco dorado'], x: 0, z: 25, yaw: 0 }].concat([['lagoon', 'Lotus Lagoon', 'Laguna del Loto', 150, 64], ['roots', 'Roots Village', 'Aldea Roots', 30, 64], ['tree', 'High Canopy Camp (Treehouse Lounge)', 'Campamento del Dosel (Salón del Árbol)', 95, 62], ['heal', 'Herbal Garden (Healing Garden)', 'Jardín de Hierbas (Jardín Curativo)', -60, 62], ['falls', 'Crystal Waterfalls (Hidden Falls)', 'Cascadas de Cristal (Cascada Escondida)', 210, 77]].map(([id, en, es, a, r]) => { const p = AP(a, r), c = ZONES[id].c; return { id, name: [en, es], x: p[0], z: p[1], yaw: faceYaw(p[0], p[1], c[0], c[1]) } })).concat(V1P),
       defaultArrival: 'default', musicProfile: { bpm: 72, root: 43, scale: [0, 3, 5, 7, 10], style: 'dub' }, stage: { pos: { x: SX, y: SY + 3, z: SZ } },
       music: { playlist: 'jungle_dub', pos: { x: SX, y: SY + 3, z: SZ }, bed: .4 } };   // V0.9.3: real dub tracks from the sound system (procedural profile = fallback)
   }

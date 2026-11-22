@@ -15,6 +15,12 @@ Object.assign(AV.ITEMS, {
   mp3_player: { n: ['MP3 player (128 MB)', 'Reproductor MP3 (128 MB)'], cat: 'souvenir', ic: '🎧', use: 'look', keep: true, model: 'cube', col: 0xe8e8f0, say: ['Exactly 31 songs. You know every one by heart.', 'Exactamente 31 canciones. Te sabes todas de memoria.'], price: 0 },
   burned_cd: { n: ['Burned mix CD', 'CD grabado'], cat: 'souvenir', ic: '💿', use: 'look', keep: true, model: 'cube', col: 0xd8d8e8, say: ['Marker on the label: “PARTY MIX 2006 — DO NOT LOSE”.', 'Rotulador en la etiqueta: “PARTY MIX 2006 — NO PERDER”.'], price: 0 }
 });
+/* V1.0 kit: River Bar menu additions (Jungle Dub) */
+Object.assign(AV.ITEMS, {
+  rum_cola: { n: ['Rum & cola', 'Ron con cola'], cat: 'drink', ic: '🥃', use: 'drink', fx: { type: 'drink', amt: .4 }, model: 'cup', col: 0x5a2a14, say: ['Dark rum, cola, lime, river breeze.', 'Ron oscuro, cola, lima y brisa del río.'], price: 30 },
+  veggie_burger: { n: ['Jungle veggie burger', 'Hamburguesa vegetal de la jungla'], cat: 'food', ic: '🍔', use: 'eat', model: 'bowl', col: 0x8a5a2a, say: ['Black-bean patty, grilled plantain, hot sauce. Energy up.', 'Hamburguesa de frijol negro, plátano a la plancha y salsa picante. Energía arriba.'], price: 22 },
+  dub_plate: { n: ['Dub plate (Bass Check)', 'Dub plate (Prueba de bajo)'], cat: 'souvenir', ic: '💿', use: 'look', keep: true, model: 'cube', col: 0x1a1a1a, say: ['A fresh one-off acetate from the Dub Lab. The gorilla bassist is waiting for it.', 'Un acetato único recién salido del Dub Lab. El gorila bajista lo está esperando.'], price: 0 }
+});
 AV.PICKUPS = AV.PICKUPS || {};
 AV.PICKUPS.vienna = [['flip_phone', 4, 122], ['mp3_player', 160, -134], ['burned_cd', -60, -6], ['almdudler', 84, 40], ['melange', 2, -6]];
 /* Vienna playlist: every ZtonedApe + Stone Ape Band track (memories of nights out) */

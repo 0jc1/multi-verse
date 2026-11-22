@@ -156,6 +156,20 @@ Backup before starting: `apeverse snapshots\apeverse_v0.9.7_stage1_done_before_s
 | Chiang Mai street crowd | tried, reverted | the medium-detail body for the instanced crowd cost 2–3× the triangles (0.7M → 1.4–2.1M) for little visible gain; the crowd keeps its light geometry, rigged locals are added at the hotspots (Stage 1) |
 | Render cost (High, headless count incl. shadow pass) | measured | Astro-9 districts 0.19–0.28M tris / 100–150 calls; Jungle Dub 0.8–0.9M / 310–530 calls; crowd shadows switched off to halve their draw calls |
 | Tests | IT | `tools/tests/suite_v098.js` 45/45 |
+## V0.9.9 — Stage 3: Vienna 2000s Memory World (2026-11-22)
+Built from `Downloads\ape multiverse 1\worlds\Apeverse Vienna 2000s Memory Map (1).png` (newer version: Badeschiff + VIS by the Alte Donau). Backup: `apeverse_v0.9.8_stage2_done_before_vienna_2026-11-22.zip`.
+| Area | State | Notes |
+|---|---|---|
+| World (`js/world_vienna.js`) | IT | ~380 × 300 m, north = up as on the map; Gründerzeit perimeter blocks with painted facades, gable roofs and lit shopfronts; Ringstraße with tram tracks + tree alleys; 7 radial avenues |
+| Landmarks | IT | Stephansplatz + cathedral (zigzag tiled roof, 78 m spire); Waxy's Irish Bar · Lukas Viennese Bar · Dons Shisha Bar (open fronts, counters, shops, summer parasols); Würstel Stand; Happy Noodles; Flex (club under the Donaukanal walls, colour-cycling light); Badeschiff (walkable deck, glowing pool, gangway, dancers); Naschmarkt (18 stalls); Karlsplatz (Karlskirche dome + columns + pool, summer cinema with the music videos + film, rave stage); Stadtpark (pond, golden living statue); Prater (rotating Riesenrad with level cabins, roller coaster, carousel, bar, lights); Christmas market; Belvedere; Schönbrunn (palace, parterre, fountain, Gloriette); Memory Zone (graffiti wall, basketball court, skate ramp); 22nd district towers + VIS school; Donauinsel beaches; Kahlenberg (hill, TV mast, viewpoint); portal to Ape Town |
+| Water + bridges | IT | Danube band with the Donauinsel (walkable), Donaukanal, Alte Donau, Stadtpark pond, Schönbrunn fountain; 4 canal bridges, 2 Danube bridges (Reichsbrücke to the 22nd) |
+| Transport | IT | U-Bahn fast travel between 7 stations (2 credits); rideable Ring tram (sit inside, ride round the Ring, E / Act to hop off); trams + bikes as traffic |
+| Seasons | IT | F / phone "Fest": Summer (terrace parasols, beach umbrellas, sailboats) ↔ Winter (snow, white roofs + trees, Christmas market open with Glühwein / Punsch / Sachertorte, lit tree, ice rink) |
+| People | IT | ~47 rigged characters on High: bartenders Sean, Lukas, Don; Old friends Max + Sophie; Frau Huber; DJs at Flex + Karlsplatz; Badeschiff + Karlsplatz dancers; tourists, Naschmarkt vendors, hiker on the Kahlenberg, VIS classmate; chats add Vienna 2000s memories (burned CDs, MSN, U6 at 4 a.m., Euro 2008…) |
+| Items | IT | `data/items_vienna.js`: Käsekrainer, Happy Noodles, Sachertorte, Melange, Almdudler, Weißer Spritzer, Glühwein, Punsch, Waxy's pint, shisha + souvenirs (flip phone, MP3 player, burned CD) as pickups |
+| Music | IT | "Vienna Memories" playlist (all ZtonedApe + Stone Ape Band tracks), positional at Karlsplatz; films take over near the summer cinema |
+| Access | IT | 5th Portal Grove gate in Ape Town; Portal Pipe + travel map (Vienna was already on the roadmap list) |
+| Tests | IT | `tools/tests/suite_v099.js` 43/43 desktop; render 0.37–0.44M tris / 110–300 calls on High (headless count) |
 ## Next
 | Phase | Scope |
 |---|---|
@@ -167,3 +181,16 @@ Backup before starting: `apeverse snapshots\apeverse_v0.9.7_stage1_done_before_s
 ## V0.9 (original, unchanged features)
 Engine/world manager, save v2 + V0.8 migration, EN/ES, settings, Stone Ape Band, Zil job/shift economy, rent, kiosk, Verdalux Drum Log,
 Astro-9 slice, Jungle Dub slice, 8 living paintings, cinema shorts reel — all still present and re-tested.
+
+## V1.0 kit — Milestones 0–3: shared shop/dialogue systems + Jungle Dub vertical slice (2026-11-22)
+Source: `Apeverse_V1_Expansion_Kit.zip` (copied to `design/apeverse-v1/`). Full audit and integration map: `docs/APEVERSE_V1_IMPLEMENTATION_STATUS.md`.
+| Area | State | Notes |
+|---|---|---|
+| Backup | IT | `apeverse snapshots/apeverse_v0.9.9_vienna_before_v1_kit_2026-11-22 (code, no media).zip` |
+| Shop panel `AV.shop` (price list, reach + balance checks, one debit per tap, receipt, vendor memory) | IT | `js/v1_systems.js` |
+| Dialogue panel `AV.talk` (2–4 choices, first meeting vs return) | IT | `js/v1_systems.js` |
+| Accessibility: Disable intoxication visuals, No flashing, Clear effects button | IT | `js/v1_systems.js`, `js/effects.js` |
+| HUD effect badge (time left) + current task | IT | `js/v1_systems.js` |
+| Jungle Dub: River Bar (Ras Mo, 5-item menu), Bamboo Bazaar (Maker Lua), Dub Lab, Jungle Temple, Mushroom Grove, renamed High Canopy Camp / Herbal Garden / Crystal Waterfalls | IT | `js/world_jungle_dub.js` |
+| Stone Ape Band on the Jungle Rave main stage (own lines each) + Bass Check quest (+45 once) | IT | `js/world_jungle_dub.js`, `js/npc.js` (`turnName`) |
+| Kit's own checks (`validate_content.py`, `node --test`) | NOT RUN | Python and Node are not installed on this machine |

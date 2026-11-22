@@ -173,7 +173,7 @@ window.APE_T = (() => {
   step('return + memory', async c => {
     c('back to Ape Town', await travel('ape_town'));
     /* measure from the same pose after each full cycle (three.js uploads geometry lazily when first seen) */
-    const pose = async () => { const a = AV.W.arrivals[AV.W.defaultArrival]; place(a.x, a.z, a.yaw || 0); AV.P.pitch = 0; let last = -1, same = 0; for (let i = 0; i < 80 && same < 8; i++) { await sleep(250); const g = AV.R.info.memory.geometries; same = g === last ? same + 1 : 0; last = g } return [AV.R.info.memory.geometries, AV.R.info.memory.textures] };
+    const pose = async () => { { const f0 = AV.R.info.render.frame; const t0 = Date.now(); while (AV.R.info.render.frame < f0 + 12 && Date.now() - t0 < 60000) await sleep(200) }   /* V0.9.9: let the new world draw (headless compiles shaders slowly) */ const a = AV.W.arrivals[AV.W.defaultArrival]; place(a.x, a.z, a.yaw || 0); AV.P.pitch = 0; let last = -1, same = 0; for (let i = 0; i < 80 && same < 8; i++) { await sleep(250); const g = AV.R.info.memory.geometries; same = g === last ? same + 1 : 0; last = g } return [AV.R.info.memory.geometries, AV.R.info.memory.textures] };
     const cyc = async () => { for (const w of ['astro9', 'jungle_dub', 'verdalux', 'ape_town']) await travel(w); return pose() };
     const m0 = await cyc(), m1 = await cyc(), m2 = await cyc();
     c('GPU memory stable across repeated world switches (no growth per cycle)', m2[0] <= m1[0] + 2 && m2[1] <= m1[1] + 2 /* cycle 0 is warm-up: geometry uploads lazily when first drawn */, 'geometries/textures ' + m0 + ' -> ' + m1 + ' -> ' + m2);

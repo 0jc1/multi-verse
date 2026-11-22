@@ -872,7 +872,7 @@ AV.registerWorld({
 AV.cm = AV.cm || {};
 /* V0.9.7: F (and the phone "Fest" button) switches festival mode directly: Normal → Yi Peng & Loy Krathong → Songkran → Normal.
    The festival board at reception still opens the full mode menu. */
-AV.keymap.KeyF = () => { if (AV.W && AV.W.id === 'chiang_mai' && AV.cm.cycleMode) AV.cm.cycleMode() };
+AV.keymap.KeyF = () => { if (AV.W && AV.W.id === 'chiang_mai' && AV.cm.cycleMode) AV.cm.cycleMode(); else if (AV.W && AV.W.id === 'vienna' && AV.vienna && AV.vienna.toggleSeason) AV.vienna.toggleSeason() };   /* V0.9.9: also Vienna summer / winter */
 { const fb = document.getElementById('tF'); if (fb) fb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (AV.running && !AV.blocking()) AV.keymap.KeyF() }) }
 AV.keymap.KeyQ = () => { if (AV.cm.shoot) AV.cm.shoot() };
 /* meeting the crew counts as soon as a conversation opens (welcome mission) */

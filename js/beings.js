@@ -132,6 +132,7 @@ function contextLine(b) {
   if (W && W.id === 'chiang_mai' && AV.S.cm && AV.S.cm.weather === 'rain') out.push(L('Rainy season vibes. Perfect for a Thai tea.', 'Ambiente de temporada de lluvias. Perfecto para un té tailandés.'));
   if (W && W.id === 'astro9' && AV.inZeroG) out.push(L('Zero gravity! Let your hair float!', '¡Gravedad cero! ¡Deja que tu pelo flote!'));
   const np = AV.audio && AV.audio.nowPlaying && AV.audio.nowPlaying(); if (np && np.playing) out.push(L('This tune — “' + np.title + '” — is my jam.', 'Este tema —“' + np.title + '”— me encanta.'));
+  if (W && W.chatLines && W.chatLines.length) { const cl = W.chatLines; out.unshift(cl[Math.floor(Math.random() * cl.length)]) }   /* V0.9.9: world-specific memories / lore */
   out.push(h < 6 ? L('Up late? The best things happen after 3 a.m.', '¿Despierto tan tarde? Lo mejor pasa después de las 3.') : h < 11 ? L('Good morning! Breakfast is the most cosmic meal.', '¡Buenos días! El desayuno es la comida más cósmica.') : h < 18 ? L('Lovely afternoon for wandering.', 'Bonita tarde para pasear.') : L('Evening! Everything glows a bit more now.', '¡Buenas noches! Ahora todo brilla un poco más.'));
   return out[Math.floor(Math.random() * Math.min(out.length, 3))];
 }
@@ -190,7 +191,7 @@ BE.spawn = function (ctx, specs) {
         else { const tx = b.target[0] - b.h.position.x, tz = b.target[1] - b.h.position.z, l = Math.hypot(tx, tz); if (l < .3) { b.target = null } else { b.play('Walk', .3); if (b.acts.Walk) b.acts.Walk.timeScale = b.speed / b.stride; const st = Math.min(l, b.speed * dt), nx = b.h.position.x + tx / l * st, nz = b.h.position.z + tz / l * st;
           if (w && !AV.isFree(w, nx, nz, .45)) b.target = null; else { b.h.position.x = nx; b.h.position.z = nz; const sy = w && w.surface(nx, nz); b.h.position.y = (sy || 0) + (b.fy || 0); b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(tx, tz), dt * 6) } } }
       }
-      b.tg.x = b.h.position.x; b.tg.z = b.h.position.z; b.mixer.update(dt);
+      if (!b.tgFixed) { b.tg.x = b.h.position.x; b.tg.z = b.h.position.z } b.mixer.update(dt);   /* V1.0: counter staff keep their target at the counter front */
     }
   });
   ctx.leave.push(() => out.forEach(b => { b.mixer.stopAllAction(); b.h.traverse(o => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.dispose() }) }));

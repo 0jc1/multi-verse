@@ -21,9 +21,9 @@ FX.active = () => FX.list.map(e => ({ type: e.type, left: Math.max(0, Math.round
 let vig = null, lastF = '', fovOn = false;
 function apply(force) {
   const now = AV.now(); FX.list = FX.list.filter(e => now - e.t0 < e.dur);
-  const c = AV.$('c'), red = AV.S.set.reduce; if (!vig) vig = AV.$('fxv');
+  const c = AV.$('c'), red = AV.S.set.reduce || AV.S.set.noFlash; if (!vig) vig = AV.$('fxv');
   const L = { drink: FX.level('drink'), smoke: FX.level('smoke'), psy: FX.level('psy'), buzz: FX.level('buzz'), glow: FX.level('glow') }, t = now;
-  const any = L.drink + L.smoke + L.psy + L.buzz + L.glow > .005;
+  const any = !AV.S.set.noIntox && L.drink + L.smoke + L.psy + L.buzz + L.glow > .005;   /* V1.0: "Disable intoxication visuals" — timers keep running, screen stays clean */
   if (!any) { if (lastF || force) { c.style.filter = ''; lastF = ''; if (vig) vig.style.opacity = 0; if (fovOn) { AV.cam.fov = 72; AV.cam.updateProjectionMatrix(); fovOn = false } AV.cam.rotation.z = 0; if (AV.audio && AV.audio.tone) AV.audio.tone.frequency.value = 20000 } return }
   const hue = red ? L.psy * 40 + L.glow * 12 + L.smoke * 10 : L.psy * Math.sin(t * .12) * 150 + L.glow * 25 * Math.sin(t * .2) + L.smoke * 28 * Math.sin(t * .07);   /* V0.9.7: weed = slow, mellow colour drift */
   const sat = 1 + L.smoke * .6 + L.psy * 1.0 + L.buzz * .25 + L.glow * .3, con = 1 + L.psy * .12 + L.buzz * .08, bri = 1 + L.smoke * .05 + L.glow * .06 - L.drink * .04;
@@ -31,12 +31,13 @@ function apply(force) {
   const f = 'hue-rotate(' + hue.toFixed(1) + 'deg) saturate(' + sat.toFixed(2) + ') contrast(' + con.toFixed(2) + ') brightness(' + bri.toFixed(2) + ')' + (blur > .05 ? ' blur(' + blur.toFixed(2) + 'px)' : '');
   if (f !== lastF) { c.style.filter = f; lastF = f }
   if (vig) { const o = Math.min(.85, L.smoke * .5 + L.psy * .6 + L.drink * .35 + L.glow * .4); vig.style.opacity = o.toFixed(3); const h = (t * 12) % 360; vig.style.background = 'radial-gradient(ellipse at 50% 50%, transparent 45%, ' + (L.psy > L.smoke ? 'hsla(' + h.toFixed(0) + ',90%,55%,.55)' : L.glow > L.smoke ? 'rgba(90,255,160,.4)' : L.drink > L.smoke ? 'rgba(60,40,30,.5)' : 'rgba(255,160,90,.45)') + ' 100%)' }
-  if (!red) { AV.cam.rotation.z += (L.drink * .07 * Math.sin(t * .9) + L.drink * .03 * Math.sin(t * 2.3) + L.psy * .035 * Math.sin(t * .37) + L.smoke * .022 * Math.sin(t * .45)); AV.cam.rotation.x += L.drink * .025 * Math.sin(t * .7) + L.smoke * .01 * Math.sin(t * .31); const fov = 72 + L.psy * 9 * Math.sin(t * .25) + L.smoke * (4 + 1.5 * Math.sin(t * .2)) + L.drink * 3 * Math.sin(t * .6); if (Math.abs(fov - AV.cam.fov) > .01) { AV.cam.fov = fov; AV.cam.updateProjectionMatrix(); fovOn = true } }
+  if (!AV.S.set.reduce) { AV.cam.rotation.z += (L.drink * .07 * Math.sin(t * .9) + L.drink * .03 * Math.sin(t * 2.3) + L.psy * .035 * Math.sin(t * .37) + L.smoke * .022 * Math.sin(t * .45)); AV.cam.rotation.x += L.drink * .025 * Math.sin(t * .7) + L.smoke * .01 * Math.sin(t * .31); const fov = 72 + L.psy * 9 * Math.sin(t * .25) + L.smoke * (4 + 1.5 * Math.sin(t * .2)) + L.drink * 3 * Math.sin(t * .6); if (Math.abs(fov - AV.cam.fov) > .01) { AV.cam.fov = fov; AV.cam.updateProjectionMatrix(); fovOn = true } }
   else if (fovOn) { AV.cam.fov = 72; AV.cam.updateProjectionMatrix(); fovOn = false }
   if (AV.audio && AV.audio.tone) AV.audio.tone.frequency.value = 20000 * Math.pow(1 - Math.min(.82, L.smoke * .55 + L.drink * .45 + L.psy * .35 + L.glow * .2), 2.2) + 400;
 }
+FX.refresh = () => apply(true);
 AV.frameFns.push(() => apply(false));
 /* V0.9.7: drunk walking — a gentle sideways stagger while you move (off with reduced motion) */
-AV.frameFns.push((dt, t) => { if (!AV.W || AV.blocking() || AV.S.set.reduce) return; const L = FX.level('drink'); if (L < .12) return; const P = AV.P, sp = Math.hypot(P.vx, P.vz); if (sp < .5) return; const k = Math.sin(t * .8) * Math.sin(t * .37 + 1) * L * 1.6 * dt * Math.min(1, sp / 4), x = P.x + Math.cos(P.yaw) * k, z = P.z - Math.sin(P.yaw) * k, r = AV.resolve(AV.W, x, z, .4); if (AV.W.surface(r[0], r[1]) !== null) { P.x = r[0]; P.z = r[1] } });
+AV.frameFns.push((dt, t) => { if (!AV.W || AV.blocking() || AV.S.set.reduce || AV.S.set.noIntox) return; const L = FX.level('drink'); if (L < .12) return; const P = AV.P, sp = Math.hypot(P.vx, P.vz); if (sp < .5) return; const k = Math.sin(t * .8) * Math.sin(t * .37 + 1) * L * 1.6 * dt * Math.min(1, sp / 4), x = P.x + Math.cos(P.yaw) * k, z = P.z - Math.sin(P.yaw) * k, r = AV.resolve(AV.W, x, z, .4); if (AV.W.surface(r[0], r[1]) !== null) { P.x = r[0]; P.z = r[1] } });
 AV.keymap.KeyX = () => FX.reset();
 })(window.AV);

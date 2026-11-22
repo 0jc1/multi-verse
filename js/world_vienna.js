@@ -66,14 +66,15 @@ AV.registerWorld({
     const shop = (x, z, label, cost, item, msg) => T(x, z, 2.2, () => tr(label[0], label[1]) + ' (' + cost + ')', () => { if (AV.txn(-cost, label[0])) { AV.bag && AV.bag.add(item, 1, true); AV.toast(tr(msg[0], msg[1])) } });
     const reserved = (x, z, m) => { for (const k in LAND) if (inRect(LAND[k], x, z, m)) return true; return false };
     MD.resetFrames();
+    { const fb = AV.$('tF'); if (fb) { fb.style.display = AV.device === 'phone' ? 'block' : 'none'; ctx.leave.push(() => fb.style.display = 'none') } }
 
     /* ---------- terrain + water ---------- */
     const seg = [110, 150, 190][q], tg = new THREE.PlaneGeometry(XMAX - XMIN, ZMAX - ZMIN, seg, Math.round(seg * .8)); tg.rotateX(-Math.PI / 2);
     const tp = tg.attributes.position; for (let i = 0; i < tp.count; i++) { const x = tp.getX(i), z = tp.getZ(i); tp.setY(i, waterAt(x, z) ? -1.6 : H(x, z)) } tg.computeVertexNormals();
     const gm = new THREE.MeshStandardMaterial({ map: groundTex([1024, 2048, 2048][q], win), roughness: .95 }); gm.userData.lin = 1; const ground = new THREE.Mesh(tg, gm); ground.receiveShadow = true; grp.add(ground);
     const wopt = { deep: 0x1a4a6a, shallow: 0x4a9ab8, sky: 0xb8d8f0, iri: .15, opacity: .9 };
-    { const dc = danP(120), dm = K.waterPlane(ctx, new THREE.PlaneGeometry(420, 36), WY, wopt); dm.position.x = dc[0]; dm.position.z = dc[1]; dm.rotation.y = -Math.atan2(DD[1], DD[0]) }
-    for (let i = 1; i < CANAL.length; i++) { const a = CANAL[i - 1], b = CANAL[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]), m = K.waterPlane(ctx, new THREE.PlaneGeometry(l + 8, 8.6), WY, wopt); m.position.x = (a[0] + b[0]) / 2; m.position.z = (a[1] + b[1]) / 2; m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
+    { const dc = danP(120), dm = K.waterPlane(ctx, new THREE.PlaneGeometry(420, 36), WY, wopt); dm.position.x = dc[0]; dm.position.z = dc[1]; dm.rotation.order = 'YXZ'; dm.rotation.y = -Math.atan2(DD[1], DD[0]) }   /* YXZ: yaw in world space, the plane stays flat */
+    for (let i = 1; i < CANAL.length; i++) { const a = CANAL[i - 1], b = CANAL[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]), m = K.waterPlane(ctx, new THREE.PlaneGeometry(l + 8, 8.6), WY, wopt); m.position.x = (a[0] + b[0]) / 2; m.position.z = (a[1] + b[1]) / 2; m.rotation.order = 'YXZ'; m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
       for (const s of [-1, 1]) { const nx = -(b[1] - a[1]) / l * 4.25 * s, nz = (b[0] - a[0]) / l * 4.25 * s; box(B.misc, MT.stone, 0xb8b0a0, (a[0] + b[0]) / 2 + nx, -.5, (a[1] + b[1]) / 2 + nz, l, 1.2, .5, -Math.atan2(b[1] - a[1], b[0] - a[0])) } }
     for (const p of PONDS) { const m = K.waterPlane(ctx, new THREE.CircleGeometry(p.r + .6, 40), WY, wopt); m.position.x = p.x; m.position.z = p.z; B.misc.add(MT.stone, new THREE.TorusGeometry(p.r, .3, 5, 40), 0xc8c0b0, K.M(p.x, .05, p.z, 1, 1, .6, Math.PI / 2, 0, 0)) }
     /* bridges: four over the Donaukanal, two across the Danube + Donauinsel */
@@ -208,7 +209,6 @@ AV.registerWorld({
     { const sx = -100, sz = 104; box(B.misc, MT.stucco, 0xf0c84a, sx, 8, sz, 84, 16, 13); ctx.cols.push([sx - 42, sx + 42, sz - 6.5, sz + 6.5]); B.roofs.add(MT.v, PRISM, win ? 0xf4f6fa : 0x5a8a6a, K.M(sx, 16, sz, 13.4, 3, 84.4, 0, Math.PI / 2, 0));
       for (let k = 0; k < 6; k++) for (const s of [-1, 1]) box(B.misc, MT.v, win ? 0xf0f4f8 : 0x3a8a3a, sx + s * (10 + k * 5), .15, 120, 3.6, .3, 8, 0, 0);
       B.misc.add(MT.stone, A.geo('cyl'), 0xe8e0d0, K.M(PONDS[1].x, 1.2, PONDS[1].z, 1, 2.4, 1)); B.misc.add(MT.v, A.geo('sph'), 0xffd84a, K.M(PONDS[1].x, 3, PONDS[1].z, .6, .9, .6), .3);
-      if (CY.spray) CY.spray(ctx, [40, 70, 100][q]);
       for (let k = 0; k < 7; k++) { B.misc.add(MT.stucco, A.geo('cyl'), 0xf4f0e8, K.M(-118 + k * 6, 3, 144, .6, 6, .6)); ctx.circles.push([-118 + k * 6, 144, .7]) } box(B.misc, MT.stucco, 0xf4f0e8, -100, 6.4, 144, 40, 1.2, 2.4);
       ctx.sign('SCHÖNBRUNN · summer palace · gardens', sx + 46, 4.4, sz - 12, 0, 6, '#ffd84a', { posts: true }) }
     /* ---------- MEMORY ZONE: graffiti wall, basketball court, skate ramp ---------- */

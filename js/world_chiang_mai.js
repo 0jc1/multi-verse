@@ -857,7 +857,7 @@ AV.registerWorld({
     const here = AV.cm.lastPos || null; AV.cm.lastPos = null;
     return {
       name: 'Chiang Mai', fog: [80, 420], glowScale: md === 'lantern' ? 1.4 : 1, sky: SKY,
-      surface: (x, z) => { if (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) return null; if (inMoat(x, z) || inRiver(x, z)) return null; const p = walk.at(x, z); return p === undefined ? 0 : Math.max(0, p) },
+      surface: (x, z) => { if (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) return null; if (inMoat(x, z) || inRiver(x, z)) return WY; const p = walk.at(x, z); return p === undefined ? 0 : Math.max(0, p) },
       speedMul: () => S.cm && S.cm.scooter === S.day ? 2 : 1,
       arrivals: { default: { x: 18, z: 46, yaw: Math.PI }, pipe: { x: 22, z: 45.6, yaw: Math.PI }, ape_gate: { x: PX + .5, z: 46.2, yaw: Math.PI }, here: here || { x: 18, z: 46, yaw: Math.PI } },
       defaultArrival: 'default',

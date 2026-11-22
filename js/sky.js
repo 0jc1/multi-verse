@@ -227,6 +227,7 @@ function buildCube(size, steps, lsteps) {
   cubeCam = new THREE.CubeCamera(.1, 20, SK.rt);
   if (!cubeScene) {
     cubeScene = new THREE.Scene();
+    SK.cubeScene = cubeScene; SK.cubeCam = cubeCam;      /* debug handles */
     faceMat = new THREE.ShaderMaterial({ uniforms: FU, vertexShader: FACE_VS, fragmentShader: FACE_FS, side: THREE.BackSide, depthTest: false, depthWrite: false, fog: false, toneMapped: false });
     faceMat.defines = { STEPS: steps, LSTEPS: lsteps };
     if (!HALF) faceMat.defines.SRGB_OUT = '';

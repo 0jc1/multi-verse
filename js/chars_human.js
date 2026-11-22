@@ -40,12 +40,15 @@ C.human = function (o) {
   const lowQ = AV.kit && AV.kit.q && AV.kit.q() === 0, Gx = o.ultra ? GU : o.lod || lowQ ? GL : GH; KK.setLite(!!o.lite);
   const g = new THREE.Group(), s = o.s || .8, big = o.slim ? .8 : (o.big || .92), k = s * 1.12;
   const skin = std(o.skin || 0xd8a47a, .7), skinD = std(shade(o.skin || 0xd8a47a, .85), .7), hair = std(o.hair == null ? 0x3a2416 : o.hair, .9), lip = std(mix(o.skin || 0xd8a47a, 0x8a3a3a, .45), .6);
-  /* redEye: bloodshot sclera + glowing red iris (the multiverse's professional cloud-watchers) */
-  const redEye = !!o.redEye, eyeK = redEye ? 1.18 : 1;
-  const white = redEye ? std(0xff5a48, .25, 0, 0xff2a1a, .7) : std(0xf6f2ea, .3),
-    iris = redEye ? std(0xff1408, .15, 0, 0xff2a10, 1.8) : std(o.eye || 0x4a2e18, .35),
-    glint = redEye ? std(0xffd8c8, .2, 0, 0xff8a6a, 1) : std(0xffffff, .2, 0, 0xffffff, 1);
-  const dark = std(0x16100c, .45), sole = std(0xf0ece4, .7);
+/* redEye: bloodshot sclera + glowing red iris (the multiverse's professional cloud-watchers).
+   The eyes are baked RED into the vertex colour (compact() flattens untextured head parts into one
+   vertex-coloured mesh, so a plain red material alone would vanish into the merge). aGlow adds a
+   bloodshot ember pulse at night (U.glow rises then); in daylight the baked red carries the look. */
+const redEye = !!o.redEye, eyeK = redEye ? 1.16 : 1;
+const white = redEye ? 0xff3a30 : 0xf6f2ea, iris = redEye ? 0xff0d05 : (o.eye || 0x4a2e18),
+  glint = redEye ? 0xffb0a0 : 0xffffff;
+const redMats = redEye ? { w: std(white, .3), i: std(iris, .2), g: std(glint, .2) } : null;
+const dark = std(0x16100c, .45), sole = std(0xf0ece4, .7);
   const shirt = o.shirt || std(0x4a8ad8, .85), pants = o.pants || std(0x3a3a52, .9);
   const sleeveM = o.sleeve === 'skin' ? skin : (o.sleeve || shirt), sleeveRole = o.sleeve === 'skin' ? 'skin' : 'shirt';
   part(g, Gx.sph, pants, 0, 1.0 * s, 0, .3 * s * big, .19 * s, .2 * s * big, 'pants');
@@ -59,10 +62,12 @@ C.human = function (o) {
   part(head, Gx.sph, skin, 0, -.14 * k, .06 * k, .18 * k, .14 * k, .17 * k, 'skin');                       // jaw
   part(head, Gx.sph, skinD, 0, -.03 * k, .255 * k, .04 * k, .065 * k, .055 * k, 'skin');                     // nose
   for (const sx of [-1, 1]) {
-    part(head, Gx.sph, white, sx * .085 * k, .04 * k, .205 * k, .04 * k * eyeK, .036 * k * eyeK, .03 * k * eyeK, 'fixed');
-    part(head, Gx.dot, iris, sx * .085 * k, .04 * k, .228 * k, .024 * k * eyeK, .024 * k * eyeK, .012 * k * eyeK, 'fixed');
-    part(head, Gx.dot, dark, sx * .085 * k, .04 * k, .236 * k, .013 * k * eyeK, .013 * k * eyeK, .008 * k * eyeK, 'fixed');
-    part(head, Gx.dot, glint, sx * .085 * k + .01 * k, .05 * k, .241 * k, .006 * k, .006 * k, .004 * k, 'fixed');
+    part(head, Gx.sph, redEye ? redMats.w : white, sx * .085 * k, .04 * k, .205 * k, .04 * k * eyeK, .036 * k * eyeK, .03 * k * eyeK, 'fixed');
+    part(head, Gx.dot, redEye ? redMats.i : iris, sx * .085 * k, .04 * k, .228 * k, .024 * k * eyeK, .024 * k * eyeK, .012 * k * eyeK, 'fixed');
+    if (!redEye) part(head, Gx.dot, dark, sx * .085 * k, .04 * k, .236 * k, .013 * k * eyeK, .013 * k * eyeK, .008 * k * eyeK, 'fixed');
+    part(head, Gx.dot, redEye ? redMats.g : glint, sx * .085 * k + .01 * k, .05 * k, .241 * k, .006 * k, .006 * k, .004 * k, 'fixed');
+    /* bloodshot streaks: thin red tendrils on the sclera (baked into the merge via colour) */
+    if (redEye) for (let bl = 0; bl < 3; bl++) part(head, Gx.dot, redMats.i, sx * .085 * k + (bl - 1) * .014 * k, (.04 + (bl % 2 ? .012 : -.014)) * k, .208 * k, .007 * k, .02 * k, .006 * k, 'fixed');
     part(head, Gx.box, hair, sx * .085 * k, .1 * k, .235 * k, .075 * k, .016 * k, .02 * k, 'hair', [0, 0, -sx * .12]);   // brows
     part(head, Gx.sph, skin, sx * .255 * k, .01 * k, 0, .045 * k, .075 * k, .04 * k, 'skin');                  // ears
   }

@@ -33,6 +33,14 @@ BE.make = function (kind, seed, over, opt) {
   if (softOK && (kind === 'human' || kind === 'ape') && AV.chars.softActor) {
     const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false }); return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
   }
+  /* every other species (alien, robot, frog, spirit) is a soft-body alien build too: sculpted Zib / Orbo bodies with
+     spring-bone belly + antennae; the species stays readable through its colour palette and suit trim */
+  if (softOK && kind !== 'human' && kind !== 'ape' && AV.chars.alienActor) {
+    const rr = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(Math.max(1, (seed * 7919) | 0)), col = arr => pick(rr, arr), sc = .88 + rr() * .26;
+    const A = AV.chars.alienActor({ type: rr() < .6 ? 'zib' : 'orbo', skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), shadow: false });
+    A.root.scale.setScalar(.9 + (sc - .88) * .75); const ch = A.st.K.legs.L;
+    return { root: A.root, clips: [], actor: A, name: pick(rr, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']), kind, S: { thigh: Math.hypot(ch.hj[1] - ch.kn[1], ch.hj[2] - ch.kn[2]), shin: Math.hypot(ch.kn[1] - ch.an[1], ch.kn[2] - ch.an[2]) } };
+  }
   const r = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(Math.max(1, (seed * 7919) | 0)), base = SP[kind] || SP.human, sc = .88 + r() * .26;
   const S = Object.assign({}, base); ['thigh', 'shin', 'uarm', 'farm', 'spine', 'chest'].forEach(k => S[k] = base[k] * sc); S.body = base.body.map(v => v * (.85 + r() * .35)); S.head = base.head.map(v => v * (.92 + r() * .16)); Object.assign(S, over || {}); S.hip = S.thigh + S.shin + .07;
   const B = {}, list = [], bone = (n, p, x, y, z) => { const b = new THREE.Bone(); b.name = n; b.position.set(x, y, z); if (p) B[p].add(b); B[n] = b; b.userData.i = list.length; list.push(b) };
@@ -96,11 +104,7 @@ BE.make = function (kind, seed, over, opt) {
     sph('head', skin, wp('head', 0, S.head[1] * .9, 0), S.head); sph('head', eye, wp('head', 0, S.head[1] * 1.0, S.head[2] * .85), [.07, .1, .03]); sph('head', glow, wp('head', 0, S.head[1] * 1.0, S.head[2] * .9), .025);
     for (const a of ['antL', 'antR']) { const s = a === 'antL' ? -1 : 1, top = wp(a, s * .12, .34, 0); seg(a, skin, wp(a, 0, -.05, 0), top, .02, .012); sph(a, glow, top, .05) }
     limb(skin, skin, glow, glow, false); name = pick(r, ['Mind Jelly', 'The Entity', 'Glimmer', 'Fractal Fred', 'Aura Ann', 'Machine Elf']);
-  } else if (softOK && AV.chars.alienActor) {   /* alien / robot / frog / spirit, soft body: sculpted Zib / Orbo builds, species shows in palette + suit trim */
-    const A = AV.chars.alienActor({ type: r() < .6 ? 'zib' : 'orbo', skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), shadow: false });
-    A.root.scale.setScalar(.9 + (sc - .88) * .75); const ch = A.st.K.legs.L;
-    return { root: A.root, clips: [], actor: A, name: pick(r, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']), kind, S: { thigh: Math.hypot(ch.hj[1] - ch.kn[1], ch.hj[2] - ch.kn[2]), shin: Math.hypot(ch.kn[1] - ch.an[1], ch.kn[2] - ch.an[2]) } };
-  } else {   /* alien: the forge alien with random palette + head shape */
+  } else {   /* alien: the forge alien with random palette + head shape (emergency fallback only) */
     const a = F.alien(Object.assign({}, F.ALIENS[r() < .6 ? 'zib' : 'orbo'], { skin: col(SP.alien.skins), suit: col(SHIRTS), glow: col(['#7ff0ff', '#ff4ad2', '#ffd84a', '#7aff8a']), head: SP.alien.head.map(v => v * (.85 + r() * .3)) })); a.name = pick(r, ['Zorp', 'Blixa', 'Quell', 'Mr. Nubs', 'Vexa', 'Trill', 'Grob', 'Yuzu-7']); a.kind = kind; a.S = F.ALIENS.zib; return a;
   }
   const geo = F.merge(parts), mesh = new THREE.SkinnedMesh(geo, mats); mesh.add(B.root); B.root.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(list));

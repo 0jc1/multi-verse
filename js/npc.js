@@ -27,7 +27,7 @@ NP.spawn = function (ctx, id, o) {
     speed: o.speed || 1.15, loop: o.loop !== false, lead: !!o.lead, anim: o.anim || null, onArrive: null, sitY: 0 };
   /* V0.9.4: walk a new route (loop or one-way, optional leading = waits for the player), callback on arrival */
   n.go = function (path, opt) { opt = opt || {}; n.path = path; n.pi = 0; n.pause = 0; n.loop = !!opt.loop; n.lead = !!opt.lead; n.speed = opt.speed || n.speed; n.onArrive = opt.onArrive || null; if (opt.yaw != null) n.yaw = opt.yaw };
-  const tgt = { x: o.tx != null ? o.tx : o.x, z: o.tz != null ? o.tz : o.z, r: o.r || 3.2, label: () => tr('Talk to ', 'Hablar con ') + N.name, fn: () => AV.openChat(id), npc: n }; n.tgt = tgt; n.follow = o.tx == null;
+  const tgt = { x: o.tx != null ? o.tx : o.x, z: o.tz != null ? o.tz : o.z, r: o.r || 3.2, label: () => tr('Talk to ', 'Hablar con ') + N.name, fn: () => AV.openChat(id), npc: n, show: () => !n.ko }; n.tgt = tgt; n.follow = o.tx == null;
   ctx.T.push(tgt);
   if (!ctx.npcList) { ctx.npcList = []; ctx.upd.push((dt, t) => update(ctx.npcList, dt, t)) }
   ctx.npcList.push(n); return n;
@@ -52,6 +52,7 @@ NP.find = function (who) { const W = AV.W; if (!W) return null; for (const t of 
 function update(list, dt, t) {
   const P = AV.P, ch = AV.chat, red = AV.S.set.reduce;
   for (const n of list) {
+    if (n.ko) continue;                                                            // knocked down: punch.js owns the body until they get up
     const g = n.g, u = g.userData, dx = P.x - g.position.x, dz = P.z - g.position.z, d = Math.hypot(dx, dz), talking = ch.open && ch.who === n.id;
     let moving = false;
     if (n.path && !talking && (d > 3.2 || n.lead) && !(n.lead && d > 14)) {     // a leading NPC waits when the player falls behind

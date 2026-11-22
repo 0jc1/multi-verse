@@ -160,7 +160,7 @@ BE.spawn = function (ctx, specs) {
       headB: made.root.getObjectByName('head') || null, faceY: A ? A.faceY * made.root.scale.y : ((made.S && made.S.head && made.S.head[1]) || .15) * .85, actor: A || null };
     b.play = (n, f) => { if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');
-    const tg = { x: s.x, z: s.z, r: 2.4, label: () => tr('Talk to ', 'Hablar con ') + b.name, fn: () => BE.chat(b) }; ctx.T.push(tg); b.tg = tg;
+    const tg = { x: s.x, z: s.z, r: 2.4, label: () => tr('Talk to ', 'Hablar con ') + b.name, fn: () => BE.chat(b), being: b, show: () => !b.ko }; ctx.T.push(tg); b.tg = tg;
     out.push(b);
   });
   const turn = (a, t, k) => a + Math.atan2(Math.sin(t - a), Math.cos(t - a)) * Math.min(1, k);
@@ -168,6 +168,7 @@ BE.spawn = function (ctx, specs) {
     const P = AV.P, on = AV.audio && AV.audio.on && (AV.audio.ok || (AV.audio.track && AV.audio.track.active)), beat = on && AV.audio.beat ? AV.audio.beat : t * 2.07, w = W();
     for (const b of out) {
       const dx = P.x - b.h.position.x, dz = P.z - b.h.position.z, d = Math.hypot(dx, dz); b.h.visible = d < 90; if (d > 45) continue;
+      if (b.ko) { b.mixer.update(dt); continue }   // knocked down: punch.js owns the holder until they get up
       const locked = BE.talkTo === b && BE.chatOpen() && AV.now() >= b.danceUntil, talking = locked || (AV.now() - b.talkT < 6 && d < 6);
       if (b.actor) b.actor.root.userData.chatting = locked;   // soft body: snap its gaze onto you during the chat
       if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * (locked ? 9 : 5)); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }

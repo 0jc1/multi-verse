@@ -132,7 +132,7 @@ C.stoner = function (seed) {
     flower: style === 'long' && r() < .5 ? pick([0xff6ad5, 0xffd84a, 0x7ff0ff]) : null,
     capCol: pick([0x2a8a4a, 0xe8303a, 0xffd84a, 0x7a4ac8]),
     s: .76 + r() * .12, big: .92 + r() * .16,
-    shirt: pick([mat('reggae'), mat('hawaii'), mat('tieDye'), std(0xff6a3a, .85), std(0x7a4ac8, .85), std(0x2a9a6a, .85)]),
+    shirt: pick([() => mat('reggae'), () => mat('hawaii'), () => mat('tieDye'), () => std(0xff6a3a, .85), () => std(0x7a4ac8, .85), () => std(0x2a9a6a, .85)])(),
     pants: std(pick([0x3a3a52, 0x6a6a5a, 0xc8b088, 0x2a2a2a, 0x4a6a3a, 0x6a2a4a]), .9),
     shorts: r() < .7, foot: r() < .65 ? 'flip' : 'sneaker',
     shoe: pick([0x2a2a2a, 0xe8e8e8, 0xe8303a, 0x3a6ad8, 0x8a5a3a])

@@ -145,6 +145,7 @@ function build(L) {
     new RG.Spring(R, 'hemF', { k: 130, c: 6, max: .045 * s }), new RG.Spring(R, 'hemB', { k: 130, c: 6, max: .045 * s }));
   /* meshes (async) */
   const mats = st.mats = L.alien ? { body: alienMat(L) } : { body: L.human ? skinMat(L) : bodyMat(L, false), fur: L.shells ? bodyMat(L, true) : null, shirt: shirtMat(L, K), pants: pantsMat(L), shoes: shoeMat(L) };
+  if (L.matHook) L.matHook(mats, K, st);   // chars_soft.js: printed fabrics, chest decals, red eyes...
   const D = p => Object.assign({ sp: L.sp }, L.ov ? { ov: L.ov } : {}, p);
   const parts = L.alien ? [] : [D({ part: 'shirt', o: L.shirt.o }), D({ part: 'pants', o: L.pants.o }), D({ part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D({ part: 'hat', style: L.hat.style })] : []);
   const skinned = (desc, mat, shellMat, shells) => GEN.geo(desc, shells).then(G => {
@@ -343,6 +344,7 @@ function proxyPose(st, P) {
     h.pole.copy(R.P[I['uarm' + k]]).add(_u.set(sd * .6, -.3, -.8).applyQuaternion(R.Q[I.chest])); P.hands[k] = h;
   }
   const hr = px.head.rotation; P.head[0] += hr.x; P.head[1] += hr.y; P.head[2] += hr.z;
+  if (st.poseHook) st.poseHook(st, P);   // chars_soft.js: sitting (lL / lR), props in the hands, instruments
 }
 const PUPPETS = new Set();
 function inScene(o) { while (o) { if (o === AV.scene) return true; o = o.parent } return false }
@@ -350,6 +352,8 @@ AV.frameFns && AV.frameFns.push((dt, t) => {
   for (const c of PUPPETS) { const g = c.st.g; if (inScene(g)) { c.seen = true; const P = AV.P; if (!P || Math.hypot(P.x - g.position.x, P.z - g.position.z) < 80) c.update(dt, t) } else if (c.seen || ++c.wait > 900) PUPPETS.delete(c) }
 });
 C.puppets = PUPPETS;
+/* internals shared with chars_soft.js (soft-body humans / apes that replace the classic humanoids) */
+C.soft = { build: L => build(L), addProxies: st => addProxies(st), PUPPETS, GEN, shared, bonePoint, headOff, collider, defBeat: () => defBeat(), eyeGeo: k => eyeGeo(k) };
 
 /* human townsfolk: two body builds, varied skin / hair / clothes from a seed (same rig, IK and walking brain as the apes) */
 const HUMAN = {

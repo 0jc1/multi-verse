@@ -20,7 +20,7 @@ window.APE_T = (() => {
     c('renderer tone mapping matches the path', AV.R.toneMapping === (s0.hdr ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping));
     c('environment loaded (' + (file ? 'procedural on file://' : 'Poly Haven HDRI') + ')', await until(() => GX().envKind === (file ? 'procedural' : 'hdri'), 20000), GX().envKind);
     const want = file ? 'procedural' : 'GLB'; c('tower is ' + want, await until(() => AV.W.gfxAssets().tower === want, 20000), JSON.stringify(AV.W.gfxAssets()));
-    c('both aliens are ' + want, await until(() => AV.W.gfxAssets().aliens.every(a => a === want), 20000), JSON.stringify(AV.W.gfxAssets()));
+    c('both aliens are soft-body characters (sculpted, loaded)', await until(() => AV.W.gfxAssets().aliens.every(a => a === 'soft-body'), 30000), JSON.stringify(AV.W.gfxAssets()));
     let reflective = 0; GX().mats.forEach((v, m) => { if (v.kind === 'env' && m.envMap) reflective++ }); c('PBR materials receive the environment map', reflective >= 5, reflective + ' materials');
     const tw = AV.W.group.getObjectByName('shell'); c('mosaic shell has colour + normal + roughness maps', !!(tw && tw.material.map && tw.material.normalMap && tw.material.roughnessMap));
     c('neon/glow boosted for bloom (HDR)', !s0.hdr || [...GX().mats].some(([m, v]) => v.kind === 'glow' && m.color.r + m.color.g + m.color.b > 3));
@@ -29,6 +29,7 @@ window.APE_T = (() => {
 
   step('rigged aliens animate', async c => {
     const P = AV.W._plaza, z = P.zib, o = P.orbo; c('Zib + Orbo have skinned meshes', [z, o].every(a => { let s = false; a.obj.traverse(m => { if (m.isSkinnedMesh) s = true }); return s }));
+    c('soft body: antenna + belly spring bones move', await until(() => [z, o].every(a => { const st = a.actor && a.actor.st; return st && st.R.t[st.sp.antL.i].length() > .002 && st.R.t[st.sp.belly.i].length() > 1e-4 }), 10000));
     c('clips Idle/Walk/Dance/Wave on both', [z, o].every(a => ['Idle', 'Walk', 'Dance', 'Wave'].every(n => !!a.acts[n])));
     const bone = a => { let b = null; a.obj.traverse(x => { if (x.isBone && /thighL/.test(x.name)) b = x }); return b };
     view(-25, 4, 0); await sleep(300);                                        // stand away so Zib keeps walking
@@ -69,7 +70,7 @@ window.APE_T = (() => {
     setQ('High');
     for (const w of ['ape_town', 'jungle_dub', 'chiang_mai', 'verdalux']) { const ok = await travel(w); await sleep(600); c(w + ': loads, no post-processing, ACES as before', ok && !GX().active && AV.R.toneMapping === THREE.ACESFilmicToneMapping && !AV.kit.dome.material.defines.LIN_OUT && !$('err').textContent, $('err').textContent) }
     c('back to Astro-9', await travel('astro9')); const want = file ? 'procedural' : 'GLB';
-    c('re-entry: post on again + assets ' + want, GX().active && await until(() => AV.W.gfxAssets().tower === want && AV.W.gfxAssets().aliens.every(a => a === want), 15000), JSON.stringify(AV.W.gfxAssets()));
+    c('re-entry: post on again + tower ' + want + ' + soft-body aliens', GX().active && await until(() => AV.W.gfxAssets().tower === want && AV.W.gfxAssets().aliens.every(a => a === 'soft-body'), 15000), JSON.stringify(AV.W.gfxAssets()));
     c('registry only holds this world’s materials', [...GX().mats.values()].every(v => v.id === 'astro9'), GX().mats.size);
     c('low gravity on the dance floor still works', AV.W.gravityAt(0, -18) < .5);
   });

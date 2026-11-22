@@ -94,6 +94,95 @@ function muralTex() {
   }));
 }
 function rainbowTex() { return TX.rb || (TX.rb = canvasTex(512, 64, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, 0); ['#ff3a6a', '#ff9a3a', '#ffe83a', '#3aff7a', '#3ac8ff', '#7a5aff', '#ff3ad8'].forEach((x, i) => g.addColorStop(i / 6, x)); c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.25)'; for (let x = 0; x < w; x += 12) c.fillRect(x, 0, 4, h) }, true)) }
+/* ======================= V1.0 realistic street textures ======================= */
+/* weathered cement render: fine grain, patch repairs, rain streaks from the roof line, damp band at the foot (tinted per building) */
+function wallTex() {
+  return TX.wall || (TX.wall = canvasTex(512, 512, (c, w, h) => {
+    const r = AV.rng(808); c.fillStyle = '#eeeae2'; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 9000; i++) { c.fillStyle = r() < .5 ? 'rgba(90,80,70,' + (.03 + r() * .05).toFixed(3) + ')' : 'rgba(255,255,255,.08)'; c.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3) }
+    for (let i = 0; i < 26; i++) { const x = r() * w, y = r() * h, rr = 20 + r() * 70, g = c.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, 'rgba(' + (r() < .5 ? '120,110,95' : '255,255,250') + ',' + (.05 + r() * .08).toFixed(3) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(x - rr, y - rr, rr * 2, rr * 2) }
+    for (let i = 0; i < 140; i++) { const x = r() * w, y = r() * 30, l = 40 + r() * (r() < .3 ? 420 : 160), sw = 1 + r() * 4, g = c.createLinearGradient(0, y, 0, y + l); g.addColorStop(0, 'rgba(60,58,52,' + (.08 + r() * .14).toFixed(3) + ')'); g.addColorStop(1, 'rgba(60,58,52,0)'); c.fillStyle = g; c.fillRect(x, y, sw, l) }
+    { const g = c.createLinearGradient(0, h - 80, 0, h); g.addColorStop(0, 'rgba(70,75,60,0)'); g.addColorStop(1, 'rgba(62,66,50,.42)'); c.fillStyle = g; c.fillRect(0, h - 80, w, 80) }
+    c.strokeStyle = 'rgba(60,55,50,.35)'; c.lineWidth = 1; for (let i = 0; i < 9; i++) { let x = r() * w, y = r() * h; c.beginPath(); c.moveTo(x, y); for (let k = 0; k < 7; k++) { x += (r() - .5) * 18; y += 6 + r() * 12; c.lineTo(x, y) } c.stroke() }
+  }, true));
+}
+/* corrugated metal / fibreglass sheet (awnings, sheds, market roofs): ridges + rust + dirt, light base so vertex colours tint it */
+function awnTex() {
+  return TX.awn || (TX.awn = canvasTex(256, 256, (c, w, h) => {
+    const r = AV.rng(909); for (let x = 0; x < w; x++) { const v = 200 + Math.sin(x / w * 28 * TAU) * 34 | 0; c.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; c.fillRect(x, 0, 1, h) }
+    for (let i = 0; i < 40; i++) { const x = r() * w, y = r() * h, l = 10 + r() * 60, g = c.createLinearGradient(0, y, 0, y + l); g.addColorStop(0, 'rgba(140,70,30,' + (.12 + r() * .2).toFixed(3) + ')'); g.addColorStop(1, 'rgba(140,70,30,0)'); c.fillStyle = g; c.fillRect(x, y, 2 + r() * 5, l) }
+    for (let i = 0; i < 2500; i++) { c.fillStyle = 'rgba(60,50,40,' + (r() * .08).toFixed(3) + ')'; c.fillRect(r() * w, r() * h, 2, 2) }
+  }, true));
+}
+/* facade atlas (1024²): 16 shop signs, 8 shopfronts, 16 windows, railings, AC unit, wooden shutters + folding doors, balcony door,
+   8 vertical blade signs. R[key] = [x, y, w, h] in pixels. Lit-able cells (curtains/blinds) glow warm at night. */
+const FAS = 1024;
+function facadeAtlas() {
+  if (TX.fa) return TX.fa; const R = {};
+  const tex = canvasTex(FAS, FAS, (c) => {
+    const r = AV.rng(5150), TH = '"Thonburi","Leelawadee UI","Leelawadee","Tahoma","Noto Sans Thai",sans-serif', EN = 'Arial,Helvetica,sans-serif';
+    const grime = (x, y, w, h, a) => { const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(40,35,30,0)'); g.addColorStop(1, 'rgba(40,35,30,' + a + ')'); c.fillStyle = g; c.fillRect(x, y, w, h) };
+    const clip = (x, y, w, h, f) => { c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); f(); c.restore() };
+    c.clearRect(0, 0, FAS, FAS);
+    /* ---- horizontal shop signs ---- */
+    [['#c8102e', '#ffffff', 'ร้านขายยา', 'PHARMACY · DRUGSTORE'], ['#1d5fa8', '#ffffff', 'ซัก อบ รีด', 'LAUNDRY 40฿ / KG'], ['#f2c230', '#3a1a00', 'ก๋วยเตี๋ยวเรือ', 'BOAT NOODLES'], ['#2a6a3a', '#ffffff', 'นวดแผนไทย', 'THAI MASSAGE · FOOT 250฿'],
+      ['#3a2416', '#f0d8a0', 'COFFEE', 'กาแฟสด · ROASTERY'], ['#f6f4ee', '#c8102e', 'มินิมาร์ท', 'MINI MART · 24 HRS'], ['#8a1a1a', '#ffd84a', 'ห้างทอง', 'GOLD SHOP'], ['#0f3a5a', '#ffffff', 'GUEST HOUSE', 'ROOMS · WIFI · AIRCON'],
+      ['#e86a1a', '#ffffff', 'เช่ารถมอเตอร์ไซค์', 'MOTORBIKE RENT 200฿'], ['#f2eee4', '#2a2a2a', 'TOUR & TRAVEL', 'DOI SUTHEP · DOI INTHANON'], ['#5a2a6a', '#ffffff', 'ร้านเสริมสวย', 'HAIR & NAIL SALON'], ['#1a1a1a', '#e8e8e8', 'TATTOO', 'สักลาย · INK STUDIO'],
+      ['#2a5a9a', '#ffffff', 'EXCHANGE', 'แลกเงิน · BEST RATE'], ['#e8dcc0', '#7a3a10', 'ข้าวซอย', 'KHAO SOI · NORTHERN FOOD'], ['#1a6a6a', '#ffffff', 'BOOKS', 'ร้านหนังสือ · USED BOOKS'], ['#b8324a', '#ffffff', 'ร้านอาหาร', 'RESTAURANT · ห้องแอร์']
+    ].forEach(([bg, fg, a, b], i) => { const x = (i % 4) * 256, y = (i / 4 | 0) * 64; R['s' + i] = [x, y, 256, 64];
+      c.fillStyle = bg; c.fillRect(x, y, 256, 64); c.strokeStyle = 'rgba(0,0,0,.3)'; c.lineWidth = 4; c.strokeRect(x + 2, y + 2, 252, 60);
+      c.fillStyle = fg; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 28px ' + (/[a-z]/i.test(a) ? EN : TH); c.fillText(a, x + 128, y + 25, 232); c.font = 'bold 13px ' + EN; c.fillText(b, x + 128, y + 50, 236); grime(x, y + 28, 256, 36, .22) });
+    /* ---- shopfronts (256x128) ---- */
+    const shutter = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); for (let k = y; k < y + h; k += 4) { c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(x, k + 3, w, 1); c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(x, k, w, 1) } c.fillStyle = 'rgba(30,30,30,.6)'; c.fillRect(x, y + h - 5, w, 5); grime(x, y + h * .5, w, h * .5, .32) };
+    const inside = (x, y, w, h, wall, warm) => { const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, warm ? '#c89a68' : '#d4d8d6'); g.addColorStop(.3, wall); g.addColorStop(1, '#1c1814'); c.fillStyle = g; c.fillRect(x, y, w, h); c.fillStyle = warm ? '#fff0c8' : '#f4fbff'; for (let k = x + 16; k < x + w - 30; k += 58) c.fillRect(k, y + 5, 34, 3) };
+    const goods = (x, y, w, h) => { for (let sy = y; sy < y + h - 4; sy += 17) { c.fillStyle = '#5a5248'; c.fillRect(x, sy + 14, w, 3); for (let k = x + 2; k < x + w - 6; k += 4 + r() * 5) { c.fillStyle = 'hsl(' + (r() * 360 | 0) + ',' + (35 + r() * 45 | 0) + '%,' + (32 + r() * 34 | 0) + '%)'; const gh = 5 + r() * 8; c.fillRect(k, sy + 14 - gh, 3 + r() * 3, gh) } } };
+    const alu = (x, y, w, h) => { c.strokeStyle = '#9a9c9e'; c.lineWidth = 5; c.strokeRect(x + 2.5, y + 2.5, w - 5, h - 5) };
+    const SF = [
+      (x, y, w, h) => shutter(x, y, w, h, '#a6aaac'),
+      (x, y, w, h) => { shutter(x, y, w, h, '#6f8c98'); c.fillStyle = '#f4f0e0'; c.fillRect(x + w / 2 - 34, y + 34, 68, 34); c.fillStyle = '#c8102e'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 15px ' + TH; c.fillText('ให้เช่า', x + w / 2, y + 45); c.font = 'bold 9px ' + EN; c.fillText('FOR RENT', x + w / 2, y + 60) },
+      (x, y, w, h) => { inside(x, y, w, h, '#bcc4c0'); goods(x + 6, y + 18, 70, h - 30); goods(x + w - 76, y + 18, 70, h - 30); c.fillStyle = '#6a5a4a'; c.fillRect(x + 90, y + h - 40, 76, 40); c.fillStyle = '#d8d0c0'; c.fillRect(x + 90, y + h - 42, 76, 4); goods(x + 92, y + 30, 72, 34); alu(x, y, w, h) },
+      (x, y, w, h) => { inside(x, y, w, h, '#7a5236', true); c.fillStyle = '#1e1a16'; c.fillRect(x + 150, y + 22, 70, 36); c.fillStyle = 'rgba(255,255,255,.75)'; for (let k = 0; k < 5; k++) c.fillRect(x + 156, y + 28 + k * 6, 30 + r() * 26, 2); c.fillStyle = '#4a3020'; c.fillRect(x + 130, y + h - 44, 110, 44); c.fillStyle = '#c8a070'; c.fillRect(x + 130, y + h - 46, 110, 4);
+        c.fillStyle = '#3a2618'; for (const k of [30, 82]) { c.beginPath(); c.ellipse(x + k, y + h - 34, 20, 5, 0, 0, TAU); c.fill(); c.fillRect(x + k - 2, y + h - 34, 4, 30); c.fillRect(x + k - 22, y + h - 24, 8, 24); c.fillRect(x + k + 14, y + h - 24, 8, 24) } c.fillStyle = '#ffd890'; for (const k of [40, 100, 170]) { c.beginPath(); c.arc(x + k, y + 16, 5, 0, TAU); c.fill() } c.fillStyle = '#3a6a32'; c.beginPath(); c.arc(x + 112, y + h - 30, 13, 0, TAU); c.fill() },
+      (x, y, w, h) => { inside(x, y, w, h, '#b8b4a8'); goods(x + 6, y + 40, w - 12, h - 48); shutter(x, y, w, 46, '#a0a4a6') },
+      (x, y, w, h) => { inside(x, y, w, h, '#a8b0b4'); goods(x + 10, y + 40, w - 20, h - 50); clip(x, y, w, h, () => { const g = c.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, 'rgba(190,215,230,.5)'); g.addColorStop(.5, 'rgba(120,150,170,.25)'); g.addColorStop(1, 'rgba(200,220,235,.45)'); c.fillStyle = g; c.fillRect(x, y, w, h) });
+        c.fillStyle = '#9a9c9e'; for (const k of [0, 84, 168, 252]) c.fillRect(x + k, y, 5, h); c.fillRect(x, y + 26, w, 4); c.fillStyle = '#3a3c3e'; c.fillRect(x + 120, y + 70, 3, 18); c.fillStyle = '#e83a5a'; c.fillRect(x + 20, y + 40, 30, 40); c.fillStyle = '#2a7ad8'; c.fillRect(x + 190, y + 44, 28, 36) },
+      (x, y, w, h) => { inside(x, y, w, h, '#c8d8e0'); for (let row = 0; row < 2; row++) for (let k = 0; k < 6; k++) { const mx = x + 12 + k * 40, my = y + 26 + row * 46; c.fillStyle = '#f2f2ee'; c.fillRect(mx, my, 34, 40); c.fillStyle = '#3a4048'; c.beginPath(); c.arc(mx + 17, my + 22, 11, 0, TAU); c.fill(); c.fillStyle = '#8ab0c8'; c.beginPath(); c.arc(mx + 17, my + 22, 7, 0, TAU); c.fill() } },
+      (x, y, w, h) => { inside(x, y, w, h, '#5a5248'); goods(x + 6, y + 20, w - 12, h - 26); c.strokeStyle = '#7a7c7e'; c.lineWidth = 3; for (let k = -h; k < w; k += 16) { c.beginPath(); c.moveTo(x + k, y + h); c.lineTo(x + k + h, y); c.stroke(); c.beginPath(); c.moveTo(x + k, y); c.lineTo(x + k + h, y + h); c.stroke() } c.fillStyle = '#5a5c5e'; for (let k = 0; k < w; k += 16) c.fillRect(x + k, y, 3, h); c.fillRect(x, y, w, 6); c.fillRect(x, y + h - 6, w, 6) }];
+    SF.forEach((f, i) => { const x = (i % 4) * 256, y = 256 + (i / 4 | 0) * 128; R['f' + i] = [x, y, 256, 128]; clip(x, y, 256, 128, () => f(x, y, 256, 128)) });
+    /* ---- windows (128x128): 8 kinds x 2 frame colours (white / bronze aluminium) ---- */
+    const glass = (x, y, w, h) => clip(x, y, w, h, () => { const g = c.createLinearGradient(x, y, x + w * .6, y + h); g.addColorStop(0, '#8a9cab'); g.addColorStop(.45, '#3c4c5a'); g.addColorStop(.6, '#5a6c7c'); g.addColorStop(1, '#26323c'); c.fillStyle = g; c.fillRect(x, y, w, h); c.fillStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.moveTo(x + w * .25, y); c.lineTo(x + w * .5, y); c.lineTo(x + w * .15, y + h); c.lineTo(x - w * .1, y + h); c.fill() });
+    const curtains = (x, y, w, h) => { c.fillStyle = '#d8b884'; c.fillRect(x, y, w, h); for (let k = x; k < x + w; k += 7) { c.fillStyle = 'rgba(120,80,40,.22)'; c.fillRect(k, y, 3, h) } c.fillStyle = '#4a3424'; c.fillRect(x + w * .44, y, w * .12, h) };
+    const woodShut = (x, y, w, h) => { c.fillStyle = '#7a4a2a'; c.fillRect(x, y, w, h); c.fillStyle = 'rgba(30,15,5,.5)'; for (let k = y + 6; k < y + h - 4; k += 6) c.fillRect(x + 6, k, w - 12, 2); c.fillStyle = '#5a341c'; c.fillRect(x + w / 2 - 2, y, 4, h); c.strokeStyle = '#4a2a14'; c.lineWidth = 4; c.strokeRect(x + 2, y + 2, w - 4, h - 4) };
+    for (let i = 0; i < 16; i++) {
+      const x = (i % 8) * 128, y = 512 + (i / 8 | 0) * 128, t = i % 8, fc = i < 8 ? '#dcdcd4' : '#6a5a48', ix = x + 8, iy = y + 8, iw = 112, ih = 112; R['w' + i] = [x, y, 128, 128];
+      c.fillStyle = fc; c.fillRect(x, y, 128, 128);
+      if (t === 4) woodShut(ix, iy, iw, ih);
+      else if (t === 5) { curtains(ix + 26, iy, iw - 52, ih); woodShut(ix, iy, 26, ih); woodShut(ix + iw - 26, iy, 26, ih) }
+      else { if (t === 2 || t === 3) curtains(ix, iy, iw, ih); else if (t === 7) { c.fillStyle = '#e6dfd0'; c.fillRect(ix, iy, iw, ih); c.fillStyle = 'rgba(100,90,70,.35)'; for (let k = iy; k < iy + ih; k += 6) c.fillRect(ix, k, iw, 1) } else glass(ix, iy, iw, ih);
+        if (t === 6) { c.fillStyle = 'rgba(230,240,245,.35)'; for (let k = iy; k < iy + ih; k += 10) c.fillRect(ix, k, iw, 2) }
+        c.fillStyle = fc; c.fillRect(x + 61, y, 6, 128);
+        if (t === 1 || t === 3) { c.strokeStyle = '#2a2a2a'; c.lineWidth = 3; for (let k = ix + 6; k < ix + iw; k += 13) { c.beginPath(); c.moveTo(k, iy); c.lineTo(k, iy + ih); c.stroke() } for (const f of [.33, .66]) { c.beginPath(); c.moveTo(ix, iy + ih * f); c.lineTo(ix + iw, iy + ih * f); c.stroke() } c.beginPath(); c.arc(x + 64, iy + ih * .5, 18, 0, TAU); c.stroke() } }
+      grime(x, y, 128, 22, .0); { const g = c.createLinearGradient(0, y + 8, 0, y + 24); g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(ix, iy, iw, 16) }
+    }
+    /* ---- railings (transparent gaps, alpha-tested) ---- */
+    R.rail0 = [0, 768, 256, 64]; c.fillStyle = '#dcd6cc'; c.fillRect(0, 768, 256, 9); c.fillRect(0, 824, 256, 8); for (let k = 4; k < 256; k += 16) { c.fillRect(k + 2, 777, 6, 47); c.beginPath(); c.ellipse(k + 5, 802, 6, 11, 0, 0, TAU); c.fill() } grime(0, 768, 256, 64, .18);
+    R.rail1 = [256, 768, 256, 64]; c.fillStyle = '#3a3c3e'; c.fillRect(256, 768, 256, 6); c.fillRect(256, 828, 256, 4); c.fillRect(256, 798, 256, 3); for (let k = 260; k < 512; k += 10) c.fillRect(k, 774, 3, 54);
+    /* ---- AC condenser, wooden shutter window, Lanna folding teak doors, balcony door ---- */
+    R.ac = [0, 832, 128, 96]; c.fillStyle = '#e8e6e0'; c.fillRect(0, 832, 128, 96); c.strokeStyle = '#b8b6b0'; c.lineWidth = 3; c.strokeRect(2, 834, 124, 92); c.fillStyle = '#3a3a3a'; c.beginPath(); c.arc(80, 880, 34, 0, TAU); c.fill(); c.strokeStyle = '#8a8a8a'; c.lineWidth = 2; for (const rr of [10, 20, 30]) { c.beginPath(); c.arc(80, 880, rr, 0, TAU); c.stroke() } c.fillStyle = '#a8a6a0'; for (let k = 846; k < 916; k += 6) c.fillRect(10, k, 28, 2); grime(0, 880, 128, 48, .3);
+    R.wshut = [0, 928, 128, 96]; c.fillStyle = '#5a341c'; c.fillRect(0, 928, 128, 96); woodShut(6, 934, 58, 84); woodShut(64, 934, 58, 84);
+    R.fwood = [128, 832, 256, 192]; c.fillStyle = '#3a2214'; c.fillRect(128, 832, 256, 192); inside(128 + 64, 840, 128, 184, '#8a6040', true); goods(128 + 70, 880, 116, 100);
+    for (let k = 0; k < 8; k++) { if (k >= 2 && k < 6) continue; const px = 128 + k * 32; c.fillStyle = k % 2 ? '#6a3e22' : '#74462a'; c.fillRect(px + 1, 840, 30, 184); c.strokeStyle = 'rgba(30,15,5,.6)'; c.lineWidth = 2; c.strokeRect(px + 5, 852, 22, 70); c.strokeRect(px + 5, 934, 22, 80) }
+    c.fillStyle = '#4a2c18'; c.fillRect(128, 832, 256, 10); grime(128, 960, 256, 64, .3);
+    R.bdoor = [384, 832, 128, 192]; c.fillStyle = '#dcdcd4'; c.fillRect(384, 832, 128, 192); curtains(392, 840, 112, 176); c.fillStyle = '#dcdcd4'; c.fillRect(445, 832, 6, 192);
+    /* ---- vertical blade signs (64x256, text runs bottom -> top) ---- */
+    [['#c8102e', '#ffffff', 'โรงแรม HOTEL'], ['#1a5a3a', '#ffffff', 'นวด MASSAGE'], ['#1a1a1a', '#ffd84a', 'BAR · LIVE'], ['#f2c230', '#8a1a1a', 'ร้านอาหาร'], ['#0f3a5a', '#ffffff', 'GUESTHOUSE'], ['#3a2416', '#f0d8a0', 'COFFEE'], ['#7a3a8a', '#ffffff', 'SPA · นวด'], ['#f4f0e6', '#c8102e', 'ห้องพัก ROOMS']
+    ].forEach(([bg, fg, txt], i) => { const x = 512 + i * 64, y = 768; R['v' + i] = [x, y, 64, 256]; c.fillStyle = bg; c.fillRect(x, y, 64, 256); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 3; c.strokeRect(x + 4, y + 4, 56, 248);
+      c.save(); c.translate(x + 32, y + 128); c.rotate(-Math.PI / 2); c.fillStyle = fg; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 30px ' + TH; c.fillText(txt, 0, 0, 236); c.restore(); grime(x, y + 160, 64, 96, .2) });
+  });
+  return TX.fa = { tex, R };
+}
+/* gable roof prism (ridge along local x), tile UVs repeated */
+const PRISM = (() => { const g = new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(-.5, 0), new THREE.Vector2(.5, 0), new THREE.Vector2(0, 1)]), { depth: 1, bevelEnabled: false }); g.translate(0, 0, -.5); g.rotateY(Math.PI / 2); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 6, uv.getY(i) * 6); return g })();
 function leafNeonTex() { return TX.leaf || (TX.leaf = canvasTex(256, 256, (c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = '#6aff6a'; c.lineWidth = 7; c.shadowColor = '#3aff3a'; c.shadowBlur = 18; for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .42; c.save(); c.translate(128, 150); c.rotate(a + Math.PI / 2); c.beginPath(); c.ellipse(0, -48 + Math.abs(i - 3) * 6, 10, 48 - Math.abs(i - 3) * 8, 0, 0, TAU); c.stroke(); c.restore() } c.fillStyle = '#ffb04a'; c.shadowColor = '#ff8a2a'; c.font = 'bold 46px Arial'; c.textAlign = 'center'; c.fillText('OPEN', 128, 230) })) }
 
 AV.registerWorld({
@@ -153,23 +242,76 @@ AV.registerWorld({
     ctx.cols.push([RIV0 - .9, RIV0 - .45, ZMIN, -43], [RIV0 - .9, RIV0 - .45, -37, 25.5], [RIV0 - .9, RIV0 - .45, 34.5, ZMAX]);
     sign('PING RIVER PIER · Loy Krathong', 252.5, 3, 37.5, -Math.PI / 2, 4.6, '#7ff0ff', true);
 
-    /* ---------- shophouses (procedural, varied, batched) ---------- */
-    const PALETTE = [0xf2e6d0, 0xe8c8a0, 0xf0d8d8, 0xd8e8d0, 0xe8e0c0, 0xd0d8e8, 0xf4f0e8, 0xe8b890, 0xc8d8c0, 0xf0c8a8, 0xd8c8e0, 0xb8d0d8];
-    const SIGNC = [0xd83a3a, 0x2a7ad8, 0xffd84a, 0x2a9a5a, 0xff7a2a, 0x9a4ad8, 0x2ad8c8, 0xe84aa0];
+    /* ---------- shophouses (V1.0: realistic Thai row houses — "tuk thaew" concrete shophouses + Lanna teak houses, batched) ----------
+       Each facade is built in a local frame (x along the street, +z out of the wall) so textured parts (signs, shutters, windows) face
+       the street the right way round. Facade atlas = 1 material: shop signs, open/closed shopfronts, windows, railings, AC units. */
+    const FA = facadeAtlas(), NU = { value: 0 }, facM = (() => {
+      const m = new THREE.MeshStandardMaterial({ vertexColors: true, map: FA.tex, roughness: .8, alphaTest: .5 });
+      m.onBeforeCompile = sh => { sh.uniforms.uNight = NU; sh.vertexShader = 'attribute float aGlow;varying float vGlow;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vGlow = aGlow;');
+        sh.fragmentShader = 'uniform float uNight;varying float vGlow;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * vGlow * uNight * 1.25;') };   // lit signs / windows glow with their own picture
+      m.customProgramCacheKey = () => 'cmFacade'; m.userData.lin = 1; return m })();
+    ctx.upd.push(() => { NU.value = AV.nightK || 0 });
+    const wallM = K.floraMat(0, { map: wallTex(), rough: .93 }), awnM = K.floraMat(0, { map: awnTex(), rough: .5, metal: .25, double: true });
+    MT.stucco = wallM; MT.roof = awnM;   // hostel, venues and market stalls also get weathered render + corrugated sheets (instead of the painted flower/stripe textures)
+    const CG = {}, cell = k => CG[k] || (CG[k] = (() => { const R0 = FA.R[k], g = new THREE.BoxGeometry(1, 1, 1), uv = g.attributes.uv, p = 1.5; for (let i = 0; i < uv.count; i++) uv.setXY(i, (R0[0] + p + uv.getX(i) * (R0[2] - 2 * p)) / FAS, 1 - (R0[1] + p + (1 - uv.getY(i)) * (R0[3] - 2 * p)) / FAS); return g })());
+    const WALLS = [0xf1ece2, 0xe9dfca, 0xddd8ce, 0xf0e1b6, 0xdcc9a6, 0xc9d3c6, 0xe8d0c0, 0xd3d7da, 0xbfb9ac, 0xe8d6a2, 0xcfdcd5, 0xf4f1ea, 0xd9c2a0, 0xc6cfd6];
+    const AWN = [0xb4b8bc, 0xb4b8bc, 0x8aa0b8, 0x7aa088, 0xb86a5a, 0xe6e4dc, 0xd89a4a, 0x9a8a7a], LITW = { 2: 1, 3: 1, 5: 1, 7: 1 };
+    const SHOP = ['f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f0', 'f1', 'f2', 'f3', 'f5', 'f4'], OPEN = { f2: 1, f3: 1, f4: 1, f5: 1, f6: 1, fwood: 1 };
+    const FR = new THREE.Matrix4(), _p = new THREE.Vector3(), _sc = new THREE.Vector3(), _qq = new THREE.Quaternion(), _ee = new THREE.Euler();
     function shophouse(b, x0, x1, z0, z1, face, r) {   // face: 'n' | 's' | 'e' | 'w' (side towards the street)
-      const h = 4.2 + Math.floor(r() * 3) * 3.1 + (r() < .2 ? 3 : 0), col = PALETTE[r() * PALETTE.length | 0], lo = q === 0;
-      b.add(MT.stucco, BG.box, col, M((x0 + x1) / 2, h / 2, (z0 + z1) / 2, x1 - x0, h, z1 - z0)); solid(x0, x1, z0, z1);
-      const along = face === 'n' || face === 's', L = along ? x1 - x0 : z1 - z0, fp = face === 'n' ? z0 : face === 's' ? z1 : face === 'w' ? x0 : x1, out = face === 'n' || face === 'w' ? -1 : 1;
-      const P = (u, y, v, su, sy, sv, glow, colr, mat) => { const c = along ? M(x0 + u, y, fp + out * v, su, sy, sv) : M(fp + out * v, y, z0 + u, sv, sy, su); b.add(mat || MT.v, BG.box, colr, c, glow) };
-      P(L / 2, 1.55, .02, L - .6, 3.0, .1, r() < .5 && !lo ? .25 : 0, r() < .5 ? 0x2a2420 : 0x6a7a8a);                                 // shopfront / shutter
-      if (r() < .7) { b.add(MT.roof, BG.box, SIGNC[r() * 8 | 0], along ? M(x0 + L / 2, 3.25, fp + out * .8, L - .3, .1, 1.6, out * .18, 0, 0) : M(fp + out * .8, 3.25, z0 + L / 2, 1.6, .1, L - .3, 0, 0, -out * .18)) }   // awning
-      P(L / 2, 3.75, .12, Math.min(L - .8, 3.6), .55, .12, .7, SIGNC[r() * 8 | 0]);                                                   // sign board
-      for (let fl = 1; fl < Math.round((h - 1.2) / 3.1); fl++) { const y = 1.4 + fl * 3.1, nW = Math.max(1, Math.floor(L / 2.4)); for (let k = 0; k < nW; k++) P((k + .5) * L / nW, y + .3, .02, 1.1, 1.4, .08, r() < .45 ? .9 : 0, r() < .45 ? 0xffe0a0 : 0x3a4a5a);
-        if (!lo && r() < .45) { P(L / 2, y - .7, .6, L - .4, .12, 1.2, 0, 0xd8d0c0); P(L / 2, y - .2, 1.15, L - .4, .9, .06, 0, 0x5a5a5a) }      // balcony
-        if (!lo && r() < .4) P(L * (.2 + r() * .6), y + 1.1, .25, .8, .5, .5, 0, 0xe8e8e8) }                                    // AC unit
-      if (r() < .3) { const c = along ? M((x0 + x1) / 2, h + .7, (z0 + z1) / 2, (x1 - x0 + .6) * .72, 1.4, (z1 - z0 + .6) * .72, 0, Math.PI / 4, 0) : M((x0 + x1) / 2, h + .7, (z0 + z1) / 2, (x1 - x0 + .6) * .72, 1.4, (z1 - z0 + .6) * .72, 0, Math.PI / 4, 0); b.add(ROOF, A.geo('hip'), 0xffffff, c) }
-      else { P(L / 2, h + .25, (along ? z1 - z0 : x1 - x0) / 2, L, .5, (along ? z1 - z0 : x1 - x0), 0, 0xd8d0c0); if (!lo && r() < .35) P(L * .3, h + 1.4, (along ? z1 - z0 : x1 - x0) * .6, 1.2, 1.8, 1.2, 0, 0x8aa0b0) }   // flat roof + water tank
-      if (!lo && r() < .3) P(L * (r() < .5 ? .15 : .85), .45, .55, .5, .9, .5, .1, 0x3a8a3a);                                    // potted plant
+      const lo = q === 0, hi = q === 2, along = face === 'n' || face === 's', L = along ? x1 - x0 : z1 - z0, D = along ? z1 - z0 : x1 - x0;
+      FR.makeRotationY({ s: 0, n: Math.PI, e: Math.PI / 2, w: -Math.PI / 2 }[face]).setPosition({ s: x0, n: x1, e: x1, w: x0 }[face], 0, { s: z1, n: z0, e: z1, w: z0 }[face]);
+      const P = (mat, geo, col, u, y, v, su, sy, sv, glow, tilt) => { _qq.setFromEuler(_ee.set(tilt || 0, 0, 0)); b.add(mat, geo, col, new THREE.Matrix4().compose(_p.set(u, y, v), _qq, _sc.set(su, sy, sv)).premultiply(FR), glow) };
+      const lanna = r() < .14, nF = lanna ? 2 : [2, 2, 2, 3, 3, 3, 3, 4, 4, 5][r() * 10 | 0], G0 = 4, FH = 3.1, top = G0 + (nF - 1) * FH, h = top + (lanna ? 0 : .9);
+      const col = WALLS[r() * WALLS.length | 0], sh = k => shadeHex(col, k); solid(x0, x1, z0, z1);
+      /* body (Lanna: masonry ground floor + overhanging teak upper floor under a tiled gable roof) */
+      if (lanna) { P(wallM, BG.box, col, L / 2, G0 / 2, -D / 2, L, G0, D); P(MT.wood, BG.box, 0xa87a58, L / 2, G0 + FH / 2, -D / 2 + .2, L, FH, D + .4); P(MT.wood, BG.box, 0x6a4a32, L / 2, G0 + .08, .25, L, .16, .3) }
+      else P(wallM, BG.box, col, L / 2, h / 2, -D / 2, L, h, D);
+      /* ground floor: party-wall pilasters, shopfront (open shop / roller shutter / glass / folding gate), fascia, sign, awning */
+      if (!lanna) for (const u of [.12, L - .12]) P(wallM, BG.box, sh(.9), u, h / 2, .05, .24, h, .12);
+      const sf = lanna ? 'fwood' : SHOP[r() * SHOP.length | 0];
+      P(facM, cell(sf), 0xffffff, L / 2, 1.58, .03, L - .55, 3.15, .06, OPEN[sf] ? .75 : 0);
+      P(wallM, BG.box, sh(.94), L / 2, 3.25, .06, L - .3, .2, .14);
+      if (!lanna || r() < .6) { const sw = Math.min(L - .9, 4.6), shh = Math.min(.95, sw / 4.4); P(facM, cell('s' + (r() * 16 | 0)), 0xffffff, L / 2, 3.38 + shh / 2, .16, sw, shh, .1, .9) }
+      if (!lanna && r() < .75) { const ac = AWN[r() * AWN.length | 0], dep = 1.3 + r() * .5; P(awnM, BG.box, ac, L / 2, 3.0, dep / 2, L - .3, .04, dep, 0, .2); P(awnM, BG.box, ac, L / 2, 3.0 - Math.sin(.2) * dep / 2 - .07, dep * Math.cos(.2) - .02, L - .3, .14, .03);
+        if (!lo) for (const u of [.4, L - .4]) P(MT.v, BG.box, 0x3a3a3a, u, 2.92, dep / 2 - .05, .04, .04, dep, 0, .2) }
+      if (!lo && !lanna && nF > 1 && r() < .28) P(facM, cell('v' + (r() * 8 | 0)), 0xffffff, L - .45, G0 + 1.6, .5, .08, 2.2, .55, .9);   // blade sign
+      /* upper floors: slab band, windows with sills + sun hoods + grilles, AC condensers, some balconies */
+      const wt = r() * 8 | 0, fAlt = r() < .4 ? 8 : 0;
+      for (let k = 1; k < nF; k++) {
+        const y0 = G0 + (k - 1) * FH, nW = Math.max(1, Math.round(L / 2.4)), ww = Math.min(1.35, L / nW - .55);
+        if (!lanna) P(wallM, BG.box, sh(.88), L / 2, y0, .1, L, .22, .2);
+        if (lanna) { for (let i = 0; i < nW; i++) P(facM, cell('wshut'), 0xffffff, (i + .5) * L / nW, y0 + 1.5, .24, ww, 1.2, .06); continue }
+        if (!lo && r() < .3 && L > 4) {   // balcony: slab, railing, sliding door
+          const rl = r() < .5 ? 'rail0' : 'rail1'; P(wallM, BG.box, sh(.92), L / 2, y0 + .02, .6, L - .5, .16, 1.2); P(facM, cell(rl), 0xffffff, L / 2, y0 + .6, 1.17, L - .5, 1.0, .05);
+          for (const u of [.27, L - .27]) P(facM, cell(rl), 0xffffff, u, y0 + .6, .6, .05, 1.0, 1.15);
+          P(facM, cell('bdoor'), 0xffffff, L / 2, y0 + 1.3, .03, Math.min(2.2, L - 1.6), 2.4, .06, r() < .5 ? 1 : 0);
+          if (hi && r() < .6) { P(MT.v, A.geo('cyl'), 0x9a5a3a, .7, y0 + .3, .75, .2, .35, .2); P(MT.v, BG.sph, 0x3a7a34, .7, y0 + .7, .75, .35, .45, .35) }
+          continue }
+        for (let i = 0; i < nW; i++) {
+          const cx = (i + .5) * L / nW, t = r() < .8 ? wt : r() * 8 | 0; P(facM, cell('w' + (t + fAlt)), 0xffffff, cx, y0 + 1.55, .03, ww, 1.45, .06, LITW[t] && r() < .55 ? 1 : 0);
+          if (lo) continue;
+          P(wallM, BG.box, sh(.95), cx, y0 + .78, .1, ww + .16, .07, .22); P(wallM, BG.box, sh(.86), cx, y0 + 2.4, .26, ww + .4, .06, .5, 0, .22);   // sill + sun hood
+          if (r() < .28) { P(facM, cell('ac'), 0xffffff, cx, y0 + .42, .2, .8, .56, .32); P(MT.v, BG.box, 0x5a5a5a, cx, y0 + .12, .22, .7, .04, .36) }
+        }
+      }
+      /* roof: parapet cap + cornice, then a gable (Lanna), hip roof, or flat roof clutter (water tanks, antenna, dish, sheet-metal shed) */
+      if (lanna) { P(ROOF, PRISM, r() < .5 ? 0xffffff : 0x9a8a80, L / 2, top, -D / 2 + .2, L + .4, 2.2, D + 1.6) }
+      else {
+        P(wallM, BG.box, sh(.84), L / 2, h - .05, .02, L + .02, .12, .3); P(wallM, BG.box, sh(.9), L / 2, top + .08, .1, L, .16, .22);
+        if (nF <= 3 && r() < .14) P(ROOF, A.geo('hip'), 0xffffff, L / 2, h + .6, -D / 2, (L + .5) / 1.414, 1.3, (D + .5) / 1.414);
+        else if (!lo) {
+          if (r() < .55) { const u = .8 + r() * (L - 1.6), tc = r() < .5 ? [MT.shiny, 0xd8dce0] : [MT.v, 0x2a5aa8]; P(MT.v, BG.box, 0x6a6a6a, u, h + .3, -D * .6, .9, .6, .9); P(tc[0], A.geo('cyl'), tc[1], u, h + 1.15, -D * .6, .5, 1.1, .5) }
+          if (r() < .35) { const u = .5 + r() * (L - 1); P(MT.v, A.geo('cyl6'), 0x8a8a8a, u, h + 1.4, -1.2, .03, 2.8, .03); if (hi) for (const y of [2.3, 2.7]) P(MT.v, BG.box, 0x8a8a8a, u, h + y, -1.2, 1.2, .03, .03) }
+          if (r() < .15) P(MT.v, BG.hem, 0xe8e8e4, L * .7, h + .5, -.8, .38, .12, .38, 0, -1.1);
+          if (r() < .18) { const sd = Math.min(4, D * .4); P(awnM, BG.box, 0xa8acb0, L / 2, h + 2.3, -D + sd / 2 + .3, L - .4, .05, sd, 0, -.1); for (const u of [.4, L - .4]) P(MT.v, BG.box, 0x5a5a5a, u, h + 1.15, -D + sd + .2, .08, 2.3, .08) }
+        }
+      }
+      /* street level clutter: drain pipe, electricity meter, potted plants */
+      if (lo) return;
+      if (!lanna && r() < .4) P(MT.v, A.geo('cyl6'), 0x8a8a84, r() < .5 ? .32 : L - .32, h / 2, .16, .06, h, .06);
+      if (r() < .3) P(MT.v, BG.box, 0x9a9a94, .55, 1.8, .1, .34, .44, .14);
+      if (r() < .35) { const u = r() < .5 ? .5 : L - .5; P(MT.v, A.geo('cyl'), 0x8a4a2a, u, .2, .4, .24, .4, .24); P(MT.v, BG.sph, 0x3a7a3a, u, .65, .4, .38, .45, .38) }
     }
     const blockRows = (bx0, bx1, bz0, bz1, b, r) => {
       const d = Math.min(12, (bz1 - bz0) / 2 - 1), dw = Math.min(12, (bx1 - bx0) / 2 - 1);

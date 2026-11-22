@@ -95,6 +95,13 @@ AV.hud = function () {
 };
 AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T travel map · I inventory · O settings · M mute · R unstuck · F3 FPS · Esc menu/mouse',
   'WASD mover · Shift correr · Espacio saltar · E interactuar · P Pipa-Portal · T mapa · I inventario · O ajustes · M silencio · R desbloquear · F3 FPS · Esc menú/ratón');
+AV.showHint = function () {
+  const el = $('hint'), esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  el.innerHTML = AV.hintText().split(' · ').filter(Boolean).map(s => {
+    const m = s.match(/^(\S+(?: \/ \S+)?)\s+(.+)$/);
+    return '<span class="hk">' + (m ? '<kbd>' + esc(m[1]) + '</kbd>' + esc(m[2]) : esc(s)) + '</span>';
+  }).join('');
+};
 
 /* modal stack: anything that takes over input (chat, pipe, viewer, cinema, map...) */
 AV.modals = [];
@@ -180,7 +187,7 @@ AV.enterWorld = function (id, arrival, opt) {
       W.fog = W.fog || [30, 170]; scene.fog.near = W.fog[0]; scene.fog.far = W.fog[1]; cam.far = Math.max(420, W.fog[1] * 2.4); cam.updateProjectionMatrix();
       S.last[id] = AV.abs(); AV.hud(); AV.save();
       if (AV.audio) AV.audio.setWorld(W);
-      $('hint').textContent = AV.hintText();
+      AV.showHint();
       if (AV.onWorldEnter) AV.onWorldEnter(W);
       if (opt.done) opt.done(W);
     } catch (e) { AV.fail('World load failed (' + id + '): ' + e.message); console.error(e); if (id !== 'ape_town' && AV.worldDefs.ape_town) { AV.W = null; AV.enterWorld('ape_town', 'finca') } }
@@ -277,7 +284,7 @@ AV.toggleSettings = function () {
   $('sReal').onchange = e => { S.realFlora = e.target.checked; AV.save() }; $('sFps').onchange = e => { S.fps = e.target.checked; AV.save() };
   if (AV.gfx && AV.gfx.bindSettings) AV.gfx.bindSettings();
 };
-AV.setLang = function (l) { AV.ui = l; AV.S.set.lang = l; AV.hud(); $('hint').textContent = AV.hintText(); AV.save(); AV.toast(l === 'es' ? 'Idioma: Español' : 'Language: English') };
+AV.setLang = function (l) { AV.ui = l; AV.S.set.lang = l; AV.hud(); AV.showHint(); AV.save(); AV.toast(l === 'es' ? 'Idioma: Español' : 'Language: English') };
 
 /* ---------------- touch input (pointer events, multitouch, no pointer lock) ---------------- */
 (function () {

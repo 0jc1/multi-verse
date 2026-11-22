@@ -1,310 +1,683 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Apeverse V0.8 — The Living Universe (slice)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>
-:root{--bg:#120a1f;--fg:#fbefdc;--ac:#ffb04a;--ac2:#7ff0c8;--pn:rgba(24,12,38,.9)}
-*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:15px Georgia,serif;overflow:hidden;color-scheme:dark}
-canvas{display:block;width:100%;height:100%}
-button,input,select{font:inherit;color:var(--fg)}
-button{background:#3a1d52;border:1px solid var(--ac);border-radius:8px;padding:8px 14px;cursor:pointer}button:hover,button.on{background:#7a3d10}
-.ov{position:fixed;inset:0;z-index:9;background:radial-gradient(ellipse at 50% 20%,#4a2266,#120a1f);overflow:auto;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px))}
-.wrap{max-width:560px;margin:0 auto}h1{font-size:clamp(30px,7vw,52px);margin:.1em 0;color:var(--ac)}h3{margin:18px 0 6px;color:var(--ac2);font-weight:normal;letter-spacing:.04em}
-.row{display:flex;flex-wrap:wrap;gap:6px}input[type=text]{background:#1c0f2e;border:1px solid #6a4aa8;border-radius:8px;padding:8px;width:100%}
-.hud{position:fixed;pointer-events:none;text-shadow:0 1px 3px #000}
-#top{left:12px;top:calc(10px + env(safe-area-inset-top,0px));line-height:1.5}
-#hint{left:12px;bottom:10px;font-size:12px;opacity:.7}
-#prompt{left:50%;bottom:24%;transform:translateX(-50%);background:var(--pn);padding:7px 16px;border-radius:10px;display:none;border:1px solid var(--ac)}
-#toast{left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--pn);padding:8px 16px;border-radius:10px;opacity:0;transition:opacity .4s;max-width:84vw;text-align:center}
-.pnl{position:fixed;background:var(--pn);border:1px solid var(--ac);border-radius:12px;padding:14px;display:none;z-index:6}
-#chat{left:50%;bottom:14px;transform:translateX(-50%);width:min(680px,95vw)}
-#log{max-height:32vh;overflow:auto;margin:6px 0;line-height:1.45}#log p{margin:.35em 0}.me{color:var(--ac2)}
-#tag{font-size:11px;opacity:.75}
-#inv,#away{left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,92vw)}
-#err{position:fixed;left:8px;right:8px;top:48px;background:#7a1020;padding:8px;border-radius:8px;display:none;z-index:20}
-#map{left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,94vw);max-height:80vh;overflow:auto}
-html,body{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}input{-webkit-user-select:text;user-select:text}
-#tc{display:none;position:fixed;inset:0;z-index:5;pointer-events:none}.touch #tc{display:block}.nm #tc{display:none!important}#tc>*{pointer-events:auto}
-#lz{position:absolute;right:0;top:0;width:55%;height:100%;touch-action:none}
-#js{position:absolute;left:calc(22px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,176,74,.5);touch-action:none}
-#jk{position:absolute;left:39px;top:39px;width:52px;height:52px;border-radius:50%;background:rgba(255,176,74,.6);pointer-events:none}
-.tb{position:absolute;min-width:64px;height:64px;border-radius:50%;padding:0;background:rgba(58,29,82,.78);touch-action:none;-webkit-user-select:none}
-#pb{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:none;gap:8px}
-.touch #hint{display:none}.touch #chat{bottom:auto;top:calc(8px + env(safe-area-inset-top,0px))}
-@media (orientation:portrait){.touch #rot{display:block!important}}
-</style></head><body>
-<canvas id="c"></canvas><div id="err"></div>
-<div id="start" class="ov"><div class="wrap">
-<h1>APEVERSE</h1><div>V0.8 · The Living Universe — touch controls, two worlds, travel map</div>
-<h3 data-t="h_dev">HOW WOULD YOU LIKE TO PLAY?</h3>
-<div class="row"><button id="dLap" class="on">Laptop / Desktop</button><button id="dPho">Phone / Tablet</button></div>
-<div id="phoneNote" style="display:none;font-size:13px;opacity:.8;margin-top:6px">Touch controls: left stick = move, drag the right side = look, round buttons = act. Landscape works best. Graphics set to Low for phones.</div>
-<h3>WHICH LANGUAGES WOULD YOU LIKE IN YOUR UNIVERSE? (up to 5)</h3>
-<input id="ls" type="text" placeholder="Search languages…"><div id="lc" class="row" style="margin-top:6px"></div>
-<label style="display:block;margin-top:8px"><input id="intl" type="checkbox"> INTERNATIONAL MODE — You never know who you’ll meet</label>
-<div style="font-size:12px;opacity:.7">Only English and Español are localized in this build. Other picks are saved for later.</div>
-<h3>OPTIONS</h3>
-<label><input id="mus" type="checkbox" checked> Music</label> &nbsp; Graphics <select id="gq"><option>Low</option><option selected>High</option></select>
-<div class="row" style="margin-top:18px"><button id="bNew">New game</button><button id="bCont">Continue saved game</button></div>
-<div style="font-size:12px;opacity:.65;margin-top:10px">Progress is stored in this browser only. Clearing site data erases it. If the mouse won’t lock inside a preview, drag to look.</div>
-</div></div>
-<div id="tc"><div id="lz"></div><div id="js"><div id="jk"></div></div>
-<button id="tE" class="tb" style="right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(40px + env(safe-area-inset-bottom,0px));width:80px;height:80px">Act</button>
-<button id="tJ" class="tb" style="right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))">Jump</button>
-<button id="tR" class="tb" style="right:calc(30px + env(safe-area-inset-right,0px));bottom:calc(136px + env(safe-area-inset-bottom,0px))">Run</button>
-<button id="tM" class="tb" style="right:calc(12px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Map</button>
-<button id="tI" class="tb" style="right:calc(84px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Bag</button>
-<div id="pb"><button id="t1" class="tb" style="position:static">1</button><button id="t2" class="tb" style="position:static">2</button><button id="t3" class="tb" style="position:static">3</button></div></div>
-<div id="rot" class="hud" style="display:none;left:50%;top:60px;transform:translateX(-50%);background:var(--pn);padding:6px 12px;border-radius:8px">Rotate your phone to landscape</div>
-<div id="fade" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:8"></div>
-<div id="top" class="hud"></div><div id="hint" class="hud">T travel map · WASD move · Shift run · Space jump · E interact · I inventory · M mute · R unstuck · Esc release mouse</div>
-<div id="prompt" class="hud"></div><div id="toast" class="hud"></div>
-<div id="chat" class="pnl"><b id="cn"></b> <span id="tag"></span><div id="log"></div><input id="ci" type="text" maxlength="200" placeholder="Type anything and press Enter…"><div class="row" style="margin-top:6px"><button class="qc" data-q="Do you have a job for me?">Work?</button><button class="qc" data-q="Tell me about the music here">Music?</button><button class="qc" data-q="Where can I travel?">Travel?</button><button id="cs">Send</button><button id="cx">Leave conversation (Esc)</button></div></div>
-<div id="map" class="pnl"></div><div id="inv" class="pnl"></div><div id="away" class="pnl"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-'use strict';
-const $=i=>document.getElementById(i),TAU=Math.PI*2,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),pick=a=>a[Math.random()*a.length|0];
-const fail=m=>{const e=$('err');e.textContent='⚠ '+m;e.style.display='block'};addEventListener('error',e=>fail(e.message));
-/* ---------- localisation (en/es only) ---------- */
-const LANGS=['English','Español','Deutsch','Français','Nederlands','Italiano','Português','中文','ภาษาไทย','Tiếng Việt','日本語','한국어','العربية','हिन्दी'];
-const STR={en:{talk:'Talk to ',bar:'Start your shift at the bar',pour:'Pour: 1 Nebula Fizz · 2 Cosmic Cola · 3 Mushroom Mocha',bed:'Rent this apartment (90 cr / 3 days)',sleep:'Sleep until morning',door:'',inv:'Inventory & transactions',money:'Credits',day:'Day',job:'Job: café helper',nojob:'Unemployed',rent:'Rented: ',days:' days left',none:'No home yet'},
-es:{talk:'Hablar con ',bar:'Empezar tu turno en la barra',pour:'Sirve: 1 Nebula Fizz · 2 Cosmic Cola · 3 Mushroom Mocha',bed:'Alquilar este apartamento (90 cr / 3 días)',sleep:'Dormir hasta la mañana',door:'',inv:'Inventario y transacciones',money:'Créditos',day:'Día',job:'Trabajo: ayudante de café',nojob:'Sin trabajo',rent:'Alquilado: ',days:' días restantes',none:'Sin casa'}};
-let ui='en',selLangs=['English','Español'],device='desktop';
-const L=k=>STR[ui][k];
-function chips(){const q=$('ls').value.toLowerCase(),c=$('lc');c.innerHTML='';LANGS.filter(l=>l.toLowerCase().includes(q)).forEach(l=>{const b=document.createElement('button');b.textContent=l;if(selLangs.includes(l))b.className='on';b.onclick=()=>{if(selLangs.includes(l))selLangs=selLangs.filter(x=>x!==l);else if(selLangs.length<5)selLangs.push(l);else toast('Maximum five languages.');chips()};c.appendChild(b)})}
-$('ls').oninput=chips;chips();
-$('dLap').onclick=()=>{device='desktop';$('dLap').className='on';$('dPho').className='';$('phoneNote').style.display='none'};
-$('dPho').onclick=()=>{device='phone';$('gq').value='Low';$('dPho').className='on';$('dLap').className='';$('phoneNote').style.display='block'};
-/* ---------- save (schema v1, safe load) ---------- */
-const KEY='apeverse_v08';
-const fresh=()=>({v:1,money:120,log:[{d:1,t:'Starting funds',a:120}],job:false,rentDays:0,name:'',day:1,time:540,seen:Date.now(),mem:{zil:{met:0,facts:[]},grk:{met:0,facts:[],drums:0}},seed:Date.now()%100000,world:'town',disc:{town:1},last:{},built:{},grow:0,news:[],drumDay:0});
-let S=fresh(),away=null;
-function load(){try{const o=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('apeverse_v07'));if(!o||typeof o!=='object'||o.v!==1||typeof o.money!=='number'||!Array.isArray(o.log))return null;return Object.assign(fresh(),o)}catch(e){return null}}
-function save(){S.seen=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-/* ---------- economy: every change goes through txn() ---------- */
-function txn(amount,why){if(!Number.isFinite(amount)||!why)return false;if(S.money+amount<0){toast('Not enough credits.');return false}S.money+=amount;S.log.unshift({d:S.day,t:why,a:amount});S.log.length=Math.min(S.log.length,40);save();hud();return true}
-/* ---------- three ---------- */
-const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(72,1,.1,300);cam.rotation.order='YXZ';
-let R;try{R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap}catch(e){fail('WebGL unavailable: '+e.message)}
-const HS=new THREE.HemisphereLight(0xcfe0ff,0x6a4a3a,.5),SUN=new THREE.DirectionalLight(0xffe2b8,1.3);SUN.castShadow=true;SUN.shadow.mapSize.set(2048,2048);const sc=SUN.shadow.camera;sc.left=sc.bottom=-40;sc.right=sc.top=40;sc.far=200;scene.add(HS,SUN,SUN.target);
-scene.fog=new THREE.Fog(0xe8b98a,30,170);
-const MAT={};const std=(c,r=.8,m=0,e=0,ei=1)=>{const k=[c,r,m,e,ei].join();return MAT[k]||(MAT[k]=new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m,emissive:e,emissiveIntensity:ei}))};
-const box=new THREE.BoxGeometry(1,1,1),sph=new THREE.SphereGeometry(1,16,12),cyl=new THREE.CylinderGeometry(1,1,1,16),ico=new THREE.IcosahedronGeometry(1,1);
-const mk=(g,m,x,y,z,sx,sy,sz,par,sh)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);if(sh!==false){o.castShadow=o.receiveShadow=true}(par||scene).add(o);return o};
-const COL=[];const wall=(x0,x1,z0,z1,y0,y1,m,col=true)=>{mk(box,m,(x0+x1)/2,(y0+y1)/2,(z0+z1)/2,x1-x0,y1-y0,z1-z0);if(col&&y0<1)COL.push([x0,x1,z0,z1])};
-/* terrain: ground + low hills in the distance */
-mk(cyl,std(0x4a7a4a,1),0,-.5,0,150,1,150).receiveShadow=true;
-mk(cyl,std(0xb8a58a,.95),0,.02,0,17,.1,17);                      // plaza
-for(let i=0;i<14;i++){const a=i/14*TAU,r=100+Math.sin(i*3)*10;mk(ico,std(i%2?0x5a6a8a:0x6a5a7a,1),Math.cos(a)*r,-6,Math.sin(a)*r,34+i%3*10,22+i%4*8,34,null,false)}
-/* a building with a REAL door gap: walls, lintel, roof, interior light */
-function building(x,z,w,d,h,wc,doorX,name){const t=.35,x0=x-w/2,x1=x+w/2,z0=z-d/2,z1=z+d/2,dw=1.3,m=std(wc,.85);
-wall(x0,x1,z0,z0+t,0,h,m);wall(x0,x0+t,z0,z1,0,h,m);wall(x1-t,x1,z0,z1,0,h,m);
-wall(x0,doorX-dw,z1-t,z1,0,h,m);wall(doorX+dw,x1,z1-t,z1,0,h,m);wall(doorX-dw,doorX+dw,z1-t,z1,2.6,h,m,false);
-mk(box,std(0x3a2a22,.9),x,.06,z,w-.4,.12,d-.4);mk(box,std(0x4a3a4a,.9),x,h+.15,z,w+.8,.3,d+.8);
-const l=new THREE.PointLight(0xffc98a,1.1,16);l.position.set(x,h-.8,z);scene.add(l);
-mk(box,std(0xffe0a0,.4,0,0xffb060,1.2),doorX,2.9,z1+.2,2.2,.35,.1,null,false);return{x0,x1,z0,z1,h,l,doorX}}
-const cafe=building(-15,-12,15,11,4.6,0xd9855a,-15,'cafe'),apt=building(15,-12,12,11,5.4,0x7a8ad0,15,'apt');
-/* the nightclub is a facade only — no door yet */
-wall(-6,6,-34,-24,0,7,std(0x2a2040,.5,.3),true);mk(box,std(0xff4fd8,.3,0,0xff4fd8,1.5),0,5.2,-23.9,9,1.3,.2,null,false);
-/* café interior */
-const bar=[-19.5,-12,-15.6,-14.2];wall(bar[0],bar[1],bar[2],bar[3],0,1.15,std(0x6a3a22,.5,.1));mk(box,std(0xe8d0a0,.35),-15.75,1.18,-14.9,7.8,.08,1.6);
-for(let i=0;i<6;i++)mk(cyl,std(0x7ff0c8,.2,0,0x3fd8a0,1),-19+i*1.3,2.2,-16.9,.14,.5,.14,null,false),mk(cyl,std(0xff9a5f,.2,0,0xff7a2a,.9),-18.4+i*1.3,3,-16.9,.14,.5,.14,null,false);
-const seats=[[-18,-9.2],[-14.8,-8.6],[-11.2,-9.6]];seats.forEach(([x,z])=>{mk(cyl,std(0x4a2a1a,.6),x,.55,z,.7,.06,.7);mk(cyl,std(0x333,.5),x,.27,z,.08,.54,.08);COL.push([x-.6,x+.6,z-.6,z+.6]);for(const s of[-1,1]){mk(cyl,std(0xc0527a,.7),x+s*1.0,.3,z,.3,.5,.3);}});
-/* apartment interior: bed, lamp, window light */
-mk(box,std(0x5a4a7a,.9),18.2,.35,-15.2,3,.5,2.2);mk(box,std(0xf0e0d0,.9),18.2,.7,-15.2,2.8,.2,2.0);mk(box,std(0xff7ac0,.9),17.2,.85,-15.2,.8,.2,1.2);COL.push([16.7,19.7,-16.3,-14.1]);
-mk(cyl,std(0x222,.4),12.8,.9,-16.2,.08,1.8,.08);mk(sph,std(0xffd890,.3,0,0xffa850,1.2),12.8,1.95,-16.2,.35,.25,.35,null,false);
-/* plaza dressing: fountain, lamps, trees (few, well-formed) */
-mk(cyl,std(0x9a9aa8,.6),0,.4,2,2.4,.8,2.4);mk(cyl,std(0x4aa0c8,.1,.2,0x1a5a8a,.6),0,.82,2,2,.05,2);mk(sph,std(0x9af0ff,.2,0,0x5ad0ff,1.4),0,2.1,2,.5,.5,.5,null,false);
-for(const[x,z]of[[-8,6],[8,6],[-8,-6],[8,-6],[0,-20],[-25,-5],[25,-5]]){mk(cyl,std(0x222233,.5,.6),x,2.2,z,.08,4.4,.08);mk(sph,std(0xfff0c0,.3,0,0xffc880,1.6),x,4.5,z,.3,.3,.3,null,false)}
-for(let i=0;i<22;i++){const a=i*2.4,r=26+(i*7%24),x=Math.cos(a)*r,z=Math.sin(a)*r+8;if((Math.abs(x)<26&&z<-4&&z>-40)||z>24)continue;const h=3+i%4;mk(cyl,std(0x5a3a2a,.9),x,h/2,z,.25+.05*(i%3),h,.25);for(let k=0;k<4;k++)mk(ico,std([0x3a8a5a,0x5aa04a,0x8a5ab0][i%3],.8),x+Math.cos(k*2)*.8,h+.6+k*.5,z+Math.sin(k*2)*.8,1.5-k*.2,1.2,1.5-k*.2)}
-/* NPCs */
-function npc(col,x,z,ry,sc=1){const g=new THREE.Group(),m=std(col,.55);mk(sph,m,0,1,0,.5,.75,.42,g);const h=new THREE.Group();h.position.y=1.95;mk(sph,m,0,0,0,.32,.34,.32,h);for(const s of[-1,1]){mk(sph,std(0xffffff,.2),s*.13,.05,.27,.09,.09,.06,h,false);mk(sph,std(0),s*.13,.05,.33,.04,.04,.03,h,false);mk(sph,m,s*.62,1.05,0,.12,.45,.12,g)}mk(cyl,std(0x222),0,.35,0,.02,.7,.02,h,false).position.y=.5;mk(sph,std(0xff5fd2,.2,0,0xff2fa0,1),0,.9,0,.07,.07,.07,h,false);g.add(h);g.position.set(x,0,z);g.rotation.y=ry;g.scale.setScalar(sc);scene.add(g);g.userData.h=h;return g}
-const zil=npc(0x7a5fd0,-16,-16.4,0),custs=[npc(0xd05f7a,seats[0][0],seats[0][1]-1.2,Math.PI),npc(0x5fb0d0,seats[2][0],seats[2][1]+1.2,0),npc(0x8fd05f,seats[1][0]+1.1,seats[1][1],-1.6)];
-const walkers=[0,1,2].map(i=>({g:npc([0xffb04a,0x7ff0c8,0xe05fa0][i],Math.cos(i*2)*9,Math.sin(i*2)*9+4,0),a:i*2,sp:.25+i*.1}));
-/* ---------- clock / sky ---------- */
-const SKY=[[0x151030,0x0c0820],[0xf0a070,0xe8b98a],[0x8fc4ff,0xcfe0ff],[0xf08a60,0xe0906a]];const c1=new THREE.Color(),c2=new THREE.Color();
-function skyAt(m){const h=m/60;let a,b,f;if(h<5){a=b=0;f=0}else if(h<8){a=0;b=1;f=(h-5)/3}else if(h<10){a=1;b=2;f=(h-8)/2}else if(h<17){a=b=2;f=0}else if(h<19.5){a=2;b=3;f=(h-17)/2.5}else if(h<21.5){a=3;b=0;f=(h-19.5)/2}else{a=b=0;f=0}
-c1.setHex(SKY[a][0]).lerp(new THREE.Color(SKY[b][0]),f);c2.setHex(SKY[a][1]).lerp(new THREE.Color(SKY[b][1]),f);const day=cl(Math.sin((h-6)/12*Math.PI),0,1);if(world==='jungle'){c1.lerp(JC1,.55);c2.lerp(JC2,.6)}scene.background=c1;scene.fog.color.copy(c2);SUN.intensity=.1+1.4*day;HS.intensity=.2+.5*day;FAC.forEach(m=>m.emissiveIntensity=1.3*(1-day));STAR.material.opacity=Math.max(0,1-day*2.2);
-const ang=(h-6)/12*Math.PI;SUN.position.set(P.x+Math.cos(ang)*60,Math.max(8,Math.sin(ang)*70),P.z+20);SUN.target.position.set(P.x,0,P.z)}
-/* ---------- audio: tuba bass, Rhodes, boom-bap ---------- */
-const A={ctx:null,on:false,mute:false,
-init(){if(this.ctx)return;const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=this.ctx=new C();this.lp=c.createBiquadFilter();this.lp.type='lowpass';this.lp.frequency.value=2200;this.g=c.createGain();this.g.gain.value=.55;this.lp.connect(this.g);this.g.connect(c.destination);
-const b=this.nb=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1},
-tone(f,t,d,ty,v,f2){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(this.lp);o.start(t);o.stop(t+d+.05)},
-noise(t,d,v,fl,ty){const c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=this.nb;f.type=ty;f.frequency.value=fl;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(this.lp);s.start(t);s.stop(t+d+.05)},
-start(){if(!this.ctx||this.on)return;this.on=true;this.st=0;this.n=this.ctx.currentTime+.1;setInterval(()=>{const L=60/84/4;while(this.n<this.ctx.currentTime+.15){this.play(this.st,this.n+(this.st%2?.17*L:0));this.n+=L;this.st++}},30)},
-play(st,t){const s=st%16,bar=(st/16|0)%4,[r,iv]=[[0,[0,3,7,10,14]],[5,[0,4,7,10,14]],[-2,[0,4,7,11,14]],[7,[0,4,7,10,13]]][bar],f=n=>65.41*Math.pow(2,n/12);
-if('x.....x...x..x..'[s]==='x')this.tone(120,t,.2,'sine',.9,40);if('....x.......x...'[s]==='x'){this.noise(t,.15,.3,1800,'bandpass');this.tone(185,t,.09,'triangle',.25)}
-if('x.xxx.xxx.xxx.xx'[s]==='x')this.noise(t,.035,.08+(s%4===0?.05:0),8000,'highpass');
-const bs='1..1..2.1..3.1..'[s];if(bs!=='.'){const o=[0,0,7,12][+bs],fr=f(r+o);this.tone(fr,t,.32,'triangle',.55,fr*.97);this.tone(fr*2,t,.1,'sine',.08)}
-if('..x...x...x..x..'[s]==='x'||s===0)for(const i of iv){this.tone(f(r+i)*4,t,.55,'sine',.045);this.tone(f(r+i)*8,t,.12,'sine',.01)}
-if(s%8===6&&Math.random()<.5)this.tone(f([12,15,17,19,22][Math.random()*5|0]+r)*8,t,.28,'triangle',.05)},
-blip(f,d,f2){if(this.ctx)this.tone(f,this.ctx.currentTime,d||.15,'sine',.25,f2)},ka(){this.blip(660,.12,990);setTimeout(()=>this.blip(990,.2),90)}};
-/* ---------- player ---------- */
-const P={x:0,y:0,z:12,vx:0,vy:0,vz:0,yaw:0,pitch:0,on:true},keys={};let running=false,locked=false,drag=false,inside=null,near=null,t0=0;
-function lock(){if(device==='phone')return;try{const p=$('c').requestPointerLock();p&&p.catch&&p.catch(()=>{})}catch(e){}}
-document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===$('c'));
-$('c').addEventListener('mousedown',()=>{if(running&&!Chat.open){drag=true;lock()}});addEventListener('mouseup',()=>drag=false);
-addEventListener('mousemove',e=>{if(!running||Chat.open||!(locked||drag))return;P.yaw-=e.movementX*.0023;P.pitch=cl(P.pitch-e.movementY*.0023,-1.45,1.45)});
-let tT=0;function toast(m){const e=$('toast');e.textContent=m;e.style.opacity=1;clearTimeout(tT);tT=setTimeout(()=>e.style.opacity=0,3800)}
-function hud(){const hh=Math.floor(S.time/60)%24,mm=Math.floor(S.time%60);$('top').innerHTML='<b>'+L('money')+': '+S.money+'</b> · '+D[world].n+'<br>'+L('day')+' '+S.day+' · '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+'<br>'+(S.job?L('job'):L('nojob'))+'<br>'+(S.rentDays>0?L('rent')+S.rentDays+L('days'):L('none'))}
-/* ---------- conversation: optional LLM via YOUR backend, else labelled offline fallback ---------- */
-const Chat={open:false,hist:[],offer:false,llm:false};
-const LLM_URL=(()=>{try{return localStorage.getItem('apeverse_llm_url')||''}catch(e){return''}})();
-const ZIL={en:{hi:['Yo. Zil. I pour, I judge, I occasionally smile. What’s good?','Back again, %n? The stools missed you. Barely.'],job:'Honestly? My last helper quit to become a cloud. I need hands: 15 credits per drink, five drinks a shift. Want in?',yes:'Then you’re hired. Walk behind the bar and press E to start a shift.',no:'Your loss. The offer stands whenever you stop being picky.',have:'You already work here. Check the bar, rookie.',pay:'Fifteen credits a drink, plus tips if the regulars like you. Nobody gets rich. Everybody gets fed.',music:'Tuba bass and Rhodes keep the walls honest. Don’t tell the nightclub I said that.',rent:'The apartment across the plaza is 90 credits for three days. The landlord’s a rock, but fair.',town:'Small town, big sky. The nightclub across the square isn’t open yet. Neither is my patience.',who:'Zil. Bartender, philosopher, reluctant landlord’s cousin.',name:'Nice to meet you, %n. I’ll remember it. I remember everything, mostly grudges.',def:['Hm. Interesting. Say more, or order something.','I’ve heard weirder. Not this week though.','Bold take. I’ll file it under “things said at bars”.']},
-es:{hi:['Ey. Soy Zil. Sirvo, juzgo y a veces sonrío. ¿Qué tal?','¿Otra vez, %n? Los taburetes te extrañaban. Poquito.'],job:'Sinceramente, mi último ayudante se fue a ser nube. Necesito manos: 15 créditos por bebida, cinco por turno. ¿Te apuntas?',yes:'Pues contratado. Ponte detrás de la barra y pulsa E para empezar el turno.',no:'Tú te lo pierdes. La oferta sigue en pie.',have:'Ya trabajas aquí. Mira la barra, novato.',pay:'Quince créditos por bebida, más propinas. Nadie se hace rico, todos comen.',music:'La tuba y el Rhodes mantienen las paredes en pie.',rent:'El apartamento de la plaza cuesta 90 créditos por tres días.',town:'Pueblo pequeño, cielo enorme. La discoteca aún no abre.',who:'Zil. Camarero y filósofo.',name:'Encantado, %n. Lo recordaré.',def:['Mmm. Interesante. Cuéntame más o pide algo.','He oído cosas más raras.','Atrevido. Lo archivo en “cosas dichas en un bar”.']}};
-function offline(msg){const m=msg.toLowerCase(),es=/\b(hola|trabajo|gracias|qué|que tal|quiero|sí|si|buenas|alquiler|musica|música)\b/.test(m)&&!/\b(yo|hello|work)\b/.test(m)?'es':'en',Z=ZIL[es];let nm=msg.match(/(?:my name is|i'?m|me llamo|soy)\s+([A-ZÁÉÍÓÚa-záéíóúñ]{2,14})/i);let out,act=null;
-if(nm&&!/looking|new|here|good|fine|broke|hungry/i.test(nm[1])){S.name=nm[1][0].toUpperCase()+nm[1].slice(1);out=Z.name.replace('%n',S.name)}
-else if(Chat.offer&&/\b(yes|yeah|sure|ok|okay|deal|sounds good|accept|sí|vale|claro|acepto|me apunto)\b/.test(m)){Chat.offer=false;out=Z.yes;act={type:'offer_job',accepted:true}}
-else if(Chat.offer&&/\b(no|nope|nah|pass|no gracias)\b/.test(m)){Chat.offer=false;out=Z.no}
-else if(/\b(work|job|hiring|hire|employ|trabajo|empleo|chamba)\b/.test(m)){if(S.job)out=Z.have;else{Chat.offer=true;out=Z.job}}
-else if(/\b(pay|money|credits|salary|paga|dinero|sueldo)\b/.test(m))out=Z.pay;else if(/\b(music|song|tuba|rhodes|jazz|música|musica|canción)\b/.test(m))out=Z.music;
-else if(/\b(rent|apartment|home|house|alquil|casa|piso)\b/.test(m))out=Z.rent;else if(/\b(portal|gate|jungle|verdalux|planet|travel|space|portal)\b/.test(m))out=S.disc.jungle?tr('Verdalux? Moss people, great drummers, terrible small talk. The gate is down the plaza road.','Hay un portal al final de la calle de la plaza.'):tr('There is a gate at the far end of the plaza road. Nobody who goes through complains about the commute.','Hay un portal al final de la calle de la plaza.');else if(/\b(town|place|club|pueblo|ciudad|discoteca)\b/.test(m))out=Z.town;else if(/\b(who|name|quién|quien|nombre)\b/.test(m))out=Z.who;
-else if(/\b(hi|hello|hey|yo|hola|buenas|what'?s good)\b/.test(m))out=pick(Z.hi).replace('%n',S.name||'stranger');else out=pick(Z.def);return{reply:out,action:act}}
-async function ask(msg){if(LLM_URL){try{const r=await fetch(LLM_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({character:Chat.who,personality:'sarcastic alien bartender, warm underneath',message:msg,history:Chat.hist.slice(-12),memory:S.mem.zil,state:{job:S.job,languages:selLangs}})});if(r.ok){const j=await r.json();if(typeof j.reply==='string'&&j.reply.length<600){Chat.llm=true;return{reply:j.reply,action:j.action&&typeof j.action==='object'?j.action:null}}}}catch(e){}}
-Chat.llm=false;return Chat.who==='grk'?{reply:grkSay(msg),action:null}:offline(msg)}
-function applyAction(a){/* whitelisted, validated: model text can never touch money or other state */if(a&&a.type==='offer_job'&&a.accepted===true&&!S.job){S.job=true;S.log.unshift({d:S.day,t:'Hired at the café',a:0});save();hud();toast('You got a job at the café!');A.ka()}}
-function say(who,txt,cls){const p=document.createElement('p');p.className=cls||'';p.textContent=who+': '+txt;$('log').appendChild(p);$('log').scrollTop=1e5}
-function openChat(w){Chat.who=w||'zil';Chat.offer=false;Chat.hist=[];Chat.open=true;for(const k in keys)keys[k]=0;try{document.exitPointerLock()}catch(e){}S.mem[Chat.who].met++;$('chat').style.display='block';$('cn').textContent=Chat.who==='grk'?'Grakk, keeper of the Drum Log':'Zil the bartender';$('log').innerHTML='';
-$('tag').textContent=LLM_URL?'(connecting to your LLM endpoint; falls back if unavailable)':'OFFLINE FALLBACK — scripted replies, NOT a real AI. Add a backend to enable a model.';
-const g=Chat.who==='grk'?grkHi():pick(ZIL[ui==='es'?'es':'en'].hi).replace('%n',S.name||'stranger');say(Chat.who==='grk'?'Grakk':'Zil',g);Chat.hist.push({r:'npc',t:g});$('ci').focus()}
-function closeChat(){Chat.open=false;$('chat').style.display='none';$('ci').blur();save();lock()}
-$('cx').onclick=closeChat;
-$('ci').addEventListener('keydown',async e=>{e.stopPropagation();if(e.key==='Escape')return closeChat();if(e.key!=='Enter'||!e.target.value.trim())return;const m=e.target.value.trim();e.target.value='';say(S.name||'You',m,'me');Chat.hist.push({r:'player',t:m});
-const res=await ask(m);say(Chat.who==='grk'?'Grakk':'Zil',res.reply);Chat.hist.push({r:'npc',t:res.reply});if(Chat.llm)$('tag').textContent='LLM connected via your backend (actions validated by the game)';else if(LLM_URL)$('tag').textContent='LLM unreachable — using OFFLINE FALLBACK';applyAction(res.action);S.mem.zil.facts=S.name?['player name: '+S.name]:[];save()});
-/* ---------- job activity: serve 5 drinks ---------- */
-const DR=['Nebula Fizz','Cosmic Cola','Mushroom Mocha'];let shift=null;
-function nextOrder(){shift.c=custs[Math.random()*3|0];shift.d=Math.random()*3|0;toast((ui==='es'?'Cliente pide: ':'Customer wants: ')+DR[shift.d])}
-function pour(d){if(!shift)return;if(d===shift.d){txn(15,'Served '+DR[d]);A.ka();shift.n++;if(shift.n>=5){txn(25,'Shift tips');toast(ui==='es'?'Turno terminado. +25 de propinas.':'Shift done. +25 tips.');shift=null;mark.visible=false}else nextOrder()}else{toast(ui==='es'?'Bebida equivocada.':'Wrong drink.');A.blip(180,.25,90)}}
-const mark=mk(sph,std(0xffe08a,.2,0,0xffc040,2),0,0,0,.18,.18,.18,null,false);mark.visible=false;
-/* ---------- interaction ---------- */
-function targets(){const o=[];if(world!=='town')return jTargets();o.push({x:-16,z:-16.4,r:3.9,label:L('talk')+'Zil',fn:()=>Chat.open||openChat()});
-if(S.job)o.push({x:-13.2,z:-13.4,r:1.6,label:shift?L('pour'):L('bar'),fn:()=>{if(!shift){shift={n:0};nextOrder()}}});
-o.push({x:18.2,z:-15.2,r:2.8,label:S.rentDays>0?L('sleep'):L('bed'),fn:sleepOrRent});o.push({x:0,z:30,r:3.6,label:tr('Use the portal gate','Usar el portal'),fn:gate});if(S.built.stall)o.push({x:-6,z:9,r:2.8,label:tr('Buy a Nebula Fizz (6 cr)','Comprar un Nebula Fizz (6 cr)'),fn:()=>{if(txn(-6,'Nebula Fizz at the new stall'))toast(tr('Tastes like blueberries and static.','Sabe a arándanos y estática.'))}});return o}
-function sleepOrRent(){if(S.rentDays<=0){if(txn(-90,'Apartment rent (3 days)')){S.rentDays=3;toast(ui==='es'?'Apartamento alquilado.':'Apartment rented.')}}else{S.day++;S.rentDays--;S.time=8*60;hud();save();toast(ui==='es'?'Dormiste. Nuevo día.':'You slept. A new day begins.')}}
-function interact(){if(near)near.fn()}
-addEventListener('keydown',e=>{if(!running||e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;const k=e.code;if(Chat.open){if(k==='Escape')closeChat();return}
-keys[k]=1;if(k==='KeyE')interact();else if(k==='KeyI'){const i=$('inv');if(i.style.display==='block'){i.style.display='none';return}i.innerHTML='<b>'+L('inv')+'</b><p>'+L('money')+': '+S.money+'</p>'+S.log.slice(0,12).map(l=>'<div>Day '+l.d+' · '+l.t+' · '+(l.a>0?'+':'')+l.a+'</div>').join('')+'<p style="font-size:12px;opacity:.7">Possessions: none yet (shops come in a later milestone).</p><button onclick="this.parentNode.style.display=\'none\'">Close</button>';i.style.display='block'}
-else if(k==='KeyM'){A.mute=!A.mute;if(A.g)A.g.gain.value=A.mute?0:.55}else if(k==='KeyR'){const d=D[world];P.x=d.x;P.z=d.z;P.y=0;P.vy=0;toast('Unstuck: back at the gate area.')}else if(shift&&/^Digit[1-3]$/.test(k))pour(+k[5]-1);else if(k==='Space')e.preventDefault()});
-addEventListener('keyup',e=>keys[e.code]=0);
+<html lang="en">
 
-/* ================= V0.8 additions ================= */
-const tr=(a,b)=>ui==='es'?b:a,abs=()=>S.day*1440+S.time;
-let world='town';const JX=400;
-const D={town:{n:'Plaza Town',x:0,z:12,cx:0,r:70},jungle:{n:'Verdalux (jungle moon)',x:JX,z:14,cx:JX,r:55}};
-const JC1=new THREE.Color(0x0e4a4a),JC2=new THREE.Color(0x3a8a6a),FAC=[],glows=[],portals=[];
-const T={x:0,y:0,run:false,jump:false};
-/* stars */
-const STAR=(()=>{const n=500,a=new Float32Array(n*3);for(let i=0;i<n;i++){const t=Math.random()*TAU,y=Math.random()*.9+.1,r=Math.sqrt(1-y*y);a[i*3]=Math.cos(t)*r*250;a[i*3+1]=y*250;a[i*3+2]=Math.sin(t)*r*250}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(a,3));const p=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false,transparent:true,opacity:0,fog:false,depthWrite:false}));p.frustumCulled=false;scene.add(p);return p})();
-/* procedural lit-window facades (canvas textures; lit windows glow at night) */
-const lit=[];for(let i=0;i<16;i++)lit.push(Math.random()<.45);
-const mkc=f=>{const c=document.createElement('canvas');c.width=c.height=128;f(c.getContext('2d'));const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t};
-const winT=mkc(g=>{g.fillStyle='#d6d0da';g.fillRect(0,0,128,128);lit.forEach((l,i)=>{g.fillStyle=l?'#ffd890':'#26334f';g.fillRect(8+(i%4)*30,8+(i/4|0)*30,20,22)})});winT.encoding=THREE.sRGBEncoding;
-const emT=mkc(g=>{g.fillStyle='#000';g.fillRect(0,0,128,128);lit.forEach((l,i)=>{if(l){g.fillStyle='#ffcf80';g.fillRect(8+(i%4)*30,8+(i/4|0)*30,20,22)}})});emT.encoding=THREE.sRGBEncoding;
-function fac(col,rx,ry){const a=winT.clone(),b=emT.clone();a.repeat.set(rx,ry);b.repeat.set(rx,ry);a.needsUpdate=b.needsUpdate=true;const m=new THREE.MeshStandardMaterial({color:col,roughness:.65,map:a,emissive:0xffffff,emissiveMap:b,emissiveIntensity:0});FAC.push(m);return m}
-/* Creative Street: a row of varied towers with cornices, setbacks, awnings, balconies and neon (facades only: no fake doors) */
-mk(box,std(0x2a2a34,.9),0,.04,30,132,.06,10,null,false);mk(box,std(0x8a8a96,.95),0,.05,38,132,.1,4,null,false);
-for(let i=-6;i<=6;i++)mk(box,std(0xe8e0b0,.8),i*10,.08,30,3,.02,.3,null,false);
-function tower(x,w,h,col,neon){const z=46,d=10;mk(box,fac(col,w/4,h/3.8),x,h/2,z,w,h,d);COL.push([x-w/2,x+w/2,z-d/2,z+d/2]);
-mk(box,std(0x2a2433,.7),x,h+.3,z,w+.6,.6,d+.6);mk(box,fac(col,w*.6/4,1.2),x,h+2.6,z,w*.6,4,d*.6);mk(box,std(0x2a2433,.7),x,h+4.8,z,w*.6+.5,.4,d*.6+.5);
-mk(box,std(neon,.6),x,3.2,40.1,w*.85,.15,1.7);mk(box,std(neon,.3,0,neon,1.8),x,4.3,40.85,w*.6,.7,.12,null,false);
-if(h>9){mk(box,std(0x3a3a48,.8),x,6.6,40.5,w*.9,.15,1.2);mk(box,std(0x3a3a48,.8),x,7.2,40,w*.9,.05,.05);}}
-[[-39,10,12,0x7a8ad0,0xff4fd8],[-26,11,16,0xd9855a,0x4ff0ff],[-13,10,9,0x8ac09a,0xffe04f],[0,12,20,0xb08ad0,0xff8a4f],[13,10,11,0xd0a0a0,0x4fffa0],[26,11,15,0x8aa0d0,0xff4f6a],[39,10,10,0xc0c08a,0x8f4fff]].forEach(a=>tower(...a));
-for(let i=-5;i<=5;i++){if(i===0)continue;const x=i*11;mk(cyl,std(0x222233,.5,.6),x,2.2,36.4,.08,4.4,.08);mk(sph,std(0xfff0c0,.3,0,0xffc880,1.6),x,4.5,36.4,.3,.3,.3,null,false)}
-/* portal gates */
-function portal(x,z){const g=new THREE.Group(),r=new THREE.Mesh(new THREE.TorusGeometry(2.3,.22,12,40),std(0x7ff0c8,.2,.4,0x2fe0b0,1.6)),d=new THREE.Mesh(new THREE.CircleGeometry(2.1,32),new THREE.MeshBasicMaterial({color:0x6a3fff,transparent:true,opacity:.5,side:THREE.DoubleSide}));r.position.y=d.position.y=2.6;g.add(r,d);mk(cyl,std(0x2a2a3a,.6),0,.15,0,3,.3,3,g);g.position.set(x,0,z);scene.add(g);portals.push(d)}
-portal(0,30);portal(JX,24);
-/* Verdalux: jungle moon (organic domes, glow-trees, drum log, drifting lights) */
-mk(cyl,std(0x1f5a4a,1),JX,-.5,0,120,1,120).receiveShadow=true;
-function glowTree(x,z,h,col,gl){mk(cyl,std(0x3a2a4a,.9),x,h/2,z,.45,h,.45);mk(sph,std(col,.5,0,col,gl),x,h+.4,z,h*.42,h*.18,h*.42,null,false);COL.push([x-.5,x+.5,z-.5,z+.5])}
-for(let i=0;i<18;i++){const a=i*2.4,r=22+(i*7%26),x=JX+Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x-JX)<5&&z>6)continue;glowTree(x,z,5+i%4*1.5,[0xff5fd2,0x5ff0ff,0xb08aff][i%3],.9)}
-const GT=[[-9,-12],[10,-14],[-14,6],[15,5],[-5,-20],[6,-22],[-20,-8]];
-function jTree(i){const p=GT[i%GT.length];glowTree(JX+p[0],p[1],7.5+i%3,[0xffe04f,0x7fffb0,0xff8a4f][i%3],1.4)}
-for(let i=0;i<5;i++){const a=i*1.26+.3,x=JX+Math.cos(a)*15,z=Math.sin(a)*15-4;mk(sph,std(0xd8a86a,.8),x,0,z,3.2,2.4,3.2);COL.push([x-2.6,x+2.6,z-2.6,z+2.6]);mk(sph,std(0xffd890,.4,0,0xffb060,1.6),x-Math.cos(a)*3,1.1,z-Math.sin(a)*3,.45,.45,.2,null,false)}
-const dl=mk(cyl,std(0x6a4a2a,.8),JX,.6,-2,.6,3.2,.6);dl.rotation.z=Math.PI/2;for(let i=0;i<3;i++)mk(sph,std(0xff8aa8,.4,0,0xff4f7a,1),JX-1+i,1.2,-2,.34,.12,.34,null,false);COL.push([JX-1.8,JX+1.8,-2.6,-1.4]);
-for(let i=0;i<14;i++){const o=mk(sph,std([0x7fffd0,0xff9ae0,0xffe08a][i%3],.3,0,[0x3fe0b0,0xff4fc0,0xffc040][i%3],1.8),JX+Math.cos(i*2.1)*(8+i*2.4),0,Math.sin(i*2.1)*(8+i*2),.14,.14,.14,null,false);glows.push({o,y:1.2+i%4*.5,p:i})}
-const grk=npc(0x2fd0a0,JX+3,-2,0,1.5);
-function jTargets(){const o=[{x:JX+3,z:-2,r:3.8,label:tr('Talk to ','Hablar con ')+'Grakk',fn:()=>Chat.open||openChat('grk')},{x:JX,z:-2,r:2.6,label:tr('Play the Drum Log','Tocar el tronco-tambor'),fn:drum},{x:JX,z:24,r:3.6,label:tr('Use the portal gate','Usar el portal'),fn:toggleMap}];return o}
-function drum(){const G=S.mem.grk;try{if(!A.ctx)A.init();A.ctx.resume&&A.ctx.resume();const t=A.ctx.currentTime;[0,.18,.36,.5,.72].forEach((o,i)=>A.tone(i%2?160:90,t+o,.25,'sine',.8,i%2?110:50))}catch(e){}
-G.drums++;if(S.drumDay!==S.day){S.drumDay=S.day;txn(12,'Played the Drum Log')}else toast(tr('The moss is full for today. Play for fun!','El musgo ya pagó hoy. ¡Toca por diversión!'));save()}
-/* town stall (appears through the evolution system) */
-let stallBuilt=false;function buildStall(){if(stallBuilt)return;stallBuilt=true;const x=-6,z=9;mk(box,std(0x8a5a32,.8),x,.55,z,3,1.1,1.1);for(let k=0;k<4;k++)mk(box,std(k%2?0xffffff:0xff5f7a,.7),x-1.275+k*.85,2.6,z,.85,.15,1.8);for(const s of[-1,1])mk(cyl,std(0x333,.5),x+s*1.5,1.3,z+.8,.05,2.6,.05);mk(box,std(0x4ff0ff,.3,0,0x4ff0ff,1.5),x,3,z+.95,2,.3,.06,null,false);COL.push([x-1.5,x+1.5,z-.55,z+.55])}
-/* evolution: bounded rules driven by in-game time away from a world */
-function news(t){S.news.unshift('Day '+S.day+': '+t);S.news.length=Math.min(S.news.length,8);toast(t)}
-function evolve(id){const g=S.last[id]==null?0:abs()-S.last[id];if(g<300)return;
-if(id==='town'){if(!S.built.stall){S.built.stall=1;buildStall();news('While you were away, a market stall opened by the fountain.')}else news(pick(['Zil rearranged the stools again.','Someone painted a lamp post pink.','The street towers got new neon.']))}
-else{if(S.grow<7){S.grow++;jTree(S.grow-1);news('A new glow-tree sprouted in Verdalux while you were gone.')}else news('The Verdalux moss hummed a new rhythm.')}}
-function travel(id){const d=D[id];if(!d||!S.disc[id]||id===world)return;$('map').style.display='none';$('fade').style.opacity=1;
-setTimeout(()=>{S.last[world]=abs();world=id;S.world=id;P.x=d.x;P.z=d.z;P.vx=P.vz=0;P.yaw=id==='town'?Math.PI:0;P.pitch=0;S.time+=180;while(S.time>=1440){S.time-=1440;S.day++}evolve(id);S.last[id]=abs();hud();save();$('fade').style.opacity=0},470)}
-function gate(){if(!S.disc.jungle){S.disc.jungle=1;news('Destination discovered: Verdalux, a jungle moon. It is now on your Travel Map.');travel('jungle')}else toggleMap()}
-function toggleMap(){const m=$('map');if(m.style.display==='block'){m.style.display='none';return}m.innerHTML='';const h=document.createElement('b');h.textContent=tr('Universal Travel Map','Mapa universal de viaje');m.appendChild(h);
-for(const k in D){if(!S.disc[k])continue;const r=document.createElement('div');r.style.margin='8px 0';const b=document.createElement('button');b.textContent=D[k].n+(k===world?tr(' (you are here)',' (estás aquí)'):'');b.disabled=k===world;b.onclick=()=>travel(k);r.appendChild(b);m.appendChild(r)}
-const n=document.createElement('div');n.style.cssText='font-size:12px;opacity:.85;margin-top:8px';n.textContent=tr('Travel takes about 3 hours of game time. Worlds change while you are away.','El viaje tarda unas 3 horas de juego. Los mundos cambian mientras no estás.');m.appendChild(n);
-(S.news||[]).slice(0,5).forEach(t=>{const p=document.createElement('div');p.style.cssText='font-size:12px;margin-top:4px';p.textContent='• '+t;m.appendChild(p)});
-const c=document.createElement('button');c.textContent=tr('Close','Cerrar');c.style.marginTop='10px';c.onclick=()=>m.style.display='none';m.appendChild(c);m.style.display='block'}
-function toggleInv(){window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyI'}))}
-function extras(dt){const t=now_();for(const p of portals){p.rotation.z+=dt;p.scale.setScalar(1+Math.sin(t*3)*.04)}for(const g of glows)g.o.position.y=g.y+Math.sin(t*1.2+g.p)*.4;
-document.body.classList.toggle('nm',!!Chat.open);$('pb').style.display=(device==='phone'&&shift)?'flex':'none'}
-addEventListener('keydown',e=>{if(running&&!Chat.open&&e.code==='KeyT'&&e.target.tagName!=='INPUT')toggleMap()});
-function grkHi(){const m=S.mem.grk;return m.met>1?(m.drums?tr('Back, drummer. The log remembers your '+m.drums+' rhythms.','Volviste, tamborilero.'):'The moss remembers you. Have you touched the Drum Log yet?'):'Mmm. A two-legged visitor. I am Grakk, keeper of the Drum Log. Speak slowly; my thoughts grow like moss. (I only speak English for now.)'}
-function grkSay(msg){const m=msg.toLowerCase(),G=S.mem.grk;let o;
-if(/\b(drums?|music|rhythms?|beats?|songs?|bands?|play(?:ing)?)\b/.test(m))o=G.drums?'You have played '+G.drums+' times. The moss hums your tempo. Zil would call it "tuba-adjacent".':'Press the log and the whole jungle answers. We have no word for "wrong note", only "not yet".';
-else if(/\b(job|work|money|pay|credits|earn)\b/.test(m))o='Play the Drum Log. The moss pays once per sun: twelve credits. Greedy drummers get only echoes.';
-else if(/\b(portal|gate|town|home|zil|bar|back|return|travel)\b/.test(m))o='The gate hums at the end of the old path. The bartender on the other side sends bad jokes through. We keep them.';
-else if(/\b(planets?|moons?|verdalux|jungle|where|places?|trees?)\b/.test(m))o='Verdalux, a moon that listens. Glow-trees grow when travelers go away and come back. The jungle likes to be missed.';
-else if(/\b(humans?|apes?|monkeys?|species|aliens?)\b/.test(m))o='Two-legs talk before they listen. Ape-kin drum better. All are guests.';
-else if(/\b(stupid|terrible|bad|hate|boring|dumb|ugly)\b/.test(m))o='Mmm. The moss disagrees. So do I. Play first, complain after.';
-else if(/\b(hi|hello|hey|yo|hola)\b/.test(m))o=grkHi();
-else o=pick(['Mmm. The moss is thinking. Ask me about the drums, the gate, or the trees.','Slow words, two-legs. My thoughts grow like moss.','That question has no roots. Try another.']);return o}
-/* ---- touch input: pointer events, multitouch, no pointer lock ---- */
-(function(){const js=$('js'),jk=$('jk'),lz=$('lz'),RR=52;let jid=null,jc=null,lid=null,lx=0,ly=0;
-function jm(e){let dx=e.clientX-jc.x,dy=e.clientY-jc.y;const l=Math.hypot(dx,dy);if(l>RR){dx*=RR/l;dy*=RR/l}const mg=Math.hypot(dx,dy)/RR;T.x=mg<.12?0:dx/RR;T.y=mg<.12?0:dy/RR;jk.style.transform='translate('+dx+'px,'+dy+'px)'}
-js.addEventListener('pointerdown',e=>{if(jid!==null)return;jid=e.pointerId;try{js.setPointerCapture(e.pointerId)}catch(_){}const b=js.getBoundingClientRect();jc={x:b.left+b.width/2,y:b.top+b.height/2};jm(e);e.preventDefault()});
-js.addEventListener('pointermove',e=>{if(e.pointerId===jid)jm(e)});
-const je=e=>{if(e.pointerId===jid){jid=null;T.x=T.y=0;jk.style.transform=''}};js.addEventListener('pointerup',je);js.addEventListener('pointercancel',je);
-lz.addEventListener('pointerdown',e=>{if(lid!==null)return;lid=e.pointerId;lx=e.clientX;ly=e.clientY;try{lz.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
-lz.addEventListener('pointermove',e=>{if(e.pointerId!==lid)return;const dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;if(running&&!Chat.open){P.yaw-=dx*.0045;P.pitch=cl(P.pitch-dy*.0045,-1.45,1.45)}});
-const le=e=>{if(e.pointerId===lid)lid=null};lz.addEventListener('pointerup',le);lz.addEventListener('pointercancel',le);
-const bind=(id,dn,up)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();dn()});if(up)['pointerup','pointercancel','pointerleave'].forEach(n=>b.addEventListener(n,up))};
-bind('tE',()=>{if(running)interact()});bind('tJ',()=>T.jump=true,()=>T.jump=false);bind('tR',()=>{T.run=!T.run;$('tR').classList.toggle('on',T.run)});bind('tM',()=>{if(running)toggleMap()});bind('tI',()=>{if(running)toggleInv()});
-bind('t1',()=>pour(0));bind('t2',()=>pour(1));bind('t3',()=>pour(2));
-$('cs').onclick=()=>$('ci').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}));
-document.querySelectorAll('.qc').forEach(b=>b.onclick=()=>{$('ci').value=b.dataset.q;$('cs').click()});
-document.addEventListener('touchmove',e=>{if(running&&!(e.target.closest&&e.target.closest('#log,.ov,.pnl')))e.preventDefault()},{passive:false});
-document.addEventListener('contextmenu',e=>{if(device==='phone')e.preventDefault()});
-try{if(matchMedia('(pointer:coarse)').matches)$('dPho').click()}catch(_){}})();
+<head>
+    <meta charset="utf-8">
+    <title>Apeverse V0.8 — The Living Universe (slice)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <style>
+        :root {
+            --bg: #120a1f;
+            --fg: #fbefdc;
+            --ac: #ffb04a;
+            --ac2: #7ff0c8;
+            --pn: rgba(24, 12, 38, .9)
+        }
 
-/* ---------- boot ---------- */
-function begin(cont){try{R&&(R.setPixelRatio($('gq').value==='High'?Math.min(devicePixelRatio||1,1.5):1),R.shadowMap.enabled=$('gq').value==='High');
-ui=selLangs[0]==='Español'?'es':'en';const sv=cont?load():null;if(sv){S=sv;const mins=Math.min((Date.now()-S.seen)/60000,72*60);if(mins>3){const r=[Date.now()%7,mins|0];S.time=(S.time+mins*2)%1440;S.day+=Math.floor((S.time+mins*2)/1440)>0?0:0;
-away=['Zil took a double shift and says the stools are “emotionally exhausted”.','A new fountain light was installed in the plaza.',pick(['The nightclub crew was seen loading amps (still closed).','A traveling musician was spotted near the old road.']),'Nothing was taken from you while you were away.']}}else{S=fresh()}
-S.mem=S.mem&&S.mem.zil?S.mem:{zil:{met:0,facts:[]}};if(!S.mem.grk)S.mem.grk={met:0,facts:[],drums:0};world=D[S.world]?S.world:'town';if(S.built.stall)buildStall();for(let i=0;i<S.grow;i++)jTree(i);document.body.classList.toggle('touch',device==='phone');if(S.job===undefined)S.job=false;
-$('start').style.display='none';running=true;resize();hud();if($('mus').checked){try{A.init();A.start()}catch(e){fail('Audio: '+e.message)}}
-{const dd=D[world];P.x=dd.x;P.z=dd.z;P.yaw=world==='town'?Math.PI:0}lock();if(away){$('away').innerHTML='<b>'+(ui==='es'?'Bienvenido de nuevo a Apeverse':'Welcome back to Apeverse!')+'</b><p>'+(ui==='es'?'Mientras estabas fuera:':'While you were away:')+'</p>'+away.map(a=>'<div>• '+a+'</div>').join('')+'<p style="font-size:12px;opacity:.7">These are lightweight, bounded simulated notes. Businesses and real NPC schedules arrive in later milestones.</p><button onclick="this.parentNode.style.display=\'none\'">Continue</button>';$('away').style.display='block'}
-t0=performance.now();requestAnimationFrame(loop)}catch(e){fail('Startup failed: '+e.message)}}
-$('bNew').onclick=()=>begin(false);$('bCont').onclick=()=>{if(!load()){toast('No valid saved game found. Starting new.');begin(false)}else begin(true)};
-function resize(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener('resize',()=>R&&resize());
-/* ---------- loop ---------- */
-let last=performance.now(),sav=0;
-function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;try{update(dt);R.render(scene,cam)}catch(e){fail('Runtime: '+e.message)}}
-function update(dt){const run=keys.ShiftLeft||keys.ShiftRight||T.run;let ax=0,az=0;
-if(!Chat.open){const f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-T.y,s=(keys.KeyD?1:0)-(keys.KeyA?1:0)+T.x,sn=Math.sin(P.yaw),cs=Math.cos(P.yaw);ax=-sn*f+cs*s;az=-cs*f-sn*s;const l=Math.hypot(ax,az);if(l>1){ax/=l;az/=l}P.yaw+=((keys.ArrowLeft?1:0)-(keys.ArrowRight?1:0))*2*dt;if((keys.Space||T.jump)&&P.on){P.vy=7;P.on=false}}
-const sp=run?7.5:4,k=Math.min(1,(P.on?14:3)*dt);P.vx+=(ax*sp-P.vx)*k;P.vz+=(az*sp-P.vz)*k;P.vy-=22*dt;P.x+=P.vx*dt;P.z+=P.vz*dt;P.y+=P.vy*dt;if(P.y<=0){P.y=0;P.vy=0;P.on=true}
-for(const c of COL){const r=.4;if(P.x>c[0]-r&&P.x<c[1]+r&&P.z>c[2]-r&&P.z<c[3]+r){const a=P.x-(c[0]-r),b=c[1]+r-P.x,d=P.z-(c[2]-r),e=c[3]+r-P.z,m=Math.min(a,b,d,e);if(m===a)P.x=c[0]-r;else if(m===b)P.x=c[1]+r;else if(m===d)P.z=c[2]-r;else P.z=c[3]+r}}
-{const dw=D[world];P.x=cl(P.x,dw.cx-dw.r,dw.cx+dw.r);P.z=cl(P.z,-dw.r,dw.r)}
-const bob=Math.hypot(P.vx,P.vz)>1&&P.on?Math.sin(now_()*9)*.04:0;cam.position.set(P.x,P.y+1.7+bob,P.z);cam.rotation.set(P.pitch,P.yaw,0);STAR.position.copy(cam.position);
-/* clock: 1 real sec = 2 game minutes */
-S.time+=dt*2;if(S.time>=1440){S.time-=1440;S.day++}if(((now_()|0)%5===0)&&Math.floor(now_())!==hud.l){hud.l=Math.floor(now_());hud()}skyAt(S.time);
-const was=inside;inside=[cafe,apt].find(b=>P.x>b.x0&&P.x<b.x1&&P.z>b.z0&&P.z<b.z1)||null;if(A.lp&&was!==inside)A.lp.frequency.setTargetAtTime(inside?9000:2200,A.ctx.currentTime,.3);
-/* NPC life */
-for(const w of walkers){w.a+=dt*w.sp*.3;w.g.position.set(Math.cos(w.a)*10,0,Math.sin(w.a)*8+5);w.g.rotation.y=-w.a+Math.PI;w.g.position.y=Math.abs(Math.sin(now_()*5+w.a))*.05}
-for(const n of[zil,...custs,grk]){const d=Math.hypot(P.x-n.position.x,P.z-n.position.z);if(d<8){let a=Math.atan2(P.x-n.position.x,P.z-n.position.z)-n.rotation.y;a=Math.atan2(Math.sin(a),Math.cos(a));n.userData.h.rotation.y+=(cl(a,-.9,.9)-n.userData.h.rotation.y)*Math.min(1,4*dt)}}
-if(shift){mark.visible=true;mark.position.set(shift.c.position.x,2.7+Math.sin(now_()*4)*.06,shift.c.position.z)}
-/* prompt */
-near=null;if(!Chat.open){let bd=1e9;for(const t of targets()){const d=Math.hypot(t.x-P.x,t.z-P.z);if(d<t.r&&d<bd){bd=d;near=t}}}
-const pr=$('prompt');if(near){pr.style.display='block';pr.textContent=(device==='phone'?'▶ ':'E — ')+near.label}else pr.style.display='none';
-extras(dt);if((sav+=dt)>20){sav=0;save()}}
-const now_=()=>performance.now()/1000;
-addEventListener('beforeunload',()=>{try{save()}catch(e){}});
-if(!window.THREE)fail('Three.js failed to load. Check your connection.');
-</script></body></html>
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font: 15px Georgia, serif;
+            overflow: hidden;
+            color-scheme: dark
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+            color: var(--fg)
+        }
+
+        button {
+            background: #3a1d52;
+            border: 1px solid var(--ac);
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer
+        }
+
+        button:hover,
+        button.on {
+            background: #7a3d10
+        }
+
+        .ov {
+            position: fixed;
+            inset: 0;
+            z-index: 9;
+            background: radial-gradient(ellipse at 50% 20%, #4a2266, #120a1f);
+            overflow: auto;
+            padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px))
+        }
+
+        .wrap {
+            max-width: 560px;
+            margin: 0 auto
+        }
+
+        h1 {
+            font-size: clamp(30px, 7vw, 52px);
+            margin: .1em 0;
+            color: var(--ac)
+        }
+
+        h3 {
+            margin: 18px 0 6px;
+            color: var(--ac2);
+            font-weight: normal;
+            letter-spacing: .04em
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px
+        }
+
+        input[type=text] {
+            background: #1c0f2e;
+            border: 1px solid #6a4aa8;
+            border-radius: 8px;
+            padding: 8px;
+            width: 100%
+        }
+
+        .hud {
+            position: fixed;
+            pointer-events: none;
+            text-shadow: 0 1px 3px #000
+        }
+
+        #top {
+            left: 12px;
+            top: calc(10px + env(safe-area-inset-top, 0px));
+            line-height: 1.5
+        }
+
+        #hint {
+            left: 12px;
+            bottom: 10px;
+            font-size: 12px;
+            opacity: .7
+        }
+
+        #prompt {
+            left: 50%;
+            bottom: 24%;
+            transform: translateX(-50%);
+            background: var(--pn);
+            padding: 7px 16px;
+            border-radius: 10px;
+            display: none;
+            border: 1px solid var(--ac)
+        }
+
+        #toast {
+            left: 50%;
+            top: calc(14px + env(safe-area-inset-top, 0px));
+            transform: translateX(-50%);
+            background: var(--pn);
+            padding: 8px 16px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity .4s;
+            max-width: 84vw;
+            text-align: center
+        }
+
+        .pnl {
+            position: fixed;
+            background: var(--pn);
+            border: 1px solid var(--ac);
+            border-radius: 12px;
+            padding: 14px;
+            display: none;
+            z-index: 6
+        }
+
+        #chat {
+            left: 50%;
+            bottom: 14px;
+            transform: translateX(-50%);
+            width: min(680px, 95vw)
+        }
+
+        #log {
+            max-height: 32vh;
+            overflow: auto;
+            margin: 6px 0;
+            line-height: 1.45
+        }
+
+        #log p {
+            margin: .35em 0
+        }
+
+        .me {
+            color: var(--ac2)
+        }
+
+        #tag {
+            font-size: 11px;
+            opacity: .75
+        }
+
+        #inv,
+        #away {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(440px, 92vw)
+        }
+
+        #err {
+            position: fixed;
+            left: 8px;
+            right: 8px;
+            top: 48px;
+            background: #7a1020;
+            padding: 8px;
+            border-radius: 8px;
+            display: none;
+            z-index: 20
+        }
+
+        #map {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(460px, 94vw);
+            max-height: 80vh;
+            overflow: auto
+        }
+
+        html,
+        body {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none
+        }
+
+        input {
+            -webkit-user-select: text;
+            user-select: text
+        }
+
+        #tc {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none
+        }
+
+        .touch #tc {
+            display: block
+        }
+
+        .nm #tc {
+            display: none !important
+        }
+
+        #tc>* {
+            pointer-events: auto
+        }
+
+        #lz {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 55%;
+            height: 100%;
+            touch-action: none
+        }
+
+        #js {
+            position: absolute;
+            left: calc(22px + env(safe-area-inset-left, 0px));
+            bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .1);
+            border: 2px solid rgba(255, 176, 74, .5);
+            touch-action: none
+        }
+
+        #jk {
+            position: absolute;
+            left: 39px;
+            top: 39px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(255, 176, 74, .6);
+            pointer-events: none
+        }
+
+        .tb {
+            position: absolute;
+            min-width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            padding: 0;
+            background: rgba(58, 29, 82, .78);
+            touch-action: none;
+            -webkit-user-select: none
+        }
+
+        #pb {
+            position: absolute;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            display: none;
+            gap: 8px
+        }
+
+        .touch #hint {
+            display: none
+        }
+
+        .touch #chat {
+            bottom: auto;
+            top: calc(8px + env(safe-area-inset-top, 0px))
+        }
+
+        @media (orientation:portrait) {
+            .touch #rot {
+                display: block !important
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+    <div id="err"></div>
+    <div id="start" class="ov">
+        <div class="wrap">
+            <h1>APEVERSE</h1>
+            <div>V0.8 · The Living Universe — touch controls, two worlds, travel map</div>
+            <h3 data-t="h_dev">HOW WOULD YOU LIKE TO PLAY?</h3>
+            <div class="row"><button id="dLap" class="on">Laptop / Desktop</button><button id="dPho">Phone /
+                    Tablet</button></div>
+            <div id="phoneNote" style="display:none;font-size:13px;opacity:.8;margin-top:6px">Touch controls: left stick
+                = move, drag the right side = look, round buttons = act. Landscape works best. Graphics set to Low for
+                phones.</div>
+            <h3>WHICH LANGUAGES WOULD YOU LIKE IN YOUR UNIVERSE? (up to 5)</h3>
+            <input id="ls" type="text" placeholder="Search languages…">
+            <div id="lc" class="row" style="margin-top:6px"></div>
+            <label style="display:block;margin-top:8px"><input id="intl" type="checkbox"> INTERNATIONAL MODE — You never
+                know who you’ll meet</label>
+            <div style="font-size:12px;opacity:.7">Only English and Español are localized in this build. Other picks are
+                saved for later.</div>
+            <h3>OPTIONS</h3>
+            <label><input id="mus" type="checkbox" checked> Music</label> &nbsp; Graphics <select id="gq">
+                <option>Low</option>
+                <option selected>High</option>
+            </select>
+            <div class="row" style="margin-top:18px"><button id="bNew">New game</button><button id="bCont">Continue
+                    saved game</button></div>
+            <div style="font-size:12px;opacity:.65;margin-top:10px">Progress is stored in this browser only. Clearing
+                site data erases it. If the mouse won’t lock inside a preview, drag to look.</div>
+        </div>
+    </div>
+    <div id="tc">
+        <div id="lz"></div>
+        <div id="js">
+            <div id="jk"></div>
+        </div>
+        <button id="tE" class="tb"
+            style="right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(40px + env(safe-area-inset-bottom,0px));width:80px;height:80px">Act</button>
+        <button id="tJ" class="tb"
+            style="right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))">Jump</button>
+        <button id="tR" class="tb"
+            style="right:calc(30px + env(safe-area-inset-right,0px));bottom:calc(136px + env(safe-area-inset-bottom,0px))">Run</button>
+        <button id="tM" class="tb"
+            style="right:calc(12px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Map</button>
+        <button id="tI" class="tb"
+            style="right:calc(84px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px))">Bag</button>
+        <div id="pb"><button id="t1" class="tb" style="position:static">1</button><button id="t2" class="tb"
+                style="position:static">2</button><button id="t3" class="tb" style="position:static">3</button></div>
+    </div>
+    <div id="rot" class="hud"
+        style="display:none;left:50%;top:60px;transform:translateX(-50%);background:var(--pn);padding:6px 12px;border-radius:8px">
+        Rotate your phone to landscape</div>
+    <div id="fade"
+        style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:8">
+    </div>
+    <div id="top" class="hud"></div>
+    <div id="hint" class="hud">T travel map · WASD move · Shift run · Space jump · E interact · I inventory · M mute · R
+        unstuck · Esc release mouse</div>
+    <div id="prompt" class="hud"></div>
+    <div id="toast" class="hud"></div>
+    <div id="chat" class="pnl"><b id="cn"></b> <span id="tag"></span>
+        <div id="log"></div><input id="ci" type="text" maxlength="200" placeholder="Type anything and press Enter…">
+        <div class="row" style="margin-top:6px"><button class="qc"
+                data-q="Do you have a job for me?">Work?</button><button class="qc"
+                data-q="Tell me about the music here">Music?</button><button class="qc"
+                data-q="Where can I travel?">Travel?</button><button id="cs">Send</button><button id="cx">Leave
+                conversation (Esc)</button></div>
+    </div>
+    <div id="map" class="pnl"></div>
+    <div id="inv" class="pnl"></div>
+    <div id="away" class="pnl"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        'use strict';
+        const $ = i => document.getElementById(i), TAU = Math.PI * 2, cl = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.random() * a.length | 0];
+        const fail = m => { const e = $('err'); e.textContent = '⚠ ' + m; e.style.display = 'block' }; addEventListener('error', e => fail(e.message));
+        /* ---------- localisation (en/es only) ---------- */
+        const LANGS = ['English', 'Español', 'Deutsch', 'Français', 'Nederlands', 'Italiano', 'Português', '中文', 'ภาษาไทย', 'Tiếng Việt', '日本語', '한국어', 'العربية', 'हिन्दी'];
+        const STR = {
+            en: { talk: 'Talk to ', bar: 'Start your shift at the bar', pour: 'Pour: 1 Nebula Fizz · 2 Cosmic Cola · 3 Mushroom Mocha', bed: 'Rent this apartment (90 cr / 3 days)', sleep: 'Sleep until morning', door: '', inv: 'Inventory & transactions', money: 'Credits', day: 'Day', job: 'Job: café helper', nojob: 'Unemployed', rent: 'Rented: ', days: ' days left', none: 'No home yet' },
+            es: { talk: 'Hablar con ', bar: 'Empezar tu turno en la barra', pour: 'Sirve: 1 Nebula Fizz · 2 Cosmic Cola · 3 Mushroom Mocha', bed: 'Alquilar este apartamento (90 cr / 3 días)', sleep: 'Dormir hasta la mañana', door: '', inv: 'Inventario y transacciones', money: 'Créditos', day: 'Día', job: 'Trabajo: ayudante de café', nojob: 'Sin trabajo', rent: 'Alquilado: ', days: ' días restantes', none: 'Sin casa' }
+        };
+        let ui = 'en', selLangs = ['English', 'Español'], device = 'desktop';
+        const L = k => STR[ui][k];
+        function chips() { const q = $('ls').value.toLowerCase(), c = $('lc'); c.innerHTML = ''; LANGS.filter(l => l.toLowerCase().includes(q)).forEach(l => { const b = document.createElement('button'); b.textContent = l; if (selLangs.includes(l)) b.className = 'on'; b.onclick = () => { if (selLangs.includes(l)) selLangs = selLangs.filter(x => x !== l); else if (selLangs.length < 5) selLangs.push(l); else toast('Maximum five languages.'); chips() }; c.appendChild(b) }) }
+        $('ls').oninput = chips; chips();
+        $('dLap').onclick = () => { device = 'desktop'; $('dLap').className = 'on'; $('dPho').className = ''; $('phoneNote').style.display = 'none' };
+        $('dPho').onclick = () => { device = 'phone'; $('gq').value = 'Low'; $('dPho').className = 'on'; $('dLap').className = ''; $('phoneNote').style.display = 'block' };
+        /* ---------- save (schema v1, safe load) ---------- */
+        const KEY = 'apeverse_v08';
+        const fresh = () => ({ v: 1, money: 120, log: [{ d: 1, t: 'Starting funds', a: 120 }], job: false, rentDays: 0, name: '', day: 1, time: 540, seen: Date.now(), mem: { zil: { met: 0, facts: [] }, grk: { met: 0, facts: [], drums: 0 } }, seed: Date.now() % 100000, world: 'town', disc: { town: 1 }, last: {}, built: {}, grow: 0, news: [], drumDay: 0 });
+        let S = fresh(), away = null;
+        function load() { try { const o = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('apeverse_v07')); if (!o || typeof o !== 'object' || o.v !== 1 || typeof o.money !== 'number' || !Array.isArray(o.log)) return null; return Object.assign(fresh(), o) } catch (e) { return null } }
+        function save() { S.seen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)) } catch (e) { } }
+        /* ---------- economy: every change goes through txn() ---------- */
+        function txn(amount, why) { if (!Number.isFinite(amount) || !why) return false; if (S.money + amount < 0) { toast('Not enough credits.'); return false } S.money += amount; S.log.unshift({ d: S.day, t: why, a: amount }); S.log.length = Math.min(S.log.length, 40); save(); hud(); return true }
+        /* ---------- three ---------- */
+        const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(72, 1, .1, 300); cam.rotation.order = 'YXZ';
+        let R; try { R = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true }); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap } catch (e) { fail('WebGL unavailable: ' + e.message) }
+        const HS = new THREE.HemisphereLight(0xcfe0ff, 0x6a4a3a, .5), SUN = new THREE.DirectionalLight(0xffe2b8, 1.3); SUN.castShadow = true; SUN.shadow.mapSize.set(2048, 2048); const sc = SUN.shadow.camera; sc.left = sc.bottom = -40; sc.right = sc.top = 40; sc.far = 200; scene.add(HS, SUN, SUN.target);
+        scene.fog = new THREE.Fog(0xe8b98a, 30, 170);
+        const MAT = {}; const std = (c, r = .8, m = 0, e = 0, ei = 1) => { const k = [c, r, m, e, ei].join(); return MAT[k] || (MAT[k] = new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, emissive: e, emissiveIntensity: ei })) };
+        const box = new THREE.BoxGeometry(1, 1, 1), sph = new THREE.SphereGeometry(1, 16, 12), cyl = new THREE.CylinderGeometry(1, 1, 1, 16), ico = new THREE.IcosahedronGeometry(1, 1);
+        const mk = (g, m, x, y, z, sx, sy, sz, par, sh) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); if (sh !== false) { o.castShadow = o.receiveShadow = true } (par || scene).add(o); return o };
+        const COL = []; const wall = (x0, x1, z0, z1, y0, y1, m, col = true) => { mk(box, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0); if (col && y0 < 1) COL.push([x0, x1, z0, z1]) };
+        /* terrain: ground + low hills in the distance */
+        mk(cyl, std(0x4a7a4a, 1), 0, -.5, 0, 150, 1, 150).receiveShadow = true;
+        mk(cyl, std(0xb8a58a, .95), 0, .02, 0, 17, .1, 17);                      // plaza
+        for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, r = 100 + Math.sin(i * 3) * 10; mk(ico, std(i % 2 ? 0x5a6a8a : 0x6a5a7a, 1), Math.cos(a) * r, -6, Math.sin(a) * r, 34 + i % 3 * 10, 22 + i % 4 * 8, 34, null, false) }
+        /* a building with a REAL door gap: walls, lintel, roof, interior light */
+        function building(x, z, w, d, h, wc, doorX, name) {
+            const t = .35, x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2, dw = 1.3, m = std(wc, .85);
+            wall(x0, x1, z0, z0 + t, 0, h, m); wall(x0, x0 + t, z0, z1, 0, h, m); wall(x1 - t, x1, z0, z1, 0, h, m);
+            wall(x0, doorX - dw, z1 - t, z1, 0, h, m); wall(doorX + dw, x1, z1 - t, z1, 0, h, m); wall(doorX - dw, doorX + dw, z1 - t, z1, 2.6, h, m, false);
+            mk(box, std(0x3a2a22, .9), x, .06, z, w - .4, .12, d - .4); mk(box, std(0x4a3a4a, .9), x, h + .15, z, w + .8, .3, d + .8);
+            const l = new THREE.PointLight(0xffc98a, 1.1, 16); l.position.set(x, h - .8, z); scene.add(l);
+            mk(box, std(0xffe0a0, .4, 0, 0xffb060, 1.2), doorX, 2.9, z1 + .2, 2.2, .35, .1, null, false); return { x0, x1, z0, z1, h, l, doorX }
+        }
+        const cafe = building(-15, -12, 15, 11, 4.6, 0xd9855a, -15, 'cafe'), apt = building(15, -12, 12, 11, 5.4, 0x7a8ad0, 15, 'apt');
+        /* the nightclub is a facade only — no door yet */
+        wall(-6, 6, -34, -24, 0, 7, std(0x2a2040, .5, .3), true); mk(box, std(0xff4fd8, .3, 0, 0xff4fd8, 1.5), 0, 5.2, -23.9, 9, 1.3, .2, null, false);
+        /* café interior */
+        const bar = [-19.5, -12, -15.6, -14.2]; wall(bar[0], bar[1], bar[2], bar[3], 0, 1.15, std(0x6a3a22, .5, .1)); mk(box, std(0xe8d0a0, .35), -15.75, 1.18, -14.9, 7.8, .08, 1.6);
+        for (let i = 0; i < 6; i++)mk(cyl, std(0x7ff0c8, .2, 0, 0x3fd8a0, 1), -19 + i * 1.3, 2.2, -16.9, .14, .5, .14, null, false), mk(cyl, std(0xff9a5f, .2, 0, 0xff7a2a, .9), -18.4 + i * 1.3, 3, -16.9, .14, .5, .14, null, false);
+        const seats = [[-18, -9.2], [-14.8, -8.6], [-11.2, -9.6]]; seats.forEach(([x, z]) => { mk(cyl, std(0x4a2a1a, .6), x, .55, z, .7, .06, .7); mk(cyl, std(0x333, .5), x, .27, z, .08, .54, .08); COL.push([x - .6, x + .6, z - .6, z + .6]); for (const s of [-1, 1]) { mk(cyl, std(0xc0527a, .7), x + s * 1.0, .3, z, .3, .5, .3); } });
+        /* apartment interior: bed, lamp, window light */
+        mk(box, std(0x5a4a7a, .9), 18.2, .35, -15.2, 3, .5, 2.2); mk(box, std(0xf0e0d0, .9), 18.2, .7, -15.2, 2.8, .2, 2.0); mk(box, std(0xff7ac0, .9), 17.2, .85, -15.2, .8, .2, 1.2); COL.push([16.7, 19.7, -16.3, -14.1]);
+        mk(cyl, std(0x222, .4), 12.8, .9, -16.2, .08, 1.8, .08); mk(sph, std(0xffd890, .3, 0, 0xffa850, 1.2), 12.8, 1.95, -16.2, .35, .25, .35, null, false);
+        /* plaza dressing: fountain, lamps, trees (few, well-formed) */
+        mk(cyl, std(0x9a9aa8, .6), 0, .4, 2, 2.4, .8, 2.4); mk(cyl, std(0x4aa0c8, .1, .2, 0x1a5a8a, .6), 0, .82, 2, 2, .05, 2); mk(sph, std(0x9af0ff, .2, 0, 0x5ad0ff, 1.4), 0, 2.1, 2, .5, .5, .5, null, false);
+        for (const [x, z] of [[-8, 6], [8, 6], [-8, -6], [8, -6], [0, -20], [-25, -5], [25, -5]]) { mk(cyl, std(0x222233, .5, .6), x, 2.2, z, .08, 4.4, .08); mk(sph, std(0xfff0c0, .3, 0, 0xffc880, 1.6), x, 4.5, z, .3, .3, .3, null, false) }
+        for (let i = 0; i < 22; i++) { const a = i * 2.4, r = 26 + (i * 7 % 24), x = Math.cos(a) * r, z = Math.sin(a) * r + 8; if ((Math.abs(x) < 26 && z < -4 && z > -40) || z > 24) continue; const h = 3 + i % 4; mk(cyl, std(0x5a3a2a, .9), x, h / 2, z, .25 + .05 * (i % 3), h, .25); for (let k = 0; k < 4; k++)mk(ico, std([0x3a8a5a, 0x5aa04a, 0x8a5ab0][i % 3], .8), x + Math.cos(k * 2) * .8, h + .6 + k * .5, z + Math.sin(k * 2) * .8, 1.5 - k * .2, 1.2, 1.5 - k * .2) }
+        /* NPCs */
+        function npc(col, x, z, ry, sc = 1) { const g = new THREE.Group(), m = std(col, .55); mk(sph, m, 0, 1, 0, .5, .75, .42, g); const h = new THREE.Group(); h.position.y = 1.95; mk(sph, m, 0, 0, 0, .32, .34, .32, h); for (const s of [-1, 1]) { mk(sph, std(0xffffff, .2), s * .13, .05, .27, .09, .09, .06, h, false); mk(sph, std(0), s * .13, .05, .33, .04, .04, .03, h, false); mk(sph, m, s * .62, 1.05, 0, .12, .45, .12, g) } mk(cyl, std(0x222), 0, .35, 0, .02, .7, .02, h, false).position.y = .5; mk(sph, std(0xff5fd2, .2, 0, 0xff2fa0, 1), 0, .9, 0, .07, .07, .07, h, false); g.add(h); g.position.set(x, 0, z); g.rotation.y = ry; g.scale.setScalar(sc); scene.add(g); g.userData.h = h; return g }
+        const zil = npc(0x7a5fd0, -16, -16.4, 0), custs = [npc(0xd05f7a, seats[0][0], seats[0][1] - 1.2, Math.PI), npc(0x5fb0d0, seats[2][0], seats[2][1] + 1.2, 0), npc(0x8fd05f, seats[1][0] + 1.1, seats[1][1], -1.6)];
+        const walkers = [0, 1, 2].map(i => ({ g: npc([0xffb04a, 0x7ff0c8, 0xe05fa0][i], Math.cos(i * 2) * 9, Math.sin(i * 2) * 9 + 4, 0), a: i * 2, sp: .25 + i * .1 }));
+        /* ---------- clock / sky ---------- */
+        const SKY = [[0x151030, 0x0c0820], [0xf0a070, 0xe8b98a], [0x8fc4ff, 0xcfe0ff], [0xf08a60, 0xe0906a]]; const c1 = new THREE.Color(), c2 = new THREE.Color();
+        function skyAt(m) {
+            const h = m / 60; let a, b, f; if (h < 5) { a = b = 0; f = 0 } else if (h < 8) { a = 0; b = 1; f = (h - 5) / 3 } else if (h < 10) { a = 1; b = 2; f = (h - 8) / 2 } else if (h < 17) { a = b = 2; f = 0 } else if (h < 19.5) { a = 2; b = 3; f = (h - 17) / 2.5 } else if (h < 21.5) { a = 3; b = 0; f = (h - 19.5) / 2 } else { a = b = 0; f = 0 }
+            c1.setHex(SKY[a][0]).lerp(new THREE.Color(SKY[b][0]), f); c2.setHex(SKY[a][1]).lerp(new THREE.Color(SKY[b][1]), f); const day = cl(Math.sin((h - 6) / 12 * Math.PI), 0, 1); if (world === 'jungle') { c1.lerp(JC1, .55); c2.lerp(JC2, .6) } scene.background = c1; scene.fog.color.copy(c2); SUN.intensity = .1 + 1.4 * day; HS.intensity = .2 + .5 * day; FAC.forEach(m => m.emissiveIntensity = 1.3 * (1 - day)); STAR.material.opacity = Math.max(0, 1 - day * 2.2);
+            const ang = (h - 6) / 12 * Math.PI; SUN.position.set(P.x + Math.cos(ang) * 60, Math.max(8, Math.sin(ang) * 70), P.z + 20); SUN.target.position.set(P.x, 0, P.z)
+        }
+        /* ---------- audio: tuba bass, Rhodes, boom-bap ---------- */
+        const A = {
+            ctx: null, on: false, mute: false,
+            init() {
+                if (this.ctx) return; const C = window.AudioContext || window.webkitAudioContext; if (!C) return; const c = this.ctx = new C(); this.lp = c.createBiquadFilter(); this.lp.type = 'lowpass'; this.lp.frequency.value = 2200; this.g = c.createGain(); this.g.gain.value = .55; this.lp.connect(this.g); this.g.connect(c.destination);
+                const b = this.nb = c.createBuffer(1, c.sampleRate, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++)d[i] = Math.random() * 2 - 1
+            },
+            tone(f, t, d, ty, v, f2) { const c = this.ctx, o = c.createOscillator(), g = c.createGain(); o.type = ty; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(this.lp); o.start(t); o.stop(t + d + .05) },
+            noise(t, d, v, fl, ty) { const c = this.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = this.nb; f.type = ty; f.frequency.value = fl; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); s.connect(f); f.connect(g); g.connect(this.lp); s.start(t); s.stop(t + d + .05) },
+            start() { if (!this.ctx || this.on) return; this.on = true; this.st = 0; this.n = this.ctx.currentTime + .1; setInterval(() => { const L = 60 / 84 / 4; while (this.n < this.ctx.currentTime + .15) { this.play(this.st, this.n + (this.st % 2 ? .17 * L : 0)); this.n += L; this.st++ } }, 30) },
+            play(st, t) {
+                const s = st % 16, bar = (st / 16 | 0) % 4, [r, iv] = [[0, [0, 3, 7, 10, 14]], [5, [0, 4, 7, 10, 14]], [-2, [0, 4, 7, 11, 14]], [7, [0, 4, 7, 10, 13]]][bar], f = n => 65.41 * Math.pow(2, n / 12);
+                if ('x.....x...x..x..'[s] === 'x') this.tone(120, t, .2, 'sine', .9, 40); if ('....x.......x...'[s] === 'x') { this.noise(t, .15, .3, 1800, 'bandpass'); this.tone(185, t, .09, 'triangle', .25) }
+                if ('x.xxx.xxx.xxx.xx'[s] === 'x') this.noise(t, .035, .08 + (s % 4 === 0 ? .05 : 0), 8000, 'highpass');
+                const bs = '1..1..2.1..3.1..'[s]; if (bs !== '.') { const o = [0, 0, 7, 12][+bs], fr = f(r + o); this.tone(fr, t, .32, 'triangle', .55, fr * .97); this.tone(fr * 2, t, .1, 'sine', .08) }
+                if ('..x...x...x..x..'[s] === 'x' || s === 0) for (const i of iv) { this.tone(f(r + i) * 4, t, .55, 'sine', .045); this.tone(f(r + i) * 8, t, .12, 'sine', .01) }
+                if (s % 8 === 6 && Math.random() < .5) this.tone(f([12, 15, 17, 19, 22][Math.random() * 5 | 0] + r) * 8, t, .28, 'triangle', .05)
+            },
+            blip(f, d, f2) { if (this.ctx) this.tone(f, this.ctx.currentTime, d || .15, 'sine', .25, f2) }, ka() { this.blip(660, .12, 990); setTimeout(() => this.blip(990, .2), 90) }
+        };
+        /* ---------- player ---------- */
+        const P = { x: 0, y: 0, z: 12, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, on: true }, keys = {}; let running = false, locked = false, drag = false, inside = null, near = null, t0 = 0;
+        function lock() { if (device === 'phone') return; try { const p = $('c').requestPointerLock(); p && p.catch && p.catch(() => { }) } catch (e) { } }
+        document.addEventListener('pointerlockchange', () => locked = document.pointerLockElement === $('c'));
+        $('c').addEventListener('mousedown', () => { if (running && !Chat.open) { drag = true; lock() } }); addEventListener('mouseup', () => drag = false);
+        addEventListener('mousemove', e => { if (!running || Chat.open || !(locked || drag)) return; P.yaw -= e.movementX * .0023; P.pitch = cl(P.pitch - e.movementY * .0023, -1.45, 1.45) });
+        let tT = 0; function toast(m) { const e = $('toast'); e.textContent = m; e.style.opacity = 1; clearTimeout(tT); tT = setTimeout(() => e.style.opacity = 0, 3800) }
+        function hud() { const hh = Math.floor(S.time / 60) % 24, mm = Math.floor(S.time % 60); $('top').innerHTML = '<b>' + L('money') + ': ' + S.money + '</b> · ' + D[world].n + '<br>' + L('day') + ' ' + S.day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '<br>' + (S.job ? L('job') : L('nojob')) + '<br>' + (S.rentDays > 0 ? L('rent') + S.rentDays + L('days') : L('none')) }
+        /* ---------- conversation: optional LLM via YOUR backend, else labelled offline fallback ---------- */
+        const Chat = { open: false, hist: [], offer: false, llm: false };
+        const LLM_URL = (() => { try { return localStorage.getItem('apeverse_llm_url') || '' } catch (e) { return '' } })();
+        const ZIL = {
+            en: { hi: ['Yo. Zil. I pour, I judge, I occasionally smile. What’s good?', 'Back again, %n? The stools missed you. Barely.'], job: 'Honestly? My last helper quit to become a cloud. I need hands: 15 credits per drink, five drinks a shift. Want in?', yes: 'Then you’re hired. Walk behind the bar and press E to start a shift.', no: 'Your loss. The offer stands whenever you stop being picky.', have: 'You already work here. Check the bar, rookie.', pay: 'Fifteen credits a drink, plus tips if the regulars like you. Nobody gets rich. Everybody gets fed.', music: 'Tuba bass and Rhodes keep the walls honest. Don’t tell the nightclub I said that.', rent: 'The apartment across the plaza is 90 credits for three days. The landlord’s a rock, but fair.', town: 'Small town, big sky. The nightclub across the square isn’t open yet. Neither is my patience.', who: 'Zil. Bartender, philosopher, reluctant landlord’s cousin.', name: 'Nice to meet you, %n. I’ll remember it. I remember everything, mostly grudges.', def: ['Hm. Interesting. Say more, or order something.', 'I’ve heard weirder. Not this week though.', 'Bold take. I’ll file it under “things said at bars”.'] },
+            es: { hi: ['Ey. Soy Zil. Sirvo, juzgo y a veces sonrío. ¿Qué tal?', '¿Otra vez, %n? Los taburetes te extrañaban. Poquito.'], job: 'Sinceramente, mi último ayudante se fue a ser nube. Necesito manos: 15 créditos por bebida, cinco por turno. ¿Te apuntas?', yes: 'Pues contratado. Ponte detrás de la barra y pulsa E para empezar el turno.', no: 'Tú te lo pierdes. La oferta sigue en pie.', have: 'Ya trabajas aquí. Mira la barra, novato.', pay: 'Quince créditos por bebida, más propinas. Nadie se hace rico, todos comen.', music: 'La tuba y el Rhodes mantienen las paredes en pie.', rent: 'El apartamento de la plaza cuesta 90 créditos por tres días.', town: 'Pueblo pequeño, cielo enorme. La discoteca aún no abre.', who: 'Zil. Camarero y filósofo.', name: 'Encantado, %n. Lo recordaré.', def: ['Mmm. Interesante. Cuéntame más o pide algo.', 'He oído cosas más raras.', 'Atrevido. Lo archivo en “cosas dichas en un bar”.'] }
+        };
+        function offline(msg) {
+            const m = msg.toLowerCase(), es = /\b(hola|trabajo|gracias|qué|que tal|quiero|sí|si|buenas|alquiler|musica|música)\b/.test(m) && !/\b(yo|hello|work)\b/.test(m) ? 'es' : 'en', Z = ZIL[es]; let nm = msg.match(/(?:my name is|i'?m|me llamo|soy)\s+([A-ZÁÉÍÓÚa-záéíóúñ]{2,14})/i); let out, act = null;
+            if (nm && !/looking|new|here|good|fine|broke|hungry/i.test(nm[1])) { S.name = nm[1][0].toUpperCase() + nm[1].slice(1); out = Z.name.replace('%n', S.name) }
+            else if (Chat.offer && /\b(yes|yeah|sure|ok|okay|deal|sounds good|accept|sí|vale|claro|acepto|me apunto)\b/.test(m)) { Chat.offer = false; out = Z.yes; act = { type: 'offer_job', accepted: true } }
+            else if (Chat.offer && /\b(no|nope|nah|pass|no gracias)\b/.test(m)) { Chat.offer = false; out = Z.no }
+            else if (/\b(work|job|hiring|hire|employ|trabajo|empleo|chamba)\b/.test(m)) { if (S.job) out = Z.have; else { Chat.offer = true; out = Z.job } }
+            else if (/\b(pay|money|credits|salary|paga|dinero|sueldo)\b/.test(m)) out = Z.pay; else if (/\b(music|song|tuba|rhodes|jazz|música|musica|canción)\b/.test(m)) out = Z.music;
+            else if (/\b(rent|apartment|home|house|alquil|casa|piso)\b/.test(m)) out = Z.rent; else if (/\b(portal|gate|jungle|verdalux|planet|travel|space|portal)\b/.test(m)) out = S.disc.jungle ? tr('Verdalux? Moss people, great drummers, terrible small talk. The gate is down the plaza road.', 'Hay un portal al final de la calle de la plaza.') : tr('There is a gate at the far end of the plaza road. Nobody who goes through complains about the commute.', 'Hay un portal al final de la calle de la plaza.'); else if (/\b(town|place|club|pueblo|ciudad|discoteca)\b/.test(m)) out = Z.town; else if (/\b(who|name|quién|quien|nombre)\b/.test(m)) out = Z.who;
+            else if (/\b(hi|hello|hey|yo|hola|buenas|what'?s good)\b/.test(m)) out = pick(Z.hi).replace('%n', S.name || 'stranger'); else out = pick(Z.def); return { reply: out, action: act }
+        }
+        async function ask(msg) {
+            if (LLM_URL) { try { const r = await fetch(LLM_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ character: Chat.who, personality: 'sarcastic alien bartender, warm underneath', message: msg, history: Chat.hist.slice(-12), memory: S.mem.zil, state: { job: S.job, languages: selLangs } }) }); if (r.ok) { const j = await r.json(); if (typeof j.reply === 'string' && j.reply.length < 600) { Chat.llm = true; return { reply: j.reply, action: j.action && typeof j.action === 'object' ? j.action : null } } } } catch (e) { } }
+            Chat.llm = false; return Chat.who === 'grk' ? { reply: grkSay(msg), action: null } : offline(msg)
+        }
+        function applyAction(a) {/* whitelisted, validated: model text can never touch money or other state */if (a && a.type === 'offer_job' && a.accepted === true && !S.job) { S.job = true; S.log.unshift({ d: S.day, t: 'Hired at the café', a: 0 }); save(); hud(); toast('You got a job at the café!'); A.ka() } }
+        function say(who, txt, cls) { const p = document.createElement('p'); p.className = cls || ''; p.textContent = who + ': ' + txt; $('log').appendChild(p); $('log').scrollTop = 1e5 }
+        function openChat(w) {
+            Chat.who = w || 'zil'; Chat.offer = false; Chat.hist = []; Chat.open = true; for (const k in keys) keys[k] = 0; try { document.exitPointerLock() } catch (e) { } S.mem[Chat.who].met++; $('chat').style.display = 'block'; $('cn').textContent = Chat.who === 'grk' ? 'Grakk, keeper of the Drum Log' : 'Zil the bartender'; $('log').innerHTML = '';
+            $('tag').textContent = LLM_URL ? '(connecting to your LLM endpoint; falls back if unavailable)' : 'OFFLINE FALLBACK — scripted replies, NOT a real AI. Add a backend to enable a model.';
+            const g = Chat.who === 'grk' ? grkHi() : pick(ZIL[ui === 'es' ? 'es' : 'en'].hi).replace('%n', S.name || 'stranger'); say(Chat.who === 'grk' ? 'Grakk' : 'Zil', g); Chat.hist.push({ r: 'npc', t: g }); $('ci').focus()
+        }
+        function closeChat() { Chat.open = false; $('chat').style.display = 'none'; $('ci').blur(); save(); lock() }
+        $('cx').onclick = closeChat;
+        $('ci').addEventListener('keydown', async e => {
+            e.stopPropagation(); if (e.key === 'Escape') return closeChat(); if (e.key !== 'Enter' || !e.target.value.trim()) return; const m = e.target.value.trim(); e.target.value = ''; say(S.name || 'You', m, 'me'); Chat.hist.push({ r: 'player', t: m });
+            const res = await ask(m); say(Chat.who === 'grk' ? 'Grakk' : 'Zil', res.reply); Chat.hist.push({ r: 'npc', t: res.reply }); if (Chat.llm) $('tag').textContent = 'LLM connected via your backend (actions validated by the game)'; else if (LLM_URL) $('tag').textContent = 'LLM unreachable — using OFFLINE FALLBACK'; applyAction(res.action); S.mem.zil.facts = S.name ? ['player name: ' + S.name] : []; save()
+        });
+        /* ---------- job activity: serve 5 drinks ---------- */
+        const DR = ['Nebula Fizz', 'Cosmic Cola', 'Mushroom Mocha']; let shift = null;
+        function nextOrder() { shift.c = custs[Math.random() * 3 | 0]; shift.d = Math.random() * 3 | 0; toast((ui === 'es' ? 'Cliente pide: ' : 'Customer wants: ') + DR[shift.d]) }
+        function pour(d) { if (!shift) return; if (d === shift.d) { txn(15, 'Served ' + DR[d]); A.ka(); shift.n++; if (shift.n >= 5) { txn(25, 'Shift tips'); toast(ui === 'es' ? 'Turno terminado. +25 de propinas.' : 'Shift done. +25 tips.'); shift = null; mark.visible = false } else nextOrder() } else { toast(ui === 'es' ? 'Bebida equivocada.' : 'Wrong drink.'); A.blip(180, .25, 90) } }
+        const mark = mk(sph, std(0xffe08a, .2, 0, 0xffc040, 2), 0, 0, 0, .18, .18, .18, null, false); mark.visible = false;
+        /* ---------- interaction ---------- */
+        function targets() {
+            const o = []; if (world !== 'town') return jTargets(); o.push({ x: -16, z: -16.4, r: 3.9, label: L('talk') + 'Zil', fn: () => Chat.open || openChat() });
+            if (S.job) o.push({ x: -13.2, z: -13.4, r: 1.6, label: shift ? L('pour') : L('bar'), fn: () => { if (!shift) { shift = { n: 0 }; nextOrder() } } });
+            o.push({ x: 18.2, z: -15.2, r: 2.8, label: S.rentDays > 0 ? L('sleep') : L('bed'), fn: sleepOrRent }); o.push({ x: 0, z: 30, r: 3.6, label: tr('Use the portal gate', 'Usar el portal'), fn: gate }); if (S.built.stall) o.push({ x: -6, z: 9, r: 2.8, label: tr('Buy a Nebula Fizz (6 cr)', 'Comprar un Nebula Fizz (6 cr)'), fn: () => { if (txn(-6, 'Nebula Fizz at the new stall')) toast(tr('Tastes like blueberries and static.', 'Sabe a arándanos y estática.')) } }); return o
+        }
+        function sleepOrRent() { if (S.rentDays <= 0) { if (txn(-90, 'Apartment rent (3 days)')) { S.rentDays = 3; toast(ui === 'es' ? 'Apartamento alquilado.' : 'Apartment rented.') } } else { S.day++; S.rentDays--; S.time = 8 * 60; hud(); save(); toast(ui === 'es' ? 'Dormiste. Nuevo día.' : 'You slept. A new day begins.') } }
+        function interact() { if (near) near.fn() }
+        addEventListener('keydown', e => {
+            if (!running || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return; const k = e.code; if (Chat.open) { if (k === 'Escape') closeChat(); return }
+            keys[k] = 1; if (k === 'KeyE') interact(); else if (k === 'KeyI') { const i = $('inv'); if (i.style.display === 'block') { i.style.display = 'none'; return } i.innerHTML = '<b>' + L('inv') + '</b><p>' + L('money') + ': ' + S.money + '</p>' + S.log.slice(0, 12).map(l => '<div>Day ' + l.d + ' · ' + l.t + ' · ' + (l.a > 0 ? '+' : '') + l.a + '</div>').join('') + '<p style="font-size:12px;opacity:.7">Possessions: none yet (shops come in a later milestone).</p><button onclick="this.parentNode.style.display=\'none\'">Close</button>'; i.style.display = 'block' }
+            else if (k === 'KeyM') { A.mute = !A.mute; if (A.g) A.g.gain.value = A.mute ? 0 : .55 } else if (k === 'KeyR') { const d = D[world]; P.x = d.x; P.z = d.z; P.y = 0; P.vy = 0; toast('Unstuck: back at the gate area.') } else if (shift && /^Digit[1-3]$/.test(k)) pour(+k[5] - 1); else if (k === 'Space') e.preventDefault()
+        });
+        addEventListener('keyup', e => keys[e.code] = 0);
+
+        /* ================= V0.8 additions ================= */
+        const tr = (a, b) => ui === 'es' ? b : a, abs = () => S.day * 1440 + S.time;
+        let world = 'town'; const JX = 400;
+        const D = { town: { n: 'Plaza Town', x: 0, z: 12, cx: 0, r: 70 }, jungle: { n: 'Verdalux (jungle moon)', x: JX, z: 14, cx: JX, r: 55 } };
+        const JC1 = new THREE.Color(0x0e4a4a), JC2 = new THREE.Color(0x3a8a6a), FAC = [], glows = [], portals = [];
+        const T = { x: 0, y: 0, run: false, jump: false };
+        /* stars */
+        const STAR = (() => { const n = 500, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const t = Math.random() * TAU, y = Math.random() * .9 + .1, r = Math.sqrt(1 - y * y); a[i * 3] = Math.cos(t) * r * 250; a[i * 3 + 1] = y * 250; a[i * 3 + 2] = Math.sin(t) * r * 250 } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(a, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); p.frustumCulled = false; scene.add(p); return p })();
+        /* procedural lit-window facades (canvas textures; lit windows glow at night) */
+        const lit = []; for (let i = 0; i < 16; i++)lit.push(Math.random() < .45);
+        const mkc = f => { const c = document.createElement('canvas'); c.width = c.height = 128; f(c.getContext('2d')); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t };
+        const winT = mkc(g => { g.fillStyle = '#d6d0da'; g.fillRect(0, 0, 128, 128); lit.forEach((l, i) => { g.fillStyle = l ? '#ffd890' : '#26334f'; g.fillRect(8 + (i % 4) * 30, 8 + (i / 4 | 0) * 30, 20, 22) }) }); winT.encoding = THREE.sRGBEncoding;
+        const emT = mkc(g => { g.fillStyle = '#000'; g.fillRect(0, 0, 128, 128); lit.forEach((l, i) => { if (l) { g.fillStyle = '#ffcf80'; g.fillRect(8 + (i % 4) * 30, 8 + (i / 4 | 0) * 30, 20, 22) } }) }); emT.encoding = THREE.sRGBEncoding;
+        function fac(col, rx, ry) { const a = winT.clone(), b = emT.clone(); a.repeat.set(rx, ry); b.repeat.set(rx, ry); a.needsUpdate = b.needsUpdate = true; const m = new THREE.MeshStandardMaterial({ color: col, roughness: .65, map: a, emissive: 0xffffff, emissiveMap: b, emissiveIntensity: 0 }); FAC.push(m); return m }
+        /* Creative Street: a row of varied towers with cornices, setbacks, awnings, balconies and neon (facades only: no fake doors) */
+        mk(box, std(0x2a2a34, .9), 0, .04, 30, 132, .06, 10, null, false); mk(box, std(0x8a8a96, .95), 0, .05, 38, 132, .1, 4, null, false);
+        for (let i = -6; i <= 6; i++)mk(box, std(0xe8e0b0, .8), i * 10, .08, 30, 3, .02, .3, null, false);
+        function tower(x, w, h, col, neon) {
+            const z = 46, d = 10; mk(box, fac(col, w / 4, h / 3.8), x, h / 2, z, w, h, d); COL.push([x - w / 2, x + w / 2, z - d / 2, z + d / 2]);
+            mk(box, std(0x2a2433, .7), x, h + .3, z, w + .6, .6, d + .6); mk(box, fac(col, w * .6 / 4, 1.2), x, h + 2.6, z, w * .6, 4, d * .6); mk(box, std(0x2a2433, .7), x, h + 4.8, z, w * .6 + .5, .4, d * .6 + .5);
+            mk(box, std(neon, .6), x, 3.2, 40.1, w * .85, .15, 1.7); mk(box, std(neon, .3, 0, neon, 1.8), x, 4.3, 40.85, w * .6, .7, .12, null, false);
+            if (h > 9) { mk(box, std(0x3a3a48, .8), x, 6.6, 40.5, w * .9, .15, 1.2); mk(box, std(0x3a3a48, .8), x, 7.2, 40, w * .9, .05, .05); }
+        }
+        [[-39, 10, 12, 0x7a8ad0, 0xff4fd8], [-26, 11, 16, 0xd9855a, 0x4ff0ff], [-13, 10, 9, 0x8ac09a, 0xffe04f], [0, 12, 20, 0xb08ad0, 0xff8a4f], [13, 10, 11, 0xd0a0a0, 0x4fffa0], [26, 11, 15, 0x8aa0d0, 0xff4f6a], [39, 10, 10, 0xc0c08a, 0x8f4fff]].forEach(a => tower(...a));
+        for (let i = -5; i <= 5; i++) { if (i === 0) continue; const x = i * 11; mk(cyl, std(0x222233, .5, .6), x, 2.2, 36.4, .08, 4.4, .08); mk(sph, std(0xfff0c0, .3, 0, 0xffc880, 1.6), x, 4.5, 36.4, .3, .3, .3, null, false) }
+        /* portal gates */
+        function portal(x, z) { const g = new THREE.Group(), r = new THREE.Mesh(new THREE.TorusGeometry(2.3, .22, 12, 40), std(0x7ff0c8, .2, .4, 0x2fe0b0, 1.6)), d = new THREE.Mesh(new THREE.CircleGeometry(2.1, 32), new THREE.MeshBasicMaterial({ color: 0x6a3fff, transparent: true, opacity: .5, side: THREE.DoubleSide })); r.position.y = d.position.y = 2.6; g.add(r, d); mk(cyl, std(0x2a2a3a, .6), 0, .15, 0, 3, .3, 3, g); g.position.set(x, 0, z); scene.add(g); portals.push(d) }
+        portal(0, 30); portal(JX, 24);
+        /* Verdalux: jungle moon (organic domes, glow-trees, drum log, drifting lights) */
+        mk(cyl, std(0x1f5a4a, 1), JX, -.5, 0, 120, 1, 120).receiveShadow = true;
+        function glowTree(x, z, h, col, gl) { mk(cyl, std(0x3a2a4a, .9), x, h / 2, z, .45, h, .45); mk(sph, std(col, .5, 0, col, gl), x, h + .4, z, h * .42, h * .18, h * .42, null, false); COL.push([x - .5, x + .5, z - .5, z + .5]) }
+        for (let i = 0; i < 18; i++) { const a = i * 2.4, r = 22 + (i * 7 % 26), x = JX + Math.cos(a) * r, z = Math.sin(a) * r; if (Math.abs(x - JX) < 5 && z > 6) continue; glowTree(x, z, 5 + i % 4 * 1.5, [0xff5fd2, 0x5ff0ff, 0xb08aff][i % 3], .9) }
+        const GT = [[-9, -12], [10, -14], [-14, 6], [15, 5], [-5, -20], [6, -22], [-20, -8]];
+        function jTree(i) { const p = GT[i % GT.length]; glowTree(JX + p[0], p[1], 7.5 + i % 3, [0xffe04f, 0x7fffb0, 0xff8a4f][i % 3], 1.4) }
+        for (let i = 0; i < 5; i++) { const a = i * 1.26 + .3, x = JX + Math.cos(a) * 15, z = Math.sin(a) * 15 - 4; mk(sph, std(0xd8a86a, .8), x, 0, z, 3.2, 2.4, 3.2); COL.push([x - 2.6, x + 2.6, z - 2.6, z + 2.6]); mk(sph, std(0xffd890, .4, 0, 0xffb060, 1.6), x - Math.cos(a) * 3, 1.1, z - Math.sin(a) * 3, .45, .45, .2, null, false) }
+        const dl = mk(cyl, std(0x6a4a2a, .8), JX, .6, -2, .6, 3.2, .6); dl.rotation.z = Math.PI / 2; for (let i = 0; i < 3; i++)mk(sph, std(0xff8aa8, .4, 0, 0xff4f7a, 1), JX - 1 + i, 1.2, -2, .34, .12, .34, null, false); COL.push([JX - 1.8, JX + 1.8, -2.6, -1.4]);
+        for (let i = 0; i < 14; i++) { const o = mk(sph, std([0x7fffd0, 0xff9ae0, 0xffe08a][i % 3], .3, 0, [0x3fe0b0, 0xff4fc0, 0xffc040][i % 3], 1.8), JX + Math.cos(i * 2.1) * (8 + i * 2.4), 0, Math.sin(i * 2.1) * (8 + i * 2), .14, .14, .14, null, false); glows.push({ o, y: 1.2 + i % 4 * .5, p: i }) }
+        const grk = npc(0x2fd0a0, JX + 3, -2, 0, 1.5);
+        function jTargets() { const o = [{ x: JX + 3, z: -2, r: 3.8, label: tr('Talk to ', 'Hablar con ') + 'Grakk', fn: () => Chat.open || openChat('grk') }, { x: JX, z: -2, r: 2.6, label: tr('Play the Drum Log', 'Tocar el tronco-tambor'), fn: drum }, { x: JX, z: 24, r: 3.6, label: tr('Use the portal gate', 'Usar el portal'), fn: toggleMap }]; return o }
+        function drum() {
+            const G = S.mem.grk; try { if (!A.ctx) A.init(); A.ctx.resume && A.ctx.resume(); const t = A.ctx.currentTime;[0, .18, .36, .5, .72].forEach((o, i) => A.tone(i % 2 ? 160 : 90, t + o, .25, 'sine', .8, i % 2 ? 110 : 50)) } catch (e) { }
+            G.drums++; if (S.drumDay !== S.day) { S.drumDay = S.day; txn(12, 'Played the Drum Log') } else toast(tr('The moss is full for today. Play for fun!', 'El musgo ya pagó hoy. ¡Toca por diversión!')); save()
+        }
+        /* town stall (appears through the evolution system) */
+        let stallBuilt = false; function buildStall() { if (stallBuilt) return; stallBuilt = true; const x = -6, z = 9; mk(box, std(0x8a5a32, .8), x, .55, z, 3, 1.1, 1.1); for (let k = 0; k < 4; k++)mk(box, std(k % 2 ? 0xffffff : 0xff5f7a, .7), x - 1.275 + k * .85, 2.6, z, .85, .15, 1.8); for (const s of [-1, 1]) mk(cyl, std(0x333, .5), x + s * 1.5, 1.3, z + .8, .05, 2.6, .05); mk(box, std(0x4ff0ff, .3, 0, 0x4ff0ff, 1.5), x, 3, z + .95, 2, .3, .06, null, false); COL.push([x - 1.5, x + 1.5, z - .55, z + .55]) }
+        /* evolution: bounded rules driven by in-game time away from a world */
+        function news(t) { S.news.unshift('Day ' + S.day + ': ' + t); S.news.length = Math.min(S.news.length, 8); toast(t) }
+        function evolve(id) {
+            const g = S.last[id] == null ? 0 : abs() - S.last[id]; if (g < 300) return;
+            if (id === 'town') { if (!S.built.stall) { S.built.stall = 1; buildStall(); news('While you were away, a market stall opened by the fountain.') } else news(pick(['Zil rearranged the stools again.', 'Someone painted a lamp post pink.', 'The street towers got new neon.'])) }
+            else { if (S.grow < 7) { S.grow++; jTree(S.grow - 1); news('A new glow-tree sprouted in Verdalux while you were gone.') } else news('The Verdalux moss hummed a new rhythm.') }
+        }
+        function travel(id) {
+            const d = D[id]; if (!d || !S.disc[id] || id === world) return; $('map').style.display = 'none'; $('fade').style.opacity = 1;
+            setTimeout(() => { S.last[world] = abs(); world = id; S.world = id; P.x = d.x; P.z = d.z; P.vx = P.vz = 0; P.yaw = id === 'town' ? Math.PI : 0; P.pitch = 0; S.time += 180; while (S.time >= 1440) { S.time -= 1440; S.day++ } evolve(id); S.last[id] = abs(); hud(); save(); $('fade').style.opacity = 0 }, 470)
+        }
+        function gate() { if (!S.disc.jungle) { S.disc.jungle = 1; news('Destination discovered: Verdalux, a jungle moon. It is now on your Travel Map.'); travel('jungle') } else toggleMap() }
+        function toggleMap() {
+            const m = $('map'); if (m.style.display === 'block') { m.style.display = 'none'; return } m.innerHTML = ''; const h = document.createElement('b'); h.textContent = tr('Universal Travel Map', 'Mapa universal de viaje'); m.appendChild(h);
+            for (const k in D) { if (!S.disc[k]) continue; const r = document.createElement('div'); r.style.margin = '8px 0'; const b = document.createElement('button'); b.textContent = D[k].n + (k === world ? tr(' (you are here)', ' (estás aquí)') : ''); b.disabled = k === world; b.onclick = () => travel(k); r.appendChild(b); m.appendChild(r) }
+            const n = document.createElement('div'); n.style.cssText = 'font-size:12px;opacity:.85;margin-top:8px'; n.textContent = tr('Travel takes about 3 hours of game time. Worlds change while you are away.', 'El viaje tarda unas 3 horas de juego. Los mundos cambian mientras no estás.'); m.appendChild(n);
+            (S.news || []).slice(0, 5).forEach(t => { const p = document.createElement('div'); p.style.cssText = 'font-size:12px;margin-top:4px'; p.textContent = '• ' + t; m.appendChild(p) });
+            const c = document.createElement('button'); c.textContent = tr('Close', 'Cerrar'); c.style.marginTop = '10px'; c.onclick = () => m.style.display = 'none'; m.appendChild(c); m.style.display = 'block'
+        }
+        function toggleInv() { window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyI' })) }
+        function extras(dt) {
+            const t = now_(); for (const p of portals) { p.rotation.z += dt; p.scale.setScalar(1 + Math.sin(t * 3) * .04) } for (const g of glows) g.o.position.y = g.y + Math.sin(t * 1.2 + g.p) * .4;
+            document.body.classList.toggle('nm', !!Chat.open); $('pb').style.display = (device === 'phone' && shift) ? 'flex' : 'none'
+        }
+        addEventListener('keydown', e => { if (running && !Chat.open && e.code === 'KeyT' && e.target.tagName !== 'INPUT') toggleMap() });
+        function grkHi() { const m = S.mem.grk; return m.met > 1 ? (m.drums ? tr('Back, drummer. The log remembers your ' + m.drums + ' rhythms.', 'Volviste, tamborilero.') : 'The moss remembers you. Have you touched the Drum Log yet?') : 'Mmm. A two-legged visitor. I am Grakk, keeper of the Drum Log. Speak slowly; my thoughts grow like moss. (I only speak English for now.)' }
+        function grkSay(msg) {
+            const m = msg.toLowerCase(), G = S.mem.grk; let o;
+            if (/\b(drums?|music|rhythms?|beats?|songs?|bands?|play(?:ing)?)\b/.test(m)) o = G.drums ? 'You have played ' + G.drums + ' times. The moss hums your tempo. Zil would call it "tuba-adjacent".' : 'Press the log and the whole jungle answers. We have no word for "wrong note", only "not yet".';
+            else if (/\b(job|work|money|pay|credits|earn)\b/.test(m)) o = 'Play the Drum Log. The moss pays once per sun: twelve credits. Greedy drummers get only echoes.';
+            else if (/\b(portal|gate|town|home|zil|bar|back|return|travel)\b/.test(m)) o = 'The gate hums at the end of the old path. The bartender on the other side sends bad jokes through. We keep them.';
+            else if (/\b(planets?|moons?|verdalux|jungle|where|places?|trees?)\b/.test(m)) o = 'Verdalux, a moon that listens. Glow-trees grow when travelers go away and come back. The jungle likes to be missed.';
+            else if (/\b(humans?|apes?|monkeys?|species|aliens?)\b/.test(m)) o = 'Two-legs talk before they listen. Ape-kin drum better. All are guests.';
+            else if (/\b(stupid|terrible|bad|hate|boring|dumb|ugly)\b/.test(m)) o = 'Mmm. The moss disagrees. So do I. Play first, complain after.';
+            else if (/\b(hi|hello|hey|yo|hola)\b/.test(m)) o = grkHi();
+            else o = pick(['Mmm. The moss is thinking. Ask me about the drums, the gate, or the trees.', 'Slow words, two-legs. My thoughts grow like moss.', 'That question has no roots. Try another.']); return o
+        }
+        /* ---- touch input: pointer events, multitouch, no pointer lock ---- */
+        (function () {
+            const js = $('js'), jk = $('jk'), lz = $('lz'), RR = 52; let jid = null, jc = null, lid = null, lx = 0, ly = 0;
+            function jm(e) { let dx = e.clientX - jc.x, dy = e.clientY - jc.y; const l = Math.hypot(dx, dy); if (l > RR) { dx *= RR / l; dy *= RR / l } const mg = Math.hypot(dx, dy) / RR; T.x = mg < .12 ? 0 : dx / RR; T.y = mg < .12 ? 0 : dy / RR; jk.style.transform = 'translate(' + dx + 'px,' + dy + 'px)' }
+            js.addEventListener('pointerdown', e => { if (jid !== null) return; jid = e.pointerId; try { js.setPointerCapture(e.pointerId) } catch (_) { } const b = js.getBoundingClientRect(); jc = { x: b.left + b.width / 2, y: b.top + b.height / 2 }; jm(e); e.preventDefault() });
+            js.addEventListener('pointermove', e => { if (e.pointerId === jid) jm(e) });
+            const je = e => { if (e.pointerId === jid) { jid = null; T.x = T.y = 0; jk.style.transform = '' } }; js.addEventListener('pointerup', je); js.addEventListener('pointercancel', je);
+            lz.addEventListener('pointerdown', e => { if (lid !== null) return; lid = e.pointerId; lx = e.clientX; ly = e.clientY; try { lz.setPointerCapture(e.pointerId) } catch (_) { } e.preventDefault() });
+            lz.addEventListener('pointermove', e => { if (e.pointerId !== lid) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; if (running && !Chat.open) { P.yaw -= dx * .0045; P.pitch = cl(P.pitch - dy * .0045, -1.45, 1.45) } });
+            const le = e => { if (e.pointerId === lid) lid = null }; lz.addEventListener('pointerup', le); lz.addEventListener('pointercancel', le);
+            const bind = (id, dn, up) => { const b = $(id); b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); dn() }); if (up) ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => b.addEventListener(n, up)) };
+            bind('tE', () => { if (running) interact() }); bind('tJ', () => T.jump = true, () => T.jump = false); bind('tR', () => { T.run = !T.run; $('tR').classList.toggle('on', T.run) }); bind('tM', () => { if (running) toggleMap() }); bind('tI', () => { if (running) toggleInv() });
+            bind('t1', () => pour(0)); bind('t2', () => pour(1)); bind('t3', () => pour(2));
+            $('cs').onclick = () => $('ci').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+            document.querySelectorAll('.qc').forEach(b => b.onclick = () => { $('ci').value = b.dataset.q; $('cs').click() });
+            document.addEventListener('touchmove', e => { if (running && !(e.target.closest && e.target.closest('#log,.ov,.pnl'))) e.preventDefault() }, { passive: false });
+            document.addEventListener('contextmenu', e => { if (device === 'phone') e.preventDefault() });
+            try { if (matchMedia('(pointer:coarse)').matches) $('dPho').click() } catch (_) { }
+        })();
+
+        /* ---------- boot ---------- */
+        function begin(cont) {
+            try {
+                R && (R.setPixelRatio($('gq').value === 'High' ? Math.min(devicePixelRatio || 1, 1.5) : 1), R.shadowMap.enabled = $('gq').value === 'High');
+                ui = selLangs[0] === 'Español' ? 'es' : 'en'; const sv = cont ? load() : null; if (sv) {
+                    S = sv; const mins = Math.min((Date.now() - S.seen) / 60000, 72 * 60); if (mins > 3) {
+                        const r = [Date.now() % 7, mins | 0]; S.time = (S.time + mins * 2) % 1440; S.day += Math.floor((S.time + mins * 2) / 1440) > 0 ? 0 : 0;
+                        away = ['Zil took a double shift and says the stools are “emotionally exhausted”.', 'A new fountain light was installed in the plaza.', pick(['The nightclub crew was seen loading amps (still closed).', 'A traveling musician was spotted near the old road.']), 'Nothing was taken from you while you were away.']
+                    }
+                } else { S = fresh() }
+                S.mem = S.mem && S.mem.zil ? S.mem : { zil: { met: 0, facts: [] } }; if (!S.mem.grk) S.mem.grk = { met: 0, facts: [], drums: 0 }; world = D[S.world] ? S.world : 'town'; if (S.built.stall) buildStall(); for (let i = 0; i < S.grow; i++)jTree(i); document.body.classList.toggle('touch', device === 'phone'); if (S.job === undefined) S.job = false;
+                $('start').style.display = 'none'; running = true; resize(); hud(); if ($('mus').checked) { try { A.init(); A.start() } catch (e) { fail('Audio: ' + e.message) } }
+                { const dd = D[world]; P.x = dd.x; P.z = dd.z; P.yaw = world === 'town' ? Math.PI : 0 } lock(); if (away) { $('away').innerHTML = '<b>' + (ui === 'es' ? 'Bienvenido de nuevo a Apeverse' : 'Welcome back to Apeverse!') + '</b><p>' + (ui === 'es' ? 'Mientras estabas fuera:' : 'While you were away:') + '</p>' + away.map(a => '<div>• ' + a + '</div>').join('') + '<p style="font-size:12px;opacity:.7">These are lightweight, bounded simulated notes. Businesses and real NPC schedules arrive in later milestones.</p><button onclick="this.parentNode.style.display=\'none\'">Continue</button>'; $('away').style.display = 'block' }
+                t0 = performance.now(); requestAnimationFrame(loop)
+            } catch (e) { fail('Startup failed: ' + e.message) }
+        }
+        $('bNew').onclick = () => begin(false); $('bCont').onclick = () => { if (!load()) { toast('No valid saved game found. Starting new.'); begin(false) } else begin(true) };
+        function resize() { R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix() } addEventListener('resize', () => R && resize());
+        /* ---------- loop ---------- */
+        let last = performance.now(), sav = 0;
+        function loop(now) { requestAnimationFrame(loop); const dt = Math.min(.05, (now - last) / 1000); last = now; try { update(dt); R.render(scene, cam) } catch (e) { fail('Runtime: ' + e.message) } }
+        function update(dt) {
+            const run = keys.ShiftLeft || keys.ShiftRight || T.run; let ax = 0, az = 0;
+            if (!Chat.open) { const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - T.y, s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + T.x, sn = Math.sin(P.yaw), cs = Math.cos(P.yaw); ax = -sn * f + cs * s; az = -cs * f - sn * s; const l = Math.hypot(ax, az); if (l > 1) { ax /= l; az /= l } P.yaw += ((keys.ArrowLeft ? 1 : 0) - (keys.ArrowRight ? 1 : 0)) * 2 * dt; if ((keys.Space || T.jump) && P.on) { P.vy = 7; P.on = false } }
+            const sp = run ? 7.5 : 4, k = Math.min(1, (P.on ? 14 : 3) * dt); P.vx += (ax * sp - P.vx) * k; P.vz += (az * sp - P.vz) * k; P.vy -= 22 * dt; P.x += P.vx * dt; P.z += P.vz * dt; P.y += P.vy * dt; if (P.y <= 0) { P.y = 0; P.vy = 0; P.on = true }
+            for (const c of COL) { const r = .4; if (P.x > c[0] - r && P.x < c[1] + r && P.z > c[2] - r && P.z < c[3] + r) { const a = P.x - (c[0] - r), b = c[1] + r - P.x, d = P.z - (c[2] - r), e = c[3] + r - P.z, m = Math.min(a, b, d, e); if (m === a) P.x = c[0] - r; else if (m === b) P.x = c[1] + r; else if (m === d) P.z = c[2] - r; else P.z = c[3] + r } }
+            { const dw = D[world]; P.x = cl(P.x, dw.cx - dw.r, dw.cx + dw.r); P.z = cl(P.z, -dw.r, dw.r) }
+            const bob = Math.hypot(P.vx, P.vz) > 1 && P.on ? Math.sin(now_() * 9) * .04 : 0; cam.position.set(P.x, P.y + 1.7 + bob, P.z); cam.rotation.set(P.pitch, P.yaw, 0); STAR.position.copy(cam.position);
+            /* clock: 1 real sec = 2 game minutes */
+            S.time += dt * 2; if (S.time >= 1440) { S.time -= 1440; S.day++ } if (((now_() | 0) % 5 === 0) && Math.floor(now_()) !== hud.l) { hud.l = Math.floor(now_()); hud() } skyAt(S.time);
+            const was = inside; inside = [cafe, apt].find(b => P.x > b.x0 && P.x < b.x1 && P.z > b.z0 && P.z < b.z1) || null; if (A.lp && was !== inside) A.lp.frequency.setTargetAtTime(inside ? 9000 : 2200, A.ctx.currentTime, .3);
+            /* NPC life */
+            for (const w of walkers) { w.a += dt * w.sp * .3; w.g.position.set(Math.cos(w.a) * 10, 0, Math.sin(w.a) * 8 + 5); w.g.rotation.y = -w.a + Math.PI; w.g.position.y = Math.abs(Math.sin(now_() * 5 + w.a)) * .05 }
+            for (const n of [zil, ...custs, grk]) { const d = Math.hypot(P.x - n.position.x, P.z - n.position.z); if (d < 8) { let a = Math.atan2(P.x - n.position.x, P.z - n.position.z) - n.rotation.y; a = Math.atan2(Math.sin(a), Math.cos(a)); n.userData.h.rotation.y += (cl(a, -.9, .9) - n.userData.h.rotation.y) * Math.min(1, 4 * dt) } }
+            if (shift) { mark.visible = true; mark.position.set(shift.c.position.x, 2.7 + Math.sin(now_() * 4) * .06, shift.c.position.z) }
+            /* prompt */
+            near = null; if (!Chat.open) { let bd = 1e9; for (const t of targets()) { const d = Math.hypot(t.x - P.x, t.z - P.z); if (d < t.r && d < bd) { bd = d; near = t } } }
+            const pr = $('prompt'); if (near) { pr.style.display = 'block'; pr.textContent = (device === 'phone' ? '▶ ' : 'E — ') + near.label } else pr.style.display = 'none';
+            extras(dt); if ((sav += dt) > 20) { sav = 0; save() }
+        }
+        const now_ = () => performance.now() / 1000;
+        addEventListener('beforeunload', () => { try { save() } catch (e) { } });
+        if (!window.THREE) fail('Three.js failed to load. Check your connection.');
+    </script>
+</body>
+
+</html>

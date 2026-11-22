@@ -81,6 +81,16 @@ function paintGround(N) {
   for (let i = 0; i < 26000; i++) { const x = r() * S - S / 2, z = r() * S - S / 2; if (waterDepth(x, z) > -1.8 || roadDist(x, z) < .6 || Math.hypot(x, z) < 35.5 || ell(x, z) > .95 || x < -91) continue; c.fillStyle = fl[i % fl.length]; c.globalAlpha = .55 + r() * .45; c.beginPath(); c.arc(P(x), P(z), (.12 + r() * .2) * m, 0, TAU); c.fill() } c.globalAlpha = 1;
   const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.userData = { keep: true }; return t;
 }
+/* trampoline mat: dark woven bed, stitched rings, a bright star in the middle */
+let BEDTEX = null;
+function paintBed(N) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = N; const c = cv.getContext('2d'), h = N / 2;
+  const g = c.createRadialGradient(h, h, 0, h, h, h); g.addColorStop(0, '#2a2448'); g.addColorStop(1, '#141024'); c.fillStyle = g; c.fillRect(0, 0, N, N);
+  c.strokeStyle = 'rgba(255,255,255,.05)'; c.lineWidth = 1; for (let i = 0; i < N; i += 4) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, N); c.moveTo(0, i); c.lineTo(N, i); c.stroke() }
+  c.setLineDash([6, 5]); c.lineWidth = 3; [[.94, '#ffd84a'], [.62, '#7ff0ff'], [.32, '#ff6ad5']].forEach(([f, col]) => { c.strokeStyle = col; c.beginPath(); c.arc(h, h, h * f, 0, TAU); c.stroke() }); c.setLineDash([]);
+  c.fillStyle = '#ffd84a'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, r = h * (i % 2 ? .08 : .2); c.lineTo(h + Math.cos(a) * r, h + Math.sin(a) * r) } c.closePath(); c.fill();
+  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.userData = { keep: true }; return t;
+}
 
 AV.registerWorld({
   id: 'ape_town',
@@ -329,6 +339,48 @@ AV.registerWorld({
     for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, x = PX + Math.cos(a) * 8.5, z = PZ + Math.sin(a) * 8.5; if (roadDist(x, z) < 1) continue; const y = H(x, z); B.east.add(MT.stone, A.geo('box'), 0xc8b8a0, K.M(x, y + .6, z, .5, 1.2, .5)); B.east.add(MT.stone, A.geo('cone4'), 0xb0a090, K.M(x, y + 1.55, z, .7, .5, .7)); B.east.add(MT.v, A.geo('box'), 0xffe0a0, K.M(x, y + 1.2, z, .32, .3, .32), 1); ctx.circles.push([x, z, .4]) }
     sign('ASIA GARDEN', 46, 72, Math.PI * .8, 4, '#ff6a6a');
     K.field(ctx, K.species.bamboo(0x8ac83a), K.floraMat(.012), K.n(10), { x: PX, z: PZ, r0: 10, r1: 16 }, { H, s0: .9, s1: 1.4, col: .45, ok: (x, z) => free(x, z, 1.5) });
+
+    /* ---------- BOUNCY TRAMPOLINES: step on to bounce, hold Space / Jump on landing to go higher, walk off the edge to stop ---------- */
+    const TRAMPS = [[32, 68, 2.8, 0xff6ad5, 0x7ff0ff], [42, -64, 2.6, 0xffd84a, 0x9a5cff], [-50, -26, 2.6, 0x7aff9a, 0xff8a3a], [60, 22, 3.1, 0x4ac8ff, 0xffd84a], [-36, 64, 2.4, 0xb07aff, 0x7aff9a]];
+    const TOP = .8, VMIN = 7.5, VMAX = 60;
+    if (!BEDTEX) BEDTEX = paintBed(256);
+    const tramps = TRAMPS.map(([x, z, r, c1, c2], i) => {
+      const y = H(x, z), top = y + TOP, b = z > 40 ? B.south : z < -40 ? B.north : x < 0 ? B.west : B.east;
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + i, lx = x + Math.cos(a) * (r - .1), lz = z + Math.sin(a) * (r - .1); b.add(MT.shiny, A.geo('cyl'), 0xd0d0e0, K.M(lx, y + (TOP - .1) / 2, lz, .05, TOP - .1, .05)) }
+      b.add(MT.shiny, new THREE.TorusGeometry(r, .06, 6, 48), 0xd0d0e0, K.M(x, top - .1, z, 1, 1, 1, Math.PI / 2, 0, 0));
+      b.add(MT.dbl, new THREE.CylinderGeometry(r, r, .5, 32, 1, true), c2, K.M(x, top - .36, z), .1);
+      for (let k = 0; k < 12; k++) b.add(MT.v, new THREE.TorusGeometry(r, .17, 6, 6, TAU / 12), k % 2 ? c2 : c1, K.M(x, top + .02, z, 1, 1, .55, Math.PI / 2, 0, k * TAU / 12), .2);
+      const g = new THREE.RingGeometry(0, r - .1, 28, 5); g.rotateX(-Math.PI / 2); const pos = g.attributes.position, rr = new Float32Array(pos.count);
+      for (let k = 0; k < pos.count; k++) rr[k] = 1 - (Math.hypot(pos.getX(k), pos.getZ(k)) / (r - .1)) ** 2;
+      const bm = new THREE.MeshStandardMaterial({ map: BEDTEX, roughness: .85 }); bm.userData.lin = 1;
+      const bed = new THREE.Mesh(g, bm); bed.position.set(x, top - .04, z); bed.receiveShadow = true; grp.add(bed);
+      walk.pad(x, z, r + .2, top); occ.push([x, z, r + 2.5]);
+      ctx.T.push({ x, z, r: r + 1.6, label: () => tr('Trampoline: hop on and bounce!', 'Cama elástica: ¡súbete y rebota!'), fn: () => AV.toast(HINT()) });
+      return { x, z, r: r + .2, top, g, pos, rr, amp: 0, tt: 0 };
+    });
+    const HINT = () => tr('Boing! Keep holding Space / Jump: every landing launches you higher — all the way into the sky. Walk off the edge to stop.', '¡Boing! Sigue manteniendo Espacio / Saltar: cada caída te lanza más alto — hasta el cielo. Sal por el borde para parar.');
+    const boing = (tp, v) => { tp.amp = .1 + v / VMAX * .4; tp.tt = 0; const g = 1 - Math.hypot(AV.P.x - tp.x, AV.P.z - tp.z) / 18; if (AV.audio && g > 0) { const f = 160 + v * 5; AV.audio.blip(f, .12, 'triangle', .12 * g); setTimeout(() => AV.audio.blip(f * 1.6, .18, 'sine', .08 * g), 70) } };
+    /* a couple of locals who never get tired of it */
+    const JUMP = [['ape', 3, 1.25], ['alien', 0, 1.45]].slice(0, AV.beings.n(ctx, 1, 2, 2));
+    const jumpers = AV.beings.spawn(ctx, JUMP.map(([kind, ti], i) => ({ kind, x: tramps[ti].x + .6, z: tramps[ti].z - .4, y: tramps[ti].top, yaw: i * 2.4, mode: 'float', seed: 90 + i })))
+      .map((b, i) => ({ b, tp: tramps[JUMP[i][1]], f: JUMP[i][2], ph: i * .37, last: 0 }));
+    let prevVy = 0, hinted = false;
+    /* the mat sags deeper the harder you land: a big launch bends it way down before it snaps back */
+    ctx.upd.push((dt, t) => {
+      const P = AV.P, red = AV.S.set.reduce ? .5 : 1;
+      if (P.on && !AV.blocking()) for (const tp of tramps) {
+        if (Math.hypot(P.x - tp.x, P.z - tp.z) > tp.r || Math.abs(P.y - tp.top) > .06) continue;
+        const v = Math.min(VMAX, Math.max(VMIN, -prevVy * .9 + (AV.keys.Space || AV.T.jump ? 12 : 0)));
+        P.vy = v; P.on = false; boing(tp, v);
+        if (!hinted) { hinted = true; AV.toast(HINT()) } break;
+      }
+      prevVy = P.vy;
+      for (const j of jumpers) { const p = (t * j.f + j.ph) % 1; if (p < j.last) boing(j.tp, 9); j.last = p; j.b.h.position.y = j.tp.top + 4 * 1.5 * red * p * (1 - p) }
+      for (const tp of tramps) {
+        if (tp.amp <= 0) continue; tp.tt += dt; const e = Math.exp(-4 * tp.tt), dip = e < .02 ? 0 : -tp.amp * e * Math.cos(11 * tp.tt) * red;
+        for (let k = 0; k < tp.pos.count; k++) tp.pos.setY(k, dip * tp.rr[k]); tp.pos.needsUpdate = true; if (!dip) tp.amp = 0;
+      }
+    });
 
     /* ---------- vegetation: CC0 models where they fit, procedural elsewhere ---------- */
     const pick = (n, area, ok, sMin, sMax) => { const out = []; for (let i = 0, tries = 0; i < n && tries < n * 12; tries++) { let x, z; if (area.r1 != null) { const a = rng() * TAU, r = area.r0 + rng() * (area.r1 - area.r0); x = (area.x || 0) + Math.cos(a) * r; z = (area.z || 0) + Math.sin(a) * r } else { x = area.x0 + rng() * (area.x1 - area.x0); z = area.z0 + rng() * (area.z1 - area.z0) } if (!ok(x, z)) continue; out.push({ x, y: H(x, z), z, s: sMin + rng() * (sMax - sMin), ry: rng() * TAU }); i++ } return out };

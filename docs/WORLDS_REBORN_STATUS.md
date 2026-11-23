@@ -79,6 +79,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 |---|---|---|
 | **Astro-9 metropolis, first district (§5)** | `js/astro9_metro.js`, `suite_astro9_metro.js` 30/30. See the list below. | Cinema 9, Orbit Lounge, Docking Bay rebuild, residential spires, Glassopy Observatory, transit rings, rooftops, upper-level bridges, chunk loading. The architecture is stylised (lathe towers + mosaic), not yet the Da Nang / Chiang Mai detail level. Shop interiors are simple rooms with a counter. |
 | **Pai (§10)** | Playable first slice: `js/world_pai.js`, `suite_pai.js` 30/30. See the list below. | **Visuals are primitive** (boxes on flat grass, about 9k triangles; far below the Chiang Mai / Da Nang bar). No Pai Canyon, waterfall, hot springs, White Buddha, rice fields; no scenic road transition (the minivan is a fade). Venue names are unverified memories, labelled as such. |
+| **Astro-9 district 2 (§5)** | `js/astro9_district2.js`, `suite_astro9_d2.js` 23/23. The Art Avenue runs south from the plaza, with 6 living paintings that slowly change. **Cinema 9 hall:** an indoor hall with walls and one door, 5 rows of seats, "take a seat" puts you facing the screen, which plays your films (tags astro + mv); a popcorn counter. **Orbit Lounge:** a space-jazz club with its own procedural jazz (walking bass, swung ride, electric-piano comping; no files). The jazz is heard only near the lounge, and the world music ducks inside. A trio on stage, a cocktail bar, keys to jam. **Glassopy Observatory:** a glass dome; the telescope shows a live sky view that changes daily. Facades with mosaic bands, pillars and glowing arched windows. | **Film playback:** only *loading* was confirmed in the headless test; real playback depends on your video files. The halls are still simple boxes inside. Not built yet: Docking Bay rebuild, residential spires, transit rings. |
 | Songkran visuals | | NPCs don't look wet; crowd uses the existing throw pose; no crowd-cheer audio layer; FPS in the crowd not measured. |
 | Photoreal human faces (§34A) | Soft-body characters exist (0jc1) | Heavy; no hero-human pass yet. Needs a real Iris Xe FPS reading first. |
 
@@ -125,7 +126,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 
 1. **Owner:** play-test basketball, Songkran, the minimap, the DJ mixer, the Astro-9 plaza and Pai on the real laptop and phone. Report the F3 FPS readings.
 2. **Pai visual pass:** real shophouse architecture, trees, terrain and river banks. Then Pai Canyon + a scenic scooter route.
-3. **Astro-9 second district:** Cinema 9 + Orbit Lounge (space jazz). Then a Madrid first slice (Pinar/Chamartín + metro + Sol).
+3. **Next:** Madrid first slice (Pinar/Chamartín + metro + Sol); Astro-9 Docking Bay + residential spires.
 
 ## Log (2026-11-23)
 
@@ -136,4 +137,5 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Astro-9 metropolis, first district.
 - Pai first slice.
 - Full DJ mixer.
+- Astro-9 district 2 (Art Avenue, Cinema 9 hall, Orbit Lounge, Glassopy Observatory).
 - Vehicles milestone (earlier, commit `f84ba1b`).

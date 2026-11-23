@@ -14,8 +14,8 @@ if (AV.astro9x && AV.astro9x.GATES.indexOf(90) < 0) AV.astro9x.GATES.push(90);  
 const PL = { x: 0, z: 94, r: 24 }, BLVD = [-5, 5, 24, 72], BAZ = [-98, -20, 70, 104], FOOD = [20, 92, 70, 104];
 const STOPS = [{ id: 'plaza', x: 13, z: 112, n: L('Spiral Plaza', 'Plaza Espiral') }, { id: 'gate', x: 8, z: 36, n: L('South Gate', 'Puerta Sur') }, { id: 'bazaar', x: -90, z: 100, n: L('Intergalactic Bazaar', 'Bazar Intergaláctico') }, { id: 'food', x: 86, z: 100, n: L('Food Ring', 'Anillo de Comida') }, { id: 'club', x: -22, z: -6, n: L('Club Graviton', 'Club Graviton') }];
 M.STOPS = STOPS; M.PLAZA = PL;
-const inR = (x, z, r) => x > r[0] && x < r[1] && z > r[2] && z < r[3];
-M.surface = (x, z) => (Math.hypot(x - PL.x, z - PL.z) < PL.r || inR(x, z, BLVD) || inR(x, z, BAZ) || inR(x, z, FOOD)) ? 0 : null;
+const inR = (x, z, r) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];   /* inclusive: shared edges (doors, street joins) stay walkable */
+M.surface = (x, z) => (Math.hypot(x - PL.x, z - PL.z) < PL.r || inR(x, z, BLVD) || inR(x, z, BAZ) || inR(x, z, FOOD)) ? 0 : AV.astro9m2 ? AV.astro9m2.surface(x, z) : null;   /* + district 2 (astro9_district2.js) */
 
 /* ---------- items sold here ---------- */
 Object.assign(AV.ITEMS, {
@@ -49,12 +49,12 @@ M.build = function (ctx, deps) {
   for (const r of [BLVD, BAZ, FOOD]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(r[1] - r[0], r[3] - r[2]), streetM); m.rotation.x = -Math.PI / 2; m.position.set((r[0] + r[1]) / 2, .015, (r[2] + r[3]) / 2); m.receiveShadow = true; grp.add(m) }
   /* glowing kerb lines + railings (you can't walk off the edge: the surface ends, and the rails show where) */
   for (let z = BLVD[2]; z < BLVD[3]; z += 2.5) for (const sx of [BLVD[0], BLVD[1]]) { box(0x8a90b0, sx, .5, z, .08, 1, .08); box(MOS[(z / 2.5 | 0) % 6], sx, 1.02, z, .1, .06, 2.5, 0, 1) }
-  for (let k = 0; k < 96; k++) { const a = k / 96 * TAU, x = PL.x + Math.cos(a) * (PL.r - .3), z = PL.z + Math.sin(a) * (PL.r - .3); if (Math.abs(x) < 6 && z < PL.z) continue; if (z > PL.z - 10 && z < PL.z + 10 && Math.abs(x) > 18) continue; box(0x8a90b0, x, .5, z, .08, 1, .08); box(MOS[k % 6], x, 1.02, z, .1, .06, 1.6, -a, 1) }
+  for (let k = 0; k < 96; k++) { const a = k / 96 * TAU, x = PL.x + Math.cos(a) * (PL.r - .3), z = PL.z + Math.sin(a) * (PL.r - .3); if (Math.abs(x) < 6 && z < PL.z) continue; if (Math.abs(x) < 8 && z > PL.z) continue; if (z > PL.z - 10 && z < PL.z + 10 && Math.abs(x) > 18) continue; box(0x8a90b0, x, .5, z, .08, 1, .08); box(MOS[k % 6], x, 1.02, z, .1, .06, 1.6, -a, 1) }
   /* ---------- Gaudí towers around the plaza: sinuous lathe spires with mosaic bands ---------- */
   const tower = (x, z, h, w, col) => { const pts = []; for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push(new THREE.Vector2(w * (1 - t * .75) * (1 + .22 * Math.sin(t * 9 + x)), t * h)) } const g = new THREE.LatheGeometry(pts, 14); parts.push([g, col, K.M(x, 0, z, 1, 1, 1)]);
     for (let b = 1; b < 5; b++) { const t = b / 5; glow.push([new THREE.TorusGeometry(w * (1 - t * .75) * 1.02, .09, 5, 18), MOS[(b + (x | 0)) % 6], K.M(x, t * h, z, 1, 1, 1, Math.PI / 2, 0, 0)]) }
     glow.push([K.BG.sph, MOS[(z | 0) % 6], K.M(x, h + .6, z, .7, 1.1, .7)]); ctx.circles.push([x, z, w * 1.05]) };
-  for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + .3, R = PL.r + 9 + (k % 3) * 4, x = PL.x + Math.cos(a) * R, z = PL.z + Math.sin(a) * R; const pad = r => [r[0] - 5, r[1] + 5, r[2] - 5, r[3] + 5]; if (inR(x, z, pad(BAZ)) || inR(x, z, pad(FOOD)) || inR(x, z, pad(BLVD))) continue;   /* never inside a street or a building */ tower(x, z, 18 + (k % 4) * 7, 3 + (k % 2), [0xe8d8c8, 0xd8b8e8, 0xc8e0e8][k % 3]) }
+  for (let k = 0; k < 9; k++) { const a = k / 9 * TAU + .3, R = PL.r + 9 + (k % 3) * 4, x = PL.x + Math.cos(a) * R, z = PL.z + Math.sin(a) * R; const pad = r => [r[0] - 5, r[1] + 5, r[2] - 5, r[3] + 5]; if (inR(x, z, pad(BAZ)) || inR(x, z, pad(FOOD)) || inR(x, z, pad(BLVD))) continue; if (AV.astro9m2 && [[0, 0], [5, 5], [-5, 5], [5, -5], [-5, -5]].some(o => AV.astro9m2.surface(x + o[0], z + o[1]) !== null)) continue;   /* never inside a street or a building */ tower(x, z, 18 + (k % 4) * 7, 3 + (k % 2), [0xe8d8c8, 0xd8b8e8, 0xc8e0e8][k % 3]) }
   /* the giant organic arch over the boulevard + the "9" spiral monument */
   glow.push([new THREE.TorusGeometry(9, .7, 10, 40, Math.PI), 0xc88aff, K.M(0, 0, 70, 1, 1.25, 1)]); parts.push([new THREE.TorusGeometry(9, 1.1, 8, 40, Math.PI), 0xe8d8c8, K.M(0, 0, 70.6, 1, 1.25, 1)]); ctx.circles.push([-9, 70, 1.2], [9, 70, 1.2]);
   { const pts = []; for (let i = 0; i <= 20; i++) { const t = i / 20; pts.push(new THREE.Vector2(2.4 * (1 - t) + .4 + .5 * Math.sin(t * 12), t * 11)) } parts.push([new THREE.LatheGeometry(pts, 20), 0xe8e0f0, K.M(PL.x, 0, PL.z, 1, 1, 1)]); ctx.circles.push([PL.x, PL.z, 3]) }
@@ -62,7 +62,7 @@ M.build = function (ctx, deps) {
   ctx.sign('ASTRO-9 · CENTRAL SPIRAL PLAZA', 0, 9.8, 70.4, Math.PI, 10, '#ffd84a', {});
   /* ---------- the plaza's market ring (open stalls with canopies) ---------- */
   const stall = (x, z, ry, col) => { box(0x3a3048, x, .5, z, 2.2, 1, 1, ry); box(col, x, 2.6, z, 2.6, .12, 1.8, ry, 1); for (const s of [-1, 1]) box(0x8a90b0, x + Math.cos(ry) * s * 1.1, 1.3, z - Math.sin(ry) * s * 1.1, .08, 2.6, .08, ry); ctx.circles.push([x, z, 1.1]) };
-  for (let k = 0; k < 10; k++) { const a = Math.PI * .15 + k / 10 * Math.PI * .7, x = PL.x + Math.cos(a) * (PL.r - 5), z = PL.z + Math.sin(a) * (PL.r - 5); stall(x, z, -a + Math.PI / 2, MOS[k % 6]) }
+  for (let k = 0; k < 10; k++) { const a = Math.PI * .15 + k / 10 * Math.PI * .7, x = PL.x + Math.cos(a) * (PL.r - 5), z = PL.z + Math.sin(a) * (PL.r - 5); if (Math.abs(x) < 6) continue; stall(x, z, -a + Math.PI / 2, MOS[k % 6]) }
   /* ---------- Intergalactic Bazaar: 4 enterable shops (north side, doors onto the street) + stalls (south side) ---------- */
   ctx.sign('INTERGALACTIC BAZAAR · trade · art · curios', -60, 6.4, 104.3, Math.PI, 9, '#ff8ad8', { posts: true });
   SHOPS.forEach((s, i) => { const b = ctx.building(s.x, 78, 13, 12, 5.2, [0xe0c8e8, 0xc8e0f0, 0xe8e0c0, 0xd0e8d0][i], s.x, { floor: 0x2a2440, roof: s.col });
@@ -113,7 +113,8 @@ M.build = function (ctx, deps) {
   /* ---------- places (minimap, portal pipe, NPC directions) ---------- */
   const places = [{ id: 'm_plaza', name: L('Central Spiral Plaza', 'Plaza Espiral Central'), x: PL.x + 6, z: PL.z - 12, yaw: 0 }, { id: 'm_gate', name: L('South Gate & Spiral Boulevard', 'Puerta Sur y Bulevar Espiral'), x: 0, z: 40, yaw: Math.PI },
     { id: 'm_bazaar', name: L('Intergalactic Bazaar', 'Bazar Intergaláctico'), x: -60, z: 94, yaw: Math.PI / 2 }, { id: 'm_food', name: L('Food Ring & Astro Café', 'Anillo de Comida y Astro Café'), x: 50, z: 94, yaw: -Math.PI / 2 }].concat(SHOPS.map(s => ({ id: 'm_' + s.id, name: s.n, x: s.x, z: 86, yaw: Math.PI })));
-  return { surface: M.surface, places };
+  const d2 = AV.astro9m2 ? AV.astro9m2.build(ctx) : null;
+  return { surface: M.surface, places: places.concat(d2 ? d2.places : []) };
 };
 /* a street musician with the alien synth on the plaza (shared instrument activity, music_play.js) */
 addEventListener('load', () => { if (AV.act && AV.act.PLACES) AV.act.PLACES.astro9 = (AV.act.PLACES.astro9 || []).concat([{ type: 'instspot', kind: 'alien', x: -10, z: 106, name: ['Spiral Plaza buskers', 'músicos de la Plaza Espiral'] }]) });

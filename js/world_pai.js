@@ -22,6 +22,20 @@ const PL = { sunset: [-42, -100], paradise: [44, -98], tea: [-26, 13], hostel: [
 const cpx = z => 4 + 5 * Math.sin(Math.max(0, z - 128) / 14);   /* the canyon walking path */
 const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t) };
 const gau = (x, z, cx, cz, s) => Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (2 * s * s));
+/* ---------- procedural textures (generated once, reused): tinted by each part's vertex colour ---------- */
+const TX = {};
+function ctex(key, size, draw, rep) { if (TX[key]) return TX[key]; const cv = document.createElement('canvas'); cv.width = cv.height = size; draw(cv.getContext('2d'), size, AV.rng(key.length * 131 + 7)); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (rep) t.repeat.set(rep, rep); return TX[key] = t }
+const woodTex = () => ctex('pai_wood', 256, (c, s, r) => { c.fillStyle = '#d8cfc2'; c.fillRect(0, 0, s, s); for (let x = 0; x < s; x += 32) { for (let y = 0; y < s; y += 2) { c.fillStyle = 'rgba(70,45,25,' + (.06 + .08 * Math.abs(Math.sin(y * .05 + x + r() * .4))).toFixed(3) + ')'; c.fillRect(x + 2 + Math.sin(y * .03 + x) * 3, y, 26, 2) } c.fillStyle = 'rgba(40,25,15,.55)'; c.fillRect(x, 0, 2, s); if (r() < .7) { c.strokeStyle = 'rgba(60,35,20,.45)'; c.lineWidth = 2; c.beginPath(); c.ellipse(x + 8 + r() * 16, r() * s, 3, 6, 0, 0, Math.PI * 2); c.stroke() } } });
+const plasTex = () => ctex('pai_plaster', 256, (c, s, r) => { c.fillStyle = '#f2efe8'; c.fillRect(0, 0, s, s); for (let i = 0; i < 1600; i++) { c.fillStyle = 'rgba(' + (r() < .5 ? '90,80,60' : '255,255,255') + ',' + (r() * .08).toFixed(3) + ')'; c.fillRect(r() * s, r() * s, 2 + r() * 6, 2 + r() * 6) }
+  const g = c.createLinearGradient(0, s, 0, s * .6); g.addColorStop(0, 'rgba(70,55,35,.45)'); g.addColorStop(1, 'rgba(70,55,35,0)'); c.fillStyle = g; c.fillRect(0, s * .6, s, s * .4);   /* grime at the bottom of every storey */
+  c.strokeStyle = 'rgba(60,50,40,.35)'; c.lineWidth = 1; for (let i = 0; i < 5; i++) { c.beginPath(); let x = r() * s, y = r() * s; c.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (r() - .5) * 18; y += r() * 12; c.lineTo(x, y) } c.stroke() } });
+const roofTex = () => ctex('pai_roof', 128, (c, s, r) => { for (let x = 0; x < s; x++) { const v = 200 + 40 * Math.sin(x / s * Math.PI * 16); c.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; c.fillRect(x, 0, 1, s) } for (let i = 0; i < 40; i++) { c.fillStyle = 'rgba(120,60,20,' + (r() * .35).toFixed(2) + ')'; c.beginPath(); c.arc(r() * s, r() * s, 2 + r() * 8, 0, Math.PI * 2); c.fill() } });
+const groundTex = () => ctex('pai_ground', 256, (c, s, r) => { c.fillStyle = '#c8c8c0'; c.fillRect(0, 0, s, s); for (let i = 0; i < 5000; i++) { const k = r(); c.fillStyle = k < .4 ? 'rgba(40,70,20,.18)' : k < .7 ? 'rgba(255,255,230,.12)' : 'rgba(90,70,40,.16)'; c.fillRect(r() * s, r() * s, 1 + r() * 3, 3 + r() * 5) } }, 110);
+const laneTex = () => ctex('pai_lane', 256, (c, s, r) => { c.fillStyle = '#d0c4b0'; c.fillRect(0, 0, s, s); for (let i = 0; i < 2200; i++) { c.fillStyle = 'rgba(' + (r() < .5 ? '80,60,40' : '255,250,235') + ',' + (r() * .22).toFixed(3) + ')'; c.beginPath(); c.arc(r() * s, r() * s, 1 + r() * 2.6, 0, Math.PI * 2); c.fill() } c.strokeStyle = 'rgba(90,75,55,.25)'; c.lineWidth = 2; for (let y = 0; y < s; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(s, y); c.stroke() } });
+/* world-space box-mapped UVs for merged geometry, so textures never stretch with the part's scale */
+function worldUV(g, sc, sy) { const p = g.attributes.position, n = g.attributes.normal, uv = new Float32Array(p.count * 2); for (let i = 0; i < p.count; i++) { const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i)), x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+  if (ay >= ax && ay >= az) { uv[i * 2] = x / sc; uv[i * 2 + 1] = z / sc } else if (ax >= az) { uv[i * 2] = z / sc; uv[i * 2 + 1] = y / (sy || sc) } else { uv[i * 2] = x / sc; uv[i * 2 + 1] = y / (sy || sc) } } g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); return g }
+const texMat = (map, rough, metal) => { const m = new THREE.MeshStandardMaterial({ vertexColors: true, map, roughness: rough, metalness: metal || 0 }); m.userData.lin = 1; return m };
 /* ---------- terrain ---------- */
 function base(x, z) {
   let h = 0; const e = Math.hypot(x / 165, (z - 5) / 170); if (e > 1) h += (e - 1) * 70 * (1 + .3 * Math.sin(x * .05) * Math.cos(z * .04));
@@ -69,6 +83,7 @@ AV.registerWorld({
       if (x > 100 && x < 160 && z > -50 && z < 64) return (Math.floor(x / 9) + Math.floor(z / 7)) % 3 ? (n > 0 ? 0x7ab83a : 0x8ac84a) : 0xb8c85a;
       if (Math.abs(x) < 16 && Math.abs(z) < 72) return 0x8a7a5a;
       return h > 9 ? (n > 0 ? 0x2e5a2e : 0x3a6a32) : n > .5 ? 0x4a7a32 : n > -.4 ? 0x3e7030 : 0x5a8a3a });
+    { const tm = grp.children[grp.children.length - 1]; if (tm && tm.material && tm.isMesh) { tm.material.map = groundTex(); tm.material.needsUpdate = true } }   /* ground detail texture */
     K.waterPlane(ctx, new THREE.PlaneGeometry(14, 420), -.55, { deep: 0x3a5a46, shallow: 0x7a9a6a, iri: .05, sky: 0xd8c8a8, opacity: .92 }).position.x = RIV.x;
     const pool = (x, z, r, y, opt) => { const w = K.waterPlane(ctx, new THREE.CircleGeometry(r, 28), y, opt); w.position.x = x; w.position.z = z; return w };
     pool(PL.fall[0] + 2, PL.fall[1], 8, H(PL.fall[0] + 9, PL.fall[1]) - .4, { deep: 0x1a6a7a, shallow: 0x5ac8c8, iri: .1 });
@@ -92,10 +107,10 @@ AV.registerWorld({
       B(wood, 0x2a1a14, fx - s * .4, 2.25, zc + w / 2 - .5, .06, .9, 1.2); B(glow, col, fx - s * .44, 2.25, zc + w / 2 - .5, .03, .7, 1);
       if (o.chalk !== false) { B(wood, 0x1a1a1a, fx - s * .5, .55, zc - w / 2 + 1.1, .05, 1.05, .5); B(glow, 0xf0f0e0, fx - s * .53, .7, zc - w / 2 + 1.1, .02, .1, .42) }
       for (let i = 0; i < 3; i++) B(glow, [0xff4ad2, 0x4ad8ff, 0xffd84a][i], fx - s * .2, h - .45, zc - w / 3 + i * w / 3, .12, .12, .12);
-      if (name) { signs.push([name, fx - s * 1.5, h + (two ? 3.3 : .95), zc - w / 2 + .6, Math.PI, Math.min(w - 2.4, 3.6), col]); signs.push([name, fx + s * .1, h + (two ? 3.3 : .95), zc, s > 0 ? -Math.PI / 2 : Math.PI / 2, Math.min(w - 1.4, 6), col]) }   /* projecting board you read walking down the street + facade sign */
+      if (name) { signs.push([name, fx - s * 1.5, h + (two ? 3.3 : .95), zc - w / 2 + .6, Math.PI, Math.min(w - 2.4, 3.6), col]); if (o.wood) signs.push([name, fx + s * .1, h + (two ? 3.3 : .95), zc, s > 0 ? -Math.PI / 2 : Math.PI / 2, Math.min(w - 1.4, 6), col]) }   /* projecting board you read walking down the street + facade sign */
       return { s, fx, bx, cx, zc, w, h };
     }
-    const cafe = (b, n) => { for (let i = 0; i < n; i++) { const tx = b.cx + b.s * (i % 2 ? 1.1 : -1.1), tz = b.zc - b.w / 4 + (i >> 1) * (b.w / 2.4); C(wood, 0x6a4a30, tx, .72, tz, .5, .06); C(wood, 0x4a3020, tx, .36, tz, .05, .72); for (const d of [-.75, .75]) C(wood, 0x7a5a3a, tx, .23, tz + d, .2, .46); ctx.circles.push([tx, tz, .55]) } };
+    const cafe = (b, n) => { B(wood, 0x1a1a1a, b.bx - b.s * .2, 2.1, b.zc + 1.6, .05, 1, 1.6); for (let i = 0; i < 4; i++) B(glow, 0xf0f0e0, b.bx - b.s * .24, 1.75 + i * .2, b.zc + 1.6, .02, .05, 1.2); for (let i = 0; i < 2; i++) { C(wood, 0x2a2a2a, b.cx, b.h - .3, b.zc - b.w / 4 + i * b.w / 2, .01, .6); C(glow, 0xffd890, b.cx, b.h - .65, b.zc - b.w / 4 + i * b.w / 2, .16, .2) } for (let i = 0; i < n; i++) { const tx = b.cx + b.s * (i % 2 ? 1.1 : -1.1), tz = b.zc - b.w / 4 + (i >> 1) * (b.w / 2.4); C(wood, 0x6a4a30, tx, .72, tz, .5, .06); C(wood, 0x4a3020, tx, .36, tz, .05, .72); for (const d of [-.75, .75]) C(wood, 0x7a5a3a, tx, .23, tz + d, .2, .46); ctx.circles.push([tx, tz, .55]) } };
     const W = [[-55, 8, 'BAMBOO CRAFTS', '#ffb04a'], [-45, 10, 'RAINNY CAFÉ', '#7aff8a', { wood: true }], [-35, 8, 'HANDMADE ART', '#ff8ad8'], [-26, 10, 'GANITA CAFÉ', '#ffd84a', { wood: true }], [-16, 8, 'MOUNTAIN COFFEE', '#d8a060'], [-7, 8, 'REGGAE HUT', '#7aff8a'], [2, 8, 'TOURS · LAUNDRY', '#4ad8ff'],
       [24, 8, 'SILVER & STONES', '#e8e8f0'], [33, 8, 'NOODLES', '#ff8a3a'], [42, 8, 'MINIMART 24H', '#4ad8ff'], [51, 8, 'POSTCARDS', '#ff8ad8'], [60, 8, null, '#ffd84a']];
     const E = [[-55, 8, 'THAI MASSAGE', '#ff8ad8'], [-45, 8, 'SOUVENIRS', '#ffd84a'], [-36, 9, 'LIVE BLUES BAR', '#4ad8ff', { wood: true }], [-27, 8, 'ROTI & PANCAKES', '#ffb04a'], [-18, 8, 'TATTOO', '#c88aff'], [-9, 8, 'COCOA & TEA', '#d8a060'],
@@ -103,7 +118,7 @@ AV.registerWorld({
     const built = {}; W.forEach(([z, w, n, c, o]) => built['w' + z] = shophouse('w', z, w, n, parseInt(c.slice(1), 16), o)); E.forEach(([z, w, n, c, o]) => built['e' + z] = shophouse('e', z, w, n, parseInt(c.slice(1), 16), o));
     cafe(built['w-45'], 4); cafe(built['w-26'], 4); cafe(built['e-36'], 3); cafe(built['e30'], 2);
     for (let z = -62; z <= 64; z += 3.6) if (rng() < .45) { const x = (rng() < .5 ? -1 : 1) * (4 + rng() * .3), zz = z + rng(); C(plaster, 0xb86a3a, x, .25, zz, .25, .5); plaster.push([K.BG.ico, 0x3a8a3a, K.M(x, .75, zz, .42, .45, .42)]) }
-    const lm = new THREE.MeshStandardMaterial({ color: lin(0x9a8466), roughness: .92 }); lm.userData.lin = 1; const lane = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 140), lm); lane.rotation.x = -Math.PI / 2; lane.position.set(0, .02, 0); lane.receiveShadow = true; grp.add(lane);
+    const lm = new THREE.MeshStandardMaterial({ color: lin(0xb89c78), roughness: .92, map: (() => { const t = laneTex().clone(); t.needsUpdate = true; t.repeat.set(2, 40); return t })() }); lm.userData.lin = 1; const lane = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 140), lm); lane.rotation.x = -Math.PI / 2; lane.position.set(0, .02, 0); lane.receiveShadow = true; grp.add(lane);
     const zig = []; for (let z = -64; z <= 66; z += 7) zig.push([(zig.length % 2 ? 3.6 : -3.6), 4.3, z]); K.lanterns(ctx, zig, { per: 9, sag: .5, cols: [0xfff0b0, 0xffd080, 0xff9ad8, 0x9ae8ff] });
     const fz = []; for (let z = -64; z <= 66; z += 11) fz.push([(fz.length % 2 ? -3.6 : 3.6), 3.4, z]); K.lanterns(ctx, fz, { per: 7, sag: .3, cols: [0xff4ad2, 0xffd84a, 0x7aff8a] });
     const stallG = new THREE.Group(); grp.add(stallG); const stallParts = [];
@@ -191,7 +206,7 @@ AV.registerWorld({
     /* ---------- signs + merged architecture (4 draw calls for all buildings) ---------- */
     signs.forEach(([t, x, y, z, ry, w, c]) => ctx.sign(t, x, y, z, ry, w, '#' + c.toString(16).padStart(6, '0'), {}));
     const gM = new THREE.MeshBasicMaterial({ vertexColors: true }); gM.userData.lin = 1;
-    for (const [arr, m, sh] of [[wood, K.floraMat(0, { rough: .85 }), true], [roof, K.floraMat(0, { rough: .7, metal: .15 }), true], [plaster, K.floraMat(0, { rough: .9 }), true], [glow, gM, false]]) { if (!arr.length) continue; const mesh = new THREE.Mesh(K.merge(arr), m); mesh.castShadow = sh && q === 2; mesh.receiveShadow = true; grp.add(mesh) }
+    for (const [arr, m, sh, sc, sy] of [[wood, texMat(woodTex(), .8), true, 2.2], [roof, texMat(roofTex(), .55, .25), true, 1.6], [plaster, texMat(plasTex(), .92), true, 3, 3.4], [glow, gM, false]]) { if (!arr.length) continue; const geo = K.merge(arr); if (sc) worldUV(geo, sc, sy); const mesh = new THREE.Mesh(geo, m); mesh.castShadow = sh && q === 2; mesh.receiveShadow = true; grp.add(mesh) }
     /* ---------- vegetation: jungle wraps the valley; open paths, quiet canyon ---------- */
     const segD = (x, z, r) => { const dx = r[2] - r[0], dz = r[3] - r[1], t = Math.max(0, Math.min(1, ((x - r[0]) * dx + (z - r[1]) * dz) / (dx * dx + dz * dz))); return Math.hypot(x - r[0] - dx * t, z - r[1] - dz * t) };
     const clear = (x, z) => { if (Math.abs(x) < 16 && Math.abs(z) < 72) return false; if (Math.abs(x - RIV.x) < 9) return false; for (const k in PL) { const p = PL[k]; if (k !== 'canyon' && Math.hypot(x - p[0], z - p[1]) < 17) return false } if (x > 52 && x < RIV.x && Math.abs(z - 8) < 44) return false; if (x > 100 && x < 160 && z > -50 && z < 64) return false; if (ROUTES.some(r => segD(x, z, r) < r[4] / 2 + 1.6)) return false; return surf(x, z) !== null };
@@ -208,6 +223,7 @@ AV.registerWorld({
     K.field(ctx, K.species.grass(0x9ac84a), K.floraMat(.03), K.n(280), { x0: 100, x1: 160, z0: -50, z1: 64 }, { H, s0: 1, s1: 1.6, ok: (x, z) => !(Math.abs(z - BR.z) < 4) });
     K.field(ctx, K.species.rock(0x8a8070), K.floraMat(0), K.n(50), { x0: -140, x1: -70, z0: -30, z1: 100 }, { H, s0: .8, s1: 2.2, ok: (x, z) => !inPool(x, z) && clear(x, z) });
     K.field(ctx, K.species.rock(0xa8582e), K.floraMat(0), K.n(30), { x0: -50, x1: 60, z0: 110, z1: 180 }, { H, s0: 1, s1: 2.6, ok: (x, z) => Math.abs(x - cpx(z)) > 5 && Math.abs(z - 172) > 6 });
+    K.field(ctx, K.species.rock(0x8a8a7a), K.floraMat(0), K.n(70), { x0: RIV.x - 9, x1: RIV.x + 9, z0: -170, z1: 170 }, { H: (x, z) => Math.max(H(x, z), -.9), s0: .7, s1: 2.2, ok: (x, z) => Math.abs(z - BR.z) > 6 && !(x < RIV.x && Math.abs(z - 8) < 44) });
     for (let i = 0; i < 18; i++) { const a = i / 18 * TAU, R = 300 + (i % 3) * 40, m = new THREE.Mesh(K.BG.cone, AV.std([0x3a5a50, 0x4a6a5a, 0x2e4a44][i % 3], .95)); m.scale.set(90 + (i % 4) * 20, 70 + (i * 37 % 50), 80); m.position.set(Math.cos(a) * R, 20, Math.sin(a) * R); grp.add(m) }
     K.motes(ctx, { n: 120, x: 0, z: 0, r: 90, y0: .5, y1: 4, cols: [0xd8ff7a, 0xffe060], size: 3, night: true, H });
     /* ---------- people: browsing, eating, partying, hanging out ---------- */
@@ -218,6 +234,7 @@ AV.registerWorld({
     link(at(-1.4, 12), [[-12, 13], [PL.tea[0] + 4, PL.tea[1] - 2]]); link(at(1.4, 0), [[20, 1], [44, 2], [bank - 8, BR.z - 3]]);   /* (walkers stay on the flat valley floor; the hills have their own seated / dancing crowds) */
     const NAV = CY.nav(nodes, edges), crowd = CY.crowd(ctx), V = ['man', 'woman', 'tourist', 'tourist', 'woman'];
     for (let i = 0; i < [26, 40, 56][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; crowd.add({ v: V[i % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .35 }) }
+    const nightWalk = []; for (let i = 0; i < [12, 18, 26][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; nightWalk.push(crowd.add({ v: V[(i + 2) % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .5 })) }
     const put = (x, z, yaw, m, v) => crowd.add({ v: v || V[Math.abs(Math.round(x * 7 + z)) % 5], x, z, y: H(x, z), yaw, mode: m || 'sit' });
     for (const b of [rC, gC, blues]) for (let i = 0; i < 3; i++) put(b.cx + b.s * (i % 2 ? 1.1 : -1.1), b.zc - b.w / 4 + (i >> 1) * (b.w / 2.4) + .75, b.s > 0 ? Math.PI / 2 : -Math.PI / 2);
     [[-2, -2.6], [2.4, -1.4], [2.6, 1.8], [-1.6, 2.6], [-3, 0]].forEach(([dx, dz], i) => put(PL.tea[0] + dx, PL.tea[1] + dz, Math.atan2(-dx, -dz), i < 2 ? 'drum' : 'sit', i < 2 ? 'drummer' : null));
@@ -228,10 +245,10 @@ AV.registerWorld({
     crowd.build();
     /* warm street lamps for the evening (a few real lights; the lanterns do the rest) */
     const lamps = [-48, -16, 16, 48].map(z => { const l = new THREE.PointLight(0xffb060, 0, 26); l.position.set(0, 4, z); grp.add(l); return l });
-    if (AV.beings && AV.beings.spawn) { const keep = AV.beings.list; try { AV.beings.spawn(ctx, [{ kind: 'human', x: -2, y: 0, z: -40, yaw: 0, mode: 'idle', seed: 7201 }, { kind: 'human', x: 60, y: 0, z: 2, yaw: 1, mode: 'idle', seed: 7203 }, { kind: 'ape', x: 2, y: 0, z: 18, yaw: Math.PI, mode: 'idle', seed: 7202 }, { kind: 'human', x: PL.sunset[0] + 4, y: H(PL.sunset[0] + 4, PL.sunset[1] + 6), z: PL.sunset[1] + 6, yaw: 0, mode: 'idle', seed: 7204 }].slice(0, q ? 4 : 2));   /* realistic talkers are heavy: 2 on Low */ AV.beings.list = (keep || []).concat(AV.beings.list || []) } catch (e) { console.warn('pai beings', e) } }
+    if (AV.beings && AV.beings.spawn) { const keep = AV.beings.list; try { AV.beings.spawn(ctx, [{ kind: 'human', x: -2, y: 0, z: -40, yaw: 0, mode: 'idle', seed: 7201 }, { kind: 'human', x: 60, y: 0, z: 2, yaw: 1, mode: 'idle', seed: 7203 }, { kind: 'ape', x: 2, y: 0, z: 18, yaw: Math.PI, mode: 'idle', seed: 7202 }, { kind: 'human', x: PL.sunset[0] + 4, y: H(PL.sunset[0] + 4, PL.sunset[1] + 6), z: PL.sunset[1] + 6, yaw: 0, mode: 'idle', seed: 7204 }].slice(0, [1, 2, 4][q]).map(b => Object.assign(b, { lod: true })));   /* coarser sculpt: these are background talkers */   /* realistic talkers are ~200k triangles each: 1 on Low, 2 Medium, 4 High */ AV.beings.list = (keep || []).concat(AV.beings.list || []) } catch (e) { console.warn('pai beings', e) } }
     /* ---------- life by the hour ---------- */
     ctx.upd.push((dt, t) => { const ev = eve(), fo = fireOn();
-      stallG.visible = ev; const nk = AV.nightK || 0; lamps.forEach(l => l.intensity = nk * 1.6); party.forEach((w, i) => w.vis = ev || i < 3); watchers.forEach((w, i) => w.vis = fo || i < 4); spinner.vis = fo;
+      stallG.visible = ev; nightWalk.forEach(w => w.vis = ev); const nk = AV.nightK || 0; lamps.forEach(l => l.intensity = nk * 1.6); party.forEach((w, i) => w.vis = ev || i < 3); watchers.forEach((w, i) => w.vis = fo || i < 4); spinner.vis = fo;
       fireG.visible = fo; fireL.intensity = fo ? 2.4 + Math.sin(t * 17) * .7 : 0;
       if (fo) { fireBalls.forEach((b, k) => { const a = t * 5.2 + k * Math.PI; b.position.set(Math.cos(a) * 1.15, 1.5 + Math.sin(a) * 1.15, Math.sin(t * 1.3) * .3) }); trail.forEach((m, i) => { const k = i % 2, a = (t - (i >> 1) * .02) * 5.2 + k * Math.PI; m.position.set(Math.cos(a) * 1.15, 1.5 + Math.sin(a) * 1.15, Math.sin(t * 1.3) * .3); m.material.opacity = .5 * (1 - (i >> 1) / 20) }) }
       tubs.forEach((o, k) => { o.position.y = -.42 + Math.sin(t + k) * .05; o.position.z = -60 + ((t * 1.1 + k * 40) % 140) }) });

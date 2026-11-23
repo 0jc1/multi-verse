@@ -105,14 +105,29 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 
 **Pai, what still looks weak:**
 - Low-poly trees and ico-sphere canopies on Low (Medium/High swap in the detailed plants).
-- Buildings are clean boxes without weathering or textures.
+- Buildings are textured now (wood grain, cracked plaster with grime, corrugated tin) but still simple shapes, with no props on upper floors.
 - Characters are the standard crowd figures.
-- The ground is flat-coloured.
-- 878k triangles / 320 draw calls in the street on Low (the headless renderer can't measure FPS).
+- Ground and lane have detail textures; no path wear or puddles.
+- **Performance (street, Low, headless probe):** was 796k triangles / 320 draw calls; now 472k / 265.
+  - Half the old cost was the realistic soft-body talkers (about 200k triangles each, even with the coarser sculpt). Pai now keeps 1 on Low, 2 on Medium, 4 on High.
+  - The shared character code gives Low the *finest* sculpt (`lod` is set only on Medium/High). That looks inverted, but it's 0jc1's code, so it's left unchanged. A spawn entry can now ask for `lod`.
 - No scenic road transition to Chiang Mai (the minivan is a fade).
 - No swimming in the river or springs.
 
-**Next Pai polish:** textured wood and plaster, more interiors, a bigger crowd at night, LOD for distant shophouses, a real FPS check.
+**Polish pass 2 (done):**
+- Procedural textures with world-space UVs.
+- 12–26 extra walkers at night.
+- Café menu boards and hanging lamps.
+- River boulders.
+- Facade signs only on the venues (fewer draw calls).
+- Talkers capped by quality.
+
+**Next:**
+- Real FPS on the laptop (F3).
+- Upper-floor props and laundry lines.
+- Food-stall smoke at night.
+- A scenic road transition.
+- Swimming.
 
 **Old first slice (replaced), what worked:**
 - **Walking Street:** a 190 m lane of wooden shophouses, with lanterns and night-market stalls from 17:00.

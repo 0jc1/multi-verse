@@ -36,7 +36,7 @@ const roadX = z => { for (let i = 1; i < ROAD.length; i++) { const a = ROAD[i - 
 const NAVL = [
   [[86, ZMIN + 16], [86, -40], [88, 0], [90, 40], [88, ZMAX - 16]],                           // west verge of Route 90
   [[88, 6], [100, 12], [KIOSK.x - 6, KIOSK.z + 5], [PORTAL.x - 4, PORTAL.z + 2]],            // to the beach + portal
-  [[90, 60], [MASADA.x + MASADA.r + 14, MASADA.z + 2]],                                       // to the cable car
+  [[90, 60], [MASADA.x + MASADA.r + 23, MASADA.z + 6]],                                       // to the cable car
   [[88, -2], [40, 10], [CAMP.x + 10, CAMP.z + 4], [CAMP.x - 2, CAMP.z + 8]],                  // to the Bedouin camp
   [[40, 10], [POST.x + 8, POST.z + 6], [POST.x - 4, POST.z + 7]],                              // to the outpost
   [[40, 10], [-10, -30], [OASIS.x + 12, OASIS.z + 14], [OASIS.x + 2, OASIS.z + 12]],          // to Ein Gedi
@@ -101,7 +101,7 @@ AV.registerWorld({
     { const parts = [], r = AV.rng(43); for (let i = 0; i < 22; i++) { const a = deg(-60 + i * 6 + r() * 4), d = 520 + r() * 160, h = 90 + r() * 140; parts.push([BG.ico, [0xc8a8a0, 0xb89a9a, 0xd0b4a8][i % 3], M((XMIN + XMAX) / 2 + Math.cos(a) * d, h * .3 - 20, (ZMIN + ZMAX) / 2 + Math.sin(a) * d, 150 + r() * 90, h, 120 + r() * 70), 0]) }
       const mm = new THREE.Mesh(K.merge(parts), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false })); mm.material.userData.lin = 1; grp.add(mm); ctx.upd.push(() => mm.material.color.setScalar(1 - (AV.nightK || 0) * .72)) }
     /* the cliffs (escarpment) along the west edge */
-    for (let z = ZMIN + 10; z < ZMAX - 10; z += 16) { const x = XMIN + 18 + rng() * 10; B.rock.add(rockM, BG.ico, [0xb4906a, 0xa58460, 0xc0a078][(z / 16 | 0) % 3], M(x, H(x, z) + 6, z, 14 + rng() * 6, 14 + rng() * 8, 12 + rng() * 6, rng(), rng() * 3, rng())) }
+    for (let z = ZMIN + 6; z < ZMAX - 6; z += 13) for (let k = 0; k < 3; k++) { const x = XMIN + 14 + k * 9 + rng() * 4, zz = z + (rng() - .5) * 6; B.rock.add(rockM, BG.dod, [0xc8a070, 0xb89060, 0xd4b080][(k + (z / 13 | 0)) % 3], M(x, H(x, zz) + 1.2 - k * .4, zz, 11 + rng() * 5, 2.6 + rng() * 2.2, 8 + rng() * 4, 0, rng() * .6 - .3, 0)) }   // strata ledges of the escarpment
 
     /* ---------- the Dead Sea ---------- */
     { const w = K.waterPlane(ctx, new THREE.PlaneGeometry(XMAX - SHORE + 2, GD), WY, { deep: 0x1a7a88, shallow: 0x3ab8b8, sky: 0xc8e8f0, iri: .2, opacity: .93, scale: .5 }); w.position.x = (SHORE + XMAX) / 2 + 1; w.position.z = (ZMIN + ZMAX) / 2 }
@@ -112,15 +112,19 @@ AV.registerWorld({
 
     /* ---------- Ein Gedi oasis ---------- */
     { const ox = OASIS.x, oz = OASIS.z;
-      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { const px = ox - 16 + k * 2, pz = oz + s * (16 + k * 3); B.rock.add(rockM, BG.ico, [0xb4906a, 0xa58460, 0xc0a078][k], M(px, H(px, pz) + 3, pz, 8, 7, 7, rng(), rng() * 3, rng())) }
+      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { const px = ox - 16 + k * 2, pz = oz + s * (16 + k * 3); B.rock.add(rockM, BG.dod, [0xb4906a, 0xa58460, 0xc0a078][k], M(px, H(px, pz) + 3, pz, 8, 7, 7, rng(), rng() * 3, rng())) }
       for (const [px, pz, r0] of [[ox - 2, oz + 4, 3.4], [ox + 4, oz - 2, 2.6], [ox + 8, oz - 9, 2]]) { const w = K.waterPlane(ctx, new THREE.CircleGeometry(r0, 30), H(px, pz) + .15, { deep: 0x1a6a5a, shallow: 0x4ac8b0, sky: 0xb8e8f0, iri: .3, opacity: .92 }); w.position.x = px; w.position.z = pz }
-      const fx = ox - 12, fz = oz, fy = H(fx, fz); B.rock.add(rockM, BG.ico, 0xa58460, M(fx - 3, fy + 6, fz, 6, 9, 7)); K.waterfall(ctx, fx + 1, fy + .2, fz, 2.6, 8, Math.PI / 2, { c1: 0x9ae8ff }); occ.push({ x0: fx - 8, x1: fx + 1, z0: fz - 5, z1: fz + 5 }); solid(fx - 8, fx, fz - 4, fz + 4);
+      const fx = ox - 12, fz = oz, fy = H(fx, fz); B.rock.add(rockM, BG.dod, 0xa58460, M(fx - 3, fy + 6, fz, 6, 9, 7)); K.waterfall(ctx, fx + 1, fy + .2, fz, 2.6, 8, Math.PI / 2, { c1: 0x9ae8ff }); occ.push({ x0: fx - 8, x1: fx + 1, z0: fz - 5, z1: fz + 5 }); solid(fx - 8, fx, fz - 4, fz + 4);
       ctx.sign('EIN GEDI · oasis', ox + 14, H(ox + 14, oz + 16) + 3.2, oz + 16, -Math.PI / 2, 4, '#7aff9a', { posts: true }) }
 
     /* ---------- Masada ---------- */
     const TOP = MASADA.h + 2;
     { const mx = MASADA.x, mz = MASADA.z;
-      for (let k = 0; k < 22; k++) { const a = k / 22 * TAU, px = mx + Math.cos(a) * (MASADA.r + 6), pz = mz + Math.sin(a) * (MASADA.r + 6); if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .35 || Math.abs(a) < .3 || Math.abs(a - TAU) < .3) continue; B.rock.add(rockM, BG.ico, 0xb4906a, M(px, H(px, pz) - 2, pz, 6, 9 + rng() * 4, 6, rng(), rng() * 3, rng())) }
+      { const base = H(mx + MASADA.r + 14, mz) - 1.5, hh = TOP - base + .3, GAPW = .24;   /* three.js cylinders start at +z and turn towards +x: west (-x) is theta = 3PI/2 */
+        const cg = new THREE.CylinderGeometry(MASADA.r + .6, MASADA.r + 12, hh, 40, 4, true, 1.5 * Math.PI + GAPW, TAU - 2 * GAPW), cp = cg.attributes.position, cr = AV.rng(808);
+        for (let i = 0; i < cp.count; i++) { const y = cp.getY(i); if (y > hh / 2 - .01) continue; const k = 1 + (cr() - .5) * .12; cp.setX(i, cp.getX(i) * k); cp.setZ(i, cp.getZ(i) * k); cp.setY(i, y + (cr() - .5) * .8) }
+        cg.computeVertexNormals(); B.rock.add(rockM, cg, 0xc09468, M(mx, base + hh / 2, mz));
+        for (let k = 0; k < 4; k++) B.rock.add(rockM, new THREE.CylinderGeometry(MASADA.r + 3 + k * 2.4, MASADA.r + 3.4 + k * 2.4, .5, 40, 1, true, 1.5 * Math.PI + GAPW, TAU - 2 * GAPW), [0xa88058, 0xd0a878][k % 2], M(mx, TOP - 4 - k * 5.2, mz)) }   // dark strata bands
       /* casemate wall around the rim (low), Herod's northern terraces, storerooms, cistern */
       for (let k = 0; k < 40; k++) { const a = k / 40 * TAU; if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .25 || Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < .25) continue; const px = mx + Math.cos(a) * (MASADA.r - 1.5), pz = mz + Math.sin(a) * (MASADA.r - 1.5); B.build.add(MT.stone, BG.box, 0xc8b490, M(px, TOP + .5, pz, 3.6, 1, .8, 0, -a + Math.PI / 2, 0)) }
       for (let t = 0; t < 3; t++) box(B.build, MT.stucco, 0xd8ccb2, mx - 9 + t * 1.5, mx + 9 - t * 1.5, TOP, TOP + 1.2 + t * .8, mz - MASADA.r + 5 + t * 3, mz - MASADA.r + 7 + t * 3);
@@ -132,7 +136,7 @@ AV.registerWorld({
         for (let i = 0; i <= n; i++) { const f = i / n, px = a0[0] + (a1[0] - a0[0]) * f, pz = a0[1] + (a1[1] - a0[1]) * f, py = y0 + (TOP - y0) * f; walk.pad(px, pz, 2.8, py + .05); if (i % 3 === 0) box(B.rock, MT.stone, 0xa8926e, px - 2.4, px + 2.4, py - 2, py + .05, pz - 2.4, pz + 2.4) }
         ctx.sign('ROMAN RAMP', a0[0] + 2, y0 + 3.2, a0[1] - 3.4, -Math.PI / 2, 3.2, '#ffd84a', { posts: true }) }
       /* cable car: lower station, cable, upper station */
-      { const cx0 = mx + MASADA.r + 12, cz0 = mz + 2, cy0 = H(cx0, cz0);
+      { const cx0 = mx + MASADA.r + 19, cz0 = mz + 2, cy0 = H(cx0, cz0);
         box(B.build, MT.shiny, 0x8a8a92, cx0 - 3, cx0 + 3, cy0 - .5, cy0 + 4, cz0 - 3, cz0 + 3); solid(cx0 - 3, cx0 + 3, cz0 - 3, cz0 + 3); box(B.build, MT.v, 0xb04a3a, cx0 - 3.4, cx0 + 3.4, cy0 + 4, cy0 + 4.6, cz0 - 3.4, cz0 + 3.4);
         box(B.build, MT.shiny, 0x8a8a92, mx + MASADA.r - 6, mx + MASADA.r - 2, TOP, TOP + 3, mz - 2, mz + 6);
         const cable = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(cx0, cy0 + 4.4, cz0), new THREE.Vector3(mx + MASADA.r - 4, TOP + 3, mz + 2)]), new THREE.LineBasicMaterial({ color: 0x3a3a3a })); grp.add(cable);
@@ -142,12 +146,12 @@ AV.registerWorld({
       ctx.sign('MASADA', mx, TOP + 4.4, mz + 4, Math.PI, 4.2, '#ffd84a', { posts: true }) }
     walk.pad(MASADA.x, MASADA.z, MASADA.r - .5, TOP);
     /* the cliffs: a ring of colliders at the foot, open only where the Roman ramp climbs (west) */
-    for (let k = 0; k < 72; k++) { const a = k / 72 * TAU; if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .2) continue; ctx.circles.push([MASADA.x + Math.cos(a) * (MASADA.r + 5), MASADA.z + Math.sin(a) * (MASADA.r + 5), 1.9]) }
+    for (let k = 0; k < 96; k++) { const a = k / 96 * TAU; if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .2) continue; ctx.circles.push([MASADA.x + Math.cos(a) * (MASADA.r + 12.5), MASADA.z + Math.sin(a) * (MASADA.r + 12.5), 1.9]) }
     const UPPER = [MASADA.x + 12, MASADA.z - 8];   // where the cable car lets you off on the summit
 
     /* ---------- Qumran cave ---------- */
     { const cx0 = CAVES.x, cz0 = CAVES.z, cy0 = H(cx0, cz0);
-      for (let k = 0; k < 5; k++) B.rock.add(rockM, BG.ico, 0xb4906a, M(cx0 - 4 + k * 4 - 8, cy0 + 6 + k, cz0 - 9 - k * 2, 9, 9 + k, 8, rng(), rng() * 3, rng()));
+      for (let k = 0; k < 5; k++) B.rock.add(rockM, BG.dod, 0xb4906a, M(cx0 - 4 + k * 4 - 8, cy0 + 6 + k, cz0 - 9 - k * 2, 9, 9 + k, 8, rng(), rng() * 3, rng()));
       box(B.rock, rockM, 0xa58460, cx0 - 6, cx0 + 6, cy0 - 1, cy0 + 6, cz0 - 7, cz0 - 2); solid(cx0 - 6, cx0 + 6, cz0 - 7, cz0 - 2);
       box(B.rock, MT.v, 0x2a2016, cx0 - 2.6, cx0 + 2.6, cy0, cy0 + 3.4, cz0 - 1.98, cz0 - 1.94);   // the dark cave mouth
       for (let k = 0; k < 3; k++) { B.decor.add(MT.v, A.geo('cyl'), 0xa87a4a, M(cx0 + 3.5 + k * .8, cy0 + .45, cz0 - .8, .22, .9, .22)); B.decor.add(MT.v, BG.sph, 0x8a6030, M(cx0 + 3.5 + k * .8, cy0 + .95, cz0 - .8, .24, .14, .24)) }   // clay jars
@@ -219,10 +223,10 @@ AV.registerWorld({
 
     /* ======================= people ======================= */
     const crew = {};
-    const spawn = (id, role, seed, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
+    const spawn = (id, role, seed, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed, q < 2 ? { lod: true } : null), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
     spawn('noa', 'soldier', 71, POST.x - 1, POST.z + 5, 0);
     spawn('salem', 'bedouin', 82, CAMP.x + 1, CAMP.z - 4.5, Math.PI);
-    spawn('amir', 'guide', 93, MASADA.x + MASADA.r + 14, MASADA.z + 6, -Math.PI / 2);
+    spawn('amir', 'guide', 93, MASADA.x + MASADA.r + 22, MASADA.z + 8, -Math.PI / 2);
     const tomer = spawn('tomer', 'student', 104, CAVES.x - 2, CAVES.z + 2.4, 0, n => { if (S.jd.hikerFound) { if (!n.stood) { n.stood = true; n.g.position.y = SURF(n.g.position.x, n.g.position.z) } return } const u = n.g.userData; u.lL.rotation.x = u.lR.rotation.x = -1.45; n.g.position.y = SURF(n.g.position.x, n.g.position.z) - .33 });
     /* soft-body residents (priority order: Low gets the first few) */
     const HOT = [['soldier', POST.x + 5, POST.z + 7, 'idle', Math.PI], ['pilgrim', KIOSK.x - 7, KIOSK.z + 6, 'wander', 0], ['bedouin', CAMP.x - 4, CAMP.z + 5, 'idle', 0], ['business', SHORE - 9, -18, 'idle', Math.PI / 2],
@@ -251,9 +255,9 @@ AV.registerWorld({
     T(OASIS.x + 10, OASIS.z + 10, 2.4, () => tr('Ein Gedi spring: fill a water bottle (free)', 'Manantial de Ein Gedi: llenar una botella (gratis)'), () => { if (S.jd.springDay === S.day) return AV.toast(tr('The ranger smiles: one bottle a day from the spring, please.', 'El guarda sonríe: una botella al día del manantial, por favor.')); S.jd.springDay = S.day; give('water'); AV.toast(tr('Cold spring water from the cliff. → backpack (I)', 'Agua fría del manantial. → mochila (I)')) });
     for (const tz of [2, 8]) T(SHORE - 10, tz, 2, () => tr('Dead Sea mud bath', 'Baño de barro del Mar Muerto'), () => { if (!S.jd.mud) { S.jd.mud = true; AV.vitals && AV.vitals.add(0, 8) } AV.toast(tr('You smear the black mineral mud over your arms. Your skin feels ten years younger and you look like a very relaxed statue.', 'Te untas el barro negro por los brazos. La piel se siente diez años más joven y pareces una estatua muy relajada.')) });
     T(SHORE + 2, 20, 4, () => tr('Wade in and float in the Dead Sea', 'Entrar y flotar en el Mar Muerto'), () => { const P = AV.P; P.x = SHORE + WADE + 6; P.y = SURF(P.x, P.z); P.vx = P.vz = P.vy = 0; AV.toast(tr('You lie back and the water holds you like a hammock. Don’t splash your eyes!', 'Te tumbas y el agua te sostiene como una hamaca. ¡Que no te salpique a los ojos!')); AV.vitals && AV.vitals.add(0, 6); AV.dlg && AV.dlg.event('dead_sea_float') });
-    T(MASADA.x + MASADA.r + 12, MASADA.z + 6, 3, () => tr('Cable car up Masada (10)', 'Teleférico a Masada (10)'), () => { if (!AV.txn(-10, 'Cable car')) return; AV.audio && AV.audio.blip(392, .4, 'sine', .1); AV.fadeTo(1, 400);
+    T(MASADA.x + MASADA.r + 19, MASADA.z + 6.4, 3, () => tr('Cable car up Masada (10)', 'Teleférico a Masada (10)'), () => { if (!AV.txn(-10, 'Cable car')) return; AV.audio && AV.audio.blip(392, .4, 'sine', .1); AV.fadeTo(1, 400);
       setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, UPPER[0], UPPER[1]); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || TOP; P.vx = P.vz = 0; P.yaw = Math.PI / 2; S.time += 8; AV.fadeTo(0, 600); AV.toast(tr('The cabin sways up the cliff. Herod’s terraces open up below you.', 'La cabina se balancea por el acantilado. Las terrazas de Herodes se abren a tus pies.')) }, 900) });
-    T(UPPER[0], UPPER[1], 2.6, () => tr('Cable car down (free)', 'Teleférico de bajada (gratis)'), () => { AV.fadeTo(1, 400); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, MASADA.x + MASADA.r + 15, MASADA.z + 2); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; AV.fadeTo(0, 600) }, 500) });
+    T(UPPER[0], UPPER[1], 2.6, () => tr('Cable car down (free)', 'Teleférico de bajada (gratis)'), () => { AV.fadeTo(1, 400); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, MASADA.x + MASADA.r + 23, MASADA.z + 6); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; AV.fadeTo(0, 600) }, 500) });
     T(MASADA.x, MASADA.z - 4, 6, () => tr('Look out over the Dead Sea', 'Mirar el Mar Muerto'), () => { AV.P.yaw = -Math.PI / 2; AV.P.pitch = -.18; AV.vitals && AV.vitals.add(0, 10); AV.toast(tr('The sea gleams far below: blue salt, white shore, the hills of Moab in the haze.', 'El mar brilla muy abajo: sal azul, orilla blanca y los montes de Moab en la bruma.')) });
     T(CAMP.x + 10, CAMP.z - 8, 2.6, () => tr('Ride the camel (15)', 'Montar en camello (15)'), () => { if (!AV.txn(-15, 'Camel ride')) return; AV.fadeTo(1, 500); setTimeout(() => { S.time += 15; AV.fadeTo(0, 700); AV.vitals && AV.vitals.add(0, 8); AV.toast(tr('She stands up rear legs first — you lean back and hold on. The desert rolls by at camel speed, its own kind of perfect.', 'Se levanta primero con las patas traseras: te echas hacia atrás y te agarras. El desierto pasa a velocidad de camello, su propia clase de perfección.')) }, 600) });
     T(CAMP.x + 1, CAMP.z - 5.6, 2.4, () => tr('Salem’s fire: a glass of sage tea (free)', 'El fuego de Salem: un vaso de té de salvia (gratis)'), () => { give('sage_tea'); AV.toast(tr('Salem pours it from high up, the proper way. Sweet, hot, smelling of desert sage. → backpack (I)', 'Salem lo sirve desde lo alto, como debe ser. Dulce, caliente y con olor a salvia. → mochila (I)')) });
@@ -283,9 +287,9 @@ AV.registerWorld({
     return {
       name: 'Judean Desert · Dead Sea', fog: [90, 440], sky: SKY, glowScale: md === 'night' ? 1.4 : 1,
       surface: (x, z) => (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) ? null : SURF(x, z),
-      arrivals: { default: { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 }, bus: { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 }, pipe: { x: BUS.x - 4, z: BUS.z + 7, yaw: Math.PI / 2 }, ape_gate: { x: PORTAL.x - 3, z: PORTAL.z, yaw: Math.PI / 2 }, judean_desert: { x: PORTAL.x - 3, z: PORTAL.z, yaw: Math.PI / 2 }, here: here || { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 } }, defaultArrival: 'default',
+      arrivals: { default: { x: BUS.x - 2, z: BUS.z + 4, yaw: -Math.PI / 2 }, bus: { x: BUS.x - 2, z: BUS.z + 4, yaw: -Math.PI / 2 }, pipe: { x: BUS.x - 2, z: BUS.z + 7, yaw: -Math.PI / 2 }, ape_gate: { x: PORTAL.x - 5, z: PORTAL.z - 5, yaw: -Math.PI / 2 }, judean_desert: { x: PORTAL.x - 5, z: PORTAL.z - 5, yaw: -Math.PI / 2 }, here: here || { x: BUS.x - 2, z: BUS.z + 4, yaw: -Math.PI / 2 } }, defaultArrival: 'default',
       places: [{ id: 'beach', name: ['Dead Sea beach', 'Playa del Mar Muerto'], x: KIOSK.x - 7, z: KIOSK.z + 6, yaw: -Math.PI / 2 }, { id: 'oasis', name: ['Ein Gedi oasis', 'Oasis de Ein Gedi'], x: OASIS.x + 12, z: OASIS.z + 12, yaw: Math.PI / 2 },
-        { id: 'masada', name: ['Masada (cable car)', 'Masada (teleférico)'], x: MASADA.x + MASADA.r + 16, z: MASADA.z + 6, yaw: Math.PI / 2 }, { id: 'caves', name: ['Qumran cave', 'Cueva de Qumrán'], x: CAVES.x + 2, z: CAVES.z + 8, yaw: 0 },
+        { id: 'masada', name: ['Masada (cable car)', 'Masada (teleférico)'], x: MASADA.x + MASADA.r + 24, z: MASADA.z + 6, yaw: Math.PI / 2 }, { id: 'caves', name: ['Qumran cave', 'Cueva de Qumrán'], x: CAVES.x + 2, z: CAVES.z + 8, yaw: 0 },
         { id: 'camp', name: ['Bedouin camp', 'Campamento beduino'], x: CAMP.x + 4, z: CAMP.z - 12, yaw: Math.PI }, { id: 'post', name: ['Patrol outpost', 'Puesto de patrulla'], x: POST.x + 2, z: POST.z + 9, yaw: Math.PI }],
       chatLines: [['The sea is so salty that sinking is basically impossible. Flailing, however, is very possible.', 'El mar es tan salado que hundirse es casi imposible. Patalear, en cambio, es muy posible.'], ['Masada at sunrise. Bring a torch and a thermos.', 'Masada al amanecer. Linterna y termo.'], ['Drink before you are thirsty. Sergeant’s orders.', 'Bebe antes de tener sed. Órdenes de la sargento.'], ['The ibex at Ein Gedi will steal your lunch. They have practice.', 'Los íbices de Ein Gedi te robarán el almuerzo. Tienen práctica.']],
       musicProfile: { bpm: 76, root: 41, scale: [0, 1, 4, 5, 7, 8, 11], style: 'maqam', sparse: true }

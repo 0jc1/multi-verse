@@ -34,7 +34,7 @@ window.APE_T = (() => {
     const cr = ['dalia', 'yossi', 'karim', 'miriam', 'elias'].map(id => AV.W.T.find(t => t.npc && t.npc.id === id)).filter(Boolean);
     c('named characters spawned (Dalia, Yossi, Karim, Miriam, Elias)', cr.length === 5, cr.map(n => n.npc.id).join(','));
     let n = 0; AV.W.group.traverse(o => { if (o.isMesh && o.visible) n++ }); c('world built + visible meshes', n > 80, n + ' meshes');
-    c('arrived near Jaffa Gate', Math.hypot(AV.P.x - (-76), AV.P.z - 8) < 10, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1));
+    c('arrived beside the Jerusalem portal (west of Jaffa Gate)', Math.hypot(AV.P.x - (-80), AV.P.z - 42) < 6, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1));
   }, { shot: 'jlm_arrival' });
 
   step('Jerusalem world content', async c => {
@@ -108,7 +108,8 @@ window.APE_T = (() => {
       c('target: ' + re.source, !!AV.W.T.find(t => re.test(lab(t))));
     c('Masada plateau is high', AV.W.surface(34, 82) > 20, (AV.W.surface(34, 82) || 0).toFixed(1));
     c('Roman ramp climbs (half way up)', AV.W.surface(1, 80) > 12, (AV.W.surface(1, 80) || 0).toFixed(1));
-    c('Masada cliffs block walking up the side', !AV.isFree(AV.W, 34, 82 + 31, .4));
+    c('Masada cliffs block walking up the side', !AV.isFree(AV.W, 34, 82 + 38.5, .4));
+    c('the Roman ramp gap is open', AV.isFree(AV.W, 34 - 38.5, 81, .4));
     c('mud bath target exists', !!AV.W.T.find(t => /mud bath/.test(lab(t))));
   });
 

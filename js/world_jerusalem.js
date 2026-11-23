@@ -83,8 +83,8 @@ const navDist = (x, z) => { let d = 1e9; for (const pl of NAVL) for (let i = 1; 
 const TX = {};
 function canvasTex(w, h, draw, rep) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.wrapS = t.wrapT = rep ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.userData = { keep: true }; return t }
 /* Jerusalem limestone ashlar (warm cream blocks) */
-function stoneTex() { return TX.stone || (TX.stone = canvasTex(256, 256, (c, w, h) => { const r = AV.rng(21); c.fillStyle = '#d8ccb0'; c.fillRect(0, 0, w, h);
-  for (let y = 0; y < h; y += 32) for (let x = -(y / 32 % 2) * 24; x < w; x += 48) { const v = r() * 26 | 0; c.fillStyle = 'rgb(' + (225 + v) + ',' + (214 + v) + ',' + (188 + v * .8 | 0) + ')'; c.fillRect(x + 1.5, y + 1.5, 45, 29) }
+function stoneTex() { return TX.stone || (TX.stone = canvasTex(256, 256, (c, w, h) => { const r = AV.rng(21); c.fillStyle = '#c8ad7c'; c.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 32) for (let x = -(y / 32 % 2) * 24; x < w; x += 48) { const v = r() * 24 | 0; c.fillStyle = 'rgb(' + (226 + v) + ',' + (200 + v) + ',' + (152 + v * .8 | 0) + ')'; c.fillRect(x + 1.5, y + 1.5, 45, 29) }
   for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(120,100,70,' + (r() * .12).toFixed(2) + ')'; c.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3) }
   for (let i = 0; i < 14; i++) { c.fillStyle = 'rgba(150,120,70,' + (.08 + r() * .12).toFixed(2) + ')'; c.beginPath(); c.arc(r() * w, r() * h, 8 + r() * 30, 0, TAU); c.fill() } }, true)) }
 function groundTex(N) {
@@ -355,6 +355,7 @@ AV.registerWorld({
     };
 
     /* ---------- houses: Jerusalem stone, flat roofs or small domes, arched windows (glow at night) ---------- */
+    const ARCH = new THREE.CylinderGeometry(.45, .45, .08, 6, 1, false, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2);   // half-disc window head
     const house = (b, x, z, w, d, h, col, domed) => {
       const x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2; if (!rectFree(x0, x1, z0, z1)) return false;
       const yy = Math.min(H(x0, z0), H(x1, z0), H(x0, z1), H(x1, z1)) - .6, top = Math.max(H(x0, z0), H(x1, z0), H(x0, z1), H(x1, z1)) + h;
@@ -362,11 +363,11 @@ AV.registerWorld({
       if (domed) domeOn(b, x, z, Math.min(w, d) * .36, 0xe8dcc0, top); else { box(b, jer, col, x0 - .2, x1 + .2, top, top + .35, z0 - .2, z1 + .2); if (rng() < .5) { b.add(MT.v, A.geo('cyl'), 0x2a2a2a, M(x + w * .25, top + .9, z, .45, 1.1, .45)); b.add(MT.shiny, BG.box, 0x2a3a5a, M(x - w * .2, top + .7, z, 1.6, .06, 1.1, -.6, 0, 0)) } }
       const floors = Math.max(1, Math.round((top - yy - .6) / 3.2)), nW = Math.max(1, Math.floor(w / 2.8));
       for (let f = 0; f < floors; f++) for (let i = 0; i < nW; i++) for (const sd of [-1, 1]) { const wx = x0 + (i + .5) * w / nW, wz = sd > 0 ? z1 + .04 : z0 - .04, wy = yy + 1.9 + f * 3.2;
-        if (wy + 1.4 > top) continue; b.add(MT.v, BG.box, 0x2a2218, M(wx, wy, wz, .9, 1.3, .08)); b.add(MT.v, A.geo('arc'), 0x2a2218, M(wx, wy + .65, wz, .45, .45, .45), 0);
+        if (wy + 1.4 > top) continue; b.add(MT.v, BG.box, 0x2a2218, M(wx, wy, wz, .9, 1.3, .08)); b.add(MT.v, ARCH, 0x2a2218, M(wx, wy + .65, wz), 0);
         if (rng() < .45) NIGHT.add(MT.v, BG.box, 0xffd890, M(wx, wy, wz + sd * .03, .8, 1.15, .04), 1) }
       return true;
     };
-    const COLS = [0xe8dfc8, 0xefe6d0, 0xdfd2b4, 0xe6d8bc, 0xf2e8d4];
+    const COLS = [0xffffff, 0xfff6e8, 0xf4e8d4, 0xfaf0e0, 0xfffaf0];
     /* Old City fabric: a jittered grid inside the walls; streets appear where roads, lanes and landmarks keep it clear */
     for (let gx = OC.x0 + WALL + 5; gx < OC.x1 - WALL - 4; gx += 8.5) for (let gz = OC.z0 + WALL + 5; gz < OC.z1 - WALL - 4; gz += 8.5) {
       const w = 5.6 + rng() * 2.4, d = 5.6 + rng() * 2.4, x = gx + (rng() - .5) * 1.2, z = gz + (rng() - .5) * 1.2;
@@ -396,7 +397,7 @@ AV.registerWorld({
 
     /* ======================= people ======================= */
     const crew = {};
-    const spawn = (id, role, seed, anim) => { const [x, z, yaw] = NPC[id], n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
+    const spawn = (id, role, seed, anim) => { const [x, z, yaw] = NPC[id], n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed, q < 2 ? { lod: true } : null), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
     spawn('dalia', 'guide', 11); spawn('yossi', 'business', 22, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -1.9 + Math.sin(t * 3) * .06 });
     spawn('karim', 'vendor', 33, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
     spawn('miriam', 'businesswoman', 44); spawn('elias', 'elder', 55);
@@ -456,7 +457,7 @@ AV.registerWorld({
       name: 'Jerusalem · City of Gold', fog: [90, 430], sky: SKY, noStoners: true,
       noSmoke: (x, z) => inRect(OC, x, z, 4) || Math.hypot(x - OLIV.x, z - OLIV.z) < 50 || Math.hypot(x - ZIONM.x, z - ZIONM.z) < 20,
       surface: (x, z) => (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) ? null : SURF(x, z),
-      arrivals: { default: { x: OC.x0 - 7, z: 8, yaw: -Math.PI / 2 }, pipe: { x: OC.x0 - 7, z: 12, yaw: -Math.PI / 2 }, ape_gate: { x: PORTAL.x - 3, z: PORTAL.z, yaw: -Math.PI / 2 }, jerusalem: { x: PORTAL.x - 3, z: PORTAL.z, yaw: -Math.PI / 2 }, bus: { x: BUSSTOP.x + 2, z: BUSSTOP.z + 3, yaw: 0 } }, defaultArrival: 'default',
+      arrivals: { default: { x: OC.x0 - 7, z: 8, yaw: -Math.PI / 2 }, pipe: { x: OC.x0 - 7, z: 12, yaw: -Math.PI / 2 }, ape_gate: { x: PORTAL.x + 4, z: PORTAL.z + 4, yaw: Math.atan2(-(OC.x0 - PORTAL.x - 4), -(8 - PORTAL.z - 4)) }, jerusalem: { x: PORTAL.x + 4, z: PORTAL.z + 4, yaw: Math.atan2(-(OC.x0 - PORTAL.x - 4), -(8 - PORTAL.z - 4)) }, bus: { x: BUSSTOP.x + 2, z: BUSSTOP.z + 3, yaw: 0 } }, defaultArrival: 'default',
       places: [{ id: 'jaffa', name: ['Jaffa Gate', 'Puerta de Jaffa'], x: OC.x0 - 6, z: 8, yaw: -Math.PI / 2 }, { id: 'wall', name: ['Western Wall plaza', 'Plaza del Muro Occidental'], x: 22, z: -34, yaw: 0 },
         { id: 'dome', name: ['Temple Mount · Dome of the Rock', 'Explanada · Cúpula de la Roca'], x: DOME.x, z: DOME.z + DOME.R + 9, yaw: 0 }, { id: 'sepulchre', name: ['Holy Sepulchre', 'Santo Sepulcro'], x: -42, z: -35, yaw: 0 },
         { id: 'souk', name: ['Old City souk', 'Zoco de la Ciudad Vieja'], x: -14, z: -60, yaw: Math.PI }, { id: 'damascus', name: ['Damascus Gate', 'Puerta de Damasco'], x: -14, z: OC.z0 - 6, yaw: Math.PI },

@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
 await new Promise(r => server.listen(port, r));
 
 /* ---------- find Chrome ---------- */
-const candidates = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', '/Applications/Chromium.app/Contents/MacOS/Chromium'];
+const candidates = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser', '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge', '/Applications/Chromium.app/Contents/MacOS/Chromium', ...(process.env.CHROME ? [process.env.CHROME] : []), path.join(process.env.ProgramFiles || 'C:/Program Files', 'Google/Chrome/Application/chrome.exe'), path.join(process.env['ProgramFiles(x86)'] || 'C:/Program Files (x86)', 'Google/Chrome/Application/chrome.exe'), path.join(process.env.LOCALAPPDATA || '', 'Google/Chrome/Application/chrome.exe'), path.join(process.env['ProgramFiles(x86)'] || 'C:/Program Files (x86)', 'Microsoft/Edge/Application/msedge.exe'), '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];   /* + Windows and Linux */
 const browserPath = candidates.find(c => fs.existsSync(c));
 if (!browserPath) { console.error('Chrome not found'); process.exit(1) }
 const prof = path.join(os.tmpdir(), 'apeverse_prof_' + crypto.randomUUID().replaceAll('-', ''));

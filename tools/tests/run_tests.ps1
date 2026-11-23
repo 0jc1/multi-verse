@@ -5,7 +5,7 @@
   Usage: powershell -ExecutionPolicy Bypass -File tools\tests\run_tests.ps1 [-Out <folder>] [-Only <regex>] [-Mobile] [-Headed]
   Results: <Out>\results.json, <Out>\results.md, <Out>\*.png
 #>
-param([string]$Out = "$env:TEMP\apeverse_tests", [string]$Only = '', [switch]$Mobile, [switch]$Headed, [int]$Port = 8731, [int]$W = 1280, [int]$H = 720, [string]$Suite = '', [string]$GameRoot = '', [switch]$FileMode)
+param([string]$Out = "$env:TEMP\apeverse_tests", [string]$Only = '', [switch]$Mobile, [switch]$Headed, [int]$Port = 8731, [int]$W = 1280, [int]$H = 720, [string]$Suite = '', [string]$GameRoot = '', [switch]$FileMode, [int]$StepTimeout = 180)
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 New-Item -ItemType Directory -Force $Out | Out-Null
@@ -59,7 +59,7 @@ try {
   for ($i = 0; $i -lt $names.Count; $i++) {
     if ($Only -and $names[$i] -notmatch $Only -and $names[$i] -notmatch '^(boot|setup)') { continue }
     Write-Host "== $($names[$i])"
-    try { $r = (Eval-Js "APE_T.exec($i).then(r=>JSON.stringify(r))" 180) | ConvertFrom-Json } catch { $r = [pscustomobject]@{ checks = @([pscustomobject]@{ n = "$($names[$i]): step crashed"; pass = $false; d = "$_" }); shot = $null } }
+    try { $r = (Eval-Js "APE_T.exec($i).then(r=>JSON.stringify(r))" $StepTimeout) | ConvertFrom-Json } catch { $r = [pscustomobject]@{ checks = @([pscustomobject]@{ n = "$($names[$i]): step crashed"; pass = $false; d = "$_" }); shot = $null } }
     foreach ($c in $r.checks) { [void]$results.Add($c); Write-Host ("  " + $(if ($c.pass) { 'PASS' } else { 'FAIL' }) + " $($c.n) $(if ($c.d) { ':: ' + $c.d })") }
     if ($r.shot) { Save-Shot $r.shot }
   }

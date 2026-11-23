@@ -92,7 +92,7 @@ BE.spawn = function (ctx, specs) {
     const mixer = A ? A.mixer : new THREE.AnimationMixer(made.root), acts = A ? A.acts : {}; if (!A) made.clips.forEach(c => acts[c.name] = mixer.clipAction(c));
     if (A && s.mode === 'float') A.air = true;   // zero g: legs dangle instead of planting
     const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10,
-      greet: s.greet || null, lines: s.lines || null, role: s.role || null,
+      greet: s.greet || null, lines: s.lines || null, role: s.role || null, face: s.face || null, gT: 0, waveT: 0,
       headB: made.root.getObjectByName('head') || null, faceY: A ? A.faceY * made.root.scale.y : ((made.S && made.S.head && made.S.head[1]) || .15) * .85, actor: A || null };
     b.play = (n, f) => { if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');
@@ -109,6 +109,12 @@ BE.spawn = function (ctx, specs) {
       if (b.actor) b.actor.root.userData.chatting = locked;   // soft body: snap its gaze onto you during the chat
       if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * (locked ? 9 : 5)); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }
       else if (b.mode === 'dance' || b.mode === 'float' || AV.now() < b.danceUntil) { b.play('Dance', .3); const a = b.acts.Dance; if (a && a.getEffectiveWeight() > .99) a.time = ((((beat + b.off * .25) % 4) + 4) % 4) / 4 * a.getClip().duration; if (b.mode === 'float') b.h.position.y = b.fy + Math.sin(t * .6 + b.off) * .35; if (AV.now() >= b.danceUntil && b.mode === 'wander') b.play('Idle', .3) }
+      else if (b.mode === 'chat') {   /* Cinematic V1: two or three people actually talking - they face each other, take turns, gesture */
+        if (AV.now() > b.gT) { b.gT = AV.now() + 2.5 + Math.random() * 4; if (Math.random() < .4) { b.play('Wave', .3); b.waveT = AV.now() } if (b.actor) b.actor.talk(1.4 + Math.random()) }
+        if (b.cur === 'Wave' && AV.now() - b.waveT > 1.8) b.play('Idle', .4); if (b.cur !== 'Wave') b.play('Idle', .3);
+        if (b.face) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(b.face[0] - b.h.position.x, b.face[1] - b.h.position.z), dt * 3) }
+      else if (b.mode === 'look') {   /* Cinematic V1: looking at something (a painting, a wall, an easel); glances at you when you come close */
+        b.play('Idle', .3); const f = d < 2.6 ? [P.x, P.z] : b.face; if (f) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(f[0] - b.h.position.x, f[1] - b.h.position.z), dt * 2.5) }
       else if (b.mode === 'idle') { b.play('Idle', .3); if (d < 4) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * 2) }
       else {   /* wander */
         if (!b.target) { b.wait -= dt; b.play('Idle', .4); if (b.wait <= 0 && w) { for (let k = 0; k < 8; k++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * b.area.r, x = b.area.x + Math.cos(a) * r, z = b.area.z + Math.sin(a) * r; if (AV.isFree(w, x, z, .7)) { b.target = [x, z]; break } } b.wait = 4 + Math.random() * 8 } }

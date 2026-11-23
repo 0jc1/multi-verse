@@ -114,8 +114,8 @@ M.build = function (ctx, deps) {
   /* ---------- places (minimap, portal pipe, NPC directions) ---------- */
   const places = [{ id: 'm_plaza', name: L('Central Spiral Plaza', 'Plaza Espiral Central'), x: PL.x + 6, z: PL.z - 12, yaw: 0 }, { id: 'm_gate', name: L('South Gate & Spiral Boulevard', 'Puerta Sur y Bulevar Espiral'), x: 0, z: 40, yaw: Math.PI },
     { id: 'm_bazaar', name: L('Intergalactic Bazaar', 'Bazar Intergaláctico'), x: -60, z: 94, yaw: Math.PI / 2 }, { id: 'm_food', name: L('Food Ring & Astro Café', 'Anillo de Comida y Astro Café'), x: 50, z: 94, yaw: -Math.PI / 2 }].concat(SHOPS.map(s => ({ id: 'm_' + s.id, name: s.n, x: s.x, z: 86, yaw: Math.PI })));
-  const d2 = AV.astro9m2 ? AV.astro9m2.build(ctx) : null; const d3 = AV.astro9mega ? AV.astro9mega.build(ctx) : null; const d4 = AV.astro9more ? AV.astro9more.build(ctx) : null; const d5 = AV.astro9neon ? AV.astro9neon.build(ctx) : null; const d6 = AV.astro9market ? AV.astro9market.build(ctx) : null;
-  return { surface: M.surface, places: places.concat(d2 ? d2.places : [], d3 ? d3.places : [], d4 ? d4.places : [], d5 ? d5.places : [], d6 ? d6.places : []) };
+  const d2 = AV.astro9m2 ? AV.astro9m2.build(ctx) : null; const d3 = AV.astro9mega ? AV.astro9mega.build(ctx) : null; const d4 = AV.astro9more ? AV.astro9more.build(ctx) : null; const d5 = AV.astro9neon ? AV.astro9neon.build(ctx) : null; const d6 = AV.astro9market ? AV.astro9market.build(ctx) : null; const d7 = AV.astro9art ? AV.astro9art.build(ctx) : null;
+  return { surface: M.surface, places: places.concat(d2 ? d2.places : [], d3 ? d3.places : [], d4 ? d4.places : [], d5 ? d5.places : [], d6 ? d6.places : [], d7 ? d7.places : []) };
 };
 /* a street musician with the alien synth on the plaza (shared instrument activity, music_play.js) */
 addEventListener('load', () => { if (AV.act && AV.act.PLACES) AV.act.PLACES.astro9 = (AV.act.PLACES.astro9 || []).concat([{ type: 'instspot', kind: 'alien', x: -10, z: 106, name: ['Spiral Plaza buskers', 'músicos de la Plaza Espiral'] }]) });

@@ -191,3 +191,36 @@ Filled in at the end of each milestone. See `## Milestone log`.
     - both Food Ring lanes
     - all 4 plaza mouths and a full loop around the plaza
   - Regressions: `suite_astro9_neon` 37/37, `astro9_mega` 25/25, `astro9_metro` 30/30.
+
+### Milestone 4c: Astro-9 district 2, the arts quarter (`js/astro9_art.js`)
+
+- **Prism Gallery (enterable).**
+  - Textured façade with display windows.
+  - 8 unique framed works, 3 sculptures on plinths, a bench and track lights.
+  - Wall-text and sculpture interactions, plus a print shop (print, zine).
+  - A curator with her own lines.
+- **Mural Alley, the first real side-street shortcut:** Art Avenue → Food Ring.
+  - 6 different large murals (whale, astro ape, ASTRO·9 wildstyle, neon jungle, planet stack, paste-up posters).
+  - An open tag wall: your name is sprayed on and kept in the save.
+  - A spray artist at work with a spray mist.
+  - String lights, pipes, AC units, bins, puddles.
+  - Loft façades on the outer faces, so the block reads as buildings from the plaza and the Food Ring.
+- **Spray Lab:** an art-supply shopfront on the avenue, with a spray can and a zine for sale.
+- **Avenue:**
+  - Paint-splattered terrazzo paving.
+  - 10 gallery-spot lamps with 8 different exhibition banners.
+  - A kinetic ring sculpture.
+  - Chalk drawings on the ground.
+  - An easel with the painter Lyx.
+- **Expressive characters:** new `beings.js` modes.
+  - `chat`: people face each other, take turns talking and gesture.
+  - `look`: people study a painting or wall, and glance at you when you come close.
+  - This replaces static idlers here: 5 / 7 / 9 people on Low / Medium / High.
+- **Fix:** the Art Avenue taxi-stand pole stood in the middle of the avenue at z 136. It now stands at the kerb (`transit.js`).
+- **Tests:** new `suite_astro9_art` 27/27; regressions `astro9_d2` 23/23, `astro9_metro` 30/30, `astro9_mega` 25/25, `astro9_neon` 37/37. It checks:
+  - avenue end to end
+  - the gallery loop and its shop
+  - the alley shortcut into the Food Ring
+  - the Spray Lab, Cinema 9 and Orbit Lounge doors
+  - interactions, people and the tag wall
+- **Plan for the owner's "Living Megacity" brief:** `docs/ASTRO9_CITY_PLAN.md`.

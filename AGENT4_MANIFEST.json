@@ -1,0 +1,80 @@
+{
+  "project": "APEVERSE Agent 4 / Sevilla portable Git commit",
+  "date": "2026-11-23",
+  "source_repository": "https://github.com/0jc1/multi-verse",
+  "inspected_branch": "apeverse-v1-jungle-slice",
+  "inspected_commit": "6cd5576657a9ebdaa52cf0d3fb098864abc9b9e7",
+  "remote_branch_created": false,
+  "remote_commit_created": false,
+  "pr_created": false,
+  "remote_write_blocker": "FORBIDDEN 403: Resource not accessible by integration (GitHub REST git/refs create-reference)",
+  "reference_maps_available": false,
+  "qa": {
+    "syntax": "pass",
+    "static_low_medium_high": "pass",
+    "installer_fixture": "pass",
+    "browser_runner": "not_run",
+    "rendered_screenshots": "not_run",
+    "windows_android": "not_run"
+  },
+  "files": [
+    {
+      "file": "GITHUB_HANDOFF.md",
+      "bytes": 3157,
+      "sha256": "80f1cf9e0896c5f4f797f95a2794ee6356d999f9059d9157453040075795d2c7"
+    },
+    {
+      "file": "README_AGENT4_PATCH.md",
+      "bytes": 6953,
+      "sha256": "0c02afb36e79d5a62106d7630840bfe075c0f41e1c5e2ded4af71def2771086a"
+    },
+    {
+      "file": "data/agent4_worlds.js",
+      "bytes": 2047,
+      "sha256": "36c3627dbbea2cf0a2fba9b0237fabacb5c4e6dfeca7f2ad346e3d2c436bd695"
+    },
+    {
+      "file": "design/agent4_new_cities/AGENT4_MASTER_PROMPT.md",
+      "bytes": 19584,
+      "sha256": "ec4da38a49d8116be0750d2972d8099130921cf50259a788fa289bdf47e1e54d"
+    },
+    {
+      "file": "docs/CODEX_AGENT4_NEW_CITIES_STATUS.md",
+      "bytes": 10465,
+      "sha256": "6bd415a01c4f8786543934c0a57d23ece9e0c04caf2844aca567d87de09e8cc8"
+    },
+    {
+      "file": "js/agent4_seville_plan.js",
+      "bytes": 6386,
+      "sha256": "0e25993ed7c758fb9ae53139d2422c056c9c59812375d3299fa372da84ef8b84"
+    },
+    {
+      "file": "js/world_seville.js",
+      "bytes": 37343,
+      "sha256": "58315802dd54d360a07545c471b9369baeecbf1827e6f0ddd9ad092c9edbc482"
+    },
+    {
+      "file": "tools/apply_agent4_seville.mjs",
+      "bytes": 1856,
+      "sha256": "4b6cd1d465e9919164c49209af5abc824b23b71f2426ebbd1cf09810fe4c8723"
+    },
+    {
+      "file": "tools/tests/agent4_seville_installer.test.cjs",
+      "bytes": 2052,
+      "sha256": "c97f3434e65d82f00c5462c75e44efcab906ded9130d82339d3fb23784ff5ac9"
+    },
+    {
+      "file": "tools/tests/agent4_seville_static.test.cjs",
+      "bytes": 8294,
+      "sha256": "cb95ef368adc8d850fd9370b223b8acb3632027d0b3429a25e9f96d97f8defc5"
+    },
+    {
+      "file": "tools/tests/suite_agent4_seville.js",
+      "bytes": 5795,
+      "sha256": "519cc14c5c839e39cf0e80cd1231cf4ed78e4c0cadaf7c48cba6da55c67fa0de"
+    }
+  ],
+  "latest_checked_target_commit": "6b1376e5893ae2ba48ece1b34923b283e0ce2aa3",
+  "dedicated_branch_requested": "codex/agent4-sevilla-20261123",
+  "local_git_commit": "See AGENT4_DELIVERY.md (generated after commit; to avoid self-referential object hashing)"
+}

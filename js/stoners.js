@@ -195,12 +195,14 @@
     return AV.safeSpot(W, x, z);
   }
   function anchorsFor(W, n, rng) {
-    const out = [[AV.P.x, AV.P.z]];
+    /* V1.1: a world can mark private places (a home, a metro carriage) where no wandering stranger should appear */
+    const priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z)), a0 = W.arrivals && (W.arrivals[W.defaultArrival] || W.arrivals.default);
+    const out = [priv(AV.P.x, AV.P.z) && a0 ? [a0.x, a0.z] : [AV.P.x, AV.P.z]];
     const places = (W.places || []).map(normPlace).filter(p => p && isFinite(p.x) && isFinite(p.z));
     for (let i = places.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const s = places[i]; places[i] = places[j]; places[j] = s }
     for (const p of places) {
       if (out.length >= n) break;
-      if (out.every(a => Math.hypot(a[0] - p.x, a[1] - p.z) > 20)) out.push([p.x, p.z]);
+      if (!priv(p.x, p.z) && out.every(a => Math.hypot(a[0] - p.x, a[1] - p.z) > 20)) out.push([p.x, p.z]);
     }
     for (let i = 0; out.length < n && i < 24; i++) { const a = rng() * TAU, r = 22 + rng() * 45; out.push([AV.P.x + Math.cos(a) * r, AV.P.z + Math.sin(a) * r]) }
     return out.slice(0, n);

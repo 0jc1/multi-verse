@@ -80,6 +80,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 | **Astro-9 metropolis, first district (§5)** | `js/astro9_metro.js`, `suite_astro9_metro.js` 30/30. See the list below. | Cinema 9, Orbit Lounge, Docking Bay rebuild, residential spires, Glassopy Observatory, transit rings, rooftops, upper-level bridges, chunk loading. The architecture is stylised (lathe towers + mosaic), not yet the Da Nang / Chiang Mai detail level. Shop interiors are simple rooms with a counter. |
 | **Pai (§10), rebuilt from the illustrated map** | `js/world_pai.js` + `js/ambience.js`, `suite_pai.js` 46/46. See the list below. | See the list below. |
 | **Astro-9 district 2 (§5)** | `js/astro9_district2.js`, `suite_astro9_d2.js` 23/23. The Art Avenue runs south from the plaza, with 6 living paintings that slowly change. **Cinema 9 hall:** an indoor hall with walls and one door, 5 rows of seats, "take a seat" puts you facing the screen, which plays your films (tags astro + mv); a popcorn counter. **Orbit Lounge:** a space-jazz club with its own procedural jazz (walking bass, swung ride, electric-piano comping; no files). The jazz is heard only near the lounge, and the world music ducks inside. A trio on stage, a cocktail bar, keys to jam. **Glassopy Observatory:** a glass dome; the telescope shows a live sky view that changes daily. Facades with mosaic bands, pillars and glowing arched windows. | **Film playback:** only *loading* was confirmed in the headless test; real playback depends on your video files. The halls are still simple boxes inside. Not built yet: Docking Bay rebuild, residential spires, transit rings. |
+| **Madrid first slice (§9)** | `js/world_madrid.js`, `suite_madrid.js` 45/45. See the list below. | See the list below. |
 | Songkran visuals | | NPCs don't look wet; crowd uses the existing throw pose; no crowd-cheer audio layer; FPS in the crowd not measured. |
 | Photoreal human faces (§34A) | Soft-body characters exist (0jc1) | Heavy; no hero-human pass yet. Needs a real Iris Xe FPS reading first. |
 
@@ -129,6 +130,29 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - A scenic road transition.
 - Swimming.
 
+**Madrid first slice, what works:** two districts from your map, linked by a working Metro ride.
+- **Pinar de Chamartín (mi barrio):**
+  - A brick-block avenue with balconies, plane trees and traffic.
+  - Bar La Esquina (Paco's bar, fictional) with terrace, a panadería (churros), a frutería.
+  - Parque de Pinar: fountain, benches, playground, trees.
+  - The Cuatro Torres skyline and the snowy Sierra de Guadarrama.
+  - A bike-share stand.
+  - The memory home: a fictional flat, no real address. Boris & Lila the dachshunds live there with name tags; you can take them for a walk and they follow you around Pinar. A screen plays Ztonedape videos.
+- **Sol / Gran Vía / Malasaña:**
+  - Puerta del Sol: the clock-tower building, Km 0, the bear-and-strawberry-tree statue, two fountains, lamps, benches, a guitar busker.
+  - Calle de Montera up to Gran Vía: grand facades with wrought-iron balconies, theatre signs, a domed corner building, Cine Gran Vía with a big street screen playing your films, traffic.
+  - Malasaña: Sala Malasaña (walk-in live-music hall with a bar, DJ booth and drum kit), a walk-in taberna with tapas (vegan bravas and pimientos marked), a mural.
+- **Metro:** stations Pinar de Chamartín, Sol and Gran Vía. A 2-credit ride in a carriage with tunnel lights rushing past (E skips).
+- **Sound zones:** traffic, crowds, pigeons at Sol, a Spanish-guitar busker, bar music in Malasaña at night, birds in the park, metro rumble, the dogs.
+- **Private places:** wandering strangers (0jc1's stoners.js) no longer appear in the private flat or the carriage. `noStrangersAt` is a per-world opt-in.
+
+**Madrid, what still looks weak:**
+- Facades are repetitive (one builder, no ornate stonework).
+- Shop interiors outside the venues are only lit glass.
+- The flat is plain box furniture.
+- The sky looks washed out.
+- Not built yet: Retiro, Malasaña plazas, La Latina, Atocha, Madrid Río, Lavapiés, the other metro lines.
+
 **Old first slice (replaced), what worked:**
 - **Walking Street:** a 190 m lane of wooden shophouses, with lanterns and night-market stalls from 17:00.
 - **Places to eat and drink:**
@@ -164,7 +188,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 
 1. **Owner:** play-test basketball, Songkran, the minimap, the DJ mixer, the Astro-9 plaza and Pai on the real laptop and phone. Report the F3 FPS readings.
 2. **Pai:** owner play-test; then texture and interior polish, and a scenic road transition.
-3. **Next:** Madrid first slice (Pinar/Chamartín + metro + Sol); Astro-9 Docking Bay + residential spires.
+3. **Next:** Madrid district 2 (Retiro + La Latina / Lavapiés) or Ibiza 1969 / Koh Tao; Astro-9 Docking Bay + residential spires.
 
 ## Log (2026-11-23)
 
@@ -177,4 +201,5 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Full DJ mixer.
 - Astro-9 district 2 (Art Avenue, Cinema 9 hall, Orbit Lounge, Glassopy Observatory).
 - Pai rebuilt from the illustrated map, with layered ambience (`js/ambience.js`).
+- Madrid first slice (Pinar de Chamartín + Sol / Gran Vía / Malasaña + Metro).
 - Vehicles milestone (earlier, commit `f84ba1b`).

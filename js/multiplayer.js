@@ -28,8 +28,8 @@ function status() {
    falls back to the classic villager only if the soft pipeline is missing */
 function NP_softAvatar(h) {
   const C = AV.chars;
-  if (C.npc) return C.npc(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null);   // chars_real villager = soft body
-  return C.classic.npc(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null);
+  if (C.npc && C.softActor) return C.npc(FURS[h % FURS.length], SHIRTS[(h >>> 4) % SHIRTS.length], null);   // chars_real villager = soft body
+  throw new Error('Remote avatars require the soft-body character pipeline');
 }
 
 /* ---------- remote avatars ---------- */

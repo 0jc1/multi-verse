@@ -11,7 +11,7 @@
      student, elder, guide     everyday locals
    C.regional.actor(role, seed)  -> { look, dress } for AV.beings.spawn specs
    C.regional.body(role, seed)   -> a puppet with the classic pivots for AV.npc.spawn({ body })
-   Instanced street crowd: walker variants 'suit', 'orthodox', 'keff', 'hijab', 'soldier', 'robe', 'nun', 'monk' (C.walkerKit).
+   Street-crowd variants 'suit', 'orthodox', 'keff', 'hijab', 'soldier', 'robe', 'nun', 'monk' map to these soft roles.
    Vehicles: CY.VB.bus (city bus), CY.VB.jeep (desert patrol jeep). */
 'use strict';
 (function (AV) {

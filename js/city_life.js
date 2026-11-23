@@ -12,27 +12,31 @@ const _m = new THREE.Matrix4(), _l = new THREE.Matrix4(), _q = new THREE.Quatern
 const lin = h => new THREE.Color(h).convertSRGBToLinear();
 const hourNow = () => (AV.S.time / 60) % 24;
 
-/* ======================= pedestrians ======================= */
+/* ======================= pedestrians =======================
+   Pedestrians use the same sculpted spring/IK bodies as named NPCs.  The old walkerKit path baked heads, torsos and
+   limbs from spheres/boxes/cylinders into InstancedMeshes; it was cheap, but made the background cast visibly belong
+   to a different game.  Holders below keep the existing street/navigation API while softActor owns the body pose. */
 const PAL = { skin: [0xf0c8a8, 0xe0b088, 0xd8a47a, 0xc8946a, 0xb07a50, 0x8a5a3a, 0x6a4028], hair: [0x14100c, 0x2a1a10, 0x4a2c18, 0x8a4a20, 0xd8b860, 0xb0b0b0, 0x3a2a20],
   shirt: [0xe8603a, 0x3a8ad8, 0xf2e8d8, 0x2a9a6a, 0xd84a8a, 0x2a2a2a, 0xffd84a, 0x7a4ac8, 0xff8a3a, 0x4ac8c8, 0xffffff, 0xc83a3a], pants: [0x3a3a52, 0xc8b088, 0x2a2a2a, 0x6a8ab8, 0x8a5a3a, 0x4a6a3a] };
 CY.crowd = function (ctx, opt) {
-  opt = opt || {}; const lo = K.q() < 2, mat = C.walkerMat(), sets = {}, list = [], rng = ctx.rng, far = opt.far || [55, 80, 110][K.q()];
+  opt = opt || {}; const list = [], rng = ctx.rng, far = opt.far || [55, 80, 110][K.q()];
+  const roleFor = { suit: 'business', orthodox: 'orthodox', keff: 'bedouin', hijab: 'hijabi', soldier: 'soldier', robe: 'pilgrim', nun: 'nun', monk: 'monk' };
   const cr = {
     list,
     add(w) {   // w: {v, x, z, yaw, mode, route, loop, speed, nav, cols, y, idleProb}
       const r = rng; w.v = w.v || 'man'; w.cols = w.cols || { skin: PAL.skin[r() * 7 | 0], hair: w.v === 'monk' ? PAL.skin[2] : PAL.hair[r() * 7 | 0], shirt: w.v === 'monk' ? 0xe8801a : PAL.shirt[r() * 12 | 0], pants: w.v === 'monk' ? 0xe8801a : PAL.pants[r() * 6 | 0] };
-      Object.assign(w, { ph: r() * TAU, sp: w.speed || (.9 + r() * .5), y: w.y || 0, t: 0, pause: 0, ri: 0, vis: true, yaw: w.yaw || 0, mode: w.mode || 'walk', base: w.mode || 'walk', react: 0 }); list.push(w); return w;
+      Object.assign(w, { ph: r() * TAU, sp: w.speed || (.9 + r() * .5), y: w.y || 0, t: 0, pause: 0, ri: 0, vis: true, yaw: w.yaw || 0, mode: w.mode || 'walk', base: w.mode || 'walk', react: 0, seed: ((r() * 0x7fffffff) | 0) + list.length * 97 }); list.push(w); return w;
     },
     build() {
-      const by = {}; list.forEach(w => (by[w.v] = by[w.v] || []).push(w));
-      for (const v in by) {
-        const kit = C.walkerKit(v, lo), ws = by[v], n = ws.length, attrs = {};
-        for (const a of ['iSkin', 'iShirt', 'iPants', 'iHair']) attrs[a] = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3);
-        ws.forEach((w, i) => { const c = w.cols; [['iSkin', c.skin], ['iShirt', c.shirt], ['iPants', c.pants], ['iHair', c.hair]].forEach(([a, h]) => { const cc = lin(h); attrs[a].setXYZ(i, cc.r, cc.g, cc.b) }); w.si = i });
-        const meshes = {};
-        for (const p in kit) { const g = kit[p].geo.clone(); for (const a in attrs) g.setAttribute(a, attrs[a]); const im = new THREE.InstancedMesh(g, mat, n); im.frustumCulled = false; im.castShadow = false; im.receiveShadow = false; /* many small bodies: no shadow pass */ ctx.group.add(im); meshes[p] = { im, pos: kit[p].pos } }
-        sets[v] = { ws, meshes };
-      }
+      if (!C.softActor) throw new Error('city crowd requires chars_soft.js');
+      list.forEach((w, i) => {
+        const regional = C.regional && roleFor[w.v] ? C.regional.actor(roleFor[w.v], w.seed) : null;
+        const look = regional ? regional.look : { skin: w.cols.skin, hair: w.cols.hair, style: w.v === 'monk' ? 'bald' : undefined,
+          shirt: { col: w.cols.shirt, o: /^(monk|nun|robe|keff|hijab)$/.test(w.v) ? { robe: .72 } : undefined }, pants: { col: w.cols.pants }, shadow: false };
+        const made = C.softActor('human', w.seed, { lod: true, shells: 0, shadow: false, look, dress: regional && regional.dress });
+        const h = new THREE.Group(); h.add(made.root); h.position.set(w.x, w.y, w.z); h.rotation.y = w.yaw; ctx.group.add(h);
+        w.h = h; w.actor = made.actor; w.body = made.root; w.si = i;
+      });
       cr.built = true; return cr;
     },
     setVisible(fn) { list.forEach(w => w.vis = fn(w)) }
@@ -53,38 +57,21 @@ CY.crowd = function (ctx, opt) {
     const sp = w.sp * (w.v === 'monk' ? .7 : 1), s = Math.min(d, sp * dt); w.x += dx / d * s + (w.side || 0) * 0; w.z += dz / d * s; w.moving = true;
     let dy = Math.atan2(dx, dz) - w.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); w.yaw += dy * Math.min(1, dt * 6);
   }
-  /* pose -> per-pivot euler [x, y, z], body lift */
-  const P = {}; ['head', 'aL', 'aR', 'lL', 'lR'].forEach(k => P[k] = [0, 0, 0]);
-  function pose(w, t, beat) {
-    for (const k in P) { P[k][0] = 0; P[k][1] = 0; P[k][2] = 0 } let lift = 0, red = AV.S.set.reduce ? .4 : 1;
-    const m = w.react > 0 ? 'react' : w.mode;
-    if (w.moving) { w.ph += .016 * 7.5 * w.sp; const sw = Math.sin(w.ph); P.lL[0] = sw * .55; P.lR[0] = -sw * .55; P.aL[0] = -sw * .4; P.aR[0] = sw * .4; lift = Math.abs(Math.cos(w.ph)) * .035; if (w.v === 'monk') { P.aL[0] = -1.1; P.aR[0] = -1.1 } if (m === 'splash' || w.v === 'splasher') { P.aR[0] = -1.4 } if (w.v === 'drummer') { P.aL[0] = -1.1 + Math.abs(Math.sin(beat * Math.PI)) * .5; P.aR[0] = -1.1 + Math.abs(Math.cos(beat * Math.PI)) * .5 } if (w.v === 'dancer') { P.aL[2] = -1.9 + Math.sin(t * 3 + w.ph) * .4 * red; P.aR[2] = 1.9 + Math.cos(t * 3 + w.ph) * .4 * red } }
-    else if (m === 'sit') { P.lL[0] = P.lR[0] = -1.45; P.aL[0] = P.aR[0] = -.5; lift = -.42; P.head[1] = Math.sin(t * .5 + w.ph) * .3 }
-    else if (m === 'dance') { const ph = (beat + w.ph) * Math.PI; P.aL[2] = -2.3 + Math.sin(ph) * .4 * red; P.aR[2] = 2.3 - Math.sin(ph) * .4 * red; lift = Math.abs(Math.sin(ph)) * .12 * red; P.head[2] = Math.sin(ph) * .15 * red }
-    else if (m === 'talk') { P.aR[0] = -.6 + Math.sin(t * 4 + w.ph) * .3 * red; P.aL[0] = -.2; P.head[0] = Math.sin(t * 7 + w.ph) * .06 * red }
-    else if (m === 'splash') { P.aR[0] = -1.5; P.aL[0] = -1.2; P.aL[2] = .3; lift = Math.abs(Math.sin(t * 3 + w.ph)) * .03 }
-    else if (m === 'drum') { const ph = beat * Math.PI * 2; P.aL[0] = -1.1 + Math.max(0, Math.sin(ph)) * .6; P.aR[0] = -1.1 + Math.max(0, -Math.sin(ph)) * .6 }
-    else if (m === 'react') { P.aL[2] = -2.6; P.aR[2] = 2.6; lift = Math.abs(Math.sin(t * 14)) * .15; w.react -= .016 }
-    else if (m === 'shop') { P.aR[0] = -.9; P.head[0] = .25 }
-    else { P.head[1] = Math.sin(t * .7 + w.ph) * .4; P.aR[0] = Math.sin(t * 1.3 + w.ph) * .05 }
-    return lift;
-  }
   let frameI = 0;
   ctx.upd.push((dt, t) => {
-    if (!cr.built) return; frameI++; const cam = AV.cam.position, on = AV.audio && AV.audio.on && (AV.audio.ok || (AV.audio.track && AV.audio.track.active)), beat = on ? AV.audio.beat : t * 1.8;
-    for (const v in sets) {
-      const S = sets[v], ms = S.meshes;
-      for (const w of S.ws) {
+    if (!cr.built) return; frameI++; const cam = AV.cam.position;
+      for (const w of list) {
         const d = Math.hypot(w.x - cam.x, w.z - cam.z), show = w.vis && d < far;
-        if (!show) { if (w.shown !== false) { for (const p in ms) ms[p].im.setMatrixAt(w.si, ZERO); w.shown = false } if (w.vis) step(w, dt * (frameI % 4 === 0 ? 4 : 0)); continue }
+        w.h.visible = show;
+        if (!show) { w.shown = false; if (w.vis && frameI % 4 === 0) step(w, dt * 4); continue }
         if (d > far * .6 && (frameI + w.si) % 3 !== 0 && w.shown) { step(w, dt); continue }   // distant: animate every 3rd frame
-        w.shown = true; step(w, d > far * .6 ? dt * 3 : dt); if (opt.H) w.y = opt.H(w.x, w.z) + (w.dy || 0); const lift = pose(w, t, beat);
-        _q.setFromAxisAngle(_v.set(0, 1, 0), w.yaw); _m.compose(_v.set(w.x, w.y + lift, w.z), _q, _s);
-        for (const p in ms) { if (p === 'root') { ms[p].im.setMatrixAt(w.si, _m); continue } const e = P[p]; _e.set(e[0], e[1], e[2]); _q.setFromEuler(_e); _l.compose(ms[p].pos, _q, _s); _l.premultiply(_m); ms[p].im.setMatrixAt(w.si, _l) }
+        w.shown = true; step(w, d > far * .6 ? dt * 3 : dt); if (opt.H) w.y = opt.H(w.x, w.z) + (w.dy || 0);
+        w.h.position.set(w.x, w.y + (w.mode === 'sit' ? -.38 : 0), w.z); w.h.rotation.y = w.yaw;
+        const active = w.react > 0 ? 'Wave' : (w.moving ? 'Walk' : (w.mode === 'dance' || w.v === 'dancer' ? 'Dance' : (w.mode === 'talk' || w.mode === 'splash' || w.mode === 'drum' ? 'Wave' : 'Idle')));
+        w.actor.play(active); if (w.react > 0) w.react = Math.max(0, w.react - dt); w.actor.mixer.update(dt);
       }
-      for (const p in ms) ms[p].im.instanceMatrix.needsUpdate = true;
-    }
   });
+  ctx.leave.push(() => list.forEach(w => { if (!w.actor) return; w.actor.mixer.stopAllAction(); w.body.traverse(o => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.dispose() }) }));
   return cr;
 };
 /* street graph: nodes [[x,z]], links [[i,j]] ; near(x,z) -> nearest node */

@@ -15,6 +15,17 @@ Ape Town now follows the illustrated masterplan: La Finca gateway and market lan
 * Villagers expose the classic pivots (`userData.head/aL/aR/lL/lR/torso`) as invisible proxies, so `npc.js` paths, talking gestures and world dance code drive the new bodies unchanged.
 * `node tools/bench_sculpt.js` times the sculpts.
 
+## Regional characters (Jerusalem + Judean Desert)
+* `js/chars_regional.js` builds the regional people on the same soft-body rig as every other human (IK feet, spring jiggle, sculpted garments in `js/anatomy_regional.js`): **businessmen & businesswomen** (tailored jacket, tie/scarf, briefcase, phone), **desert soldiers** (camo uniform, plate vest with pouches, hydration pack, helmet, boots, radio), orthodox walkers (long coat + brimmed hat), market vendors (apron), Bedouin hosts (thobe + keffiyeh with black agal), women in embroidered thobes and hijab, pilgrims (camera, backpack), monks & nuns (habit + hood/veil), students, elders, guides.
+* Instanced street-crowd variants (walk/sit/talk/dance poses from `js/city_life.js`): `suit`, `orthodox`, `keff`, `hijab`, `soldier`, `robe`, `monk`, `nun` — one draw call per body type for any number of people.
+* Props: briefcase, coffee cup, shopping bag, prayer beads, walking staff, chest radio, camera, backpack, apron, canteen. Vehicles: city `bus` and desert patrol `jeep` (instanced, with the traffic system).
+* Procedural Middle-Eastern music style `maqam` (maqam Hijaz scale, maqsum darbuka, oud plucks, drone) — used by both new worlds when no playlist files exist.
+
+## Regional characters (Jerusalem + Judean Desert) — named cast
+* **Jerusalem:** Dalia (Old City guide, tour mission), Yossi (startup founder, lost briefcase), Karim (spice merchant, ka'ak errand), Miriam (Mahane Yehuda baker, hands over the briefcase), Elias (Armenian ceramicist).
+* **Judean Desert:** Sgt. Noa (patrol commander: water run + lost hiker), Salem (Bedouin host: Zahra the camel), Amir (Masada ranger), Tomer (the lost hiker himself).
+* Dialogue in `data/npcs_worlds.js` (EN/ES), quests defined in the world files, rewards paid only through `AV.txn`.
+
 ## Run it
 * **Recommended (Windows):** double-click `start_server.bat`. It uses Python if installed, otherwise the built-in PowerShell server (`tools/serve.ps1`), and opens `http://localhost:8000/index.html`. Close the black window to stop. Cinema screens and paintings play in-world only this way (http).
 * **Easiest:** double-click `index.html` (works from `file://`). Paintings and the cinema play in a pop-up video viewer instead of on the 3D screens.
@@ -34,9 +45,11 @@ Press **P** (or the Pipe button). A holographic list of all 25 registry worlds a
 | World | Status |
 |---|---|
 | Ape Town (hub) | Playable: plaza, lotus stage + Stone Ape Band, Gallery Gardens, outdoor cinema, Zil's Café, Bissap kiosk, eco-lodge, Portal Grove |
+| Jurassic Koh Samui | Playable: Koh Samui-shaped prehistoric island — Dino Valley, Fern Cathedral, Great Lagoon, Nesting Cliffs, River Canyon, Crystal Cave, High Canopy Trail, futuristic Time Gate |
 | Verdalux | Playable (legacy V0.8 jungle moon: Grakk, Drum Log, growing glow-trees; Vela the glow-tree gardener, Old Tuk the gate warden) |
 | Astro-9 · Club Graviton | Playable first slice (low-gravity dance floor, DJ Nix, fictional-points casino with host Lyra, dock master Captain Rook) |
-| Jungle Dub Party Planet | Playable first slice (positional dub sound system, Bongo, bamboo village, river; Auntie Pearl in Roots Village, Riverman Tosh at Lotus Lagoon) |
+| Jungle Dub Party Planet | Playable first slice (positional dub sound system, Bongo, bamboo village, river; Auntie Pearl in Roots Village, Riverman Tosh at Lotus Lagoon) || Jerusalem · City of Gold | Playable: Old City walls, 4 quarters, 7 gates, Temple Mount + Dome of the Rock, Western Wall plaza, Holy Sepulchre, Tower of David, covered souk, Mamilla, Mahane Yehuda, light rail, Mount of Olives; Dalia, Yossi, Karim, Miriam, Elias |
+| Judean Desert · Dead Sea | Playable: salt shore (float!), Ein Gedi oasis, Masada (Roman ramp + cable car), Qumran caves, Bedouin camp, patrol outpost, beach kiosk; Sgt. Noa, Salem, Amir, Tomer |
 | 21 other roadmap worlds | In `data/worlds.json`, shown in the Pipe as Under construction |
 
 ## Data-driven content

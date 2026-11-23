@@ -44,16 +44,24 @@ process.on('exit', () => { try { br.kill() } catch (e) { } try { fs.rmSync(prof,
 
 /* ---------- minimal CDP client (no deps: raw WebSocket handshake) ---------- */
 class CDP {
-  constructor() { this.ws = null; this.id = 0; this.pending = new Map(); this.listeners = [];
-    this._acc = Buffer.alloc(0); this._len = 0; this._head = 0; }
+  constructor() { this.ws = null; this.id = 0; this.pending = new Map(); this.listeners = []; this._acc = Buffer.alloc(0); }
   _buf(chunk) {
+    /* WebSocket frames (the HTTP upgrade response is consumed by the 'upgrade' event) */
     this._acc = Buffer.concat([this._acc, chunk]);
     for (;;) {
-      if (!this._len) { const i = this._acc.indexOf('\r\n\r\n'); if (i < 0) return; const head = this._acc.slice(0, i).toString(); const m = head.match(/content-length: *(\d+)/i); this._len = m ? +m[1] : 0; this._head = i + 4; if (!this._len) { this._acc = this._acc.slice(this._head); continue } }
-      if (this._acc.length < this._head + this._len) return;
-      const payload = this._acc.slice(this._head, this._head + this._len).toString();
-      this._acc = this._acc.slice(this._head + this._len); this._len = 0; this._head = 0;
-      const o = JSON.parse(payload);
+      if (this._acc.length < 2) return;
+      const b0 = this._acc[0], b1 = this._acc[1], op = b0 & 15, masked = !!(b1 & 128);
+      let len = b1 & 127, off = 2;
+      if (len === 126) { if (this._acc.length < 4) return; len = this._acc.readUInt16BE(2); off = 4 }
+      else if (len === 127) { if (this._acc.length < 10) return; len = Number(this._acc.readBigUInt64BE(2)); off = 10 }
+      const mask = masked ? this._acc.slice(off, off + 4) : null; if (masked) off += 4;
+      if (this._acc.length < off + len) return;
+      let payload = this._acc.slice(off, off + len);
+      if (mask) payload = Buffer.from(payload.map((b, i) => b ^ mask[i % 4]));
+      this._acc = this._acc.slice(off + len);
+      if (op === 8) { console.error('websocket closed'); return }
+      if (op !== 1 && op !== 2) continue;   // ping/pong/continuation not used by CDP
+      const o = JSON.parse(payload.toString());
       if (o.id != null && this.pending.has(o.id)) { const { res, rej } = this.pending.get(o.id); this.pending.delete(o.id); o.error ? rej(new Error(o.error.message)) : res(o.result) }
       else this.listeners.forEach(l => l(o));
     }
@@ -106,31 +114,31 @@ const shot = async name => { const r = await cdp.send('Page.captureScreenshot', 
 const errors = [];
 cdp.on(o => { if (o.method === 'Runtime.exceptionThrown') { const d = o.params.exceptionDetails; errors.push((d.text + ' ' + (d.exception && d.exception.description || '')).slice(0, 400)) } });
 
-/* inject suite */
+/* inject suite + run steps INSIDE the browser (the suite returns closures, which can't cross CDP) */
 const suite = fs.readFileSync(suiteFile, 'utf8');
-const runner = evalJs(suite + '\nwindow.__steps = window.APE_T ? window.APE_T.steps || window.APE_T : null; window.APE_T');
-const api = await evalJs('(function(){ const s = window.__steps; if (!s) return null; return s })()', 10);
-if (!api) { console.error('suite did not export APE_T'); process.exit(1) }
+await evalJs(suite, 30);
+const nSteps = await evalJs('window.APE_T.steps.length', 10);
+if (!nSteps) { console.error('suite did not export APE_T.steps'); process.exit(1) }
+const names = await evalJs('window.APE_T.steps.map(s => s.name)', 10);
 
 let pass = 0, fail = 0; const results = [];
-for (const step of api.steps) {
-  if (only && !new RegExp(only).test(step.name)) continue;
-  const checks = [];
-  const c = (name, ok, info) => checks.push({ name, ok: !!ok, info: info == null ? '' : String(info).slice(0, 160) });
+for (let i = 0; i < nSteps; i++) {
+  const name = names[i];
+  if (only && !new RegExp(only).test(name)) continue;
   const started = Date.now();
-  try {
-    await evalJs(`window.__cur = ${JSON.stringify(step.name)}`);
-    const fnBody = step.fn.toString();
-    await evalJs(`(async () => { const c = (n, ok, info) => window.__checks.push({n, ok: !!ok, info: info == null ? '' : String(info).slice(0,160)}); window.__checks = []; const step = ${fnBody}; await step(c); })()`, 600);
-    const got = await evalJs('window.__checks');
-    for (const g of got) checks.push({ name: g.n, ok: g.ok, info: g.info });
-    if (step.shot) await shot(step.shot);
-  } catch (e) { checks.push({ name: 'step completed', ok: false, info: e.message.slice(0, 200) }) }
+  const out = await evalJs(`(async () => {
+    const step = window.APE_T.steps[${i}], checks = [];
+    const c = (n, ok, info) => checks.push({ n, ok: !!ok, info: info == null ? '' : String(info).slice(0, 160) });
+    try { await step.fn(c) } catch (e) { checks.push({ n: 'step completed', ok: false, info: String(e && e.message || e).slice(0, 200) }) }
+    return checks;
+  })()`, 900);
+  const checks = out.map(g => ({ name: g.n, ok: g.ok, info: g.info }));
+  if (i < nSteps) { const shotName = await evalJs(`window.APE_T.steps[${i}].shot || ''`, 5); if (shotName) await shot(shotName) }
   const okAll = checks.every(x => x.ok);
   pass += checks.filter(x => x.ok).length; fail += checks.filter(x => !x.ok).length;
-  results.push({ step: step.name, ms: Date.now() - started, checks });
-  console.log((okAll ? '✔' : '✘') + ' ' + step.name + '  (' + (Date.now() - started) + ' ms)');
-  for (const x of checks) console.log('   ' + (x.ok ? '  ✓ ' : '  ✗ ') + x.name + (x.info && !x.ok ? '  — ' + x.info : x.info && okAll === false && !x.ok ? '' : ''));
+  results.push({ step: name, ms: Date.now() - started, checks });
+  console.log((okAll ? '✔' : '✘') + ' ' + name + '  (' + (Date.now() - started) + ' ms)');
+  for (const x of checks) console.log('   ' + (x.ok ? '✓' : '✗') + ' ' + x.name + (x.info ? '  — ' + x.info : ''));
 }
 console.log('\n' + pass + ' passed, ' + fail + ' failed' + (errors.length ? ', ' + errors.length + ' console errors' : ''));
 if (errors.length) { console.log('console errors:'); errors.slice(0, 12).forEach(e => console.log('  ' + e)) }

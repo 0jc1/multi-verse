@@ -131,6 +131,9 @@ AV.registerWorld({
 
     /* ---------- helpers ---------- */
     const stoneH = (x, z) => { const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) };
+    /* walkable pads for rectangles (a ring of overlapping discs) and ramps that respect the 0.9 m step limit */
+    const padRect = (x0, x1, z0, z1, y) => { const step = 12; for (let x = x0; x <= x1 + .1; x += Math.min(step, (x1 - x0) || 1)) for (let z = z0; z <= z1 + .1; z += Math.min(step, (z1 - z0) || 1)) walk.pad(Math.min(x, x1), Math.min(z, z1), Math.max(7, step * .75), y) };
+    const ramp = (x0, z0, x1, z1, y0, y1, n) => { n = n || Math.max(4, Math.ceil(Math.abs(y1 - y0) / .6)); for (let i = 0; i <= n; i++) { const f = i / n; walk.pad(x0 + (x1 - x0) * f, z0 + (z1 - z0) * f, 2.4, y0 + (y1 - y0) * f) } };
     const domeOn = (b, x, z, r0, col, y, gold2) => { const yy = y != null ? y : stoneH(x, z); b.add(MT.v, A.geo('dome'), col, M(x, yy, z, r0, r0 * 1.05, r0), gold2 ? .3 : .1); b.add(goldMat, A.geo('cyl'), 0xe8c040, M(x, yy + r0 * 1.1, z, r0 * .1, r0 * .28, r0 * .1)) };
     const minaret = (b, x, z, h) => { const yy = stoneH(x, z); b.add(jer, new THREE.CylinderGeometry(1.5, 1.9, h, 10), 0xffffff, M(x, yy + h / 2, z)); b.add(jer, new THREE.CylinderGeometry(2.1, 2.1, 1.6, 10), 0xf2ecdc, M(x, yy + h - 1, z)); b.add(jer, new THREE.ConeGeometry(1.5, 3.4, 10), 0x2a5a3a, M(x, yy + h + 2.6, z)); b.add(goldMat, A.geo('sph'), 0xe8c040, M(x, yy + h + 4.4, z, .3, .3, .3), .5); solid(x - 2, x + 2, z - 2, z + 2) };
     const archRow = (b, x0, x1, z, y, n, col, r0) => { for (let i = 0; i < n; i++) { const x = x0 + (i + .5) * (x1 - x0) / n; b.add(MT.v, new THREE.TorusGeometry(r0 || 1.5, .22, 6, 12, Math.PI), col, M(x, y, z, 1, 1, 1, 0, 0, 0)) } };
@@ -192,7 +195,10 @@ AV.registerWorld({
     { const yy0 = H((TM.x0 + TM.x1) / 2, TM.z1 + 2);
       /* retaining wall + esplanade platform */
       box(B.stone, jer, 0xf2ecdc, TM.x0 - 2, TM.x1 + 2, yy0 - 1, yy0 + 1.6, TM.z1 - 2, TM.z1 + 1); solid(TM.x0 - 2, TM.x1 + 2, TM.z1 - 2, TM.z1 + 1);
-      walk.pad((TM.x0 + TM.x1) / 2, (TM.z0 + TM.z1) / 2, Math.max(TM.x1 - TM.x0, TM.z1 - TM.z0) / 2 + 2, yy0 + 1.8);   // the whole esplanade is one pad
+      padRect(TM.x0, TM.x1, TM.z0, TM.z1, yy0 + 1.8);   // the whole esplanade is walkable
+      ramp(WW.x + 3, TM.z1 + 3.6, WW.x + 3, TM.z1 - 1.2, yy0 + .2, yy0 + 1.8, 8);   // Mughrabi ramp up from the Western Wall plaza
+      box(B.stone, MT.wood, 0x8a6a44, WW.x + 1.6, WW.x + 4.4, yy0 + .2, yy0 + 1.9, TM.z1 - 1.4, TM.z1 + .1);   // the wooden bridge deck
+      ramp(TM.x0 + 8, TM.z1 + 4, TM.x0 + 8, TM.z1 - 2, yy0 + .2, yy0 + 1.8, 8);
       for (let x = TM.x0; x < TM.x1; x += 7) { box(B.stone, jer, 0xe8dfc8, x, x + 5, yy0 + 1.8, yy0 + 2.2, TM.z1 - 1.5, TM.z1 - .5) }   // stair band on the south edge
       /* Dome of the Rock (center of the esplanade) */
       const dx = (TM.x0 + TM.x1) / 2 - 8, dz = (TM.z0 + TM.z1) / 2 + 2, dy = yy0 + 1.8, R = 11;
@@ -219,7 +225,7 @@ AV.registerWorld({
     }
     /* ---------- Western Wall plaza (below the Mount, south) ---------- */
     { const wy0 = H(WW.x, WW.z1 + 4);
-      walk.pad(WW.x, (WW.z0 + WW.z1) / 2 + 2, 9, wy0);      // plaza pad (mechanical wall is solid, no walking into it)
+      padRect(WW.x - 9, WW.x + 8, WW.z0, WW.z1, wy0);      // plaza pad (the wall itself is solid)
       /* the wall itself: 7 courses of giant ashlar with the little notes (papers) tucked between */
       for (let z = WW.z0; z < WW.z1; z += 1.3) { for (let c = 0; c < 8; c++) { const y = wy0 + c * 1.05, inset = c % 2 ? .65 : 0; box(B.stone, jer, 0xd8ccb2, WW.x - 2.2 + inset, WW.x + 2.2 + inset, y, y + 1, z, z + 1.25) } }
       solid(WW.x - 2.6, WW.x + 2.6, WW.z0, WW.z1);
@@ -312,7 +318,7 @@ AV.registerWorld({
           box(B.decor, railM, 0x8a8a90, x - .7, x + .7, y + .02, y + .12, z - 2.6, z + 2.6); box(B.decor, railM, 0x6a7a3a, x - .7, x + .7, y, y + .02, z - 2.6, z + 2.6);
           if (k % 2 === 0) { B.decor.add(MT.v, A.geo('cyl'), 0x5a5a5a, M(x + 3.4, y + 3, z, .09, 6, .09)); ctx.circles.push([x + 3.4, z, .2]) } } }
       const STOPS = [['Mahane Yehuda', SHUK.x1 + 10, JR.z - 2.2], ['City Hall', CITYHALL.x - 12, JR.z - 2.2], ['Jaffa Center', JR.x0 + 40, JR.z - 2.2]];
-      STOPS.forEach(([n, x, z]) => { const y = H(x, z); box(B.decor, MT.shiny, 0x2a4ab8, x, y + 2.4, z, .3, 4.8, 1.6); box(B.night, MT.v, 0x3a6aff, M(x, y + 5.2, z, 1.2, 1.2, .3), 1); ctx.circles.push([x, z, .5]);
+      STOPS.forEach(([n, x, z]) => { const y = H(x, z); box(B.decor, MT.shiny, 0x2a4ab8, x - .15, x + .15, y, y + 4.8, z - .8, z + .8); B.decor.add(MT.v, BG.box, 0x3a6aff, M(x, y + 5.2, z, .3, 1.2, 1.2), 1); ctx.circles.push([x, z, .5]);
         ctx.T.push({ x: x + 1.8, z, r: 2.4, label: () => tr('Light rail: ', 'Tranvía: ') + n + tr(' (3 credits)', ' (3 créditos)'), fn: () => { if (!AV.txn(-3, 'Light rail')) return; AV.audio && AV.audio.blip(660, .2, 'sine', .1); AV.fadeTo(1, 350); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, x + 2.2, z + 1.4); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; S.time += 6; AV.fadeTo(0, 500); AV.toast(tr('“Hashava mehu PendingIntent” — the recorded lady says the doors are closing. You are somewhere else now.', 'La grabación dice que las puertas se cierran. Ahora estás en otra parte.')) }, 900) } }) }) }
     /* ---------- Mount Zion (dormition abbey) ---------- */
     { const zx = ZIONM.x, zz = ZIONM.z, zy = H(zx, zz); box(B.stone, jer, 0xd8ccb2, zx - 12, zx + 12, zy, zy + 12, zz - 12, zz + 12); solid(zx - 12, zx + 12, zz - 12, zz + 12);
@@ -360,7 +366,7 @@ AV.registerWorld({
     const spawn = (id, body, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body: body || C.regional.body(null, 0), H: (px, pz) => stoneH(px, pz), r: 2.6, anim, speed: 1.25 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
     spawn('dalia', C.regional.body('guide', 11), JAFFA[0] + 4, JAFFA[1] + 5, Math.PI / 2);
     spawn('yossi', C.regional.body('business', 22), (MAM.x0 + MAM.x1) / 2, MAM.z0 + 3, 0, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking && Math.hypot(n.g.position.x - (MAM.x0 + MAM.x1) / 2, n.g.position.z - (MAM.z0 + 3)) < .5) { u.aR.rotation.x = -1.9 + Math.sin(t * 3) * .06; if (u.st) u.head.rotation.y = Math.sin(t * .8) * .3 } });
-    spawn('karim', C.regional.body('vendor', 33), 4, -34, 0, (n, dt, t) => { const u = n.g.userData; if (!n.path && !talking) u.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
+    spawn('karim', C.regional.body('vendor', 33), 4, -34, 0, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking) u.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
     spawn('miriam', C.regional.body('businesswoman', 44), (SHUK.x0 + SHUK.x1) / 2 - 2, (SHUK.z0 + SHUK.z1) / 2, Math.PI);
     spawn('elias', C.regional.body('elder', 55), HS.x - 18, HS.z + 14, Math.PI * .8);
     /* --- interactions --- */
@@ -400,17 +406,24 @@ AV.registerWorld({
       p.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { AV.closePanel('cmp'); AV.audio && AV.audio.whoosh(); AV.travel(b.dataset.w, 'jerusalem') }) });
 
     /* --- crowd: instanced walkers on a street graph --- */
-    const nodes = [], edges = [], idx = {}; const addN = (k, x, z) => { idx[k] = nodes.length; nodes.push([x, z]) };
-    const chain = pts => { let prev = null; pts.forEach(([x, z]) => { const id = nodes.length; nodes.push([x, z]); if (prev != null) edges.push([prev, id]); prev = id }); return prev };
-    { const a = chain([[JR.x0 + 6, JR.z + 3], [JR.x0 + 40, JR.z + 3], [JR.x0 + 80, JR.z + 3], [MAM.x0 + 4, JR.z + 3], [MAM.x0 + 30, JR.z + 3], [MAM.x1 + 2, JR.z + 3]]);   // Jaffa Rd south pavement
-      const b = chain([[JR.x0 + 6, JR.z - 3], [JR.x0 + 40, JR.z - 3], [JR.x0 + 80, JR.z - 3], [MAM.x0 + 4, JR.z - 3], [MAM.x0 + 30, JR.z - 3], [MAM.x1 + 2, JR.z - 3]]);  // north pavement
-      edges.push([a, b]);
-      const m = chain([[MAM.x1 + 2, JR.z + 3], [MAM.x0 + 30, 14], [MAM.x0 + 10, 12], [JAFFA[0] + 6, 10]]); edges.push([a + 4, m], [a + 5, idx[Object.keys(idx).find(() => false)] || nodes.length - 1]);
-      const j = chain([[JAFFA[0] + 6, 10], [JAFFA[0] + 8, 2], [JAFFA[0] + 8, -12], [JAFFA[0] + 10, -30], [DAMASCUS[0] - 6, DAMASCUS[1] - 6]]); edges.push([m + 3, j], [a + 5, m + 1]);
-      const k0 = chain([[DAMASCUS[0] - 4, DAMASCUS[1] - 4], [DAMASCUS[0], -40], [DAMASCUS[0] + 2, -30], [4, -32], [2, -40], [WW.x, -44], [WW.x + 3, -38]]); edges.push([j + 4, k0], [b + 5, j]);
-      const t0 = chain([[WW.x + 3, -38], [WW.x + 3, -30], [TM.x1 - 6, -44], [TM.x1 - 6, -58], [LIONS[0] - 6, LIONS[1] - 4]]); edges.push([k0 + 5, t0], [k0 + 3, t0]);
-      const s0 = chain([[LIONS[0] - 6, LIONS[1] - 4], [OC.x1 - 8, 6], [OC.x1 - 10, 30], [-10, OC.z1 - 6], [-40, OC.z1 - 6], [JAFFA[0] + 8, 20]]); edges.push([t0 + 4, s0], [s0 + 5, j + 1]);
-      const sh = chain([[JR.x0 + 60, JR.z - 3], [JR.x0 + 62, JR.z - 8], [SHUK.x0 + 6, SHUK.z0 + 2], [(SHUK.x0 + SHUK.x1) / 2, (SHUK.z0 + SHUK.z1) / 2], [SHUK.x1 - 4, (SHUK.z0 + SHUK.z1) / 2]]); edges.push([b + 2, sh], [sh + 3, sh + 4]);
+    const nodes = [], edges = []; const addN = (x, z) => { nodes.push([x, z]); return nodes.length - 1 };
+    /* a polyline of waypoints -> nodes + edges; returns { first, last, ids } */
+    const chain = pts => { let prev = null; const ids = pts.map(([x, z]) => { const id = addN(x, z); if (prev != null) edges.push([prev, id]); prev = id; return id }); return { first: ids[0], last: ids[ids.length - 1], ids } };
+    { const S1 = chain([[JR.x0 + 6, JR.z + 3], [JR.x0 + 40, JR.z + 3], [JR.x0 + 80, JR.z + 3], [MAM.x0 + 4, JR.z + 3], [MAM.x0 + 30, JR.z + 3], [MAM.x1 + 2, JR.z + 3]]);   // Jaffa Rd, south pavement
+      const N1 = chain([[JR.x0 + 6, JR.z - 3], [JR.x0 + 40, JR.z - 3], [JR.x0 + 80, JR.z - 3], [MAM.x0 + 4, JR.z - 3], [MAM.x0 + 30, JR.z - 3], [MAM.x1 + 2, JR.z - 3]]);  // north pavement
+      edges.push([S1.last, N1.last]);                                                            // link the two pavements at the east end
+      const MM = chain([[MAM.x1 + 2, JR.z + 3], [MAM.x0 + 30, 14], [MAM.x0 + 10, 12], [JAFFA[0] + 6, 10]]);   // Mamilla avenue -> Jaffa Gate plaza
+      edges.push([S1.ids[5], MM.first], [S1.ids[4], MM.ids[1]]);
+      const JG = chain([[JAFFA[0] + 6, 10], [JAFFA[0] + 8, 2], [JAFFA[0] + 8, -12], [JAFFA[0] + 10, -30], [DAMASCUS[0] - 6, DAMASCUS[1] - 6]]);   // west lane up to Damascus Gate
+      edges.push([MM.last, JG.first], [S1.ids[5], MM.ids[1]]);
+      const SOU = chain([[DAMASCUS[0] - 4, DAMASCUS[1] - 4], [DAMASCUS[0], -40], [DAMASCUS[0] + 2, -30], [4, -32], [2, -40], [WW.x, -44], [WW.x + 3, -38]]);   // souk alley chain
+      edges.push([JG.last, SOU.first], [N1.ids[5], JG.first]);
+      const E1 = chain([[WW.x + 3, -38], [WW.x + 3, -30], [TM.x1 - 6, -44], [TM.x1 - 6, -58], [LIONS[0] - 6, LIONS[1] - 4]]);   // Western Wall -> Lions' Gate
+      edges.push([SOU.last, E1.first], [SOU.ids[4], E1.first]);
+      const S2 = chain([[LIONS[0] - 6, LIONS[1] - 4], [OC.x1 - 8, 6], [OC.x1 - 10, 30], [-10, OC.z1 - 6], [-40, OC.z1 - 6], [JAFFA[0] + 8, 20]]);   // east + south lanes back to Jaffa
+      edges.push([E1.last, S2.first], [S2.last, JG.ids[1]]);
+      const SH = chain([[JR.x0 + 60, JR.z - 3], [JR.x0 + 62, JR.z - 8], [SHUK.x0 + 6, SHUK.z0 + 2], [(SHUK.x0 + SHUK.x1) / 2, (SHUK.z0 + SHUK.z1) / 2], [SHUK.x1 - 4, (SHUK.z0 + SHUK.z1) / 2]]);   // off the north pavement into Mahane Yehuda
+      edges.push([N1.ids[2], SH.first], [SH.ids[3], SH.last]);
     }
     const NAV = CY.nav(nodes, edges);
     const crowd = CY.crowd(ctx), nPed = [20, 36, 54][q];
@@ -425,7 +438,7 @@ AV.registerWorld({
     /* rigged characters at the hotspots (V0.9.7 pattern) */
     const roles = ['business', 'businesswoman', 'orthodox', 'vendor', 'student', 'pilgrim', 'hijabi', 'soldier', 'monk', 'nun', 'elder', 'embroidered', 'bedouin'];
     const spots = [[JAFFA[0] + 8, 8, 14], [MAM.x0 + 20, MAM.z0 + 3, 12], [(MAM.x0 + MAM.x1) / 2, MAM.z0 + 3, 10], [4, -30, 12], [-10, -36, 10], [8, -30, 10], [WW.x + 5, -36, 10], [TM.x0 - 2, TM.z1 + 4, 10], [HS.x - 12, HS.z + 14, 10], [HS.x + 16, HS.z + 8, 8], [CITYHALL.x - 10, CITYHALL.z + 4, 12], [(SHUK.x0 + SHUK.x1) / 2 + 6, (SHUK.z0 + SHUK.z1) / 2, 12], [-30, 30, 10]];
-    AV.beings.spawn(ctx, spots.slice(0, AV.beings.n(ctx, 3, 6, 9)).map(([x, z, r], i) => { const role = roles[i % roles.length], a = C.regional.actor(role, 500 + i * 17);
+    AV.beings.spawn(ctx, spots.slice(0, AV.beings.n(ctx, 2, 4, 6)).map(([x, z, r], i) => { const role = roles[i % roles.length], a = C.regional.actor(role, 500 + i * 17);
       return { kind: 'human', x, z, area: { x, z, r }, seed: 500 + i, look: a.look, dress: a.dress, role,
         lines: [tr('The light rail is free with a daily pass. Cheap and slow and perfect.', 'El tranvía es gratis con el pase de un día. Barato, lento y perfecto.'), tr('Best falafel is a matter of religion. And of the queue length.', 'El mejor falafel es cuestión de religión. Y del tamaño de la cola.'), tr('The stones here are golden at seven. Every photographer knows.', 'Las piedras se vuelven doradas a las siete. Todo fotógrafo lo sabe.'), tr('Watch the cats of the Old City. They own everything.', 'Cuidado con los gatos de la Ciudad Vieja. Ellos son los dueños.')][i % 4],
         greet: [tr('Shalom! Nice day for stones.', '¡Shalom! Buen día para piedras.'), tr('Salaam! Welcome to the Old City.', '¡Salam! Bienvenido a la Ciudad Vieja.'), tr('Water, hat, and comfortable shoes — the holy trinity of Jerusalem.', 'Agua, sombrero y zapatos cómodos: la sagrada trinidad de Jerusalén.')][i % 3] } }));
@@ -475,4 +488,10 @@ AV.registerWorld({
     };
   }
 });
+
+/* ---------- world-side helpers used by dialogue (Dalia's checklist) ---------- */
+AV.jlm = AV.jlm || {};
+AV.jlm.SPOTS = [['western_wall', 'Western Wall', 'Muro Occidental'], ['sepulchre', 'Holy Sepulchre', 'Santo Sepulcro'], ['dome', 'Dome of the Rock', 'Cúpula de la Roca'], ['tower', 'Tower of David', 'Torre de David'], ['shuk', 'Mahane Yehuda', 'Mahane Yehuda']];
+AV.jlm.tourList = function () { const S = AV.S || {}, done = (S.jlm && S.jlm.tour) || []; return AV.jlm.SPOTS.map(([id, en, es]) => (done.indexOf(id) >= 0 ? '✔ ' : '○ ') + AV.tr(en, es)).join(' · ') };
+AV.jlm.done = function () { const S = AV.S || {}; return ((S.jlm && S.jlm.tour) || []).length };
 })(window.AV);

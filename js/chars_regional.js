@@ -149,6 +149,56 @@ RG.walkCols = function (v, r) {
 };
 RG.gear = GEAR; RG.headPart = headPart; RG.clothMat = clothMat;
 
+/* ======================= quick-chat content per role (AV.beings: greet + "What's your story?") ======================= */
+const L2 = (en, es) => [en, es];
+const TALK = {
+  business: { names: ['Avi Cohen', 'Rami Haddad', 'Omar Nasser', 'Eitan Ben-Ami', 'Yoav Mizrahi'],
+    greet: [L2('Shalom! Sorry — quick, I have a meeting in five.', '¡Shalom! Perdona, rápido: tengo una reunión en cinco minutos.'), L2('Hi! You look like someone who needs an app.', '¡Hola! Tienes cara de necesitar una app.'), L2('Coffee break. Best ten minutes of my day.', 'Pausa para el café. Los mejores diez minutos de mi día.')],
+    lines: [L2('Half the startups here began in a café on Jaffa Road. The other half in the queue for it.', 'La mitad de las startups de aquí nacieron en un café de la calle Jaffa. La otra mitad, en la cola.'), L2('My office looks at the Old City walls. Very bad for productivity, very good for the soul.', 'Mi oficina da a las murallas. Fatal para la productividad, genial para el alma.'), L2('Investors ask about scale. I tell them about three thousand years of history.', 'Los inversores preguntan por la escala. Yo les hablo de tres mil años de historia.')] },
+  businesswoman: { names: ['Dana Levi', 'Michal Ben-David', 'Talia Shapiro', 'Rana Khoury', 'Noa Peretz'],
+    greet: [L2('Hello! Lovely day for walking between meetings.', '¡Hola! Buen día para caminar entre reuniones.'), L2('Hi there — are you lost? Mamilla is that way.', 'Hola, ¿te has perdido? Mamilla está por allí.')],
+    lines: [L2('I run a design studio near City Hall. We print our posters in three languages.', 'Llevo un estudio de diseño junto al Ayuntamiento. Imprimimos los carteles en tres idiomas.'), L2('Lunch is always hummus. It is not a habit, it is a policy.', 'El almuerzo siempre es hummus. No es costumbre, es política.')] },
+  soldier: { names: ['Cpl. Itai', 'Pvt. Shira', 'Sgt. Yoni', 'Cpl. Maya', 'Pvt. Daniel'],
+    greet: [L2('Hey! Drink water — the sun here is no joke.', '¡Eh! Bebe agua: aquí el sol no es broma.'), L2('Shalom! Heading home for the weekend. My mother is cooking already.', '¡Shalom! Me voy a casa el fin de semana. Mi madre ya está cocinando.'), L2('Need directions? I know every bus line by heart.', '¿Necesitas indicaciones? Me sé todas las líneas de autobús.')],
+    lines: [L2('Desert patrol is mostly rescuing hikers who went out at noon in flip-flops.', 'La patrulla del desierto consiste sobre todo en rescatar excursionistas que salen a mediodía en chanclas.'), L2('Night shift in the desert: a million stars and jackals singing. Best part of the job.', 'Turno de noche en el desierto: un millón de estrellas y chacales cantando. Lo mejor del trabajo.'), L2('Three liters of water a day, minimum. Sergeant’s orders.', 'Tres litros de agua al día, mínimo. Órdenes de la sargento.')] },
+  orthodox: { names: ['Reb Shmuel', 'Mr. Friedman', 'Yaakov', 'Moshe'],
+    greet: [L2('Shalom aleichem! Welcome to Jerusalem.', '¡Shalom aleijem! Bienvenido a Jerusalén.'), L2('Good day to you, traveller.', 'Buen día, viajero.')],
+    lines: [L2('My family has lived in the Jewish Quarter for five generations.', 'Mi familia vive en el Barrio Judío desde hace cinco generaciones.'), L2('On Friday afternoon the whole city slows down and smells of baking bread.', 'El viernes por la tarde toda la ciudad se calma y huele a pan recién horneado.')] },
+  vendor: { names: ['Abu Sami', 'Hassan', 'Moshe the fruit man', 'Yusuf', 'Avraham'],
+    greet: [L2('Ahlan! Come, look — everything fresh today!', '¡Ahlan! Ven, mira: ¡hoy todo está fresco!'), L2('Best price for you, my friend!', '¡El mejor precio para ti, amigo!'), L2('Taste first, buy later!', '¡Primero prueba, luego compra!')],
+    lines: [L2('My grandfather sold spices on this exact corner. The corner is older than him.', 'Mi abuelo vendía especias en esta misma esquina. La esquina es más vieja que él.'), L2('Bargain with a smile and you always win. Even when you lose.', 'Regatea con una sonrisa y siempre ganas. Incluso cuando pierdes.')] },
+  bedouin: { names: ['Abu Musa', 'Suleiman', 'Hamad', 'Eid'],
+    greet: [L2('Ahlan wa sahlan! You are welcome here.', '¡Ahlan wa sahlan! Aquí eres bienvenido.'), L2('Sit, sit. First tea, then talk.', 'Siéntate, siéntate. Primero el té, luego hablamos.')],
+    lines: [L2('Our tents are woven from goat hair. In the sun they shade, in the rain they swell and keep the water out.', 'Nuestras tiendas se tejen con pelo de cabra. Con sol dan sombra; con lluvia se hinchan y no dejan pasar el agua.'), L2('A guest is a gift. Three days of hospitality, no questions asked.', 'El huésped es un regalo. Tres días de hospitalidad sin preguntas.')] },
+  hijabi: { names: ['Layla', 'Amira', 'Fatima', 'Rana', 'Nour'],
+    greet: [L2('Marhaba! Welcome.', '¡Marhaba! Bienvenido.'), L2('Salaam! Are you looking for the market?', '¡Salam! ¿Buscas el mercado?')],
+    lines: [L2('I teach maths at a school near Damascus Gate. The students are louder than the souk.', 'Enseño matemáticas en un colegio junto a la Puerta de Damasco. Los alumnos son más ruidosos que el zoco.'), L2('The best knafeh is in the Old City. I will not tell you which shop — you must find it.', 'El mejor knafeh está en la Ciudad Vieja. No te diré qué tienda: tienes que encontrarla.')] },
+  embroidered: { names: ['Umm Khalil', 'Samira', 'Hanan'],
+    greet: [L2('Welcome, welcome. Grape leaves, fresh from the hills!', 'Bienvenido. ¡Hojas de parra, frescas de las colinas!')],
+    lines: [L2('My mother taught me this embroidery. Every village has its own pattern.', 'Mi madre me enseñó este bordado. Cada pueblo tiene su propio dibujo.'), L2('I come in from the village every morning with herbs and vegetables.', 'Vengo del pueblo cada mañana con hierbas y verduras.')] },
+  pilgrim: { names: ['Pilgrim Maria', 'Tourist Hans', 'Backpacker Lucy', 'Pilgrim José', 'Grandma Ruth', 'Tourist Kenji'],
+    greet: [L2('Isn’t it incredible? I’ve dreamed of coming here for years!', '¿No es increíble? ¡Llevaba años soñando con venir!'), L2('Excuse me, could you take our photo?', 'Perdona, ¿nos haces una foto?')],
+    lines: [L2('I walked the Via Dolorosa this morning. My feet hurt, my heart is full.', 'Esta mañana recorrí la Vía Dolorosa. Me duelen los pies, pero tengo el corazón lleno.'), L2('We floated in the Dead Sea yesterday. My hair is still crunchy.', 'Ayer flotamos en el Mar Muerto. Todavía tengo el pelo crujiente.')] },
+  monk: { names: ['Brother Francis', 'Father Theodoros', 'Brother Matteo'],
+    greet: [L2('Peace be with you.', 'La paz sea contigo.'), L2('Welcome, pilgrim of the multiverse.', 'Bienvenido, peregrino del multiverso.')],
+    lines: [L2('Our order has kept a house in Jerusalem for centuries. The stones remember everyone.', 'Nuestra orden tiene casa en Jerusalén desde hace siglos. Las piedras recuerdan a todos.')] },
+  nun: { names: ['Sister Agnes', 'Sister Marta', 'Sister Hripsime'],
+    greet: [L2('Good day, child. Mind the steps.', 'Buen día, hijo. Cuidado con los escalones.')],
+    lines: [L2('We bake bread for the hostel every morning before the bells.', 'Horneamos pan para el albergue cada mañana antes de las campanas.')] },
+  student: { names: ['Noam', 'Lior', 'Sara', 'Adam', 'Rawan', 'Yuval'],
+    greet: [L2('Hey! Are you on the exchange programme?', '¡Hola! ¿Estás en el programa de intercambio?'), L2('Yo — the falafel on Jaffa Road is the best, trust me.', 'Oye, el falafel de la calle Jaffa es el mejor, créeme.')],
+    lines: [L2('I study archaeology. In this city that just means looking down when you walk.', 'Estudio arqueología. En esta ciudad eso solo significa mirar al suelo al caminar.'), L2('Friday night we go to Mahane Yehuda — the market turns into bars.', 'El viernes por la noche vamos a Mahane Yehuda: el mercado se convierte en bares.')] },
+  elder: { names: ['Abu Khalil', 'Grandpa Yehuda', 'Mr. Petrosyan', 'Old Nikolai'],
+    greet: [L2('Sit, sit. Young people walk too fast.', 'Siéntate. Los jóvenes andáis demasiado deprisa.'), L2('In my day, this street was all donkeys and bicycles.', 'En mis tiempos, esta calle era todo burros y bicicletas.')],
+    lines: [L2('I have played backgammon at this café every afternoon for forty years. I am still winning.', 'Juego al backgammon en este café cada tarde desde hace cuarenta años. Sigo ganando.')] },
+  guide: { names: ['Guide Ruthie', 'Guide Samir', 'Guide Anat'],
+    greet: [L2('Tours! History included, sunscreen not.', '¡Tours! La historia está incluida; el protector solar, no.')],
+    lines: [L2('Water, hat and comfortable shoes — the three essentials of any visit.', 'Agua, sombrero y zapatos cómodos: lo esencial de cualquier visita.')] }
+};
+RG.talk = function (role, seed) { const T = TALK[role] || TALK.student, i = Math.abs(seed | 0); return { name: T.names[i % T.names.length], greet: T.greet, lines: T.lines } };
+/* a ready-to-spawn AV.beings spec for a role */
+RG.being = function (role, x, z, seed, extra) { const a = RG.actor(role, seed), t = RG.talk(role, seed); return Object.assign({ kind: 'human', x, z, seed, role, look: a.look, dress: a.dress, name: t.name, greet: t.greet, lines: t.lines, area: { x, z, r: 8 } }, extra || {}) };
+
 /* ======================= instanced street crowd variants ======================= */
 const KK = C._kit, std = AV.std, W = std(0xffffff, .85), VAR = C.walkerVar;
 if (VAR && KK) {

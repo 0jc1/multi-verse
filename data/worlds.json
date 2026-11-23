@@ -436,23 +436,5 @@
   ],
   "kind": "legacy_v08",
   "art_refs": []
- },
- {
-  "id": "koh_samui_jurassic",
-  "name": "Jurassic Koh Samui",
-  "roadmap_no": 24,
-  "core_identity": "A fantastical ancient Koh Samui: primordial jungle, dinosaur herds, a Time Gate",
-  "music_identity": "Primordial ambient, distant calls, jungle drums",
-  "status": "planned",
-  "landmarks": [
-   "Dino Valley",
-   "Fern Cathedral",
-   "Great Lagoon",
-   "Nesting Cliffs",
-   "River Canyon",
-   "Crystal Cave",
-   "High Canopy Trail",
-   "Time Gate"
-  ]
  }
 ]

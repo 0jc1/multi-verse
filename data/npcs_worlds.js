@@ -207,6 +207,16 @@
     fallback: c => [c.t('Hm. The water doesn’t answer that either. Ask me about the lagoon, the river or the frogs.', 'Mm. El agua tampoco contesta a eso. Pregúntame por la laguna, el río o las ranas.'), c.t('Like a current — I’ll let that one drift by.', 'Como una corriente: dejaré que esa pase de largo.')]
   };
 
+  /* ---------- Jerusalem + Judean Desert helpers (shared topic sets, quest lookups) ---------- */
+  const q = (c, id) => c.q(id), SJ = () => AV.S || {};
+  const common = {
+    oldcity: { id: 'oldcity', kw: ['old city', 'wall', 'gate', 'jaffa', 'damascus', 'lions', 'zion gate', 'dung', 'quarter', 'ciudad vieja', 'muralla', 'puerta', 'barrio'], say: c => [c.t('The Old City has four quarters — Christian, Muslim, Jewish and Armenian — inside walls Suleiman the Magnificent built in the 1500s. Seven open gates: Jaffa Gate in the west is the easiest way in.', 'La Ciudad Vieja tiene cuatro barrios —cristiano, musulmán, judío y armenio— dentro de las murallas que levantó Solimán el Magnífico en el siglo XVI. Siete puertas abiertas: la de Jaffa, al oeste, es la entrada más fácil.')] },
+    holy: { id: 'holy', kw: ['western wall', 'kotel', 'temple mount', 'dome of the rock', 'al aqsa', 'aqsa', 'sepulchre', 'sepulcher', 'church', 'mosque', 'synagogue', 'holy', 'pray', 'muro', 'templo', 'cupula', 'mezquita', 'iglesia', 'sinagoga', 'sagrado', 'rezar'], say: c => [c.t('Three faiths hold this city sacred. The Western Wall, the Dome of the Rock and Al-Aqsa on the platform above it, the Church of the Holy Sepulchre a few alleys away. Dress modestly, speak softly, and no smoking near the holy places.', 'Tres religiones consideran sagrada esta ciudad. El Muro Occidental, la Cúpula de la Roca y Al-Aqsa en la explanada de encima, la Iglesia del Santo Sepulcro a pocas callejuelas. Vístete con decoro, habla bajo y nada de fumar cerca de los lugares sagrados.')] },
+    food: { id: 'food', kw: ['food', 'eat', 'hungry', 'falafel', 'hummus', 'market', 'shuk', 'souk', 'comida', 'comer', 'hambre', 'mercado'], say: c => [c.t('Hummus near the Damascus Gate, falafel on Jaffa Road, rugelach at Mahane Yehuda, ka’ak from the carts. You will not leave hungry. You might not leave at all.', 'Hummus junto a la Puerta de Damasco, falafel en la calle Jaffa, rugelach en Mahane Yehuda, ka’ak de los carritos. No te irás con hambre. Quizá no te vayas nunca.')] },
+    travel: { id: 'travel', kw: ['tram', 'light rail', 'bus', 'desert', 'dead sea', 'masada', 'portal', 'pipe', 'ape town', 'tranvia', 'autobus', 'desierto', 'mar muerto', 'pipa'], say: c => [c.t('The light rail runs along Jaffa Road — stops at City Hall, Jaffa Center and Mahane Yehuda. For the desert, the bus at Damascus Gate drives down to the Dead Sea. And the purple portal by the Jaffa Gate goes home to Ape Town.', 'El tranvía va por la calle Jaffa: paradas en el Ayuntamiento, Jaffa Center y Mahane Yehuda. Para el desierto, el autobús de la Puerta de Damasco baja hasta el Mar Muerto. Y el portal morado junto a la Puerta de Jaffa vuelve a Ape Town.')] }
+  };
+  const withC = (t, keys) => t.concat((keys || Object.keys(common)).map(k => common[k]).filter(ct => !t.some(x => x.id === ct.id)));
+
 /* ======================= DALIA — Old City guide, Jaffa Gate ======================= */
   const dalia = {
     name: 'Dalia', title: ['Old City guide', 'guía de la Ciudad Vieja'], col: '#7aff9a',
@@ -324,6 +334,7 @@
     back: { id: 'back', kw: ['jerusalem', 'bus', 'portal', 'pipe', 'ape town', 'home', 'jerusalen', 'autobus', 'pipa', 'casa'], say: c => [c.t('The bus stop on Route 90 goes back up to Jerusalem. The purple portal by the beach kiosk goes to Ape Town.', 'La parada de la carretera 90 vuelve a Jerusalén. El portal morado junto al quiosco de la playa va a Ape Town.')] }
   };
   const withD = (t, keys) => t.concat((keys || Object.keys(dcommon)).map(k => dcommon[k]).filter(ct => !t.some(x => x.id === ct.id)));
+  const S = () => AV.S || {}, jd = () => (AV.S && AV.S.jd) || {}, jlm = () => (AV.S && AV.S.jlm) || {};
   const noa = {
     name: 'Sgt. Noa', title: ['desert patrol sergeant', 'sargento de la patrulla del desierto'], col: '#e8d08a',
     persona: 'Sergeant Noa, the calm, dry-humoured commander of a small desert patrol outpost in the Judean Desert. Her job is mostly search and rescue for hikers who underestimate the heat. Practical, protective, obsessed with hydration.',

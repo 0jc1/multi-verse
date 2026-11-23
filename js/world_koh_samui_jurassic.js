@@ -91,39 +91,6 @@ const TOR = new THREE.TorusGeometry(1, .07, 8, 26);   // glowing rings (kit has 
 function canvasTex(w, h, draw, rep) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
   t.wrapS = t.wrapT = rep ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.userData = { keep: true }; return t }
-/* painted island ground (beach → jungle → rock → lagoon → canyon), drawn in island space */
-function groundTex(N) {
-  if (TX.g0) return TX.g0;
-  const GW = 760, GD = 700;
-  return TX.g0 = canvasTex(N, Math.round(N * GD / GW), (c, w, h) => {
-    const m = w / GW, P = (x, z) => [(x - CX + GW / 2) * m, (z - CZ + GD / 2) * m], r = AV.rng(44);
-    c.fillStyle = '#1a5a78'; c.fillRect(0, 0, w, h);                       // deep sea
-    /* shallow water ring + beach + jungle + rock bands, following the island outline */
-    for (let py = 0; py < h; py++) for (let step = 0; step < 1; step++) {}  // (per-pixel fill below)
-    const S = 2.2;
-    function shade(hex, k) { const n = parseInt(hex.slice(1), 16), f = v => clamp(Math.round(v * k), 0, 255);
-      return 'rgb(' + f(n >> 16) + ',' + f(n >> 8 & 255) + ',' + f(n & 255) + ')' }
-    for (let py = 0; py < h; py += 1) { const z = py / m + CZ - GD / 2;
-      for (let px = 0; px < w; px += 1) { const x = px / m + CX - GW / 2;
-        const hh = H(x, z); let col;
-        if (hh < -3) col = '#1a5a78'; else if (hh < -.4) col = '#2a86a0'; else if (hh < .6) col = '#e8d8a8';
-        else if (hh < 2.2) col = '#c8b488'; else if (hh < 7) col = '#3a7a3a';
-        else if (hh < 16) col = '#2a6a34'; else if (hh < 30) col = '#3a5a30'; else col = '#5a5648';
-        const lgn = Math.exp(-Math.pow((x - 132) / 58, 2) - Math.pow((z - 40) / 40, 2));
-        if (lgn > .5 && hh < 4) col = hh < -1 ? '#1e6a80' : '#d8c898';
-        const riv = Math.abs(canyonDist(x, z)); if (riv < 9 && hh > 0) col = riv < 5 && hh < 4 ? '#7a6a4a' : '#8a7a5a';
-        if (r() < .04) col = shade(col, .9 + r() * .25);
-        c.fillStyle = col; c.fillRect(px, py, 1.4, 1.4);
-        px += S - 1;
-      }
-    }
-    /* fern speckle on the jungle */
-    c.globalAlpha = .5;
-    for (let i = 0; i < N * 9; i++) { const x = r() * w, y = r() * h;
-      c.fillStyle = r() < .5 ? 'rgba(20,60,30,.5)' : 'rgba(90,140,60,.4)'; c.fillRect(x, y, 2 + r() * 3, 2 + r() * 3) }
-    c.globalAlpha = 1;
-  });
-}
 /* rock/cliff texture (stratified volcanic stone) */
 function cliffTex() {
   return TX.cliff || (TX.cliff = canvasTex(512, 512, (c, w, h) => {
@@ -297,7 +264,7 @@ AV.registerWorld({
   build(ctx) {
     const S = AV.S || (AV.S = {}), q = ctx.q, rng = ctx.rng, grp = ctx.group;
     S.ksj = S.ksj || {};
-    const SKY = { fixed: { bg: 0x9fd8e8, fog: 0xc8e8e0, sun: .85, hs: .5 }, tint: [0xfff0d0, 0xcfefff, .04, .08], dome: { s1: 0x9fd8e8, s2: 0xd8f0e8, swirl: .04, cloud: .65, glow: .35 } };
+    const SKY = { tint: [0xfff0d0, 0xd8f4e8, .06, .1], dome: { s1: 0xdde6ee, s2: 0xa8d8e8, swirl: .02, cloud: .55, glow: .45 } };
     const B = { land: K.batch(), rock: K.batch(), plants: K.batch(), portal: K.batch(), cave: K.batch(), night: K.batch() };
     const occ = [];
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
@@ -312,13 +279,15 @@ AV.registerWorld({
     const tp = tg.attributes.position, col = new Float32Array(tp.count * 3), cc = new THREE.Color();
     for (let i = 0; i < tp.count; i++) { const x = tp.getX(i), z = tp.getZ(i), h = H(x, z); tp.setY(i, h);
       const lgn = Math.exp(-Math.pow((x - LM.lagoon[0]) / 58, 2) - Math.pow((z - LM.lagoon[1]) / 40, 2));
-      let hex; if (h < -.4) hex = 0x2a6a70; else if (h < .7) hex = 0xd8c89a; else if (h < 3) hex = 0x9aa060;
-      else if (h < 10) hex = 0x3a7a3a; else if (h < 22) hex = 0x2f6a34; else hex = 0x4a4a3a;
-      if (lgn > .45 && h < 4) hex = h < -1 ? 0x1e6a80 : 0xb8a878;
-      const riv = Math.abs(canyonDist(x, z)); if (riv < 7 && h > .6 && h < 9) hex = 0x8a7a54;
-      cc.setHex(hex).convertSRGBToLinear(); col[i * 3] = cc.r; col[i * 3 + 1] = cc.g; col[i * 3 + 2] = cc.b; }
+      let hex; if (h < -.4) hex = 0x3a8a88; else if (h < .7) hex = 0xeadcb0; else if (h < 3) hex = 0xb4b870;
+      else if (h < 10) hex = 0x5a9a48; else if (h < 22) hex = 0x4a8a40; else hex = 0x6a6a52;
+      if (lgn > .45 && h < 4) hex = h < -1 ? 0x2a8a98 : 0xd8c898;
+      const riv = Math.abs(canyonDist(x, z)); if (riv < 7 && h > .6 && h < 9) hex = 0xa08a60;
+      /* natural mottling so the jungle floor isn't one flat colour */
+      const n = .88 + .12 * Math.sin(x * .31 + z * .17) * Math.cos(z * .27 - x * .11) + .06 * Math.sin(x * 1.7) * Math.sin(z * 1.3);
+      cc.setHex(hex).convertSRGBToLinear(); col[i * 3] = cc.r * n; col[i * 3 + 1] = cc.g * n; col[i * 3 + 2] = cc.b * n; }
     tg.setAttribute('color', new THREE.BufferAttribute(col, 3)); tg.computeVertexNormals();
-    const gmat = new THREE.MeshStandardMaterial({ map: groundTex([512, 1024, 1024][q]), vertexColors: true, roughness: .95 });
+    const gmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 });
     gmat.userData.lin = 1; const ground = new THREE.Mesh(tg, gmat); ground.receiveShadow = true; grp.add(ground);
 
     /* ---------- water: sea + lagoon + blue pool (iridescent, animated) ---------- */
@@ -440,7 +409,8 @@ AV.registerWorld({
     const pteroItems = []; for (let i = 0; i < K.n(14); i++) { const f = i % 3, cx = [300, LM.lagoon[0], LM.nestingCliffs[0]][f], cz = [-60, LM.lagoon[1], LM.nestingCliffs[1]][f];
       pteroItems.push({ x: cx, y: [58, 44, 62][f] + rng() * 14, z: cz, s: 2.2 + rng() * 1.6, ry: rng() * TAU, _f: f, _r: 40 + rng() * 60, _sp: .14 + rng() * .1, _ph: rng() * TAU }) }
     { const items = pteroItems, grp2 = new THREE.Group(); ctx.group.add(grp2);
-      const meshes = items.map(it => { const m = new THREE.Mesh(pteroGeo, pteroMat); m.scale.setScalar(it.s); grp2.add(m); return m });
+      const pg = pteroGeo();
+      const meshes = items.map(it => { const m = new THREE.Mesh(pg, pteroMat); m.scale.setScalar(it.s); grp2.add(m); return m });
       /* flock centres: over the open sea, the lagoon and the nesting cliffs */
       const FLO = [[300, -60, 58], [LM.lagoon[0], LM.lagoon[1], 44], [LM.nestingCliffs[0], LM.nestingCliffs[1], 62]];
       ctx.upd.push((dt, t) => { items.forEach((it, i) => { const f = FLO[it._f], a = t * it._sp + it._ph, m = meshes[i];
@@ -560,7 +530,7 @@ AV.registerWorld({
 
     const PL = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
     return {
-      name: 'Jurassic Koh Samui', fog: [60, 420], sky: SKY,
+      name: 'Jurassic Koh Samui', fog: [110, 620], sky: SKY,
       surface: (x, z) => { if (x < XMIN + 2 || x > XMAX - 2 || z < ZMIN + 2 || z > ZMAX - 2) return null;
         const h = H(x, z), wy = waterY(x, z); return h < wy - 1.6 ? null : Math.max(h, wy - 1.6) },
       speedMul: () => { const P = AV.P; return swim(P.x, P.z) ? .55 : 1 },

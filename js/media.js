@@ -154,7 +154,7 @@ AV.frameFns.push((dt) => {
   let duck = 0;
   for (const f of M.frames) { const on = f === best && !overlay && !AV.audio.mute; setGain(f, on ? 1 : 0); if (on) duck = Math.max(duck, Math.min(1, 1.6 * (1 - bd / 6))) }
   for (const s of M.screens) { setGain(s, overlay ? 0 : 1); if (s.playing && !overlay) { const d = Math.hypot(s.x - P.x, s.z - P.z); duck = Math.max(duck, Math.min(1, Math.max(0, (s.radius * .85 - d) / (s.radius * .4)))) }   /* V0.9.7: inside ~45% of the radius the music is fully silent: the film's sound takes over */ }
-  if (M.extraDuck) duck = Math.max(duck, M.extraDuck());   /* V1.1: other venues with their own music (Astro-9 Orbit Lounge) */
+  if (M.extraDuck) duck = Math.max(duck, M.extraDuck()); (M.ducks || []).forEach(f => { try { duck = Math.max(duck, f() || 0) } catch (e) { } });   /* V1.1: other venues with their own music (Astro-9 Orbit Lounge) */
   if (AV.audio && AV.audio.setDuck) AV.audio.setDuck(duck);
   /* gallery-walk quest: really looking at a live painting for ~5 s */
   if (lookAcc >= .25) { const k = lookAcc; lookAcc = 0; if (best && bd < 4.5) { best.look += k; if (best.look > 5 && !best.noted) { best.noted = true; AV.dlg && AV.dlg.event('painting'); AV.quests && AV.quests.notePainting(best.p.filename) } } }

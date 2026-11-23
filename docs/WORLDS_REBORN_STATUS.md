@@ -78,7 +78,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 | Feature | What works | What's missing |
 |---|---|---|
 | **Astro-9 metropolis, first district (§5)** | `js/astro9_metro.js`, `suite_astro9_metro.js` 30/30. See the list below. | Cinema 9, Orbit Lounge, Docking Bay rebuild, residential spires, Glassopy Observatory, transit rings, rooftops, upper-level bridges, chunk loading. The architecture is stylised (lathe towers + mosaic), not yet the Da Nang / Chiang Mai detail level. Shop interiors are simple rooms with a counter. |
-| **Pai (§10)** | Playable first slice: `js/world_pai.js`, `suite_pai.js` 30/30. See the list below. | **Visuals are primitive** (boxes on flat grass, about 9k triangles; far below the Chiang Mai / Da Nang bar). No Pai Canyon, waterfall, hot springs, White Buddha, rice fields; no scenic road transition (the minivan is a fade). Venue names are unverified memories, labelled as such. |
+| **Pai (§10), rebuilt from the illustrated map** | `js/world_pai.js` + `js/ambience.js`, `suite_pai.js` 46/46. See the list below. | See the list below. |
 | **Astro-9 district 2 (§5)** | `js/astro9_district2.js`, `suite_astro9_d2.js` 23/23. The Art Avenue runs south from the plaza, with 6 living paintings that slowly change. **Cinema 9 hall:** an indoor hall with walls and one door, 5 rows of seats, "take a seat" puts you facing the screen, which plays your films (tags astro + mv); a popcorn counter. **Orbit Lounge:** a space-jazz club with its own procedural jazz (walking bass, swung ride, electric-piano comping; no files). The jazz is heard only near the lounge, and the world music ducks inside. A trio on stage, a cocktail bar, keys to jam. **Glassopy Observatory:** a glass dome; the telescope shows a live sky view that changes daily. Facades with mosaic bands, pillars and glowing arched windows. | **Film playback:** only *loading* was confirmed in the headless test; real playback depends on your video files. The halls are still simple boxes inside. Not built yet: Docking Bay rebuild, residential spires, transit rings. |
 | Songkran visuals | | NPCs don't look wet; crowd uses the existing throw pose; no crowd-cheer audio layer; FPS in the crowd not measured. |
 | Photoreal human faces (§34A) | Soft-body characters exist (0jc1) | Heavy; no hero-human pass yet. Needs a real Iris Xe FPS reading first. |
@@ -91,7 +91,30 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - **City life:** hover cars cross the sky with a whoosh when one passes close; an alien, ape and human crowd fills the plaza and streets.
 - Club Graviton's zero gravity is unchanged.
 
-**Pai first slice, what works:**
+**Pai (rebuilt), what works:**
+- **Layout:** follows your map: Walking Street runs north-south through a jungle valley with terrain, hills and distant mountains.
+- **Walking Street:** 23 open-front shophouses (timber posts, plaster, gable roofs, upper floors with lit windows, balconies, awnings, hanging boards readable down the street, chalkboards, shelves, plants, café tables), 2 fairy-light strings, night market from 17:00, parked scooters, warm street lamps at night, a 40-person walking crowd plus seated café guests.
+- **Cafés and shops:** Rainny Café, Ganita Café, roti stand, Live Blues Bar.
+- **Tea & Drum Circle:** a pavilion with cushions, drums, drummers and a psychedelic mural.
+- **Sunset Bar:** on the north-west ridge: a deck with railings, bar, DJ booth, cushions, canopy, string lights, dancing crowd in the evening, valley view.
+- **Paradise Circus:** tents, string lights, sand ring, an animated fire-poi show with flame trails and flicker light from 20:00, a ring of spectators, a bar.
+- **Pai River Jam:** 6 stilt cabins, a bar pavilion, campfire, the pirate sign, people hanging out, river tubers, reeds, and a bamboo bridge you walk on.
+- **Nature:** waterfall (two falls, pool, mist), hot springs (3 steaming pools, rocks), bamboo bridge over a creek, Pai Canyon (red ridges, walking path, viewpoint), Yun Lai viewpoint, rice fields, jungle trail to Jungle Rave, temple.
+- **Getting around:** bus/minivan station with the road to Chiang Mai, scooter rental.
+- **Sound zones:** insects, birds, river, frogs at night, distant dogs, market chatter, café music, tea-circle drums, hostel jam, Sunset techno, Paradise drums and crowd. World music ducks near venues that play their own.
+
+**Pai, what still looks weak:**
+- Low-poly trees and ico-sphere canopies on Low (Medium/High swap in the detailed plants).
+- Buildings are clean boxes without weathering or textures.
+- Characters are the standard crowd figures.
+- The ground is flat-coloured.
+- 878k triangles / 320 draw calls in the street on Low (the headless renderer can't measure FPS).
+- No scenic road transition to Chiang Mai (the minivan is a fade).
+- No swimming in the river or springs.
+
+**Next Pai polish:** textured wood and plaster, more interiors, a bigger crowd at night, LOD for distant shophouses, a real FPS check.
+
+**Old first slice (replaced), what worked:**
 - **Walking Street:** a 190 m lane of wooden shophouses, with lanterns and night-market stalls from 17:00.
 - **Places to eat and drink:**
   - Rainny Café (walk in, smoothie bowls).
@@ -125,7 +148,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 ## Next 3 actions
 
 1. **Owner:** play-test basketball, Songkran, the minimap, the DJ mixer, the Astro-9 plaza and Pai on the real laptop and phone. Report the F3 FPS readings.
-2. **Pai visual pass:** real shophouse architecture, trees, terrain and river banks. Then Pai Canyon + a scenic scooter route.
+2. **Pai:** owner play-test; then texture and interior polish, and a scenic road transition.
 3. **Next:** Madrid first slice (Pinar/Chamartín + metro + Sol); Astro-9 Docking Bay + residential spires.
 
 ## Log (2026-11-23)
@@ -138,4 +161,5 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Pai first slice.
 - Full DJ mixer.
 - Astro-9 district 2 (Art Avenue, Cinema 9 hall, Orbit Lounge, Glassopy Observatory).
+- Pai rebuilt from the illustrated map, with layered ambience (`js/ambience.js`).
 - Vehicles milestone (earlier, commit `f84ba1b`).

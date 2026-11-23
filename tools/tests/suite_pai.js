@@ -1,45 +1,59 @@
-/* Worlds Reborn §10: Pai first playable slice (run_tests.ps1 -Suite tools\tests\suite_pai.js -StepTimeout 900) */
+/* Worlds Reborn §10: Pai rebuilt from the illustrated map (run_tests.ps1 -Suite tools\tests\suite_pai.js -StepTimeout 900) */
 window.APE_T = (() => {
   const steps = [], step = (name, fn, o) => steps.push(Object.assign({ name, fn }, o || {}));
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(120) } return false };
   const $ = id => document.getElementById(id), lab = t => typeof t.label === 'function' ? t.label() : t.label;
   const settled = () => AV.W && $('fade').style.opacity === '0';
-  const travel = async id => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 90000) };
+  const travel = async id => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 120000) };
   const tgt = re => AV.W.T.find(t => (!t.show || t.show()) && re.test(lab(t)));
-  const at = t => { AV.P.x = t.x; AV.P.z = t.z; AV.P.y = AV.W.surface(t.x, t.z) || 0 };
-  const walkable = (x0, z0, x1, z1) => { const n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)), bad = []; for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (AV.W.surface(x, z) === null || !AV.isFree(AV.W, x, z, .35)) bad.push(x.toFixed(1) + ',' + z.toFixed(1)) } return bad };
-  const buy = async (re, item) => { const t = tgt(re); if (!t) return 'no target'; at(t); t.fn(); await sleep(300); const b = document.querySelector('[data-buy="' + item + '"]'); if (!b) { AV.closeTop(); return 'no item' } b.click(); await sleep(500); AV.closeTop(); return AV.bag.count(item) };
+  const at = (x, z) => { AV.P.x = x; AV.P.z = z; AV.P.y = AV.W.surface(x, z) || 0 };
+  /* every metre along a polyline is ground, not inside a wall or post, and never a step the player can't climb (> 1 m per metre; the game climbs up to ~0.9 m per step) */
+  const walk = pts => { const bad = []; for (let k = 1; k < pts.length; k++) { const [x0, z0] = pts[k - 1], [x1, z1] = pts[k], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)); let py = null; for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n, y = AV.W.surface(x, z); if (y === null || !AV.isFree(AV.W, x, z, .35) || (py != null && Math.abs(y - py) > 1.0)) bad.push(x.toFixed(1) + ',' + z.toFixed(1) + (y === null ? ' void' : '')); py = y } } return bad };
+  const buy = async (re, item) => { const t = tgt(re); if (!t) return 'no target'; at(t.x, t.z); t.fn(); await sleep(300); const b = document.querySelector('[data-buy="' + item + '"]'); if (!b) { AV.closeTop(); return 'no item' } b.click(); await sleep(500); AV.closeTop(); return AV.bag.count(item) };
+  const D = () => AV.paiDebug, PL = () => D().PL;
+  const shot = async (x, z, yaw, pitch, hr) => { if (hr != null) AV.S.time = hr * 60; at(x, z); AV.P.yaw = yaw; AV.P.pitch = pitch || 0; await sleep(6000) };
 
-  step('boot', async c => { $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 30000)); await sleep(1500); AV.save = () => { }; AV.S.money = 400;
-    c('Pai is a separate playable world', AV.isPlayable('pai') && AV.isPlayable('chiang_mai') && AV.isPlayable('jungle_dub')); c('Pai', await travel('pai')); c('no world error', !$('err').textContent, $('err').textContent) });
+  step('boot', async c => { $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 30000)); await sleep(1500); AV.save = () => { }; AV.S.money = 500;
+    c('Pai is its own world (Chiang Mai + Jungle Dub separate)', AV.isPlayable('pai') && AV.isPlayable('chiang_mai') && AV.isPlayable('jungle_dub')); c('Pai', await travel('pai')); c('no world error', !$('err').textContent, $('err').textContent);
+    c('arrive at the bus station', Math.hypot(AV.P.x - PL().bus[0], AV.P.z - PL().bus[1]) < 12, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1)) });
 
-  step('Walking Street, café, vegan kitchen, tea & drums', async c => {
-    const b = walkable(-95, 0, 95, 0); c('the whole Walking Street is walkable', !b.length, b.slice(0, 6).join(' '));
-    const d = walkable(-40, 0, -40, -9.4); c('walk into Rainny Café', !d.length, d.join(' ')); c('smoothie bowl at Rainny Café', (await buy(/Rainny Café counter/, 'pai_bowl')) === 1);
-    c('vegan massaman curry', (await buy(/Vegan kitchen/, 'pai_curry')) === 1); c('pot of tea at the Tea & Drum Circle', (await buy(/Tea & Drum Circle/, 'pai_tea')) === 1);
-    c('hand drums to join', AV.act.venues.some(v => v.type === 'inst' && v.p.kind === 'bongo' && v.W === AV.W)); c('scooter rental', !!tgt(/scooter/i));
+  step('routes: no blocked paths', async c => {
+    const R = { 'bus → Walking Street (north end → south end)': [[PL().bus[0] - 2, PL().bus[1] + 6], [0, -64], [0, 64]], 'street → Tea & Drum Circle lane': [[0, 13], [PL().tea[0] + 4, PL().tea[1] - 2]], 'street → river lane → hostel bar → bamboo bridge → east bank': [[0, 2], [60, 2], [84, 2], [100, 2]],
+      'bridge → jungle trail': [[100, 2], [PL().jungle[0] - 2, PL().jungle[1]]], 'north end → Sunset Bar deck': [[0, -66], [PL().sunset[0] + 4, PL().sunset[1] + 10], [PL().sunset[0] + 8, PL().sunset[1] + 7], [PL().sunset[0] + 6, PL().sunset[1] + 4.8]], 'north end → Paradise Circus': [[6, -66], [PL().paradise[0] - 4, PL().paradise[1] + 10], [PL().paradise[0], PL().paradise[1] + 6.5]],
+      'south end → Pai Canyon viewpoint (ridge path)': [[0, 66], [4, 128]].concat(Array.from({ length: 22 }, (_, i) => { const z = 129 + i * 2; return [4 + 5 * Math.sin(Math.max(0, z - 128) / 14), z] })), 'street → hot springs': [[-12, 30], [PL().springs[0] + 4, PL().springs[1] - 8]], 'street → waterfall': [[-14, -8], [PL().fall[0] + 12, PL().fall[1]]] };
+    for (const k in R) { const b = walk(R[k]); c(k, !b.length, b.slice(0, 6).join(' | ')) }
   });
 
-  step('Sunset Bar + Paradise fire show by time of day', async c => {
-    const b = walkable(86, 2, 86, 14.8); c('alley from the lane to Sunset Bar', !b.length, b.join(' ')); const p = walkable(40, 2, 40, 20.5); c('open front to Paradise Circus', !p.length, p.join(' '));
-    AV.S.time = 14 * 60; c('daytime: Sunset Bar is chill', /chill/.test(lab(tgt(/Sunset Bar/))), lab(tgt(/Sunset Bar/))); c('Sunset Bar DJ booth', !!tgt(/DJ booth.*Sunset/));
-    c('fire show not before 20:00', /20:00/.test(lab(tgt(/Paradise Circus/))));
-    AV.S.time = 21 * 60; c('night: DJ tonight', /DJ tonight/.test(lab(tgt(/Sunset Bar/)))); c('night: fire show on', /watch the fire show/.test(lab(tgt(/Paradise Circus/))));
-    AV.P.x = 40; AV.P.z = 6; AV.P.yaw = Math.PI; AV.P.pitch = .05; await sleep(5000);
-  }, { shot: 'pai_night' });
-
-  step('bridge, river hostel, bungalow, temple', async c => {
-    const b = walkable(92, 0, 126, 0); c('bamboo bridge across the Pai River', !b.length, b.join(' ')); c('the river itself is water', AV.W.surface(106, 12) === null);
-    c('River Jam bar + pirate sign', !!tgt(/River Jam bar/)); c('ukulele jam spot', AV.act.venues.some(v => v.type === 'inst' && v.p.kind === 'uke' && v.W === AV.W));
-    const s = tgt(/Your bungalow/); at(s); s.fn(); c('sleep in a riverside bungalow until 08:00', await until(() => Math.abs(AV.S.time - 480) < 2, 20000), AV.S.time);
-    c('quiet temple', !!tgt(/Temple: sit quietly/));
+  step('venues: enter + order', async c => {
+    c('Rainny Café: smoothie bowl', (await buy(/Rainny Café counter/, 'pai_bowl')) === 1); c('Ganita Café: massaman curry', (await buy(/Ganita Café counter/, 'pai_curry')) === 1);
+    c('Tea & Drum Circle: pot of tea', (await buy(/Tea & Drum Circle: order/, 'pai_tea')) === 1); c('roti stand', (await buy(/Roti stand/, 'pai_roti')) === 1);
+    AV.S.time = 14 * 60; c('Sunset Bar daytime: chill', /chill/.test(lab(tgt(/🍺 Sunset Bar/)))); c('Sunset Bar: buy a beer', (await buy(/🍺 Sunset Bar/, 'beer')) >= 1); c('Sunset Bar DJ booth', !!tgt(/DJ booth.*Sunset/));
+    c('Paradise Circus closed by day', /20:00/.test(lab(tgt(/Paradise Circus/)))); AV.S.time = 21 * 60; c('Paradise at night: fire show', /watch the fire show/.test(lab(tgt(/Paradise Circus/))));
+    c('River Jam bar', (await buy(/River Jam bar/, 'water')) >= 1); c('drums + ukulele jam spots, scooter rental', AV.act.venues.some(v => v.type === 'inst' && v.p.kind === 'bongo') && AV.act.venues.some(v => v.type === 'inst' && v.p.kind === 'uke') && !!tgt(/scooter/i));
+    const s = tgt(/riverside cabin/); at(s.x, s.z); s.fn(); c('sleep in a riverside cabin until 08:00', await until(() => Math.abs(AV.S.time - 480) < 2, 20000));
+    c('waterfall, hot springs, canyon, Yun Lai, temple', ['Waterfall: cool', 'Hot springs: soak', 'Pai Canyon viewpoint', 'Yun Lai viewpoint', 'Temple: sit'].every(n => !!tgt(new RegExp(n))));
   });
 
-  step('minivan to Chiang Mai and back, jungle trail to Jungle Dub', async c => {
-    const m = tgt(/Minivan to Chiang Mai/); at(m); const m0 = AV.S.money; m.fn(); c('minivan → Chiang Mai (40)', await until(() => AV.W && AV.W.id === 'chiang_mai' && settled(), 90000) && AV.S.money === m0 - 40);
-    const back = tgt(/Minivan to Pai/); c('Chiang Mai has the minivan back to Pai', !!back); if (back) { at(back); back.fn(); c('back in Pai', await until(() => AV.W && AV.W.id === 'pai' && settled(), 90000)) }
-    const tr2 = tgt(/Jungle trail/); at(tr2); tr2.fn(); c('trail → Jungle Dub', await until(() => AV.W && AV.W.id === 'jungle_dub' && settled(), 90000));
+  step('ambience zones', async c => {
+    const lv = () => AV.amb.lv; c('ambience engine running', await until(() => AV.amb.on, 60000));
+    AV.S.time = 19 * 60; at(0, -10); c('town at night: market chatter', await until(() => lv().chatter > .6, 60000), JSON.stringify(lv()));
+    at(PL().sunset[0] + 4, PL().sunset[1] + 5); c('Sunset Bar evening: techno', await until(() => lv().techno > .6, 60000), lv().techno);
+    at(84, 30); c('riverbank: river sound', await until(() => lv().river > .6, 60000), lv().river); c('night by the river: frogs', lv().frogs > .3, lv().frogs);
+    at(PL().tea[0] + 3, PL().tea[1]); AV.S.time = 15 * 60; c('Tea & Drum Circle: drums', await until(() => lv().drums > .6, 60000), lv().drums);
+    at(-60, -120); c('in the jungle: insects + birds, no techno', await until(() => lv().birds > .5 && lv().techno < .05, 60000), JSON.stringify(lv()));
+    c('world music ducks near the venues that play their own', (at(PL().tea[0] + 3, PL().tea[1]), await until(() => AV.media.ducks.some(f => f() > .5), 60000)));
+  });
+
+  step('day street', async c => { await shot(0, -60, Math.PI, .02, 11); c('rendered', true) }, { shot: 'pai_street_day' });
+  step('night street', async c => { await shot(0, -60, Math.PI, .02, 21); c('rendered', true) }, { shot: 'pai_street_night' });
+  step('sunset bar', async c => { await shot(PL().sunset[0] + 3, PL().sunset[1] + 14, 0, .02, 18); c('rendered', true) }, { shot: 'pai_sunset_bar' });
+  step('river hostel', async c => { await shot(48, 2, -Math.PI / 2, -.05, 17); c('rendered', true) }, { shot: 'pai_hostel' });
+
+  step('minivan both ways + jungle trail; nothing broken', async c => {
+    const m = tgt(/Minivan to Chiang Mai/); at(m.x, m.z); const m0 = AV.S.money; m.fn(); c('minivan → Chiang Mai (40)', await until(() => AV.W && AV.W.id === 'chiang_mai' && settled(), 120000) && AV.S.money === m0 - 40);
+    const back = tgt(/Minivan to Pai/); c('Chiang Mai has the minivan back', !!back); if (back) { at(back.x, back.z); back.fn(); c('back in Pai', await until(() => AV.W && AV.W.id === 'pai' && settled(), 120000)) }
+    const t = tgt(/Jungle trail/); at(t.x, t.z); t.fn(); c('trail → Jungle Dub', await until(() => AV.W && AV.W.id === 'jungle_dub' && settled(), 120000)); c('ambience stops outside Pai', !AV.amb.on);
     c('no JS errors', !$('err').textContent, $('err').textContent);
   });
 

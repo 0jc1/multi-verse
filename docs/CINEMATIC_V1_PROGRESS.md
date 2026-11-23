@@ -155,3 +155,15 @@ Filled in at the end of each milestone. See `## Milestone log`.
 - Clerks and customers are static species meshes, not rigged characters.
 - No daytime lighting; real-GPU FPS not yet measured on the owner's laptop.
 - Next in order after Astro-9: Pai, Vienna, clothing stores.
+
+### Milestone 4a: performance before more geometry
+
+- **Measured first (headless, High, Astro-9 plaza view):** 488 draw calls, 2.77 M triangles, 19 point lights. Most of it was 81 detailed character groups at every distance (about 2.2 M triangles) plus all 19 lights shading every pixel.
+- **Merged `apeverse-perf-npc-fixes` (2e755fc) into this branch:** character LOD, plant LOD and the shadow budget.
+- **New light budget (`js/perf_guard.js`):**
+  - Only the K nearest point/spot lights stay on: K = 2 / 4 / 6 on Low / Medium / High.
+  - K stays constant while you move, so shaders never recompile.
+  - Lights the game switched off itself are left alone.
+- **After (same view):** 389 draw calls, 0.96 M triangles (−65%), 6 lights on.
+- **Real-GPU FPS:** not measured. The built-in browser pane was hidden, and a hidden pane throttles frames; F3 readings from the owner's laptop are still needed.
+- **Tests:** `suite_astro9_neon` 37/37, `astro9_mega` 25/25, `astro9_d2` 23/23.

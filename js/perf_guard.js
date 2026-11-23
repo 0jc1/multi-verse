@@ -68,6 +68,7 @@ AV.frameFns.push(() => {
   const W = AV.W; if (!W || !AV.running || !AV.R) return; const now = performance.now(), dt = tPrev ? (now - tPrev) / 1000 : 0; tPrev = now; if (dt <= 0) return; clock += Math.min(dt, 1);   /* slow frames still run LOD; they only skip the FPS average */
   if ((scanT -= dt) <= 0) { scanT = 3; if (W !== PF._w) { PF._w = W; PF.small = 0; groups = [] } scan(W) }
   if ((lodT -= dt) <= 0) { lodT = .25; lod() }
+  if ((lightT -= dt) <= 0) { lightT = .5; lightBudget(W) }
   if (q() === 'Low' || document.hidden || dt > 1) return;
   ema = ema ? ema * .9 + (1 / dt) * .1 : 1 / dt; PF.fps = ema; if (cool > 0) { cool -= dt; return }
   if (Math.abs(AV.R.getPixelRatio() - lastPR) > 1e-3 && PF.step) applyStep();   /* a quality switch / world change reset it: re-apply */
@@ -75,6 +76,15 @@ AV.frameFns.push(() => {
   if (lowT > 4 && PF.step < STEPS.length - 1) change(1);
   else if (highT > 8 && PF.step > 0 && clock > lockUntil) change(-1) });
 PF.stats = () => { const W = AV.W; let shadowTris = 0, charTris = 0; if (W) W.group.traverseVisible(o => { if (o.isMesh && o.castShadow) shadowTris += tris(o.geometry) * (o.isInstancedMesh ? o.count : 1) }); for (const g of groups) { if (g.gr.visible) g.gr.traverseVisible(o => { if (o.isMesh) charTris += tris(o.geometry) }); if (g.proxy && g.proxy.visible) charTris += tris(g.proxy.geometry) }
-  return { step: PF.step, pr: AV.R && +AV.R.getPixelRatio().toFixed(2), small: PF.small, chars: groups.length, tiers: PF.tiers, charTris: Math.round(charTris), shadowTris: Math.round(shadowTris), fps: PF.fps && +PF.fps.toFixed(1), changes: PF.changes.length } };
+  return { step: PF.step, pr: AV.R && +AV.R.getPixelRatio().toFixed(2), small: PF.small, chars: groups.length, tiers: PF.tiers, charTris: Math.round(charTris), shadowTris: Math.round(shadowTris), lights: PF.lights, fps: PF.fps && +PF.fps.toFixed(1), changes: PF.changes.length } };
+/* ---------- LIGHT BUDGET: only the K nearest point / spot lights are on (K = 2 / 4 / 6 by quality). Every lit pixel loops over every
+   active light, so 18 lights cost a lot of fill rate on a laptop GPU. K stays constant while you move (one on, one off), so shaders
+   are never recompiled; lights the game itself switched off are left alone. */
+let lightT = 0, lightsW = null, lights = [];
+function lightBudget(W) { if (lightsW !== W) { lightsW = W; lights = []; W.group.traverse(o => { if ((o.isPointLight || o.isSpotLight) && !o.userData.pfKeep) lights.push(o) }) }
+  const K = { Low: 2, Medium: 4, High: 6 }[q()] || 4; if (lights.length <= K) { PF.lights = { total: lights.length, on: lights.length }; return }
+  const P = AV.P, v2 = new THREE.Vector3(), ranked = lights.filter(l => l.visible || l.userData.pfOff).map(l => (l.getWorldPosition(v2), { l, d: Math.hypot(v2.x - P.x, v2.y - (P.y || 0), v2.z - P.z) })).sort((a, b) => a.d - b.d);
+  ranked.forEach((r, i) => { const on = i < K; if (on && r.l.userData.pfOff) { r.l.visible = true; r.l.userData.pfOff = false } else if (!on && r.l.visible) { r.l.visible = false; r.l.userData.pfOff = true } });
+  PF.lights = { total: lights.length, on: Math.min(K, ranked.length) } }
 const prevE = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (prevE) prevE(W); scanT = 0; lodT = 0; groups = [] };
 })(window.AV);

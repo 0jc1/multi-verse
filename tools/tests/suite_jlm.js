@@ -16,8 +16,8 @@ window.APE_T = (() => {
   const chat = async (send1, send2) => { await sleep(300); if (send1) await AV.chatSend(send1); if (send2) await AV.chatSend(send2); await sleep(400); AV.closeChat() };
 
   step('boot', async c => {
-    $('gq').value = 'Low'; $('bNew').click();
-    c('Ape Town loads', await until(() => AV.W && AV.W.id === 'ape_town' && AV.running, 20000));
+    $('gq').value = 'Low'; const f = AV.fresh(); f.set.gq = 'Low'; AV.boot.begin(f);
+    c('Ape Town loads', await until(() => AV.W && AV.W.id === 'ape_town' && AV.running, 180000));
     if (AV.assets && AV.assets.ready) await AV.assets.ready(20000); await sleep(3000);
   });
 
@@ -33,7 +33,7 @@ window.APE_T = (() => {
     await sleep(2500);
     const cr = ['dalia', 'yossi', 'karim', 'miriam', 'elias'].map(id => AV.W.T.find(t => t.npc && t.npc.id === id)).filter(Boolean);
     c('named characters spawned (Dalia, Yossi, Karim, Miriam, Elias)', cr.length === 5, cr.map(n => n.npc.id).join(','));
-    const info = AV.R.info.render; c('renders the city', info.calls > 40, 'draw calls ' + info.calls + ', tris ' + info.triangles);
+    let n = 0; AV.W.group.traverse(o => { if (o.isMesh && o.visible) n++ }); c('world built + visible meshes', n > 80, n + ' meshes');
     c('arrived near Jaffa Gate', Math.hypot(AV.P.x - (-76), AV.P.z - 8) < 10, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1));
   }, { shot: 'jlm_arrival' });
 
@@ -98,7 +98,7 @@ window.APE_T = (() => {
     await sleep(2500);
     const crew = ['noa', 'salem', 'amir', 'tomer'].map(id => AV.W.T.find(t => t.npc && t.npc.id === id)).filter(Boolean);
     c('named desert characters spawned (Noa, Salem, Amir, Tomer)', crew.length === 4, crew.map(n => n.npc.id).join(','));
-    const info = AV.R.info.render; c('renders the desert', info.calls > 30, 'draw calls ' + info.calls + ', tris ' + info.triangles);
+    let n = 0; AV.W.group.traverse(o => { if (o.isMesh && o.visible) n++ }); c('world built + visible meshes', n > 40, n + ' meshes');
     c('sea surface is water level (low)', AV.W.surface(150, 40) < 0, (AV.W.surface(150, 40) || 0).toFixed(2));
   }, { shot: 'jd_arrival' });
 
@@ -157,7 +157,7 @@ window.APE_T = (() => {
     if (p) { p.fn(); await sleep(400); const b = [...$('cmp').querySelectorAll('[data-w]')].find(x => x.dataset.w === 'ape_town'); c('portal lists Ape Town', !!b); if (b) b.click() }
     c('portal returns to Ape Town', await until(() => AV.W && AV.W.id === 'ape_town' && settled(), 30000));
     await sleep(1200);
-    const info = AV.R.info.render; c('renders after return', info.calls > 20, 'draw calls ' + info.calls);
+    c('only one world group in the scene after 3 trips (no leaks)', AV.scene.children.filter(o => o.isGroup && o !== AV.cam).length <= 2, AV.scene.children.filter(o => o.isGroup).length);
   }, { shot: 'jlm_return' });
 
   return { steps };

@@ -118,9 +118,10 @@ window.APE_T = (() => {
   });
 
   step('bedtime: the crew sleeps by the campfire (Bix takes the night shift)', async c => {
+    away();   /* walking workers pause while the player is within ~3 m (so you can talk to them): stand clear, like the other steps */
     AV.S.time = 30; const S = site(), crew = AV.npc.brains().filter(b => b.id !== 'bix');   // 00:30: everyone's bedtime has started (Melo's is 23:30)
     c('everyone but Bix goes to sleep', await until(() => crew.every(b => b.fsm.state === 'sleep' || (b.fsm.state === 'walk' && b.fsm.data.pri === 5)), 20000), states());
-    const why = () => crew.filter(b => !(b.fsm.state === 'sleep' && b.fsm.data.at)).map(b => b.id + ':' + b.fsm.state + (b.mem.seat ? ' seat ' + Math.hypot(b.mem.seat.x - pos(b).x, b.mem.seat.z - pos(b).z).toFixed(1) + 'm' : ' no seat') + ' ' + b.fsm.log.slice(0, 4).map(l => l.to + '(' + l.why + ')').join('<')).join(' | ');
+    const why = () => crew.filter(b => !(b.fsm.state === 'sleep' && b.fsm.data.at)).map(b => b.id + ':' + b.fsm.state + (b.mem.seat ? ' seat ' + Math.hypot(b.mem.seat.x - pos(b).x, b.mem.seat.z - pos(b).z).toFixed(1) + 'm' : ' no seat') + ' player ' + Math.hypot(AV.P.x - pos(b).x, AV.P.z - pos(b).z).toFixed(1) + 'm' + ' ' + b.fsm.log.slice(0, 4).map(l => l.to + '(' + l.why + ')').join('<')).join(' | ');
     c('they reach their seats', await until(() => crew.every(b => b.fsm.state === 'sleep' && b.fsm.data.at), 60000), why());
     c('Bix is still up', B('bix').fsm.state !== 'sleep', B('bix').fsm.state);
     standAt(S.camp.x + 6, S.camp.z + 6, S.camp.x, S.camp.z); AV.P.pitch = -.25; await sleep(3000);

@@ -443,7 +443,7 @@ const RS = {
 R.species = RS;
 const OLD = R.classic = Object.assign({}, K.species);
 for (const name in RS) K.species[name] = function () {
-  if (R.on()) { try { return RS[name].apply(this, arguments) } catch (e) { console.warn('realistic ' + name + ' failed, using the classic look', e) } }
+  if (R.on()) { try { const g = RS[name].apply(this, arguments), args = arguments, self = this; if (g && g.userData && g.userData.real === 'plant') g.userData.lo = () => OLD[name].apply(self, args); return g } catch (e) { console.warn('realistic ' + name + ' failed, using the classic look', e) } }
   return OLD[name].apply(this, arguments);
 };
 
@@ -454,8 +454,35 @@ K.scatter = function (ctx, geo, mat, items, opt) {
   /* rocks share one material with the instanced boulders, which always carry instance colours; r128 does not switch programs on
      that difference, so give every scattered rock an instance colour too */
   if (r === 'rock') { mat = R.rockMat(true); items = items.map(it => it.tint == null ? Object.assign({}, it, { tint: 1 }) : it) }
-  else if (r === 'plant') R.plantify(mat);
+  else if (r === 'plant') { R.plantify(mat); if (geo.userData.lo && items.length > 12 && !(opt && opt.noLod)) return R.lodScatter(ctx, geo, mat, items, opt || {}) }
   return _scatter.call(this, ctx, geo, mat, items, opt);
+};
+/* plant LOD (perf pass): every plant is drawn with the light classic geometry in the usual distance-culled chunks (no shadow);
+   the plants within NEAR metres of you are moved into ONE realistic instanced mesh per species (shadow-casting on High) and hidden
+   in the light chunks. Rebuilt every 0.4 s when you have moved, so up close nothing changes, nothing is drawn twice, no holes. */
+R.NEAR = () => K.q() === 2 ? 55 : 40;
+const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
+R.lodScatter = function (ctx, hi, hiMat, items, opt) {
+  const lo = hi.userData.lo(), loMat = K.floraMat(hiMat.userData.sway != null ? hiMat.userData.sway : .04, { double: true });
+  const grp = _scatter.call(K, ctx, lo, loMat, items, Object.assign({}, opt, { shadow: false })); if (!grp) return grp;
+  /* map every item to (chunk mesh, instance index): same cells, same order as K.instChunks */
+  const cell = opt.cell || 110, cells = new Map(); items.forEach(it => { const k = Math.floor(it.x / cell) + ',' + Math.floor(it.z / cell); if (!cells.has(k)) cells.set(k, []); cells.get(k).push(it) });
+  const chunks = grp.children.filter(o => o.isInstancedMesh), recs = []; let ci = 0;
+  for (const list of cells.values()) { const im = chunks[ci++]; if (!im) break; list.forEach((it, i) => { const m = new THREE.Matrix4(); im.getMatrixAt(i, m); const c = im.instanceColor ? new THREE.Color().fromArray(im.instanceColor.array, i * 3) : null; recs.push({ x: it.x, z: it.z, im, i, m, c }) }) }
+  const G = 16, grid = new Map(); recs.forEach(r => { const k = Math.floor(r.x / G) + ',' + Math.floor(r.z / G); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(r) });
+  const cap = Math.min(recs.length, 700), g2 = new THREE.BufferGeometry(); if (hi.index) g2.setIndex(hi.index); for (const n in hi.attributes) g2.setAttribute(n, hi.attributes[n]); hi.groups.forEach(g => g2.addGroup(g.start, g.count, g.materialIndex));
+  g2.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1);
+  const near = new THREE.InstancedMesh(g2, hiMat, cap); near.count = 0; near.castShadow = opt.shadow !== false && K.q() === 2; near.receiveShadow = true; near.userData.lin = 1; near.userData.plantNear = 1; if (recs.some(r => r.c)) near.setColorAt(0, new THREE.Color(1, 1, 1)); grp.add(near);
+  let shown = [], lx = 1e9, lz = 1e9, t = 0; const touched = new Set();
+  const rebuild = () => { const P = AV.P, R2 = R.NEAR(); lx = P.x; lz = P.z;
+    for (const r of shown) { r.im.setMatrixAt(r.i, r.m); touched.add(r.im) } shown = [];
+    const g0x = Math.floor((P.x - R2) / G), g1x = Math.floor((P.x + R2) / G), g0z = Math.floor((P.z - R2) / G), g1z = Math.floor((P.z + R2) / G);
+    for (let gx = g0x; gx <= g1x; gx++) for (let gz = g0z; gz <= g1z; gz++) { const l = grid.get(gx + ',' + gz); if (!l) continue; for (const r of l) { if (shown.length >= cap) break; if (Math.hypot(r.x - P.x, r.z - P.z) > R2) continue; r.im.setMatrixAt(r.i, ZERO); touched.add(r.im); near.setMatrixAt(shown.length, r.m); if (r.c && near.instanceColor) near.setColorAt(shown.length, r.c); shown.push(r) } }
+    near.count = shown.length; near.visible = shown.length > 0; near.instanceMatrix.needsUpdate = true; if (near.instanceColor) near.instanceColor.needsUpdate = true; near.geometry.boundingSphere.center.set(P.x, P.y, P.z); near.geometry.boundingSphere.radius = R2 + 12;
+    touched.forEach(im => im.instanceMatrix.needsUpdate = true); touched.clear() };
+  ctx.upd.push(dt => { if ((t -= dt) > 0) return; t = .4; const P = AV.P; if (Math.hypot(P.x - lx, P.z - lz) > 3 || !near.count && shown.length === 0 && lx === 1e9) rebuild() });
+  R.lodStats = R.lodStats || { sets: 0 }; R.lodStats.sets++;
+  return grp;
 };
 /* the low-poly CC0 GLB versions of these species are replaced by the detailed procedural ones */
 const PREFER = /^quaternius\/(fern|bush|bush_flowers|flower_group|mushroom_a|palm_[abc])$/;

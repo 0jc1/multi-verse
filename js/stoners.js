@@ -210,7 +210,7 @@
   function spawnWorld(W) {
     if (!W || W.__stoners || W.noStoners) return; W.__stoners = true;   /* a world can opt out (Jerusalem: holy sites) */
     const ctx = W.ctx; if (!ctx || !W.surface || !AV.npc) return;
-    const q = ctx.q == null ? 2 : ctx.q, n = q === 0 ? 2 : 3;
+    const q = ctx.q == null ? 2 : ctx.q, n = q === 0 ? 1 : 2;
     const rng = AV.rng((AV.S.seed || 1) * 17 + hash(W.id) + (AV.S.day || 1) * 7);
     const smoke = AV.city && AV.city.smoke ? AV.city.smoke(ctx, q === 0 ? 48 : 96, { color: 0xd8ccff, opacity: .4 }) : null;
     const start = hash(W.id) % PROFILES.length;

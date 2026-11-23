@@ -101,7 +101,7 @@ MG.build = function (ctx) {
   const bodyB = K.merge([[SP, 0xffffff, K.M(0, .7, 0, .55, .62, .5)], [SP, 0x111111, K.M(-.18, .95, .44, .1, .12, .06)], [SP, 0x111111, K.M(.18, .95, .44, .1, .12, .06)], [SP, 0x111111, K.M(0, 1.05, .46, .07, .08, .05)]]);
   const bodyR = K.merge([[BX, 0xb8c0d0, K.M(0, .8, 0, .7, .8, .5)], [BX, 0x8a90a0, K.M(0, 1.45, 0, .45, .4, .4)], [BX, 0x4ad8ff, K.M(0, 1.47, .21, .32, .1, .02)], [CY, 0x5a5a6a, K.M(0, .2, 0, .3, .4, .3)], [BX, 0xc8a060, K.M(0, 1.35, -.4, .6, .5, .4)]]);
   const crowdM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, metalness: .1 }); crowdM.userData.lin = 1;
-  const ALC = [0x7aff8a, 0x4ad8ff, 0xc88aff, 0xff8ad8, 0xffd84a, 0x8affd8, 0xff8a3a, 0xb8a8ff], types = [[bodyA, [40, 70, 100][q]], [bodyB, [20, 34, 50][q]], [bodyR, [14, 22, 30][q]]], walkers = [];
+  const ALC = [0x7aff8a, 0x4ad8ff, 0xc88aff, 0xff8ad8, 0xffd84a, 0x8affd8, 0xff8a3a, 0xb8a8ff], types = [[bodyA, [28, 48, 68][q]], [bodyB, [14, 23, 34][q]], [bodyR, [10, 15, 20][q]]], walkers = [];
   const ims = types.map(([g, n], ti) => { const im = new THREE.InstancedMesh(g, crowdM, n); im.frustumCulled = false; for (let i = 0; i < n; i++) { im.setColorAt(i, dc.setHex(ti === 2 ? 0xffffff : ALC[(i * 3 + ti) % ALC.length]).convertSRGBToLinear()); const ln = lanesW[(i + ti * 3) % lanesW.length]; walkers.push({ im, i, ln, t: rng(), sp: (.012 + rng() * .02) * (rng() < .5 ? 1 : -1), off: (rng() - .5) * 8, ph: rng() * 6, sc: ti === 1 ? .8 + rng() * .5 : .9 + rng() * .25 }) } grp.add(im); return im });
   const m4 = new THREE.Matrix4(), qq = new THREE.Quaternion(), e3 = new THREE.Euler(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
   ctx.upd.push((dt, t) => {

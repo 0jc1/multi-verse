@@ -522,7 +522,7 @@ AV.registerWorld({
       const wr = nodes.length; chain([[178, -9], [178, -32], [199, -32], [199, -38], [178, -38]]); edges.push([a + 5, wr]);
       const fd = nodes.length; chain([[-97, -3], [-110, -3], [-125, -3.6], [-140, -6], [-160, -14], [-180, -10], [-195, 8], [-175, 20], [-155, 12], [-140, 6], [-125, 3.6], [-110, 3], [-97, 3]]); edges.push([idx['0,2,1,-1'], fd], [fd + 12, idx['0,2,1,1']]) }
     const NAV = CY.nav(nodes, edges);
-    const crowd = CY.crowd(ctx), nPed = [22, 40, 60][q];
+    const crowd = CY.crowd(ctx), nPed = [16, 28, 40][q];
     for (let i = 0; i < nPed; i++) { const n0 = nodes[rng() * nodes.length | 0]; crowd.add({ v: ['man', 'woman', 'tourist', 'woman', 'man'][i % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .2 }) }
     const monks = []; for (let i = 0; i < 5; i++) monks.push(crowd.add({ v: 'monk', x: 90 - i * 2.2, z: -6.6, route: [[90, -6.6], [-55, -6.6, 8, 'idle'], [-55, 6.6], [90, 6.6, 6, 'idle']], speed: .8 }));
     /* venue regulars: sitting / talking at the bars, the bazaar food court, the pool bar, Blue's band */

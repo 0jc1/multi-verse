@@ -50,7 +50,7 @@ CY.crowd = function (ctx, opt) {
     else if (w.route) { const p = w.route[w.ri]; tx = p[0]; tz = p[1] } else { w.moving = false; return }
     const dx = tx - w.x, dz = tz - w.z, d = Math.hypot(dx, dz);
     if (d < .3) {
-      if (w.nav) { const links = w.nav.links[w.to].filter(j => j !== w.from); w.from = w.to; w.to = links.length ? links[Math.random() * links.length | 0] : w.from; if (Math.random() < (w.idleProb == null ? .15 : w.idleProb)) { w.pause = 2 + Math.random() * 6; w.mode = Math.random() < .5 ? 'idle' : 'talk' } }
+      if (w.nav) { const links = w.nav.links[w.to].filter(j => j !== w.from); w.from = w.to; w.to = links.length ? links[Math.random() * links.length | 0] : w.from; if (Math.random() < (w.idleProb == null ? .06 : w.idleProb)) { w.pause = 3 + Math.random() * 7; w.mode = 'idle' } }
       else { const p = w.route[w.ri]; if (p[2]) { w.pause = p[2]; w.mode = p[3] || 'idle' } w.ri++; if (w.ri >= w.route.length) { if (w.loop === false) { w.route = null; w.ri = 0 } else w.ri = 0 } }
       w.moving = false; return;
     }
@@ -67,7 +67,7 @@ CY.crowd = function (ctx, opt) {
         if (d > far * .6 && (frameI + w.si) % 3 !== 0 && w.shown) { step(w, dt); continue }   // distant: animate every 3rd frame
         w.shown = true; step(w, d > far * .6 ? dt * 3 : dt); if (opt.H) w.y = opt.H(w.x, w.z) + (w.dy || 0);
         w.h.position.set(w.x, w.y + (w.mode === 'sit' ? -.38 : 0), w.z); w.h.rotation.y = w.yaw;
-        const active = w.react > 0 ? 'Wave' : (w.moving ? 'Walk' : (w.mode === 'dance' || w.v === 'dancer' ? 'Dance' : (w.mode === 'talk' || w.mode === 'splash' || w.mode === 'drum' ? 'Wave' : 'Idle')));
+        const active = w.react > 0 ? 'Wave' : (w.moving ? 'Walk' : (w.mode === 'dance' || w.v === 'dancer' ? 'Dance' : (w.mode === 'splash' || w.mode === 'drum' ? 'Wave' : 'Idle')));
         w.actor.play(active); if (w.react > 0) w.react = Math.max(0, w.react - dt); w.actor.mixer.update(dt);
       }
   });

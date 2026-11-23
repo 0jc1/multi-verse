@@ -115,7 +115,7 @@ function riderParts(x, y, z, shirt, helm, s, reach) {
 /* small helpers: o = fixed colour part, p = body-paint part */
 const pk = (col) => ({ o: (g, c, x, y, z, sx, sy, sz, rx, ry, rz, gl) => [g, c, M(x, y, z, sx, sy, sz, rx, ry, rz), gl || 0, 0], p: (g, x, y, z, sx, sy, sz, rx, ry, rz) => [g, col, M(x, y, z, sx, sy, sz, rx, ry, rz), 0, 1] });
 /* Thai three-wheeler: fibreglass nose over the front wheel, raked windscreen, driver bench, passenger tub + bench, chrome posts, canopy */
-VB.tuktuk = col => { const { o, p } = pk(col), out = [
+VB.tuktuk = (col, opt) => { const { o, p } = pk(col), out = [
   o(BX, 0x1e1e20, 0, .38, -.05, .9, .1, 2.2), [prof('tkN', [[.55, .32], [1.2, .36], [1.42, .55], [1.4, .82], [1.25, 1.02], [1.05, 1.06], [.75, .72], [.55, .62]], .82), col, null, 0, 1],
   o(CYL12, HEAD, 0, .84, 1.41, .1, .05, .1, PI2, 0, 0, 1), o(CYL12, CHROME, 0, .84, 1.39, .13, .05, .13, PI2), o(BX, 0xff9a1a, -.3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4), o(BX, 0xff9a1a, .3, 1.0, 1.3, .1, .06, .05, 0, 0, 0, .4),
   o(BX, 0x46586a, 0, 1.4, 1.1, 1.05, .6, .03, -.18), o(BX, CHROME, 0, 1.71, 1.05, 1.1, .04, .05), o(CYL6, 0x2a2a2a, 0, 1.08, .9, .022, .8, .022, 0, 0, PI2), p(BX, 0, 1.03, .98, .9, .1, .2),
@@ -125,7 +125,7 @@ VB.tuktuk = col => { const { o, p } = pk(col), out = [
   o(BX, CHROME, -.68, 1.03, -.7, .03, .04, 1.5), o(BX, CHROME, .68, 1.03, -.7, .03, .04, 1.5), o(BX, CHROME, 0, .5, -1.52, 1.3, .08, .06), o(BX, TAIL, -.5, .82, -1.51, .16, .1, .04, 0, 0, 0, .6), o(BX, TAIL, .5, .82, -1.51, .16, .1, .04, 0, 0, 0, .6), o(BX, PLATE, 0, .66, -1.51, .34, .12, .02),
   p(BX, 0, 1.94, -.12, 1.46, .07, 2.6), o(BX, 0x1c1c1e, 0, 1.99, -.12, 1.3, .04, 2.4), o(BX, CHROME, 0, 1.9, 1.19, 1.46, .1, .04), o(BX, CHROME, 0, 1.9, -1.43, 1.46, .1, .04)];
   for (const s of [-1, 1]) { out.push(o(CYL6, CHROME, s * .7, 1.45, 1.08, .025, 1.0, .025), o(CYL6, CHROME, s * .7, 1.47, -.1, .025, .9, .025), o(CYL6, CHROME, s * .7, 1.47, -1.36, .025, .9, .025), o(CYL6, CHROME, s * .7, 1.32, -.72, .02, 1.2, .02, PI2)); out.push(...wheel(s * .6, .27, -.85, .27, .16)) }
-  out.push(...wheel(0, .25, 1.1, .25, .14)); return vmerge(out.concat(riderParts(0, .76, .36, 0xe8e4da, 0x1a1a1a, .92, .55))) };
+  out.push(...wheel(0, .25, 1.1, .25, .14)); return vmerge(opt && opt.rider === false ? out : out.concat(riderParts(0, .76, .36, 0xe8e4da, 0x1a1a1a, .92, .55))) };
 /* automatic scooter (Click / Wave / Fino class): leg shield, footboard, under-seat body, bar cowl with headlight, mirrors */
 VB.scooter = (col, opt) => { const { o, p } = pk(col), out = [
   [prof('scA', [[.32, .4], [.55, .52], [.72, .78], [.74, 1.02], [.62, 1.08], [.48, .98], [.3, .6]], .44), col, null, 0, 1],

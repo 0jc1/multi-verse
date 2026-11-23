@@ -15,7 +15,10 @@ const KINDS = {
   bicycle: { n: L('Bicycle', 'Bicicleta'), icon: '🚲', top: 6, boost: 8.5, acc: 2.4, brake: 6, turn: 2.3, eye: 1.62, back: .25, horn: 'bell' },
   scooter: { n: L('Scooter', 'Moto'), icon: '🛵', top: 12.5, boost: 12.5, acc: 4.5, brake: 9, turn: 1.8, eye: 1.55, back: .28, horn: 'horn', engine: 'petrol', helmet: true },
   escooter: { n: L('E-scooter', 'Patinete eléctrico'), icon: '🛴', top: 6.5, boost: 6.5, acc: 3, brake: 7, turn: 2.5, eye: 1.78, back: 0, horn: 'bell', engine: 'electric' },
-  hover: { n: L('Hover scooter', 'Patinete flotante'), icon: '🛸', top: 9, boost: 9, acc: 4, brake: 5, turn: 2.6, eye: 1.85, back: 0, horn: 'chime', engine: 'hover' }
+  hover: { n: L('Hover scooter', 'Patinete flotante'), icon: '🛸', top: 9, boost: 9, acc: 4, brake: 5, turn: 2.6, eye: 1.85, back: 0, horn: 'chime', engine: 'hover' },
+  tuktuk: { n: L('Tuk-tuk', 'Tuk-tuk'), icon: '🛺', top: 9, boost: 10.5, acc: 3.2, brake: 8, turn: 1.5, eye: 1.55, back: -.36, horn: 'horn', engine: 'petrol' },
+  car: { n: L('Small car', 'Coche pequeño'), icon: '🚗', top: 15, boost: 17, acc: 4.2, brake: 10, turn: 1.25, eye: 1.2, back: -.3, horn: 'horn', engine: 'petrol' },
+  hoverbike: { n: L('Hover bike', 'Moto flotante'), icon: '🏍', top: 17, boost: 21, acc: 6.5, brake: 9, turn: 2, eye: 1.7, back: .3, horn: 'chime', engine: 'hover' }
 };
 const VEH = AV.veh = { KINDS };
 const st = () => { const S = AV.S; S.veh = S.veh || { list: [], n: 0 }; return S.veh };
@@ -26,8 +29,10 @@ const meshCache = {};
 function geoFor(kind, col) {
   const k = kind + col; if (meshCache[k]) return meshCache[k];
   let g;
-  if ((kind === 'bicycle' || kind === 'scooter') && CY && CY.VB && CY.VB[kind]) g = CY.VB[kind](col, { rider: false });
-  else {   /* kick e-scooter / hover scooter: deck, stem, bars, two small wheels (or a glow pad) */
+  if (/^(bicycle|scooter|tuktuk|car)$/.test(kind) && CY && CY.VB && CY.VB[kind]) g = CY.VB[kind](col, { rider: false });
+  else if (kind === 'hoverbike') {   /* sleek alien hover bike: teardrop body, cockpit, windscreen, two glowing ring pods */
+    const B = AV.kit.BG, M = AV.kit.M; g = AV.kit.merge([[B.sph, col, M(0, .55, 0, .38, .3, 1.15)], [B.sph, 0x1a1a24, M(0, .78, -.15, .24, .16, .5)], [B.box, 0x9ae8ff, M(0, .95, .55, .3, .22, .04, -.5, 0, 0)], [B.cyl, 0x2a2a32, M(0, .35, .75, .32, .12, .32, 0, 0, Math.PI / 2)], [B.cyl, 0x2a2a32, M(0, .35, -.75, .32, .12, .32, 0, 0, Math.PI / 2)], [B.cyl, 0xff4ad2, M(0, .2, .75, .34, .04, .34), 1], [B.cyl, 0x4ad8ff, M(0, .2, -.75, .34, .04, .34), 1], [B.box, 0x1a1a1a, M(0, 1.02, .42, .7, .04, .04)]]);
+  } else {   /* kick e-scooter / hover scooter: deck, stem, bars, two small wheels (or a glow pad) */
     const K = AV.kit, BX = K.BG.box, M = K.M, hov = kind === 'hover', parts = [[BX, col, M(0, hov ? .32 : .12, 0, .2, .05, .8)], [BX, 0x2a2a2e, M(0, hov ? .7 : .58, .38, .04, .95, .04, -.12, 0, 0)], [BX, 0x1a1a1a, M(0, hov ? 1.15 : 1.04, .44, .5, .035, .035)], [BX, 0xe8f0ff, M(0, hov ? .9 : .8, .44, .08, .05, .03), 1]];
     if (hov) parts.push([BX, 0x4ad8ff, M(0, .2, 0, .26, .03, .86), 1]);
     else parts.push([K.BG.cyl, 0x141414, M(0, .1, .36, .1, .05, .1, 0, 0, Math.PI / 2)], [K.BG.cyl, 0x141414, M(0, .1, -.36, .1, .05, .1, 0, 0, Math.PI / 2)]);
@@ -42,7 +47,7 @@ const mkMesh = (kind, col) => new THREE.Mesh(geoFor(kind, col), mat());
 let live = [];   // { rec, mesh, T }
 const valid = r => r.until >= AV.S.day;
 const fwd = yaw => [-Math.sin(yaw), -Math.cos(yaw)];
-function placeMesh(o, x, z, yaw, y, lean) { const k = KINDS[o.rec.kind], f = fwd(yaw); o.mesh.position.set(x + f[0] * k.back, y + (o.rec.kind === 'hover' ? .12 + Math.sin(AV.now() * 3) * .04 : 0), z + f[1] * k.back); o.mesh.rotation.set(0, yaw + Math.PI, lean || 0) }
+function placeMesh(o, x, z, yaw, y, lean) { const k = KINDS[o.rec.kind], f = fwd(yaw); o.mesh.position.set(x + f[0] * k.back, y + (/hover/.test(o.rec.kind) ? .12 + Math.sin(AV.now() * 3) * .04 : 0), z + f[1] * k.back); o.mesh.rotation.set(0, yaw + Math.PI, lean || 0) }
 function spawnParked(W, rec) {
   const o = { rec, mesh: mkMesh(rec.kind, rec.col) }; W.group.add(o.mesh); placeMesh(o, rec.x, rec.z, rec.yaw, W.surface(rec.x, rec.z) || 0);
   o.T = { x: rec.x, z: rec.z, r: 1.8, show: () => !ACT.cur && valid(rec), label: () => KINDS[rec.kind].icon + ' ' + tr('Ride your ', 'Montar: ') + say(KINDS[rec.kind].n).toLowerCase() + (rec.price ? tr(' (rented until midnight)', ' (alquiler hasta medianoche)') : ''), fn: () => VEH.ride(rec) };
@@ -61,6 +66,8 @@ VEH.rent = function (kind, x, z, yaw, opt) {
 /* give it back (at a stand): removes it everywhere */
 VEH.giveBack = function (rec) { if (!rec) return; if (ACT.cur && ACT.cur.id === 'ride' && ACT.cur.rec === rec) ACT.end('return'); const S = st(); S.list = S.list.filter(r => r !== rec); live.filter(o => o.rec === rec).forEach(dropLive) };
 VEH.ride = rec => ACT.start('ride', { rec });
+/* polish pass: a rented vehicle faces the most open direction (not a wall), preferring the stand's own heading */
+VEH.openYaw = function (W, x, z, pref) { let best = pref, bl = -1; for (let k = 0; k < 16; k++) { const yaw = pref + k / 16 * Math.PI * 2, f = [-Math.sin(yaw), -Math.cos(yaw)]; let l = 0; while (l < 14 && W.surface(x + f[0] * (l + 1), z + f[1] * (l + 1)) !== null && AV.isFree(W, x + f[0] * (l + 1), z + f[1] * (l + 1), .9)) l += 1; if (l > bl + .5) { bl = l; best = yaw } if (l >= 14) break } return best };
 
 /* ---------- the ride activity ---------- */
 let eng = null;
@@ -135,7 +142,7 @@ ACT.register('rental', { place(W, p) {
   const sp = fs(p.x, p.z, 2.2); if (!sp) return null; const [x, z] = sp, y = W.surface(x, z) || 0, ry = p.ry || 0, K = KINDS[p.kind], g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry;
   /* a rack with three of them on display + a small sign post */
   const cols = p.cols || [0x2a6ad8, 0xc83a3a, 0x3a7a4a];
-  for (let i = 0; i < 3; i++) { const m = mkMesh(p.kind, cols[i % cols.length]); m.position.set(-1.1 + i * 1.1, p.kind === 'hover' ? .15 : 0, 0); g.add(m) }
+  for (let i = 0; i < 3; i++) { const m = mkMesh(p.kind, cols[i % cols.length]); m.position.set((-1.1 + i * 1.1) * (/car|tuktuk/.test(p.kind) ? 2.4 : /hoverbike/.test(p.kind) ? 1.5 : 1), /hover/.test(p.kind) ? .15 : 0, 0); g.add(m) }
   const post = new THREE.Mesh(AV.G.box, AV.std(0x3a3a3a, .6)); post.scale.set(.08, 2.4, .08); post.position.set(-2, 1.2, 0); g.add(post);
   const board = new THREE.Mesh(AV.G.box, AV.std(p.col || 0x2a9a7a, .5, 0, p.col || 0x2a9a7a, .3)); board.scale.set(.9, .55, .06); board.position.set(-2, 2.5, 0); g.add(board);
   AV.lin(g); W.group.add(g); W.circles.push([x, z, 1.9]);
@@ -149,7 +156,7 @@ ACT.register('rental', { place(W, p) {
       if (VEH.mine().some(q => q.kind === p.kind)) return AV.toast(tr('You already have one in this world: return it first, or ride the one you parked.', 'Ya tienes una en este mundo: devuélvela primero o usa la que aparcaste.'));
       if (p.price && !AV.txn(-p.price, say(K.n) + ' rental')) return;
       const s2 = fs(front[0] + Math.sin(ry) * 1.2, front[1] + Math.cos(ry) * 1.2, .6) || front;
-      VEH.rent(p.kind, s2[0], s2[1], ry + Math.PI, { price: p.price, stand: p.id, col: cols[(st().n) % cols.length] }) } });
+      VEH.rent(p.kind, s2[0], s2[1], VEH.openYaw(W, s2[0], s2[1], ry + Math.PI), { price: p.price, stand: p.id, col: cols[(st().n) % cols.length] }) } });
   return v } });
 
 /* rebuild your parked vehicles whenever you enter a world; rentals collected after midnight */

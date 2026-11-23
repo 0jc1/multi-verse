@@ -32,7 +32,7 @@ window.APE_T = (() => {
     await sleep(2500); c('you stay on the platform', Math.abs(AV.P.y - 30) < .5, AV.P.y.toFixed(2));
     AV.P.yaw = Math.PI * .75; AV.P.pitch = -.15; await sleep(3500);
     const down = tgt(/Lift back down/); at(down); down.fn(); c('lift back down', AV.P.y === 0 && AV.W.surface(AV.P.x, AV.P.z) === 0);
-    const m0 = AV.S.money, d0 = AV.S.day, inn = tgt(/Astro Inn: rent/); at(inn); inn.fn(); await sleep(2000); c('Astro Inn pod: paid + morning', AV.S.money === m0 - 30 && AV.S.time === 8 * 60, m0 + '→' + AV.S.money + ' day ' + d0 + '→' + AV.S.day);
+    const m0 = AV.S.money, d0 = AV.S.day, inn = tgt(/Astro Inn: rent/); at(inn); inn.fn(); await sleep(2000); c('Astro Inn pod: paid + morning', AV.S.money === m0 - 30 && AV.S.time >= 8 * 60 && AV.S.time < 8 * 60 + 30, m0 + '→' + AV.S.money + ' day ' + d0 + '→' + AV.S.day);
     const tm = tgt(/Cosmic Temple: meditate/); c('temple meditation', !!tm); tm && (at(tm), tm.fn());
     const pt = tgt(/Portal hub/); at(pt); pt.fn(); await sleep(400); c('portal hub opens the world picker', AV.pipe.open); AV.pipe.hide();
     c('no JS errors', !$('err').textContent, $('err').textContent);

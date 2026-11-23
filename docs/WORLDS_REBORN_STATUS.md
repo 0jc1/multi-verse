@@ -233,6 +233,75 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
   - `speechSynthesis` NPC voices.
   - Build ID on the F3 overlay.
 
+
+### Polish pass on the existing worlds (`suite_polish.js` 92/92; regression: madrid 78/78, astro9_mega 25/25, astro9_d2 23/23, minimap 41/41, vehicles 52/52, astro9_metro 30/30, smoke 16/16)
+
+**Transport (`js/vehicles.js`, `js/transit.js`):**
+- **New rideable kinds:** tuk-tuk, small car and hover bike join the bicycle, scooter, e-scooter and hover scooter. A rented vehicle now spawns facing open street, not a wall.
+- **Rental stands now in:** Madrid (public bikes, e-scooters, moto sharing, car sharing), Chiang Mai (scooters, drive-it-yourself tuk-tuk), Pai (scooters, bicycles), Da Nang (bikes, plus the old scooter stand), Astro-9 (hover bikes, hover scooters), Ape Town (free e-scooters) and Koh Samui (jeep).
+- **Taxi / shuttle stands with fast travel:** pick any place or district from a list priced by distance, ride, and arrive there. One per world style:
+  - Madrid: taxis.
+  - Chiang Mai: tuk-tuk / songthaew.
+  - Pai: pickup taxi.
+  - Da Nang: motorbike taxi.
+  - Astro-9: hover taxi pads.
+  - Ape Town: free shuttle.
+  - Koh Samui: ranger jeep.
+  - Vienna: taxi.
+  - Jungle Dub: canoe ferry.
+- **Map integration:** the full map (J) has a fast-travel button on every place in those worlds, and taxi stands show on the minimap.
+- **Simplified:** driving is the same arcade model as the bikes. There are no gears or traffic rules, and you can't ride as a passenger; the taxis fade-cut rather than drive.
+
+**Madrid (`js/madrid_city.js`):**
+- **Storefronts:** a second 24-cell atlas of named storefronts in six sign styles: azulejo tiles, enamel plates, wood with gold letters, neon script, mounted letters, and cinema / theatre bulb marquees. Each district has its own mix, and storefronts pick from both atlases.
+- **Awnings and projecting signs:** awnings on cafés, bars, bakeries, fruit shops and fashion shops. Projecting double-sided signs include Hostal / Hotel, Bar, Café, Taberna, Teatro, Cine, a barber pole, Libros, an ice-cream cone, a bread sign and Mercado.
+- **Street furniture:** about 900 benches, 680 litter bins and 540 parked motorbikes, all instanced and distance-culled.
+- **Transport signs:** bus shelters with BUS discs on the avenues, newspaper kiosks, and a Metro rhombus on a pole at every station.
+- **Wayfinding:** blue posts at the big crossings pointing to the two nearest landmarks.
+- **Plazas:** new neighbourhood plazas, each with paving, a fountain, trees, a bench ring, a kiosk, talking groups and a busker or drummer. They are named on the map.
+- **People:** new walker types (students with backpacks, elderly people with canes, skaters, artists, aproned stall-holders, backpackers, shoppers, buskers), mixed per district. People sit on benches and at bus stops, a skate crew is at Madrid Río, and stall-holders work at San Miguel.
+- **Sky:** bluer.
+
+**Astro-9 (`js/astro9_more.js`):**
+- **Biotech Garden + Bio-Lab:** glowing flora; a shop for spore seeds and glowfruit.
+- **Alien Homes:** dome houses with round doors and gardens; you can knock on doors and pet the house pet.
+- **Club Subterra:** an underground interior with laser beams, a dancing crowd, a bar, playable DJ decks and a bass/hat sound layer.
+- **Sky bridge:** a walkable bridge 30 m up from the Sky Market to a Rooftop Orbit Bar with telescopes.
+- **Signage in five design languages:** flickering holograms, vertical alien-glyph banners, organic bio signs, hexagonal robot signs and tube-neon script.
+- **Wayfinding:** holo pillars with arrows, and five info kiosks that open the map.
+- **Crowd:** five new body types (four-armed giant, floating jelly, spider-bot, gremlin, hooded smuggler) walking every district, plus musicians, mechanics, monks and smugglers standing at their places.
+
+**Thai / Vietnamese / other worlds (`js/world_detail.js`, one shared layer, no world-file changes):**
+- **Plants and clutter:** flower, fern, bush and grass clusters on open ground. Against walls: potted plants, stacked plastic chairs, tiny Vietnamese stools, parked motorbikes and crates.
+- **Street furniture:** Thai and Vietnamese poles with sagging cable bundles, and Thai spirit houses where you can leave an offering.
+- **Strings:** lantern strings in Chiang Mai, Da Nang and Ape Town; prayer flags in Pai and Jungle Dub.
+- **People:** small local groups near the places: backpackers, vendors in aprons, monks, nón lá vendors, buskers.
+- **Worlds covered:** Chiang Mai, Pai, Da Nang, Ape Town, Jungle Dub, Koh Samui and Vienna.
+
+**Headless render budget (Low quality; the software renderer, not real FPS):**
+
+| View | Triangles | Draw calls |
+|---|---|---|
+| Madrid plaza | 0.8–1.2 M | 210–300 |
+| Madrid street / avenue | 1.1–1.2 M | 410–440 |
+| Astro-9 rooftop / Neon | 1.2 M | 590 |
+| Astro-9 Bio / Homes | 0.17 M | 60–75 |
+| Chiang Mai | 0.56 M | 260 |
+| Pai | 0.55 M | 380 |
+| Da Nang | 1.6 M | 335 (mostly the existing city) |
+| Ape Town | 0.46 M | 344 |
+
+**Still limited (honest):**
+- **Atlantis and Neon Nexus** are not built worlds; there is nothing there to polish. They stay "planned".
+- **Real FPS is unmeasured.** Astro-9 at 590 draw calls and Madrid at 440 are the likeliest to be heavy on a phone; F3 readings from the owner are needed.
+- **The detail layer is heuristic.** It places things where the ground is free next to walls, so placement isn't hand-authored. Da Nang and Ape Town have no street list for it to use, so they get no poles or strings.
+- **Characters:** the new walker types are still the light instanced bodies. The detailed rigged characters stay at a few busy spots for performance.
+- **Not done this pass:**
+  - Enterable shops in Madrid, apart from the existing venues.
+  - Buses that you can ride.
+  - Moving metro trains between the new stations.
+  - Vienna, Verdalux and Nimbus beyond the detail layer.
+  - Jerusalem and the Judean Desert, which are 0jc1's worlds.
 ## World IDs
 
 - **Registered:** the 26 IDs in `data/worlds.json`. Pai is now `playable`.
@@ -242,7 +311,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 
 1. **Owner:** play-test basketball, Songkran, the minimap, the DJ mixer, the Astro-9 plaza and Pai on the real laptop and phone. Report the F3 FPS readings.
 2. **Pai:** owner play-test; then texture and interior polish, and a scenic road transition.
-3. **Next:** play-test continuous Madrid + the Astro-9 megacity on real hardware (F3 FPS); then Madrid interiors / buses, Astro-9 underground club + biotech gardens + walkable sky bridges, chunk streaming for Astro-9.
+3. **Next:** owner play-test of the polish pass (Madrid streets + plazas, Astro-9 club / sky bridge, taxis + rentals in every world) with F3 FPS; then enterable Madrid shops, rideable buses, Vienna / Verdalux / Nimbus polish.
 
 ## Log (2026-11-23)
 
@@ -260,3 +329,4 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Madrid rebuilt as one continuous city (20+ neighbourhoods, landmarks, Spanish shop signage, 16 metro stations).
 - Full-screen map: zoom, pan, district names, A* street routes.
 - Astro-9 megacity (skyline, transit rings, Neon Boulevard, Astro Inn, Hangar + portal hub, Cosmic Temple, Sky Market).
+- Polish pass: transport in every real-world map (rentals + taxis + map fast travel), Madrid signage / furniture / plazas / people, Astro-9 Biotech Garden, Alien Homes, Club Subterra, sky bridge + rooftop, five sign languages, five new alien bodies; shared detail layer for the Thai / Vietnamese / hub worlds.

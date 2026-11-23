@@ -250,7 +250,7 @@ AV.registerWorld({
     };
     const startAmb = () => { if (!ok && A2 && AV.audio && AV.audio.ok) ok = A2.start(layers) }; startAmb(); ctx.upd.push(() => { if (!ok) startAmb() }); ctx.leave.push(() => { A2 && A2.stop(); ok = false });
     if (AV.media) { AV.media.ducks = (AV.media.ducks || []).filter(f => !f._md); const d = () => AV.W && AV.W.id === 'madrid' && A2 && A2.on ? Math.max(A2.lv.barmusic || 0, (A2.lv.busker || 0) * .7, A2.lv.metro || 0) : 0; d._md = 1; AV.media.ducks.push(d) }
-    return { name: 'Madrid', surface: surf, noStrangersAt: (x, z) => zone(x, z) === 'home' || zone(x, z) === 'metro', fog: [110, 820], sky: { tint: [0x8ab8ff, 0xa8c8f0, .16, .22], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .03, cloud: .3, glow: .4 } },
+    return { name: 'Madrid', surface: surf, noStrangersAt: (x, z) => zone(x, z) === 'home' || zone(x, z) === 'metro', fog: [110, 820], sky: { tint: [0x4a86e8, 0x9ab8e0, .42, .3], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .03, cloud: .3, glow: .4 } },
       arrivals: { default: { x: -30, z: -2, yaw: 0 }, pipe: { x: -30, z: -2, yaw: 0 }, ape_gate: { x: -30, z: -2, yaw: 0 }, sol: { x: 12, z: SZ + 6, yaw: Math.PI }, home: { x: FLAT.x + 4, z: FLAT.z, yaw: Math.PI / 2 } }, defaultArrival: 'default',
       noStrangersAt2: null, mapDistricts: city ? city.districts : null, mapNav: city ? city.nav : null,
       mapRoads: (city ? city.roads : []).concat([[-92, 0, 92, 0, 10], [0, 12, 0, 34, 6], [0, SZ - 22, 0, GV + 10, 10], [R.granvia[0], GV, R.granvia[1], GV, 18], [MX, GV - 10, MX, GV - 86, 10]]),

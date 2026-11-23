@@ -879,6 +879,7 @@ AV.registerWorld({
       speedMul: () => !AV.veh && S.cm && S.cm.scooter === S.day ? 2 : 1,   /* with vehicles.js the scooter is ridden for real instead */
       arrivals: { default: { x: 18, z: 46, yaw: Math.PI }, pipe: { x: 22, z: 45.6, yaw: Math.PI }, ape_gate: { x: PX + .5, z: 46.2, yaw: Math.PI }, here: here || { x: 18, z: 46, yaw: Math.PI } },
       defaultArrival: 'default',
+      mapRoads: ROADS,   /* V1.1: streets on the minimap (js/minimap.js) */
       places: [{ id: 'hostel', name: ['Giant Hostel', 'Giant Hostel'], x: 18, z: 46, yaw: Math.PI }, { id: 'gate', name: ['Tha Phae Gate', 'Puerta Tha Phae'], x: 132, z: 0, yaw: -Math.PI / 2 }, { id: 'bazaar', name: ['Night Bazaar', 'Night Bazaar'], x: 183, z: 11, yaw: Math.PI },
         { id: 'luang', name: ['Wat Chedi Luang', 'Wat Chedi Luang'], x: -28, z: 4, yaw: Math.PI }, { id: 'river', name: ['Ping River pier', 'Muelle del río Ping'], x: 252, z: 30, yaw: -Math.PI / 2 }, { id: 'field', name: ['Lantern Field', 'Campo de Farolillos'], x: -150, z: 0, yaw: Math.PI / 2 }, { id: 'pool', name: ['Rack & Roll Pool Bar', 'Bar de billar Rack & Roll'], x: 151, z: -3, yaw: 0 }],
       musicProfile: { bpm: 90, root: 45, scale: [0, 2, 4, 7, 9], style: 'boom' },

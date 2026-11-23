@@ -89,7 +89,7 @@ ACT.register('djbooth', { place(W, p) {
   W.circles.push([x, z, 1.4]); AV.lin(g); W.group.add(g);
   const front = [x + Math.sin(ry) * 1.4, z + Math.cos(ry) * 1.4], v = { type: 'dj', p, W, x, z, g };
   W.T.push({ x: front[0], z: front[1], r: 2.2, show: () => !ACT.cur, label: () => tr('🎧 DJ booth: play your own set (', '🎧 Cabina de DJ: pincha tu sesión (') + tr(p.name[0], p.name[1]) + ')', fn: () => ACT.start('dj', { v }) });
-  W.upd.push((dt, t) => { const on = ACT.cur && ACT.cur.id === 'dj' && ACT.cur.v === v && DJ.playing(); decks.forEach((d, i) => d.rotation.y += dt * (on ? (i ? 3.4 : -3.4) : 0)); glow.material.emissiveIntensity = on ? .6 + (A.beat % 1 < .2 ? 1.4 : 0) : .5 });
+  W.upd.push((dt, t) => { const on = ACT.cur && ACT.cur.id === 'dj' && ACT.cur.v === v && AV.dj.playing();   /* AV.dj: the full mixer (dj_mixer.js) when loaded */ decks.forEach((d, i) => d.rotation.y += dt * (on ? (i ? 3.4 : -3.4) : 0)); glow.material.emissiveIntensity = on ? .6 + (A.beat % 1 < .2 ? 1.4 : 0) : .5 });
   if (W.ctx && W.ctx.sign) W.ctx.sign('DJ · ' + tr(p.name[0], p.name[1]).toUpperCase(), x - Math.cos(ry) * 2.6, y + 2.6, z + Math.sin(ry) * 2.6, ry, 3.6, '#ff8ac0', { posts: true });
   return v } });
 

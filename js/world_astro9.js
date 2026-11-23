@@ -263,6 +263,7 @@ AV.registerWorld({
 
     /* ---------- V0.9.8: the districts beyond the dome ---------- */
     const ext = AV.astro9x ? AV.astro9x.build(ctx, { MT, ship }) : null;
+    const metro = AV.astro9m ? AV.astro9m.build(ctx, { MT }) : null;   /* V1.1 Worlds Reborn: the metropolis south of the station (js/astro9_metro.js) */
     /* Captain Rook's station tour: the dock beacons log each district platform you walk onto */
     if (ext) ctx.upd.push(() => { if ((S.quests || {}).station_tour !== 'active') return; for (const d of AV.astro9x.DIST) if (Math.hypot(AV.P.x - d.c[0], AV.P.z - d.c[1]) < d.r - 2) AV.quests.mark('station_tour', d.id) });
 
@@ -282,10 +283,10 @@ AV.registerWorld({
       nix.userData.aL.rotation.x = -1 + Math.sin(beat * Math.PI) * .4; nix.userData.aR.rotation.x = -1 + Math.cos(beat * Math.PI) * .4; nix.userData.head.rotation.z = Math.sin(beat * Math.PI) * .1;
       if (plazaUpd) plazaUpd(dt, t, beat) });
     ctx.leave.push(() => MD.resetFrames());
-    return { name: 'Astro-9 · Club Graviton', surface: (x, z) => Math.hypot(x, z) < R - 1 ? 0 : ext ? ext.surface(x, z) : null, fog: [40, 220], sky: { fixed: { bg: 0x05030f, fog: 0x0a0618, sun: .5, hs: .9, stars: 1, night: 1 }, dome: { s1: 0xff4ad2, s2: 0x4ac8ff, swirl: .6, cloud: .25, top: 0x0a0428, hor: 0x2a0a4a } },
+    return { name: 'Astro-9 · Club Graviton', surface: (x, z) => Math.hypot(x, z) < R - 1 ? 0 : ext && ext.surface(x, z) !== null ? 0 : metro ? metro.surface(x, z) : null, fog: [40, 220], sky: { fixed: { bg: 0x05030f, fog: 0x0a0618, sun: .5, hs: .9, stars: 1, night: 1 }, dome: { s1: 0xff4ad2, s2: 0x4ac8ff, swirl: .6, cloud: .25, top: 0x0a0428, hor: 0x2a0a4a } },
       post: { bloom: [.75, .4, 1.4], ldrThreshold: .86, grade: { exp: 1.05, con: 1.06, sat: 1.12, lift: [.01, .012, .035], gain: [1.02, .98, 1.05], vig: .35 } },
       gfxAssets: () => ({ tower: info.tower, aliens: info.aliens.slice() }), _plaza: { zib, orbo, x: PX, z: PZ },
-      places: (ext ? ext.places : []).concat([{ id: 'plaza', name: ['Gaudí Spiral Plaza', 'Plaza Espiral Gaudí'], x: PX + 11, z: PZ + 1, yaw: Math.PI / 2 }, { id: 'club', name: ['Club Graviton dance floor', 'Pista del Club Graviton'], x: 0, z: -12, yaw: 0 }, { id: 'dj', name: ['DJ Nix', 'DJ Nix'], x: 0, z: -24, yaw: 0 }, { id: 'casino', name: ['Casino (fictional points)', 'Casino (puntos ficticios)'], x: 22, z: 6, yaw: -Math.PI / 2 }, { id: 'art', name: ['Artwork bay', 'Bahía de arte'], x: -18, z: 16, yaw: Math.PI }]),
+      places: (ext ? ext.places : []).concat(metro ? metro.places : []).concat([{ id: 'plaza', name: ['Gaudí Spiral Plaza', 'Plaza Espiral Gaudí'], x: PX + 11, z: PZ + 1, yaw: Math.PI / 2 }, { id: 'club', name: ['Club Graviton dance floor', 'Pista del Club Graviton'], x: 0, z: -12, yaw: 0 }, { id: 'dj', name: ['DJ Nix', 'DJ Nix'], x: 0, z: -24, yaw: 0 }, { id: 'casino', name: ['Casino (fictional points)', 'Casino (puntos ficticios)'], x: 22, z: 6, yaw: -Math.PI / 2 }, { id: 'art', name: ['Artwork bay', 'Bahía de arte'], x: -18, z: 16, yaw: Math.PI }]),
       gravityAt: (x, z) => Math.hypot(x - CX, z - CZ) < 14.6 ? 0 : 1, zeroG: true, ceilingAt: (x, z) => Math.hypot(x - CX, z - CZ) < 14.6 ? 4.9 : null,   /* V0.9.7: TRUE zero gravity on Club Graviton */ arrivals: { default: { x: 0, z: 26, yaw: 0 }, pipe: { x: 0, z: 22, yaw: 0 }, ape_gate: { x: 0, z: 28, yaw: 0 } }, defaultArrival: 'default',
       musicProfile: { bpm: 124, root: 40, scale: [0, 3, 5, 7, 10], style: 'space' }, stage: { pos: { x: CX, y: 3, z: CZ - 10 } } };
   }

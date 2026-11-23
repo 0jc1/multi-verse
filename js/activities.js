@@ -37,7 +37,7 @@ const HIDE = ['tE', 'tK', 'tP', 'tW', 'tU', 'tN', 'tF', 'tZ'];   // phone button
 ACT.start = function (id, opt) {
   if (ACT.cur || AV.blocking() || !AV.W) return false; const def = ACT.types[id]; if (!def) return false;
   const s = ACT.cur = Object.assign({ id, def, t0: AV.now(), W: AV.W, press: false, score: 0 }, opt || {});
-  if (AV.device === 'phone') { bAct.textContent = def.btn ? tr(def.btn[0], def.btn[1]) : 'GO'; bAct.style.display = bExit.style.display = 'block'; HIDE.forEach(k => { const e = $(k); if (e) { e.dataset.actHid = e.style.display; e.style.display = 'none' } }) }
+  if (AV.device === 'phone') { bAct.textContent = def.btn ? tr(def.btn[0], def.btn[1]) : 'GO'; bAct.style.display = def.noAct ? 'none' : 'block'; bExit.style.display = 'block'; HIDE.forEach(k => { const e = $(k); if (e) { e.dataset.actHid = e.style.display; e.style.display = 'none' } }) }
   hud.style.display = 'block'; if (def.start) def.start(s); ACT.draw(); return true;
 };
 ACT.end = function (why) {

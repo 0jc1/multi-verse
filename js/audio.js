@@ -80,6 +80,7 @@ T.direct = function () {
   T.el.volume = Math.max(0, Math.min(1, v));
 };
 T.frame = function () {
+  if (A.hold) { if (T.el && !T.el.paused) T.el.pause(); return }   /* Living Playground: a DJ booth / instrument owns the music (A.hold), the world track waits */
   if (!T.active) return;
   if (!A.on) { if (T.el && !T.el.paused) T.el.pause(); return }
   if (!T.el || !T.el.src) { T.load(T.lastIdx[T.key] != null ? T.lastIdx[T.key] : 0); return }
@@ -139,7 +140,7 @@ A.update = function () {
   const src = T.active && T.pos ? T.pos : A.stage;
   if (panner && src && AV.W) { if (panner.positionX) { panner.positionX.value = src.x; panner.positionY.value = src.y; panner.positionZ.value = src.z } else panner.setPosition(src.x, src.y, src.z) }
   stageGain.gain.value = A.stage && !T.active ? 1 : 0;
-  if (T.active || !A.on || !A.prof || c.state !== 'running') return;          // a real track is playing (or loading): no synth
+  if (T.active || A.hold || !A.on || !A.prof || c.state !== 'running') return;          // a real track is playing (or loading): no synth
   const spb = 60 / A.bpm / 4;
   if (nextT < c.currentTime - .5) nextT = c.currentTime + .05;
   while (nextT < c.currentTime + .2) { stepFn(stepI, nextT); stepI++; nextT += spb }

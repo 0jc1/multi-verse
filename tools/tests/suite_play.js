@@ -38,6 +38,25 @@ window.APE_T = (() => {
     c('ball back on the rack, walking again', v.ball.parent === v.g && v.ball.position.distanceTo(v.rack) < .01);
     c('progress saved', (AV.S.act.hoops.made || 0) >= 2 && AV.S.act.hoops.att >= 3, JSON.stringify(AV.S.act.hoops));
   });
+  /* V1.1: the owner reported basketball does not work in live play. A human never releases at the exact ideal power, and the first
+     click after the menu used to only capture the mouse. These checks use the real input path and imperfect timing. */
+  step('human timing: click on the view, release anywhere in the green', async c => {
+    const v = venue(), t = tgt(/Basketball: pick up/); AV.P.x = t.x; AV.P.z = t.z; t.fn(); await sleep(150); const mb = document.querySelector('#cmp [data-m="casual"]'); mb && mb.click();
+    c('running', await until(() => AV.act.cur && AV.act.cur.id === 'hoops', 30000)); const s = AV.act.cur; if (!s) return; stand(v, 4.6); await sleep(100);
+    $('c').dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true })); c('first click on the game view starts charging (mouse not captured yet)', s.state === 'charge', s.state);
+    s.charge = AV.act._ideal(s) + .05; s.dir = 0; const m0 = s.made; window.dispatchEvent(new MouseEvent('mouseup', { button: 0 })); c('released near the edge of the green zone = perfect release', s.lastRel === 'perfect', s.lastRel);
+    AV.act._ff(4); c('…and it goes in', s.made === m0 + 1, s.made + ' / ' + s.att);
+    let inG = 0; for (const k of [-.055, -.03, .03, .055]) { if (await shot(AV.act._ideal(s) + k)) inG++ } c('4 / 4 releases inside the green score', inG === 4, inG + ' / 4');
+    let inY = 0; for (const k of [-.1, -.08, .08, .1]) { if (await shot(AV.act._ideal(s) + k)) inY++ } c('yellow zone: rim shots (in or out)', s.lastRel === 'good', inY + ' / 4 went in');
+    c('way off the zone misses', !(await shot(Math.min(1, AV.act._ideal(s) + .3))) && s.lastRel === 'off');
+    stand(v, 7.5); c('three-pointer released inside the green goes in', await shot(AV.act._ideal(s) - .04), 'score ' + s.score);
+    $('actLeave').click(); c('Leave works, walking again', !AV.act.cur && !AV.drive);
+  });
+  step('portal pipe only in hand when used (P)', async c => {
+    c('walking around: no pipe in hand', await until(() => AV.pipe.held.visible === false, 60000));
+    AV.keymap.KeyP(); c('P: pipe in hand + portal menu', AV.pipe.open && await until(() => AV.pipe.held.visible === true, 60000));
+    AV.keymap.KeyP(); c('P again: pipe put away', await until(() => !AV.pipe.open && AV.pipe.held.visible === false, 600000), JSON.stringify({ open: AV.pipe.open, puff: AV.pipe.puff, anim: AV.pipe.anim }));
+  });
   step('court view', async c => { const v = venue(); stand(v, 6); AV.P.pitch = .12; await sleep(2500); c('rendered', true) }, { shot: 'play_court_cm' });
 
   step('first to 5 vs the court regular', async c => {

@@ -1,0 +1,440 @@
+{
+  "schema": "design_seed_1",
+  "purpose": "Planning-only supplement. Inspect actual world registry; do not overwrite existing status or IDs.",
+  "reference_snapshot": "0jc1/multi-verse main inspected 2026-11-23; local may differ",
+  "worlds": [
+    {
+      "proposed_world_id": "astro9",
+      "title": "Astro-9 Megacity",
+      "era": "alien future",
+      "design_priority": "P1",
+      "user_reference_map": "REFERENCE_MAPS/Astro9_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Central Spiral Plaza",
+        "Intergalactic Bazaar",
+        "Club Graviton",
+        "Docking Bay",
+        "Cinema 9",
+        "Glassopy Observatory"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "chiang_mai",
+      "title": "Chiang Mai",
+      "era": "contemporary Thailand",
+      "design_priority": "P1",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Giant Hostel",
+        "Blues Bar",
+        "Panahan",
+        "Pineapple Express",
+        "Chada Vegetarian",
+        "Khun Kae Juice Bar",
+        "Wat temples"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "ape_town",
+      "title": "Ape Town",
+      "era": "psychedelic village hub",
+      "design_priority": "P1",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Circular Plaza",
+        "Stone Ape Band",
+        "Gallery Gardens",
+        "Outdoor Cinema"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "jungle_dub",
+      "title": "Jungle Dub / Jungle Rave",
+      "era": "psychedelic dub jungle",
+      "design_priority": "P2",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Roots Village",
+        "Main Dub Stage",
+        "River Bar",
+        "Floating Bungalows"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "madrid",
+      "title": "Madrid / Pinar",
+      "era": "contemporary Spain",
+      "design_priority": "P2",
+      "user_reference_map": "REFERENCE_MAPS/Madrid_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Pinar de Chamartín",
+        "Cuatro Torres",
+        "Sol",
+        "Gran Vía",
+        "Malasaña",
+        "Retiro",
+        "Madrid Río"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "pai",
+      "title": "Pai",
+      "era": "contemporary Thailand",
+      "design_priority": "P2",
+      "user_reference_map": "REFERENCE_MAPS/Pai_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Pai Walking Street",
+        "Sunset Bar",
+        "Paradise Circus",
+        "Rainny Café",
+        "Ganita Café?",
+        "Tea & Drum Circle",
+        "Pai River Jam Hostel"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "ibiza",
+      "title": "Ibiza Flower Power",
+      "era": "1969 hippie island",
+      "design_priority": "P3",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Dalt Vila",
+        "Sant Antoni",
+        "Cala Tarida",
+        "El Palmarar Memory House",
+        "Benirràs",
+        "Es Vedrà"
+      ],
+      "build_status": "must_audit_actual_repository",
+      "previous_generated_reference": "PREVIOUS_GENERATED_MAPS/Ibiza_OLDER_modern_concept_UPDATE_TO_1969.png",
+      "note": "Previous illustration shows modern nightlife; must be REDRAWN for 1969 flower-power period."
+    },
+    {
+      "proposed_world_id": "koh_tao",
+      "title": "Koh Tao Memories",
+      "era": "2022 Thailand",
+      "design_priority": "P3",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Mae Haad Port",
+        "Memory Hostel",
+        "Chloe Dive School",
+        "Sairee Beach",
+        "Shark Bay",
+        "Tanote Bay"
+      ],
+      "build_status": "must_audit_actual_repository",
+      "previous_generated_reference": "PREVIOUS_GENERATED_MAPS/Koh_Tao_2022_previous_concept.png",
+      "note": "The generated Black Reef Hostel name is fictional; actual hostel name unknown."
+    },
+    {
+      "proposed_world_id": "alien_maze_x9",
+      "title": "Alien Maze Planet X-9",
+      "era": "fictional alien maze",
+      "design_priority": "P4",
+      "user_reference_map": "REFERENCE_MAPS/Alien_Maze_X9_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Ape Base",
+        "Floating Temple",
+        "Crystal Gardens",
+        "UFO Docks",
+        "Mushroom Caves",
+        "Gravity Club"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "atlantis",
+      "title": "Atlantis",
+      "era": "fictional sea/underwater city",
+      "design_priority": "P4",
+      "user_reference_map": "REFERENCE_MAPS/Atlantis_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Crystal Palace",
+        "Central Plaza",
+        "Whale Sanctuary",
+        "Coral Gardens",
+        "Submarine Docks"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "neon_nexus",
+      "title": "Neon Nexus",
+      "era": "24-hour fictional cyber nightlife",
+      "design_priority": "P4",
+      "user_reference_map": "REFERENCE_MAPS/Neon_Nexus_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Nexus Casino",
+        "Synthwave Strip",
+        "Holo Sports Arena",
+        "Mirage Market",
+        "Portal Hub"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "mayan",
+      "title": "Mayan Canal City",
+      "era": "fictional Classical Maya-inspired",
+      "design_priority": "P4",
+      "user_reference_map": "REFERENCE_MAPS/Mayan_Canal_City_user_map.png",
+      "illustrative_map_status": "provided",
+      "candidate_points_of_interest": [
+        "Central Pyramid",
+        "Stone Ballcourt",
+        "Canal Markets",
+        "Jungle Temples",
+        "Boat Dock"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "hanoi",
+      "title": "Hanoi",
+      "era": "contemporary Vietnam",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Old Quarter",
+        "Hoàn Kiếm Lake",
+        "Water Puppet Theater",
+        "Long Biên Bridge",
+        "Temple of Literature"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "cat_ba",
+      "title": "Cat Ba / Lan Ha Bay",
+      "era": "contemporary Vietnam",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Cat Ba Harbor",
+        "Lan Ha Karsts",
+        "Kayak Lagoon",
+        "National Park Trails",
+        "Viet Hai Village"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "amsterdam_2077",
+      "title": "Amsterdam 2077",
+      "era": "fictional future Netherlands",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Centraal",
+        "Dam Square",
+        "Jordaan",
+        "Canal Ring",
+        "Vondelpark",
+        "Kings Day Festival"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "venice_festival",
+      "title": "Venice New Year",
+      "era": "festival modes Italy",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Rialto Bridge",
+        "Piazza San Marco",
+        "Grand Canal",
+        "Murano/Burano ferry",
+        "New Year Event"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "new_york_1926",
+      "title": "New York 1926",
+      "era": "Prohibition-era United States",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Harlem Jazz",
+        "Broadway",
+        "Lower East Side",
+        "Speakeasy",
+        "Brooklyn Bridge"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "stonehenge_eras",
+      "title": "Stonehenge Across Time",
+      "era": "c2500 BCE + other distinct windows",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Stone Circle",
+        "Neolithic Farmers",
+        "Early Forest Camp",
+        "Later Folklore Grove"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "angkor",
+      "title": "Angkor",
+      "era": "ruins + Khmer historical portal",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Angkor Wat",
+        "Bayon",
+        "Ta Prohm",
+        "Water Reservoirs",
+        "Historic Portal"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "egypt_ages",
+      "title": "Egypt Through Ages",
+      "era": "Old Kingdom/New Kingdom/Ptolemaic",
+      "design_priority": "P5",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Giza Old Kingdom",
+        "Thebes/Luxor New Kingdom",
+        "Alexandria Ptolemaic",
+        "Nile Time River"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "koh_samui_jurassic",
+      "title": "Koh Samui Jurassic",
+      "era": "fictional Jurassic period",
+      "design_priority": "P6",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Dino Valley",
+        "Fern Cathedral",
+        "Great Lagoon",
+        "Nesting Cliffs",
+        "Time Portal"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "bangkok",
+      "title": "Bangkok",
+      "era": "contemporary Thailand OPTIONAL",
+      "design_priority": "P6_OPTIONAL",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Chao Phraya",
+        "Wat Arun",
+        "Khao San",
+        "Yaowarat",
+        "BTS"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "resonara",
+      "title": "Resonara",
+      "era": "original musical fantasy planet",
+      "design_priority": "P6",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Soundwave Bridges",
+        "Drum Forest",
+        "Echo Lake",
+        "Melody Village",
+        "Sonic City"
+      ],
+      "build_status": "must_audit_actual_repository"
+    },
+    {
+      "proposed_world_id": "nomad_7",
+      "title": "Nomad-7",
+      "era": "original mobile mechanical metropolis",
+      "design_priority": "P6",
+      "user_reference_map": null,
+      "illustrative_map_status": "needs_separate_illustration",
+      "candidate_points_of_interest": [
+        "Engine Cathedral",
+        "Brass Market",
+        "Rooftop Tea Garden",
+        "Caravan Landing",
+        "Observation Spire"
+      ],
+      "build_status": "must_audit_actual_repository"
+    }
+  ],
+  "optional_world_connections": [
+    {
+      "from_world": "chiang_mai",
+      "to_world": "pai",
+      "travel_mode": "minivan_or_condensed_scooter_road",
+      "pipe_entries_always_separate": true
+    },
+    {
+      "from_world": "pai",
+      "to_world": "jungle_dub",
+      "travel_mode": "hidden_forest_road_or_trail",
+      "pipe_entries_always_separate": true
+    },
+    {
+      "from_world": "hanoi",
+      "to_world": "cat_ba",
+      "travel_mode": "bus_and_ferry_cutscene",
+      "pipe_entries_always_separate": true
+    },
+    {
+      "from_world": "koh_tao",
+      "to_world": "atlantis",
+      "travel_mode": "optional_fantasy_diving_portal",
+      "pipe_entries_always_separate": true
+    },
+    {
+      "from_world": "ibiza",
+      "to_world": "atlantis",
+      "travel_mode": "optional_underwater_portal",
+      "pipe_entries_always_separate": true
+    },
+    {
+      "from_world": "astro9",
+      "to_world": "alien_maze_x9",
+      "travel_mode": "spacestation_shuttle_or_portal",
+      "pipe_entries_always_separate": true
+    }
+  ]
+}

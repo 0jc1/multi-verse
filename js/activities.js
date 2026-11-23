@@ -50,7 +50,9 @@ const press = v => { const s = ACT.cur; if (!s || AV.blocking() || s.press === v
 /* input: capture phase, so the activity owns Esc / F / left mouse while it runs (punch + festival keys stay quiet) */
 addEventListener('keydown', e => { if (!ACT.cur || AV.blocking() || e.target.tagName === 'INPUT') return; if (e.code === 'Escape') { e.stopImmediatePropagation(); ACT.end('leave') } else if (e.code === 'KeyF') { e.stopImmediatePropagation(); e.preventDefault(); if (!e.repeat) press(true) } }, true);
 addEventListener('keyup', e => { if (ACT.cur && e.code === 'KeyF') press(false) }, true);
-addEventListener('mousedown', e => { if (ACT.cur && e.button === 0 && document.pointerLockElement === $('c')) { e.stopImmediatePropagation(); press(true) } }, true);
+/* left mouse works at once: also when the mouse is not captured yet (e.g. right after a menu), a click on the game view
+   both starts the action and captures the mouse (it used to only capture it, so the first click of every activity did nothing) */
+addEventListener('mousedown', e => { if (!ACT.cur || e.button !== 0) return; const c = $('c'); if (document.pointerLockElement === c || e.target === c) { e.stopImmediatePropagation(); if (document.pointerLockElement !== c && !AV.blocking()) AV.lock(); press(true) } }, true);
 addEventListener('mouseup', e => { if (ACT.cur && e.button === 0) press(false) }, true);
 bAct.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); press(true) }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => bAct.addEventListener(n, () => press(false)));
 bExit.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); ACT.end('leave') });
@@ -115,7 +117,7 @@ ACT.register('hoops', {
   },
   update(s, dt, t) {
     const v = s.v; if (s.mode === 'timed' && AV.now() >= s.tEnd && s.state !== 'over') return finish(s);
-    if (s.state === 'charge') { s.charge += s.dir * dt / 1.1; if (s.charge >= 1) { s.charge = 1; s.dir = -1 } else if (s.charge <= 0) { s.charge = 0; s.dir = 1 } }
+    if (s.state === 'charge') { s.charge += s.dir * dt / METER_T; if (s.charge >= 1) { s.charge = 1; s.dir = -1 } else if (s.charge <= 0) { s.charge = 0; s.dir = 1 } }
     if (s.state === 'hold' || s.state === 'charge') { const c = AV.cam, b = s.ball; b.position.set(.22, -.22, -.55); if (b.parent !== c) c.add(b) }
     if (s.flight) stepFlight(s, s.flight, dt);
     if (s.npcShot) stepFlight(s, s.npcShot, dt);
@@ -129,7 +131,7 @@ ACT.register('hoops', {
     if (s.mode === 'timed') top += tr('60-second challenge', 'Reto de 60 segundos') + ' · <b>' + s.score + '</b> ' + tr('pts', 'pts') + ' · ' + Math.max(0, Math.ceil(s.tEnd - AV.now())) + ' s · ' + tr('best ', 'récord ') + (S.best60 || 0);
     else if (s.mode === 'npc') top += tr('First to 5 vs ', 'Primero a 5 contra ') + s.v.p.npc[0] + ' · ' + tr('you ', 'tú ') + '<b>' + s.made + '</b> – <b>' + s.npcScore + '</b> ' + (s.turn === 'you' ? tr('· your shot', '· te toca') : tr('· their shot', '· le toca'));
     else top += tr('Casual shooting', 'Tiro libre') + ' · ' + s.made + ' / ' + s.att + (s.streak > 1 ? ' · ' + tr('streak ', 'racha ') + s.streak : '');
-    const meter = '<div class="meter"><div class="zone" style="left:' + Math.max(0, (ideal - .05) * 100).toFixed(1) + '%;width:10%"></div><div class="fill" style="width:' + (s.charge * 100).toFixed(1) + '%"></div></div>';
+    const meter = '<div class="meter"><div class="zone" style="left:' + Math.max(0, (ideal - GOOD) * 100).toFixed(1) + '%;width:' + (GOOD * 200) + '%;background:rgba(255,216,74,.55)"></div><div class="zone" style="left:' + Math.max(0, (ideal - PERFECT) * 100).toFixed(1) + '%;width:' + (PERFECT * 200) + '%"></div><div class="fill" style="width:' + (s.charge * 100).toFixed(1) + '%"></div></div>';
     const hint = AV.device === 'phone' ? tr('Aim with your view · hold SHOOT, release in the green', 'Apunta con la vista · mantén TIRAR y suelta en el verde') : tr('Aim at the hoop · hold click or F, release in the green · Esc leaves', 'Apunta al aro · mantén clic o F, suelta en el verde · Esc para salir');
     return top + meter + '<small>' + (s.msg ? s.msg + ' · ' : '') + d.toFixed(1) + ' m' + (three ? ' · 3 pts' : '') + ' · ' + hint + '</small>';
   }
@@ -154,7 +156,7 @@ function distToRim(s) { const h = hoopFor(s); return Math.hypot(h.rim.x - AV.P.x
 /* release point: from the player's eyes along the view (computed from AV.P, so it never lags a frame behind the camera) */
 const EYE = 1.69;
 function launchPos(out) { const P = AV.P, cp = Math.cos(P.pitch); _f.set(-Math.sin(P.yaw) * cp, Math.sin(P.pitch), -Math.cos(P.yaw) * cp); return out.set(P.x, P.y + EYE, P.z).addScaledVector(_f, .45).add(_v.set(0, -.12, 0)) }
-const ANG = 58 * Math.PI / 180, VMIN = 4, VMAX = 14;   /* a high arc: the ball drops in steeply enough to clear the front rim */
+const ANG = 58 * Math.PI / 180, VMIN = 4, VMAX = 14, METER_T = 1.5, PERFECT = .06, GOOD = .12, AIM_ASSIST = .35;   /* a high arc: the ball drops in steeply enough to clear the front rim */
 const aimPt = h => ({ x: h.rim.x, y: h.rim.y + .02, z: h.rim.z });   /* the centre of the ring: with a 58° arc it clears both the front and the back rim */
 function idealSpeed(s, from, h) { const a = aimPt(h), d = Math.hypot(a.x - from.x, a.z - from.z), dy = a.y - from.y, den = 2 * Math.cos(ANG) ** 2 * (d * Math.tan(ANG) - dy); return den > 0 ? Math.sqrt(s.v.grav * d * d / den) : VMAX }
 function idealCharge(s) { const sc = Math.sqrt(s.v.grav / 9.8), p = launchPos(new THREE.Vector3()); return Math.max(0, Math.min(1, (idealSpeed(s, p, hoopFor(s)) / sc - VMIN) / (VMAX - VMIN))) }
@@ -163,10 +165,16 @@ ACT._ideal = s => idealCharge(s);   // used by tests (and could drive an "easy m
 ACT._ff = secs => { const s = ACT.cur; if (!s) return; for (let i = 0; i < secs * 60 && ACT.cur === s; i++) s.def.update(s, 1 / 60, 0); s.lastT = AV.now() };
 function holdBall(s) { s.state = 'hold'; s.charge = 0; const b = s.ball; AV.cam.add(b); b.position.set(.22, -.22, -.55) }
 function shoot(s) {
-  const v = s.v, h = hoopFor(s), b = s.ball, p0 = launchPos(new THREE.Vector3()), sc = Math.sqrt(v.grav / 9.8), speed = (VMIN + s.charge * (VMAX - VMIN)) * sc;
+  const v = s.v, h = hoopFor(s), b = s.ball, p0 = launchPos(new THREE.Vector3()), sc = Math.sqrt(v.grav / 9.8);
+  /* V1.1 fix (owner: "basketball doesn't work"): a ball only drops in within about ±1% of the ideal speed, far tighter than a human can
+     time a moving meter. So the meter is forgiving, as in arcade basketball: release in the GREEN zone = the ideal speed (swish),
+     in the YELLOW zone = 1.2% off (rattles on the rim, sometimes in), elsewhere = the raw power you charged (a real miss). */
+  const ideal = idealSpeed(s, p0, h), err = s.charge - idealCharge(s), aerr = Math.abs(err);
+  const speed = aerr <= PERFECT ? ideal : aerr <= GOOD ? ideal * (1 + Math.sign(err) * .012) : (VMIN + s.charge * (VMAX - VMIN)) * sc;
+  s.lastRel = aerr <= PERFECT ? 'perfect' : aerr <= GOOD ? 'good' : 'off';
   AV.cam.remove(b); v.g.add(b); b.position.copy(p0);
-  /* direction: your view's heading; within 12° of the hoop it snaps to the hoop (gentle assist), launch angle fixed at 52° */
-  const ap = aimPt(h), yawHoop = Math.atan2(ap.x - p0.x, ap.z - p0.z), yawView = Math.atan2(-Math.sin(AV.P.yaw), -Math.cos(AV.P.yaw)); let dyaw = Math.atan2(Math.sin(yawHoop - yawView), Math.cos(yawHoop - yawView)); const yaw = Math.abs(dyaw) < .21 ? yawHoop : yawView;
+  /* direction: your view's heading; within 20° of the hoop it snaps to the hoop (aim assist), launch angle fixed at 58° */
+  const ap = aimPt(h), yawHoop = Math.atan2(ap.x - p0.x, ap.z - p0.z), yawView = Math.atan2(-Math.sin(AV.P.yaw), -Math.cos(AV.P.yaw)); let dyaw = Math.atan2(Math.sin(yawHoop - yawView), Math.cos(yawHoop - yawView)); const yaw = Math.abs(dyaw) < AIM_ASSIST ? yawHoop : yawView;
   const vel = new THREE.Vector3(Math.sin(yaw) * Math.cos(ANG), Math.sin(ANG), Math.cos(yaw) * Math.cos(ANG)).multiplyScalar(speed);
   s.flight = { b, pos: b.position, vel, t: 0, h, scored: false, who: 'you', from: Math.hypot(h.rim.x - p0.x, h.rim.z - p0.z), bounces: 0 };
   s.state = 'flight'; s.att++; s.msg = ''; blip(220, .08, 'sine', .12);

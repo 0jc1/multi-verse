@@ -9,7 +9,7 @@ const $ = AV.$, tr = AV.tr, TAU = AV.TAU, cam = AV.cam, scene = AV.scene;
 const PP = AV.pipe = { open: false, portal: null, anim: 0, puff: -1, smokeOn: 0 };
 
 /* ======================= held pipe (child of the camera) ======================= */
-const held = new THREE.Group(); held.scale.setScalar(.7); cam.add(held);
+const held = new THREE.Group(); held.scale.setScalar(.7); cam.add(held); PP.held = held;
 const bowlTex = AV.mkc(128, c => { const g = c.createLinearGradient(0, 0, 128, 0); ['#ff4ad2', '#ffb04a', '#ffe94a', '#4aff9a', '#4ac8ff', '#9a5cff', '#ff4ad2'].forEach((h, i) => g.addColorStop(i / 6, h)); c.fillStyle = '#4a2410'; c.fillRect(0, 0, 128, 128); c.fillStyle = g; for (let i = 0; i < 5; i++) { c.save(); c.translate(0, 18 + i * 24); c.beginPath(); for (let x = 0; x <= 128; x += 4) c.lineTo(x, Math.sin(x / 128 * TAU * 2 + i) * 5); c.lineTo(128, 8); c.lineTo(0, 8); c.fill(); c.restore() } });
 (function () {
   const wood = new THREE.MeshStandardMaterial({ color: 0x6a3416, roughness: .45, map: bowlTex, emissive: 0x2a0a20, emissiveIntensity: .4 }), brass = AV.std(0xe0b04a, .3, .9), glow = AV.std(0xff7a30, .4, 0, 0xff5a10, 1.6);
@@ -146,7 +146,9 @@ AV.keymap.KeyP = PP.toggle;
 const bowlW = new THREE.Vector3(); let wisp = 0;
 AV.frameFns.push((dt, t) => {
   const red = AV.S.set.reduce, viewer = AV.modals.some(m => m.id === 'viewer' || m.id === 'cinema');
-  held.visible = !viewer;
+  /* V1.1 (Worlds Reborn §29): the pipe is only in your hand while you use it (P / phone Pipe opens the portal menu, or a puff is playing);
+     otherwise your hands are free for whatever you equip from the backpack */
+  held.visible = !viewer && (PP.open || PP.puff >= 0 || PP.anim > .03);
   /* smoking sequence: 0..0.75 raise + inhale, 0.75..1.0 lower + exhale burst */
   let raise = 0;
   if (PP.puff >= 0) {

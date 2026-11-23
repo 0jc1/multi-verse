@@ -87,7 +87,7 @@ window.APE_T = (() => {
 
   step('normal mode + tuk-tuks + portal home', async c => {
     closeAll(); AV.cm.modePanel(); await sleep(200); $('cmp').querySelector('[data-m="normal"]').click(); c('back to normal city', await until(() => AV.S.cmMode === 'normal' && settled(), 25000)); await sleep(1500);
-    place(-5.5, 48.5); const m0 = AV.S.money; AV.cm.tukPanel('hostel'); await sleep(200); $('cmp').querySelector('[data-s="river"]').click(); await sleep(300); AV.cm.skipRide && AV.cm.skipRide(); await sleep(300); c('tuk-tuk to the Ping River (30 credits)', Math.hypot(AV.P.x - 252, AV.P.z - 22) < 3 && AV.S.money === m0 - 30);
+    place(-5.5, 48.5); const m0 = AV.S.money; AV.cm.tukPanel('hostel'); await sleep(200); $('cmp').querySelector('[data-s="river"]').click(); await sleep(300); AV.cm.skipRide && AV.cm.skipRide(); await sleep(300); c('tuk-tuk to the Ping River (distance fare, 55 credits)', Math.hypot(AV.P.x - 252, AV.P.z - 22) < 3 && AV.S.money === m0 - 55, m0 - AV.S.money);
     place(16, 48); AV.cm.portalPanel(); await sleep(200); const b = $('cmp').querySelector('[data-w="ape_town"]'); c('portal lists Ape Town', !!b); b && b.click();
     c('portal returns to Ape Town (Portal Grove)', await until(() => AV.W && AV.W.id === 'ape_town' && settled(), 25000)); c('arrives at the Chiang Mai gate', Math.hypot(AV.P.x - 72.2, AV.P.z + 63.8) < 6, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1));
   });

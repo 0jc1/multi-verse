@@ -16,7 +16,7 @@ const tr = AV.tr, TAU = Math.PI * 2, L = (e, s) => [e, s];
 const MO = AV.astro9more = {};
 const BIO = { x: 180, z: 150, r: 30 }, BPATH = [175, 185, 102, 124], HOME = { x: -180, z: 150, r: 32 }, HPATH = [-185, -175, 102, 122], CLUB = [-80, -28, 236, 274], CYO = -30, BRIDGE = [246, 290, 52, 60], ROOF = { x: 300, z: 56, r: 14, y: 30 };
 const inR = (x, z, r, p) => x >= r[0] - (p || 0) && x <= r[1] + (p || 0) && z >= r[2] - (p || 0) && z <= r[3] + (p || 0), hyp = (x, z, c) => Math.hypot(x - c.x, z - c.z);
-MO.surface = (x, z) => (inR(x, z, BRIDGE) || hyp(x, z, ROOF) < ROOF.r) ? ROOF.y : (hyp(x, z, BIO) < BIO.r || inR(x, z, BPATH) || hyp(x, z, HOME) < HOME.r || inR(x, z, HPATH)) ? 0 : inR(x, z, CLUB) ? CYO : null;
+MO.surface = (x, z) => (inR(x, z, BRIDGE) || hyp(x, z, ROOF) < ROOF.r) ? ROOF.y : (hyp(x, z, BIO) < BIO.r || inR(x, z, BPATH) || hyp(x, z, HOME) < HOME.r || inR(x, z, HPATH)) ? 0 : inR(x, z, CLUB) ? CYO : AV.astro9neon ? AV.astro9neon.surface(x, z) : null;
 MO.reserve = (x, z, p) => inR(x, z, CLUB, p) || hyp(x, z, BIO) < BIO.r + p || inR(x, z, BPATH, p) || hyp(x, z, HOME) < HOME.r + p || inR(x, z, HPATH, p) || inR(x, z, BRIDGE, p) || hyp(x, z, ROOF) < ROOF.r + p || (x > 128 && x < 152 && z > 104 && z < 120 + p);
 Object.assign(AV.ITEMS, {
   a9_spore: { n: L('Spore-lamp seed', 'Semilla lámpara de esporas'), cat: 'misc', ic: '🌱', use: 'look', keep: true, model: 'crystal', col: 0x7aff8a, say: L('Plant it anywhere dark. It glows when you sing to it.', 'Plántala en cualquier sitio oscuro. Brilla si le cantas.'), price: 18 },
@@ -100,10 +100,10 @@ MO.build = function (ctx) {
   /* ---------- sign variety along the existing streets + wayfinding pillars + info kiosks ---------- */
   sign('holo', 'FOOD RING', 'noodles · glowfruit · tea', 56, 7, 69.6, 0, 7, '#ffd84a');
   sign('glyph', 'BAZAAR', '', -99.2, 5, 88, Math.PI / 2, 1.2, '#ff4ad2', '#1a0a2a'); sign('glyph', 'NEON', '', 91.2, 5, 100, -Math.PI / 2, 1.2, '#4ad8ff', '#0a1a2a');
-  sign('hex', 'ROBOT REPAIR', 'servos · oil · existential tune-ups', 238, 5.4, 107.5, Math.PI, 6.5, '#7aff8a');
-  sign('hex', 'BOT PARTS', 'servos · chips · holo-gear', 102, 6.2, 83.4, 0, 6, '#4ad8ff');
-  sign('tube', 'Ramen', 'comet noodles · open late', 130, 5.8, 107.2, Math.PI, 5, '#ff8a3a', '#ffd84a');
-  sign('bio', 'Spore Café', 'mushroom tea', 160, 5.6, 107.2, Math.PI, 5.5, '#7aff8a', '#1a4a2a');
+  if (!AV.astro9neon)   sign('hex', 'ROBOT REPAIR', 'servos · oil · existential tune-ups', 238, 5.4, 107.5, Math.PI, 6.5, '#7aff8a');
+  if (!AV.astro9neon)   sign('hex', 'BOT PARTS', 'servos · chips · holo-gear', 102, 6.2, 83.4, 0, 6, '#4ad8ff');
+  if (!AV.astro9neon)   sign('tube', 'Ramen', 'comet noodles · open late', 130, 5.8, 107.2, Math.PI, 5, '#ff8a3a', '#ffd84a');
+  if (!AV.astro9neon)   sign('bio', 'Spore Café', 'mushroom tea', 160, 5.6, 107.2, Math.PI, 5.5, '#7aff8a', '#1a4a2a');
   sign('glyph', 'HANGAR', '', -126, 6, 200, Math.PI / 2, 1.3, '#ffd84a', '#2a1a0a'); sign('glyph', 'TEMPLE', '', 128, 6, 200, -Math.PI / 2, 1.3, '#c88aff', '#1a0a2a');
   sign('holo', 'HOVER TAXI', 'any district · any time', 14, 4.2, 108, Math.PI, 5, '#4ad8ff');
   const ways = [[-8.5, 118, [['NEON BLVD →', 175], ['← SPIRES', -180], ['↓ ART AVENUE', 0]]], [97, 104.5, [['← PLAZA', 0], ['BIOTECH ↓', 180], ['SKY MARKET ↑', 230]]], [-103, 104.5, [['PLAZA →', 0], ['ALIEN HOMES ↓', -180], ['← ASTRO INN', -150]]], [-8.5, 194, [['← HANGAR', -150], ['TEMPLE →', 150], ['↑ PLAZA', 0]]]];
@@ -116,7 +116,7 @@ MO.build = function (ctx) {
   const bodyE = K.merge([[SP, 0xb8c0d0, K.M(0, .6, 0, .5, .3, .6)], [SP, 0xff4a4a, K.M(0, .65, .55, .12, .1, .05)], ...[0, 1, 2, 3, 4, 5].map(k => { const a = k / 6 * TAU; return [CY, 0x5a5a6a, K.M(Math.cos(a) * .6, .35, Math.sin(a) * .6, .04, .8, .04, Math.sin(a) * .7, 0, -Math.cos(a) * .7)] })]);
   const bodyF = K.merge([[SP, 0xffffff, K.M(0, .45, 0, .3, .35, .28)], [SP, 0xffffff, K.M(-.28, .8, 0, .16, .3, .06, 0, 0, .4)], [SP, 0xffffff, K.M(.28, .8, 0, .16, .3, .06, 0, 0, -.4)], [SP, 0xffe066, K.M(-.1, .55, .24, .08, .09, .05)], [SP, 0xffe066, K.M(.1, .55, .24, .08, .09, .05)]]);
   const bodyG = K.merge([[K.BG.cone, 0x2a2430, K.M(0, .95, 0, .45, 1.9, .45)], [K.BG.hem || SP, 0x2a2430, K.M(0, 1.85, -.02, .3, .38, .3)], [SP, 0x7aff8a, K.M(-.08, 1.78, .2, .04, .03, .03)], [SP, 0x7aff8a, K.M(.08, 1.78, .2, .04, .03, .03)], [BX, 0x8a6a3a, K.M(.3, 1.0, .1, .3, .35, .2)]]);
-  const LN = [[100, 95, 255, 95], [-100, 95, -255, 95], [180, 104, 180, 172], [-180, 104, -180, 175], [-115, 201, -10, 201], [10, 201, 128, 201], [-90, 88, 90, 88], [0, 30, 0, 200], [ROOF.x - 50, 56, ROOF.x + 8, 56], [150, 125, 205, 172], [-150, 125, -205, 172]];
+  const LN = [AV.astro9neon ? [100, 103, 255, 103] : [100, 95, 255, 95], [-100, 95, -255, 95], [180, 104, 180, 172], [-180, 104, -180, 175], [-115, 201, -10, 201], [10, 201, 128, 201], [-90, 88, 90, 88], [0, 30, 0, 200], [ROOF.x - 50, 56, ROOF.x + 8, 56], [150, 125, 205, 172], [-150, 125, -205, 172]];
   const cm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, metalness: .1 }); cm.userData.lin = 1;
   const ALC = [0x7aff8a, 0x4ad8ff, 0xc88aff, 0xff8ad8, 0xffd84a, 0x8affd8, 0xff8a3a, 0xb8a8ff], walkers = [], dc2 = new THREE.Color();
   const ims = [[bodyC, [8, 14, 20][q], 1], [bodyD, [8, 12, 18][q], 2], [bodyE, [6, 10, 14][q], 3], [bodyF, [8, 12, 18][q], 4], [bodyG, [6, 10, 14][q], 5]].map(([g, n, ti]) => { const im = new THREE.InstancedMesh(g, cm, n); im.frustumCulled = false;

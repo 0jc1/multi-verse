@@ -16,7 +16,7 @@ window.APE_T = (() => {
   step('megacity: new districts on foot from the plaza', async c => {
     c('megacity places listed', ['mg_neon', 'mg_tech', 'mg_inst', 'mg_black', 'mg_inn', 'mg_hangar', 'mg_portal', 'mg_temple', 'mg_sky'].every(id => AV.W.places.some(p => p.id === id)));
     c('map district names', (AV.W.mapDistricts || []).length >= 10, (AV.W.mapDistricts || []).map(d => d.name).join(' | '));
-    const e = walkable([[60, 92], [80, 95], [100, 95], [255, 95]]); c('Food Ring → Neon Boulevard', !e.length, e.slice(0, 8).join(' '));
+    const e = walkable(AV.astro9neon ? [[60, 92], [80, 95], [94, 87], [255, 87]] : [[60, 92], [80, 95], [100, 95], [255, 95]]);   /* the rebuilt boulevard is walked on its sidewalks (the centre is the hover lane median) */ c('Food Ring → Neon Boulevard', !e.length, e.slice(0, 8).join(' '));
     const w = walkable([[-60, 92], [-80, 95], [-100, 95], [-255, 95]]); c('Bazaar → Residential Spires', !w.length, w.slice(0, 8).join(' '));
     const h = walkable([[0, 190], [0, 201], [-120, 201], [-150, 225]]); c('Art Avenue → Hangar + Docking Bay', !h.length, h.slice(0, 8).join(' '));
     const t = walkable([[0, 201], [130, 201], [152, 220]]); c('Art Avenue → Cosmic Temple', !t.length, t.slice(0, 8).join(' '));

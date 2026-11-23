@@ -82,3 +82,47 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - Hostel front-door walk: the static door is clear by probe, so the blocker is probably a crew NPC inside.
   - Nuni's follow mission.
   - The Songkran HUD text.
+
+### Milestone 3: Astro-9 Neon Boulevard hero street (`js/astro9_neon.js`)
+
+**What is built:** a continuous 170 m street (x 92–262), rebuilt from the ground up.
+
+- **Street cross-section:** hex-paver sidewalks (6 m each side) with lit kerbs. Between them, a 10 m wet-asphalt hover lane with median studs, planter islands and three light-strip crossings.
+- **Buildings:** 19 street buildings in five architectural families, each with its own canvas facade + emissive window texture, world-scaled UVs, setbacks and roof gear:
+  - industrial: panels, vents, pipes, amber light lines
+  - organic: round bio-concrete towers, mosaic bands, arched windows, domed caps
+  - crystal: curtain glass, cyan mullions, fins
+  - dense: stacked balconies, AC units
+  - ceramic: tile, copper fins
+- **Ground floors:** every building has a recessed glass shopfront showing a lit interior, a canopy with a light strip, and a framed shop sign.
+- **Signs:** 16 unique signs in a 2048 px atlas, each in its own design language (holo frame, gold serif, neon script tube, hazard stencil, ceramic tile, clinic, pixel, chrome, ripple, bio blob, transit). Each pairs a procedural alien glyph script with an English translation. Examples: TECH MARKET, SYNTH & STRINGS, COMET RAMEN, ROBOT REPAIR, ORBITAL OPTICS, XENO GENETICS, VOID ARCADE, GRAV-BOOTS, HOLO INK, DATA BATHS, MOON PAWN, SPORE CAFÉ, HAB UNITS, SKY TAXI, NEBULA NAILS, CARGO 9.
+- **Enterable shops:** Tech Market, Synth & Strings, Comet Ramen and Robot Repair. Each has a real room behind a door: walls, counter with collision, glowing shelves, an interior light, and a clerk (robot or alien species). The existing buy interactions were moved inside.
+- **Black Market:** a real 6 m side alley with a stall under a tarp, lanterns and vertical signs.
+- **Street life:**
+  - hover cars flying both directions of the lane at 3.4 m
+  - four animated holo-adverts on facades
+  - cables with lanterns strung across the street
+  - organic lamps; benches at the kerb, facing the shops; vending machines; alien planters (never in doorways)
+  - pedestrians moved from the lane to the sidewalks
+  - a soft night fill light so materials read
+- **Old boulevard pieces:** the stalls, floating signs, frontage towers and edge strips are switched off when this module is present. The hover-taxi stand moved off the Comet Ramen doorway to the north kerb.
+
+**Tests:** `suite_astro9_neon` 25/25.
+- Both sidewalks are walkable end to end.
+- The lane crossing, the alley and the Food Ring connection all walk.
+- The doors of Tech Market and Comet Ramen walk in; their counter interactions are inside.
+- Buying ramen works.
+
+**Render cost (headless, Medium):**
+
+| View | Triangles | Draw calls |
+|---|---|---|
+| Street level, looking east | 0.48 M | 129 |
+| Looking west, with the whole skyline | 2.3 M | 788 |
+
+**Known gaps:**
+- Interiors share one generic layout. Comet Ramen has no ramen-specific props yet (stools, steam, noodle bowls).
+- The Synth & Strings and Robot Repair rooms are built but have no walk-in test yet.
+- Clerks are simple static species meshes, not the rigged characters.
+- No daytime look: Astro-9 is permanently night.
+- Real-GPU FPS has not been measured.

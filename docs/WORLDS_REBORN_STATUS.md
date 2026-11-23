@@ -31,7 +31,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 | Bikes, scooters, e-scooters, hover scooter, tuk-tuk fares | working-auto | `js/vehicles.js`, `suite_vehicles.js` 52/52 + 10/10 phone. Not yet tried by a human. |
 | Four-choice conversations | working-auto | `js/social.js`. |
 | Pool (Chiang Mai), smoking and drinking viewmodels | exists | Not re-audited this session. |
-| Songkran | partial | A festival mode with a water gun (Q) and soak quest exists. **Missing (§35A):** bucket, bottle, hold-to-spray, dense crowds, refill tubs, NPC splash reactions. |
+| Songkran water fight (§35A) | working-auto (`suite_songkran.js` 40/40 desktop, 11/11 phone) | `js/songkran_water.js`. Three water tools you hold from the backpack, each with a fill level shown in the hand and in a small HUD:<br>- **Bucket:** click or tap SPLASH = one big throw that empties it.<br>- **Water gun:** hold = stream, release stops at once, about 8 s per tank.<br>- **Squeeze bottle:** click (or V / punch) = a forward flick instead of a punch, 5 per fill.<br>**Refills and buying:** 12 blue tubs (near Giant Hostel and by every barrel) refill tools, and they hand out a free bucket. A festival stall at the hostel sells all three (bucket 10, gun 25, bottle 5). The barrels refill too.<br>**Crowd:** hits make people flinch; splashers fire back at you; the hostel crew answers. More splashers (24/40/60 by quality), half of them on the streets around the hostel, and NPC fights twice as often.<br>**Unchanged:** empty hands punch as before, other items keep their use, the old Q gun and soak quest still work. Nothing runs outside Songkran mode. Switching the mode off removes tubs, stall, HUD and spray; the tools stay in the backpack.<br>**Not built:** NPCs don't look wet afterwards, no individual raise-a-bucket animation on the crowd figures (they use the existing "splash" pose), no separate audio layer of crowd cheering, real FPS in the crowd not measured. |
 | Photoreal human faces (§34A) | planned | Soft-body realistic characters exist (`chars_soft` / `chars_real`, from 0jc1). They are heavy: Chiang Mai on Low ran at about 1 frame per 7 s in the headless renderer. Real Iris Xe FPS has not been measured. |
 | Minimap (§28) | planned | |
 | Build ID in F3 | planned | |
@@ -58,7 +58,7 @@ The 7 maps are in `design/worlds_reborn/REFERENCE_MAPS/`: Astro-9, Madrid, Pai, 
    - Minimap proof in Chiang Mai.
    - Build ID in F3.
 3. **M3:**
-   - Songkran water tools (bucket, gun, bottle).
+   - ~~Songkran water tools (bucket, gun, bottle)~~: done (working-auto). The owner still needs to try it.
    - Chiang Mai venue spacing and 7-Eleven.
    - Ape Town plaza life.
    - Then human faces: only after a real Iris Xe FPS reading.
@@ -69,3 +69,4 @@ The 7 maps are in `design/worlds_reborn/REFERENCE_MAPS/`: Astro-9, Madrid, Pai, 
   - Imported the pack.
   - Fixed the basketball live-play failure and the always-visible pipe.
   - Vehicles milestone already done earlier today (commit `f84ba1b`).
+  - Songkran water fight (§35A): bucket, water gun, squeeze bottle, refill tubs, festival stall, denser NPC fights.

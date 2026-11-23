@@ -40,6 +40,13 @@ function model(id) {
     case 'shirt': add(mesh(BOX, mat(c), 0, 0, 0, .18, .2, .02)); add(mesh(BOX, mat(c), -.1, .07, 0, .06, .06, .02, 0, 0, .5)); add(mesh(BOX, mat(c), .1, .07, 0, .06, .06, .02, 0, 0, -.5)); break;
     case 'beads': add(mesh(TOR, mat(c, { emissive: c, emissiveIntensity: .7 }), 0, 0, 0, .06, .06, .06, 1.2)); break;
     case 'cassette': add(mesh(BOX, mat(0x1a1a1a), 0, 0, 0, .1, .064, .014)); add(mesh(BOX, mat(c), 0, .01, .008, .085, .03, .002)); break;
+    /* V1.1 Songkran water tools (js/songkran_water.js): the water inside is a separate mesh named 'water' that shows the fill level */
+    case 'bucket': { const b = add(mesh(new THREE.CylinderGeometry(1, .78, 1, 16, 1, true), mat(c, { side: THREE.DoubleSide, roughness: .4 }), 0, 0, 0, .12, .15, .12)); b.name = 'shell'; add(mesh(CYL, mat(c), 0, -.075, 0, .094, .01, .094)); add(mesh(TOR, mat(0x9a9ea4, { metalness: .6, roughness: .3 }), 0, .02, 0, .12, .12, .12, 0, 0, Math.PI / 2));
+      const w = add(mesh(CYL, mat(0x7ad8ff, { transparent: true, opacity: .8, roughness: .05, emissive: 0x2a8ac8, emissiveIntensity: .3 }), 0, 0, 0, .105, .12, .105)); w.name = 'water'; w.userData.full = .12; break }
+    case 'watergun': { add(mesh(BOX, mat(c, { roughness: .35 }), 0, 0, 0, .06, .07, .26)); add(mesh(CYL, mat(0xffd84a), 0, .015, -.18, .02, .12, .02, Math.PI / 2)); add(mesh(BOX, mat(c), 0, -.08, .07, .045, .12, .05, -.3));
+      const w = add(mesh(CYL, mat(0x7ad8ff, { transparent: true, opacity: .75, roughness: .05 }), 0, .075, .03, .045, .09, .045)); w.name = 'water'; w.userData.full = .09; add(mesh(CYL, mat(0xffffff, { transparent: true, opacity: .25 }), 0, .075, .03, .05, .1, .05)); break }
+    case 'squeeze': { add(mesh(CYL, mat(0xe8f4ff, { roughness: .15, transparent: true, opacity: .45 }), 0, 0, 0, .035, .2, .035)); add(mesh(CYL, mat(c), 0, .12, 0, .015, .05, .015));
+      const w = add(mesh(CYL, mat(0x7ad8ff, { transparent: true, opacity: .8, roughness: .05 }), 0, -.01, 0, .031, .17, .031)); w.name = 'water'; w.userData.full = .17; break }
     default: add(mesh(BOX, mat(c), 0, 0, 0, .14, .1, .006));
   }
   return g;
@@ -57,11 +64,12 @@ function apeHand() {
 }
 function ensureVM() { if (!VM.parent) AV.cam.add(VM); if (!hand) { hand = apeHand(); VM.add(hand) } }
 function showHeld() { ensureVM(); if (vmItem) { VM.remove(vmItem); vmItem = null } const id = st().bag.eq; VM.visible = !!id; if (id) { vmItem = model(id); VM.add(vmItem) } const b = $('tU'); if (b) b.style.display = id && AV.device === 'phone' ? 'block' : 'none' }
-BAG.equip = function (id) { st().bag.eq = id; showHeld(); AV.save(); refresh() };
+BAG.equip = function (id) { st().bag.eq = id; showHeld(); AV.save(); refresh(); if (BAG.onEquip) BAG.onEquip(id) };
+BAG.held = () => ({ VM, item: vmItem, id: st().bag.eq });   /* V1.1: lets js/songkran_water.js animate the held tool */
 
 /* ======================= use (animated) ======================= */
 let anim = null; const puffs = [];
-const VERB = { eat: ['Eat', 'Comer'], drink: ['Drink', 'Beber'], smoke: ['Smoke', 'Fumar'], play: ['Play', 'Tocar'], wear: ['Wear', 'Ponerse'], alien: ['Use', 'Usar'], look: ['Examine', 'Examinar'] };
+const VERB = { eat: ['Eat', 'Comer'], drink: ['Drink', 'Beber'], smoke: ['Smoke', 'Fumar'], play: ['Play', 'Tocar'], wear: ['Wear', 'Ponerse'], alien: ['Use', 'Usar'], look: ['Examine', 'Examinar'], splash: ['Splash', 'Salpicar'] };
 BAG.use = function (id) {
   const S = st(), d = D(id); if (!BAG.count(id)) return AV.toast(tr('You don’t have that.', 'No tienes eso.')); if (anim) return;
   if (d.use === 'smoke' && AV.W && AV.W.id === 'chiang_mai' && AV.P.x > 8 && AV.P.x < 32 && AV.P.z > 52 && AV.P.z < 88) return AV.toast(tr('Mutt: “Terrace only! Not inside, not in the rooms.”', 'Mutt: “¡Solo en la terraza! Ni dentro ni en las habitaciones.”'));

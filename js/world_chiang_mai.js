@@ -542,7 +542,9 @@ AV.registerWorld({
       for (let i = 0; i < [8, 14, 20][q]; i++) { const a = rng() * TAU, r = 6 + rng() * 14; dancers.push(crowd.add({ v: ['woman', 'man', 'tourist'][i % 3], x: (FIELD.x0 + FIELD.x1) / 2 + Math.cos(a) * r, z: Math.sin(a) * r, yaw: rng() * TAU, mode: rng() < .5 ? 'dance' : 'talk' })) }
       for (let i = 0; i < [6, 10, 14][q]; i++) dancers.push(crowd.add({ v: ['woman', 'man', 'tourist'][i % 3], x: 253.5 + rng() * 2, z: -20 + rng() * 60, yaw: Math.PI / 2, mode: 'idle' }));
     }
-    if (md === 'songkran') for (let i = 0; i < [14, 24, 36][q]; i++) { const n0 = nodes[rng() * nodes.length | 0]; splashers.push(crowd.add({ v: 'splasher', x: n0[0], z: n0[1], nav: NAV, idleProb: .35, cols: { skin: [0xf0c8a8, 0xd8a47a, 0xc8946a, 0xb07a50][i % 4], hair: [0x14100c, 0x4a2c18, 0xd8b860][i % 3], shirt: [0xff8ad8, 0x4ac8ff, 0xffd84a, 0x7aff8a, 0xff8a3a][i % 5], pants: [0x3a6ad8, 0x2a2a2a, 0xc8b088][i % 3] } })) }
+    /* V1.1: half of the splashers crowd the festival streets around Giant Hostel (the water fight is where you are), the rest roam the city */
+    const nearHostel = nodes.filter(n => Math.hypot(n[0] - 15, n[1] - 45) < 45);
+    if (md === 'songkran') for (let i = 0; i < [24, 40, 60][q]; i++) { const pool = i % 2 === 0 && nearHostel.length ? nearHostel : nodes, n0 = pool[rng() * pool.length | 0]; splashers.push(crowd.add({ v: 'splasher', x: n0[0], z: n0[1], nav: NAV, idleProb: .35, cols: { skin: [0xf0c8a8, 0xd8a47a, 0xc8946a, 0xb07a50][i % 4], hair: [0x14100c, 0x4a2c18, 0xd8b860][i % 3], shirt: [0xff8ad8, 0x4ac8ff, 0xffd84a, 0x7aff8a, 0xff8a3a][i % 5], pants: [0x3a6ad8, 0x2a2a2a, 0xc8b088][i % 3] } })) }
     crowd.build();
     /* V0.9.7: rigged locals + backpackers (more detailed than the instanced street crowd): hostel street, Night Bazaar, Tha Phae Gate */
     AV.beings.spawn(ctx, [[30, 44, 12], [6, 44, 10], [194, 30, 12], [188, 14, 9], [132, 8, 10], [60, 44, 10], [200, 42, 10], [-20, 44, 10], [150, 4, 8]].slice(0, AV.beings.n(ctx, 3, 6, 9)).map(([x, z, r], i) => ({ kind: 'human', x, z, area: { x, z, r }, seed: 90 + i })));
@@ -578,7 +580,7 @@ AV.registerWorld({
     const frenchie = CY.dog(0xd8b890, { frenchie: true, s: .9, collar: 0x2a3a8a }); frenchie.position.set(16, 0, 62); grp.add(frenchie);
     const strays = [[60, 46.5], [-60, -2], [130, 18], [190, 40]].map(([x, z], i) => { const d = CY.dog([0x8a6a4a, 0xe8e0d0, 0x3a2a20, 0xb08a5a][i], { s: .95 }); d.position.set(x, 0, z); d.userData.home = [x, z]; d.userData.t = 0; grp.add(d); return d });
     ctx.T.push({ x: 17, z: 51.2, r: 1.8, label: () => tr('Pet Bobo', 'Acariciar a Bobo'), fn: () => { AV.toast(AV.pick([tr('Bobo thumps his tail and sighs like a tiny old man.', 'Bobo golpea la cola y suspira como un viejecito.'), tr('Bobo rolls over. Belly rubs are mandatory.', 'Bobo se pone panza arriba. Las caricias son obligatorias.')])); AV.audio && AV.audio.blip(520, .1, 'triangle', .08) } });
-    const smoke = CY.smoke(ctx), spray = CY.spray(ctx, md === 'songkran' ? 420 : 40), rainFx = CY.rain(ctx);
+    const smoke = CY.smoke(ctx), spray = CY.spray(ctx, md === 'songkran' ? 760 : 40), rainFx = CY.rain(ctx);
 
     /* ======================= THE CREW ======================= */
     const crew = {}, H0 = () => 0;
@@ -707,11 +709,11 @@ AV.registerWorld({
       for (const rd of ROADS) { if (rd[4] < 6 || rd[0] > 247) continue; const L = Math.hypot(rd[2] - rd[0], rd[3] - rd[1]), ux = (rd[2] - rd[0]) / L, uz = (rd[3] - rd[1]) / L, off = rd[4] / 2 + 1.2; for (let s = 0; s < L; s += 14) { const xa = rd[0] + ux * s - uz * off, za = rd[1] + uz * s + ux * off, xb = rd[0] + ux * s + uz * off, zb = rd[1] + uz * s - ux * off; if (inMoat(xa, za) || inMoat(xb, zb)) continue; for (let k = 0; k < 10; k++) { const f = (k + .5) / 10; fl.push([xa + (xb - xa) * f, 5.2 - Math.sin(f * Math.PI) * .8, za + (zb - za) * f, Math.atan2(xb - xa, zb - za)]) } } }
       const tri = new THREE.BufferGeometry(); tri.setAttribute('position', new THREE.Float32BufferAttribute([-.25, 0, 0, .25, 0, 0, 0, -.45, 0], 3)); tri.computeVertexNormals();
       const fm = new THREE.InstancedMesh(tri, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), fl.length), cc = new THREE.Color(); fl.forEach((p, i) => { fm.setMatrixAt(i, M(p[0], p[1], p[2], 1, 1, 1, 0, p[3] + Math.PI / 2, 0)); fm.setColorAt(i, cc.setHex(cols[i % 5]).convertSRGBToLinear()) }); fm.instanceMatrix.needsUpdate = fm.instanceColor.needsUpdate = true; fm.frustumCulled = false; fm.material.userData.lin = 1; grp.add(fm);
-      const BARRELS = [[20, 47.4], [-4, 4.5], [4, -4.5], [60, 4], [-60, -4], [126, 4], [180, 9.8], [0, 40]]; BARRELS.forEach(([x, z]) => { B.fest.add(MT.v, A.geo('cyl'), 0x2a7ad8, M(x, .55, z, .45, 1.1, .45)); B.fest.add(MT.v, A.geo('cyl'), 0x9ad8ff, M(x, 1.1, z, .42, .02, .42), .4); ctx.circles.push([x, z, .5]); T(x, z, 1.8, () => tr('Refill your water gun', 'Recargar la pistola de agua'), () => { gun.ammo = 100; AV.toast(tr('Tank full! (Q or Splash to shoot)', '¡Tanque lleno! (Q o Splash para disparar)')); AV.audio && AV.audio.blip(300, .3, 'sine', .15) }) });
+      const BARRELS = [[20, 47.4], [-4, 4.5], [4, -4.5], [60, 4], [-60, -4], [126, 4], [180, 9.8], [0, 40]]; BARRELS.forEach(([x, z]) => { B.fest.add(MT.v, A.geo('cyl'), 0x2a7ad8, M(x, .55, z, .45, 1.1, .45)); B.fest.add(MT.v, A.geo('cyl'), 0x9ad8ff, M(x, 1.1, z, .42, .02, .42), .4); ctx.circles.push([x, z, .5]); T(x, z, 1.8, () => tr('Refill your water gun', 'Recargar la pistola de agua'), () => { gun.ammo = 100; if (AV.sk) AV.sk.refill(true); AV.toast(tr('Tank full! (Q or Splash to shoot)', '¡Tanque lleno! (Q o Splash para disparar)')); AV.audio && AV.audio.blip(300, .3, 'sine', .15) }) });
       sign('HAPPY SONGKRAN · Sawasdee Pee Mai!', 112, 6.4, 0, -Math.PI / 2, 6, '#7ff0ff');
       document.body.classList.add('songkran');
       /* NPC water fights + trucks throwing water */
-      ctx.upd.push((() => { let acc = 0; return (dt, t) => { acc += dt; if (acc < .35) return; acc = 0; const P = AV.P; const sh = splashers[Math.random() * splashers.length | 0]; if (!sh || !sh.shown) return;
+      ctx.upd.push((() => { let acc = 0; return (dt, t) => { acc += dt; if (acc < .15) return; acc = 0; const P = AV.P; const sh = splashers[Math.random() * splashers.length | 0]; if (!sh || !sh.shown) return;
         const dP = Math.hypot(P.x - sh.x, P.z - sh.z); let tx, tz, ty; if (dP < 7 && Math.random() < .45) { tx = P.x; tz = P.z; ty = 1.4 } else { const o = crowd.list.find(w => w !== sh && w.shown && Math.hypot(w.x - sh.x, w.z - sh.z) < 8); if (!o) return; tx = o.x; tz = o.z; ty = 1.2; o.react = 1.2 }
         const dx = tx - sh.x, dz = tz - sh.z, d = Math.hypot(dx, dz) || 1; sh.yaw = Math.atan2(dx, dz); sh.mode = 'splash'; sh.pause = 1; spray.emit(sh.x + dx / d * .4, 1.25, sh.z + dz / d * .4, dx / d, .35 + d * .03, dz / d, 18, .25, 6 + d * .5);
         if (tx === P.x && tz === P.z) setTimeout(() => soaked(), 300) } })());
@@ -725,6 +727,10 @@ AV.registerWorld({
       const P = AV.P, dx = -Math.sin(P.yaw) * Math.cos(P.pitch), dy = Math.sin(P.pitch), dz = -Math.cos(P.yaw) * Math.cos(P.pitch); spray.emit(P.x + dx * .6, P.y + 1.45, P.z + dz * .6, dx, dy + .12, dz, 14, .12, 13); AV.audio && AV.audio.blip(900, .05, 'triangle', .04);
       for (const w of crowd.list) { if (!w.shown) continue; const ex = w.x - P.x, ez = w.z - P.z, d = Math.hypot(ex, ez); if (d > 11 || d < .3) continue; const cos = (ex * dx + ez * dz) / (d * Math.hypot(dx, dz)); if (cos < .95) continue; if (w.react > 0) continue; w.react = 1.3; if (S.quests && S.quests.cm_soak === 'active' && AV.now() < S.cm.soakUntil) { S.cm.soak++; AV.quests.check() } if (w.v === 'splasher' && Math.random() < .6) setTimeout(() => { spray.emit(w.x, 1.25, w.z, -ex / d, .4, -ez / d, 16, .25, 9); setTimeout(soaked, 300) }, 600); break }
       for (const id in crew) { const n = crew[id], ex = n.g.position.x - P.x, ez = n.g.position.z - P.z, d = Math.hypot(ex, ez); if (d < 9 && (ex * dx + ez * dz) / d > .95 && Math.random() < .2) AV.npc.bark(n, AV.pick([tr('HEY! *laughs* Payback time!', '¡EY! *se ríe* ¡Me vengaré!'), tr('Sawasdee pee mai to you too!', '¡Sawasdee pee mai para ti también!')])) } };
+
+    /* V1.1 Worlds Reborn §35A: the held water tools (bucket, water gun, bottle) live in js/songkran_water.js and use these pieces */
+    AV.cm.sk = md === 'songkran' ? { spray, crowd, splashers, crew, soaked: () => soaked(), ctx, T, BARRELS: [[20, 47.4], [-4, 4.5], [4, -4.5], [60, 4], [-60, -4], [126, 4], [180, 9.8], [0, 40]] } : null;
+    ctx.leave.push(() => { AV.cm.sk = null });
 
     /* ======================= time of day, markets, weather, random events, HUD ======================= */
     const nightMeshes = B.night.flush(ctx, { noShadow: true }); delete B.night; const gOpen = goodsOpen.flush(ctx, { noShadow: true }), gClosed = goodsClosed.flush(ctx, { noShadow: true });

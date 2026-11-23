@@ -146,11 +146,20 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - **Sound zones:** traffic, crowds, pigeons at Sol, a Spanish-guitar busker, bar music in Malasaña at night, birds in the park, metro rumble, the dogs.
 - **Private places:** wandering strangers (0jc1's stoners.js) no longer appear in the private flat or the carriage. `noStrangersAt` is a per-world opt-in.
 
+**Madrid polish pass (done, `suite_madrid.js` 45/45):**
+- **Stonework on the central buildings:** rusticated ground floors, string courses, pilasters, window pediments with keystones (Medium/High only), dormers.
+- **Gran Vía:** a stepped tower in the spirit of the Telefónica building, cupolas with gold rings and finials, vertical neon theatre signs.
+- **Sol:** a Carlos III equestrian statue, a newspaper kiosk, a café terrace with umbrellas, people sitting and talking around the fountains.
+- **The memory flat, furnished:** sofa with cushions, rug, coffee table, bookshelf full of books, plants, floor and ceiling lamps, dining table with 4 chairs, kitchen with cabinets and fridge, family photos, the dogs' beds with blankets and bowls, a Cuatro Torres sunset in the window.
+- **Performance:** Madrid's merged geometry is now split per district (Pinar, Sol, Gran Vía, flat, Metro), and districts you're not in are hidden. Headless Low probe:
+  - Gran Vía: 640k → 399k triangles.
+  - Inside the flat: 798k → 464k (the rest is crowd, traffic and the realistic talker).
+
 **Madrid, what still looks weak:**
-- Facades are repetitive (one builder, no ornate stonework).
-- Shop interiors outside the venues are only lit glass.
-- The flat is plain box furniture.
-- The sky looks washed out.
+- Facades are still one builder with variations; no unique landmark interiors.
+- Shop interiors outside the venues are lit glass.
+- The noon sky still looks pale; a bluer tint barely changed it.
+- Characters and traffic keep drawing when you're inside the flat.
 - Not built yet: Retiro, Malasaña plazas, La Latina, Atocha, Madrid Río, Lavapiés, the other metro lines.
 
 **Old first slice (replaced), what worked:**

@@ -278,6 +278,27 @@
   "art_refs": []
  },
  {
+  "id": "da_nang",
+  "name": "Đà Nẵng — river city by the sea",
+  "roadmap_no": 21,
+  "core_identity": "Vietnamese coastal city: Hàn River, Dragon Bridge, My Khe beach",
+  "music_identity": "Sunny travel beats, sea breeze",
+  "status": "playable",
+  "landmarks": [
+   "Dragon Bridge (Cầu Rồng)",
+   "Hàn River & Love Pier",
+   "My Khe Beach (Biển Mỹ Khê)",
+   "Hàn Market",
+   "Da Nang Cathedral (Rooster Church)",
+   "Sơn Trà Night Market",
+   "Sun Wheel · Asia Park",
+   "Cồn Market",
+   "Sơn Trà peninsula & Lady Buddha",
+   "Marble Mountains"
+  ],
+  "art_refs": []
+ },
+ {
   "id": "somatra",
   "name": "Somatra - The Flower Maze Planet",
   "roadmap_no": null,

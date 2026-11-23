@@ -296,10 +296,10 @@ AV.registerWorld({
     sign('JUNGLE GARDEN', -72, 8, -Math.PI / 2 + .3, 4.2, '#7aff9a');
 
     /* ---------- NE: Portal Grove ---------- */
-    const GX = 68, GZ = -68, DESTS = [['verdalux', 0x38e8a0, 0x7a5cff, 'Verdalux'], ['astro9', 0xff4ad2, 0x4ac8ff, 'Astro-9'], ['jungle_dub', 0xe8c030, 0x30c060, 'Jungle Dub'], ['chiang_mai', 0xff6ad5, 0xffd84a, 'Chiang Mai'], ['vienna', 0xd8202a, 0xffd84a, 'Vienna 2000s']];   // V0.9.9: 5th gate → Vienna   // V0.9.4: 4th gate → Chiang Mai (was Somatra, unbuilt)
+    const GX = 68, GZ = -68, DESTS = [['verdalux', 0x38e8a0, 0x7a5cff, 'Verdalux'], ['astro9', 0xff4ad2, 0x4ac8ff, 'Astro-9'], ['jungle_dub', 0xe8c030, 0x30c060, 'Jungle Dub'], ['chiang_mai', 0xff6ad5, 0xffd84a, 'Chiang Mai'], ['da_nang', 0x52d6c4, 0xffd84a, 'Đà Nẵng', 165], ['vienna', 0xd8202a, 0xffd84a, 'Vienna 2000s', -165]];   // + 6th gate → Vienna 2000s (V0.9.9), on the far side from the grove sign   // V1.0: 5th gate → Đà Nẵng (explicit angle: 165° keeps it clear of the grove sign)
     const gates = [];
     DESTS.forEach((d, i) => {
-      const a = deg([-135, -75, -15, 45, 165][i]) , x = GX + Math.cos(a) * 10, z = GZ + Math.sin(a) * 10, ry = npcYaw(x, z, GX, GZ), ok = AV.isPlayable(d[0]), y = H(x, z);
+      const a = d[4] != null ? deg(d[4]) : deg(-135 + i * 60) , x = GX + Math.cos(a) * 10, z = GZ + Math.sin(a) * 10, ry = npcYaw(x, z, GX, GZ), ok = AV.isPlayable(d[0]), y = H(x, z);
       gates.push({ x, y, z, s: 1.35, ry });
       const pm = new THREE.ShaderMaterial({ uniforms: { t: K.U.time, c1: { value: new THREE.Color(ok ? d[1] : 0x4a3a4a) }, c2: { value: new THREE.Color(ok ? d[2] : 0x2a2a2a) }, on: { value: ok ? 1 : .25 } }, transparent: true, side: THREE.DoubleSide, depthWrite: false,
         vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -434,7 +434,9 @@ AV.registerWorld({
       surface: (x, z) => { if (ell(x, z) >= 1) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterDepth(x, z) > -.2) return -.35; const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) },
       arrivals: { default: { x: 0, z: 95, yaw: 0 }, finca: { x: 0, z: 97, yaw: 0 }, pipe: { x: 0, z: 90, yaw: 0 }, ape_gate: { x: GX, z: GZ + 4, yaw: 0 },
         verdalux: { x: GX + Math.cos(deg(-135)) * 6, z: GZ + Math.sin(deg(-135)) * 6, yaw: faceYaw(GX + Math.cos(deg(-135)) * 6, GZ + Math.sin(deg(-135)) * 6, GX, GZ + 20) },
-        astro9: { x: GX + Math.cos(deg(-75)) * 6, z: GZ + Math.sin(deg(-75)) * 6, yaw: Math.PI }, jungle_dub: { x: GX + Math.cos(deg(-15)) * 6, z: GZ + Math.sin(deg(-15)) * 6, yaw: Math.PI / 2 }, vienna: { x: GX + Math.cos(deg(165)) * 6, z: GZ + Math.sin(deg(165)) * 6, yaw: -Math.PI / 2 }, chiang_mai: { x: GX + Math.cos(deg(45)) * 6, z: GZ + Math.sin(deg(45)) * 6, yaw: faceYaw(GX + Math.cos(deg(45)) * 6, GZ + Math.sin(deg(45)) * 6, GX, GZ) } },
+        astro9: { x: GX + Math.cos(deg(-75)) * 6, z: GZ + Math.sin(deg(-75)) * 6, yaw: Math.PI }, jungle_dub: { x: GX + Math.cos(deg(-15)) * 6, z: GZ + Math.sin(deg(-15)) * 6, yaw: Math.PI / 2 }, chiang_mai: { x: GX + Math.cos(deg(45)) * 6, z: GZ + Math.sin(deg(45)) * 6, yaw: faceYaw(GX + Math.cos(deg(45)) * 6, GZ + Math.sin(deg(45)) * 6, GX, GZ) },
+        da_nang: { x: GX + Math.cos(deg(165)) * 6, z: GZ + Math.sin(deg(165)) * 6, yaw: faceYaw(GX + Math.cos(deg(165)) * 6, GZ + Math.sin(deg(165)) * 6, GX, GZ) },
+        vienna: { x: GX + Math.cos(deg(-165)) * 6, z: GZ + Math.sin(deg(-165)) * 6, yaw: faceYaw(GX + Math.cos(deg(-165)) * 6, GZ + Math.sin(deg(-165)) * 6, GX, GZ) } },
       defaultArrival: 'default',
       places: [{ id: 'finca', name: ['La Finca gateway & market', 'La Finca y el mercado'], x: 0, z: 97, yaw: 0 }, { id: 'stage', name: ['Lotus stage (Stone Ape Band)', 'Escenario de loto (Stone Ape Band)'], x: 0, z: 46.5, yaw: Math.PI },
         { id: 'plaza', name: ['Circular Plaza', 'Plaza Circular'], x: 0, z: 17, yaw: 0 }, { id: 'zil', name: ['Zil’s Café', 'Café de Zil'], x: zilFront[0], z: zilFront[1], yaw: faceYaw(zilFront[0], zilFront[1], zilPos[0], zilPos[1]) },

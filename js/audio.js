@@ -118,6 +118,12 @@ function stepFn(i, t) {
     if (st === 0) for (const k of [0, 2, 4]) note(t, mf(root + sc[(deg + k) % sc.length]), spb * 15, 'sine', .055, dest);
     if (st === 0 || st === 7) note(t, mf(root - 12 + sc[deg % sc.length]), spb * 3, 'sine', .32, dest, 420);
     if (st % 3 === 0) note(t, mf(root + 12 + sc[(st / 3 + bar * 2) % sc.length]), spb * 2, 'triangle', .04, delay);
+  } else if (p.style === 'maqam') {  // Jerusalem / desert: maqsum darbuka (doum-tak), oud-like plucks on maqam hijaz, a low drone
+    if (st === 0 || st === 8 && !p.sparse) kick(t, dest); if (st === 2 || st === 6 || st === 12) noise(t, .07, .22, 2600, dest); if (st % 2 === 1 && !p.sparse) noise(t, .02, .05, 8000, dest);
+    if (st === 0 && bar % 2 === 0) note(t, mf(root - 12), spb * 30, 'sine', .14, dest);
+    const ph = [0, 1, 2, 1, 3, 4, 3, 2, 4, 5, 4, 3, 2, 1, 2, 0], dg = ph[(st + bar * 5) % 16];
+    if (st % (p.sparse ? 4 : 2) === 0 || st === 7) note(t, mf(root + 12 + sc[(dg + deg) % sc.length]), spb * 1.6, 'sawtooth', .045, st % 6 === 0 ? delay : dest, 1700);
+    if (st === 14 && bar === 3) note(t, mf(root + 24 + sc[1]), spb * 2, 'triangle', .05, delay);
   } else if (p.style === 'amb') {    // verdalux: soft pads
     if (st === 0) { for (const k of [0, 2, 4]) note(t, mf(root + sc[(deg + k) % sc.length]), spb * 14, 'sine', .08, dest) } if (st % 8 === 0) note(t, mf(root + 24 + sc[(bar + st / 8) % sc.length]), spb * 4, 'triangle', .05, delay);
   } else {                            // boom-bap + tuba bass + rhodes (Ape Town)

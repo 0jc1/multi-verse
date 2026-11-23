@@ -13,13 +13,13 @@
 'use strict';
 (function (AV) {
 const tr = AV.tr, TAU = Math.PI * 2, L = (e, s) => [e, s];
-const SZ = 1000, GV = SZ - 124, MX = -60, CAR = { x: 800, z: 0 }, FLAT = { x: 400, z: 0 };
+const SZ = 1000, GV = SZ - 124, MX = -60, CAR = { x: 2200, z: 0 }, FLAT = { x: 2000, z: 0 };   /* private rooms live far outside the city map */
 const R = { pinar: [-92, 92, -12, 12], pinarSt: [-8, 8, 11, 36], park: [-42, 42, 34, 82], montera: [-6, 6, GV + 10, SZ - 22], granvia: [-152, 118, GV - 12, GV + 12], mala: [MX - 6, MX + 6, GV - 86, GV - 10],
   sala: [MX - 22, MX - 6, GV - 66, GV - 44], taberna: [MX + 6, MX + 20, GV - 58, GV - 42], flat: [FLAT.x - 7, FLAT.x + 7, FLAT.z - 5, FLAT.z + 5], car: [CAR.x - 1.3, CAR.x + 1.3, CAR.z - 9, CAR.z + 9] };
 const inR = (x, z, r) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];
 const inSol = (x, z) => ((x / 46) ** 2 + ((z - SZ) / 26) ** 2) <= 1;
-const surf = (x, z) => { for (const k in R) if (inR(x, z, R[k])) return 0; return inSol(x, z) ? 0 : null };
-const zone = (x, z) => z > 600 ? 'centro' : x > 700 ? 'metro' : x > 300 ? 'home' : 'pinar';
+const surf = (x, z) => { if (inR(x, z, R.flat) || inR(x, z, R.car)) return 0; if (AV.madridCity) return AV.madridCity.surf(x, z); for (const k in R) if (inR(x, z, R[k])) return 0; return inSol(x, z) ? 0 : null };   /* one continuous city (madrid_city.js) */
+const zone = (x, z) => x > 2100 ? 'metro' : x > 1900 ? 'home' : 'city';
 Object.assign(AV.ITEMS, {
   md_bravas: { n: L('Patatas bravas', 'Patatas bravas'), cat: 'food', ic: '🍟', use: 'eat', model: 'bowl', col: 0xe8902a, say: L('Crispy potatoes, spicy brava sauce. Vegan here (no alioli).', 'Patatas crujientes, salsa brava picante. Veganas aquí (sin alioli).'), price: 12 },
   md_pimientos: { n: L('Pimientos de Padrón', 'Pimientos de Padrón'), cat: 'food', ic: '🫑', use: 'eat', model: 'bowl', col: 0x4a9a3a, say: L('Unos pican y otros no. Some are hot, some are not.', 'Unos pican y otros no.'), price: 10 },
@@ -41,6 +41,8 @@ const texMat = (map, rough, metal) => { const m = new THREE.MeshStandardMaterial
 AV.registerWorld({
   id: 'madrid',
   build(ctx) {
+    /* the continuous city around the hand-built hero areas (Pinar, Sol, Montera, Gran Vía, Malasaña) */
+    const city = AV.madridCity ? AV.madridCity.build(ctx, { exclude: [[-100, 100, -40, 92], [-70, 70, 950, 1050], [-26, 26, 890, 960], [-160, 125, 840, 912], [-90, -30, 780, 872]] }) : null; if (city) ctx.upd.push(dt => city.update(dt));
     const K = AV.kit, CY = AV.city, q = ctx.q, rng = ctx.rng, grp = ctx.group, S = AV.S, wall = [], brick = [], dark = [], glow = [], pave = [];
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
     const B = (arr, col, x, y, z, sx, sy, sz, ry) => arr.push([K.BG.box, col, K.M(x, y, z, sx, sy, sz, 0, ry || 0, 0)]);
@@ -101,8 +103,8 @@ AV.registerWorld({
     C(dark, 0xd8d4cc, 0, .4, 58, 3, .8); C(glow, 0x7ac8e8, 0, .82, 58, 2.6, .05); ctx.circles.push([0, 58, 3.1]); for (const [px, pz] of [[26, 64], [30, 64]]) C(dark, 0xff4a4a, px, 1.2, pz, .06, 2.4); B(dark, 0xffd84a, 28, 2.4, 64, 4.2, .12, .12); ctx.circles.push([26, 64, .2], [30, 64, .2]);
     signs.push(['PARQUE DE PINAR', 0, 3, 35, 0, 5, '#7aff8a'], ['PINAR DE CHAMARTÍN · mi barrio', -40, 6, -11.8, 0, 7, '#ff8ad8']);
     /* Cuatro Torres skyline + Sierra de Guadarrama */
-    [[40, 250, 4.2], [70, 236, 3.6], [100, 250, 3.9], [130, 246, 3.3]].forEach(([x, h, w], i) => { const m = new THREE.Mesh(K.BG.box, AV.std([0x8a9ab0, 0x6a7a90, 0xa8b8c8, 0x7a8aa0][i], .2, .5)); m.scale.set(w * 6, h, w * 6); m.position.set(x, h / 2, -420); grp.add(m); const cap = new THREE.Mesh(K.BG.box, AV.std(0xe8f0ff, .2, .5, 0xffffff, .2)); cap.scale.set(w * 6.4, 6, w * 6.4); cap.position.set(x, h + 3, -420); grp.add(cap) });
-    for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(K.BG.cone, AV.std(0x8a90a8, .95)); m.scale.set(180, 120 + (i * 37 % 70), 120); m.position.set(-400 + i * 100, 50, -700); grp.add(m); const sn = new THREE.Mesh(K.BG.cone, AV.std(0xf4f4f8, .9)); sn.scale.set(60, 40, 40); sn.position.set(-400 + i * 100, 100 + (i * 37 % 70) / 2 + 10, -700); grp.add(sn) }
+    [[40, 250, 4.2], [70, 236, 3.6], [100, 250, 3.9], [130, 246, 3.3]].forEach(([x, h, w], i) => { const m = new THREE.Mesh(K.BG.box, AV.std([0x8a9ab0, 0x6a7a90, 0xa8b8c8, 0x7a8aa0][i], .2, .5)); m.scale.set(w * 6, h, w * 6); m.position.set(x, h / 2, -420); m.visible = !city; grp.add(m); const cap = new THREE.Mesh(K.BG.box, AV.std(0xe8f0ff, .2, .5, 0xffffff, .2)); cap.scale.set(w * 6.4, 6, w * 6.4); cap.position.set(x, h + 3, -420); cap.visible = !city; grp.add(cap) });
+    for (let i = 0; i < 9; i++) { const m = new THREE.Mesh(K.BG.cone, new THREE.MeshBasicMaterial({ color: 0x9aa0b4, fog: false })); m.scale.set(180, 120 + (i * 37 % 70), 120); m.position.set(-400 + i * 100, 50, -700); grp.add(m); const sn = new THREE.Mesh(K.BG.cone, new THREE.MeshBasicMaterial({ color: 0xf4f4f8, fog: false })); sn.scale.set(60, 40, 40); sn.position.set(-400 + i * 100, 100 + (i * 37 % 70) / 2 + 10, -700); grp.add(sn) }
     /* ---------- the memory home: a fictional flat upstairs, with Boris & Lila ---------- */
     T(34, 10.4, 2.2, () => tr('🏠 Memory home: go up to the flat (fictional, not a real address)', '🏠 Casa (recuerdo): subir al piso (ficticio, no es una dirección real)'), () => { AV.fadeTo(1, 300); setTimeout(() => { AV.P.x = FLAT.x + 5; AV.P.z = FLAT.z; AV.P.yaw = Math.PI / 2; AV.fadeTo(0, 500); AV.toast(tr('Home. Two dachshunds race to the door: BORIS and LILA!', 'Casa. Dos perros salchicha corren a la puerta: ¡BORIS y LILA!')) }, 320) });
     { const [x0, x1, z0, z1] = R.flat; const fm = new THREE.MeshStandardMaterial({ color: lin(0xb8905a), roughness: .7, map: (() => { const t = ctex('md_parquet', 128, (c, s, r) => { c.fillStyle = '#cfc2b0'; c.fillRect(0, 0, s, s); for (let y = 0; y < s; y += 16) for (let x = (y / 16 % 2) * 32; x < s; x += 64) { c.fillStyle = 'rgba(80,50,20,' + (.1 + r() * .15).toFixed(2) + ')'; c.fillRect(x, y, 62, 15) } }).clone(); t.needsUpdate = true; t.repeat.set(4, 3); return t })() }); fm.userData.lin = 1; const f = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), fm); f.rotation.x = -Math.PI / 2; f.position.set(FLAT.x, .02, FLAT.z); grp.add(f);
@@ -181,7 +183,7 @@ AV.registerWorld({
       const mt = new THREE.CanvasTexture(cv); mt.encoding = THREE.sRGBEncoding; const mu = new THREE.Mesh(new THREE.PlaneGeometry(14, 7), new THREE.MeshBasicMaterial({ map: mt })); mu.position.set(MX + 5.9, 4.5, GV - 72); mu.rotation.y = -Math.PI / 2; grp.add(mu) }
     signs.push(['MALASAÑA', MX, 6, GV - 9.6, Math.PI, 4.4, '#ff8ad8']);
     /* ======================= METRO: three stations + the carriage ride ======================= */
-    const STN = [{ id: 'pinar', n: 'Pinar de Chamartín', x: -30, z: -9, out: [-30, -2, 0] }, { id: 'sol', n: 'Sol', x: 16, z: SZ + 12, out: [12, SZ + 6, Math.PI] }, { id: 'granvia', n: 'Gran Vía', x: 14, z: GV + 11.2, out: [10, GV + 4, Math.PI] }];
+    const STN = (city ? city.stations : []).concat([{ id: 'pinar', n: 'Pinar de Chamartín', x: -30, z: -9, out: [-30, -2, 0] }, { id: 'sol', n: 'Sol', x: 16, z: SZ + 12, out: [12, SZ + 6, Math.PI] }, { id: 'granvia', n: 'Gran Vía', x: 14, z: GV + 11.2, out: [10, GV + 4, Math.PI] }]);
     STN.forEach(s => { C(dark, 0x3a3a3a, s.x, 1.6, s.z, .08, 3.2); B(glow, 0xd8202a, s.x, 3.3, s.z, .9, .9, .1); B(glow, 0xffffff, s.x, 3.3, s.z + .06, .5, .14, .02); B(dark, 0x1a1a1a, s.x + 1.6, .05, s.z, 1.8, .1, 3); B(dark, 0x8a8a8a, s.x + 1.6, .6, s.z - 1.5, 1.9, 1.2, .08); B(dark, 0x8a8a8a, s.x + 1.6, .6, s.z + 1.5, 1.9, 1.2, .08); ctx.circles.push([s.x, s.z, .2]);
       signs.push(['METRO · ' + s.n, s.x, 4.6, s.z, Math.PI / 2, 3.4, '#ff4a4a']);
       T(s.x + 1.6, s.z, 2.6, () => '🚇 ' + tr('Metro ', 'Metro ') + s.n + tr(' (2 credits)', ' (2 créditos)'), () => { const p = AV.panel('cmp', '<b>🚇 Metro · ' + s.n + '</b><div class="note">' + tr('2 credits per ride. Line 1 and Line 5 (condensed).', '2 créditos por viaje. Línea 1 y Línea 5 (resumidas).') + '</div><div class="grid">' + STN.filter(o => o !== s).map(o => '<button data-stn="' + o.id + '">' + o.n + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
@@ -199,12 +201,12 @@ AV.registerWorld({
     signs.forEach(([t, x, y, z, ry, w, c]) => ctx.sign(t, x, y, z, ry, w, c, {}));
     const gM = new THREE.MeshBasicMaterial({ vertexColors: true }); gM.userData.lin = 1;
     /* merged per district (Pinar / Sol / Gran Vía+Malasaña / flat / metro) so each can be culled; districts you are not in are hidden */
-    const dkey = (x, z) => { const zn = zone(x, z); return zn === 'centro' ? (z > SZ - 40 ? 'sol' : 'gv') : zn }, zoneMeshes = [];
+    const dkey = (x, z) => { const zn = zone(x, z); return zn !== 'city' ? zn : z < 400 ? 'pinar' : z > SZ - 40 ? 'sol' : 'gv' }, zoneMeshes = [];
     for (const [arr, m, sc, sy] of [[wall, texMat(wallTex(), .9), 3, 3.2], [brick, texMat(brickTex(), .9), 2.2, 2.2], [dark, K.floraMat(0, { rough: .6, metal: .2 }), 0], [glow, gM, 0]]) { if (!arr.length) continue; const bk = {};
       for (const p of arr) { const e = p[2].elements, k = dkey(e[12], e[14]); (bk[k] = bk[k] || []).push(p) }
       for (const k in bk) { const geo = K.merge(bk[k]); if (sc) worldUV(geo, sc, sy); const mesh = new THREE.Mesh(geo, m); mesh.receiveShadow = true; mesh.castShadow = q === 2 && arr !== glow; mesh.userData.dz = k; grp.add(mesh); zoneMeshes.push(mesh) } }
-    const SHOW = { pinar: ['pinar'], home: ['home'], metro: ['metro'], centro: ['sol', 'gv'] }; let lastZ = null;
-    ctx.upd.push(() => { const z = zone(AV.P.x, AV.P.z); if (z === lastZ) return; lastZ = z; zoneMeshes.forEach(m => m.visible = SHOW[z].includes(m.userData.dz)) });
+    const HC = { pinar: [0, 20], sol: [0, SZ], gv: [-20, GV - 20] }; let zt = 0;
+    ctx.upd.push(dt => { if ((zt += dt) < .4) return; zt = 0; const z = zone(AV.P.x, AV.P.z); zoneMeshes.forEach(m => { const k = m.userData.dz; m.visible = z === 'city' ? (HC[k] ? Math.hypot(AV.P.x - HC[k][0], AV.P.z - HC[k][1]) < 520 : false) : k === z }) });
     M.zoneMeshes = zoneMeshes;
     /* ---------- people + traffic ---------- */
     const nodes = [], edges = [], add = (x, z) => { nodes.push([x, z]); return nodes.length - 1 }, chain = (pts, loop) => { const ids = pts.map(p => add(p[0], p[1])); for (let i = 1; i < ids.length; i++) edges.push([ids[i - 1], ids[i]]); if (loop) edges.push([ids[ids.length - 1], ids[0]]); return ids };
@@ -227,7 +229,7 @@ AV.registerWorld({
     /* ---------- life by the hour, dogs ---------- */
     const lamps = [[-40, GV], [40, GV], [0, SZ], [MX, GV - 40], [-40, 0], [40, 0]].map(([x, z]) => { const l = new THREE.PointLight(0xffc880, 0, 30); l.position.set(x, 6, z); grp.add(l); return l });
     ctx.upd.push((dt, t) => { const nk = AV.nightK || 0, ev = eve(); lamps.forEach(l => l.intensity = nk * 1.5); night.forEach(w => w.vis = ev); sl.intensity = ev ? 1.6 + (Math.sin(t * 8) > .6 ? .8 : 0) : .4;
-      const P = AV.P, inPinar = zone(P.x, P.z) === 'pinar';
+      const P = AV.P, inPinar = zone(P.x, P.z) === 'city';
       dogs.forEach((d, i) => { const u = d.userData; let moving = false;
         if (walk && inPinar) { const tx = P.x - Math.sin(P.yaw) * -1.6 + (i ? 1 : -1) * .9, tz = P.z - Math.cos(P.yaw) * -1.6, dx = tx - d.position.x, dz = tz - d.position.z, dd = Math.hypot(dx, dz); if (dd > 12) { d.position.set(tx, 0, tz) } else if (dd > .4) { const sp = Math.min(dd * 2.2, 6) * dt; d.position.x += dx / dd * sp; d.position.z += dz / dd * sp; d.rotation.y = Math.atan2(dx, dz); moving = true } }
         else if (!walk) { u.t -= dt; if (u.t <= 0) { u.t = 2 + Math.random() * 4; u.tx = FLAT.x - 5 + Math.random() * 10; u.tz = FLAT.z - 3.5 + Math.random() * 7 } const dx = u.tx - d.position.x, dz = u.tz - d.position.z, dd = Math.hypot(dx, dz); if (dd > .3) { d.position.x += dx / dd * dt * 1.2; d.position.z += dz / dd * dt * 1.2; d.rotation.y = Math.atan2(dx, dz); moving = true } }
@@ -235,13 +237,14 @@ AV.registerWorld({
     /* ---------- sound zones ---------- */
     const P = AV.P, near = (p, r) => Math.max(0, 1 - Math.hypot(P.x - p[0], P.z - p[1]) / r), Z = () => zone(P.x, P.z), A2 = AV.amb; let ok = false;
     const bpmT = (bpm, f) => (c, t, o) => { f(c, t, o); return t + 60 / bpm };
+    const DZ = () => Z() === 'city' && city ? city.districtAt(P.x, P.z) : { id: Z(), park: null }, CENTRO = { sol: 1, granvia: 1, opera: 1, chueca: 1, malasana: 1, latina: 1, letras: 1, lavapies: 1, embajadores: 1 }, NIGHT = { malasana: 1, chueca: 1, latina: 1, lavapies: 1, sol: 1 };
     const layers = {
-      traffic: { loop: { filters: [['lowpass', 320], ['highpass', 40]], lfo: [.15, .3] }, vol: .5, gain: () => Z() === 'centro' ? Math.max(.4, 1 - Math.abs(P.z - GV) / 50) : Z() === 'pinar' ? Math.max(0, 1 - Math.abs(P.z) / 30) * .6 : 0 },
-      crowd: { loop: { filters: [['bandpass', 1000, .8]], lfo: [1.1, .7] }, vol: .4, gain: () => Z() === 'centro' ? Math.max(near([0, SZ], 60), near([0, GV], 90) * .8, near([MX, GV - 45], 40) * (eve() ? 1 : .4)) : Z() === 'pinar' ? near([-60, -6], 18) * .6 : 0 },
-      pigeons: { vol: .5, gain: () => Z() === 'centro' && !eve() ? near([0, SZ], 50) : 0, tick: (c, t, o) => { A2.tone(c, o, t, 300, .25, 'sine', .06, .8); A2.tone(c, o, t + .28, 280, .35, 'sine', .05, .85); return t + 2 + Math.random() * 4 } },
-      birds: { vol: .45, gain: () => Z() === 'pinar' && !eve() ? Math.max(.2, near([0, 58], 50)) : 0, tick: (c, t, o) => { const f = 2400 + Math.random() * 2000; for (let i = 0; i < 3; i++) A2.tone(c, o, t + i * .1, f * (1 + i * .05), .08, 'sine', .06, 1.2); return t + 1.6 + Math.random() * 3 } },
-      busker: { vol: .6, gain: () => Z() === 'centro' ? near([-14, SZ + 3], 34) : 0, tick: bpmT(210, (c, t, o) => { const sc = [52, 53, 55, 57, 59, 60, 62, 64], s = (t * 3.5 | 0); const m = sc[[0, 1, 2, 1, 0, 3, 2, 1, 0, 1, 4, 3][s % 12]]; A2.tone(c, o, t, 440 * Math.pow(2, (m - 57) / 12), .45, 'triangle', .1); if (s % 6 === 0) [40, 47, 52].forEach((n, k) => A2.tone(c, o, t + k * .02, 440 * Math.pow(2, (n - 57) / 12), .9, 'triangle', .05)) }) },
-      barmusic: { vol: .7, gain: () => Z() === 'centro' && eve() ? Math.max(near([MX - 14, GV - 55], 36), near([MX, GV - 50], 30) * .6) : 0, tick: bpmT(240, (c, t, o) => { const s = Math.round(t * 4) % 8; if (s % 4 === 0) A2.tone(c, o, t, 120, .25, 'sine', .45, .4); if (s % 4 === 2) A2.hit(c, o, t, .12, .18, 1800); A2.hit(c, o, t, .04, .05, 8000); if (s % 2 === 0) A2.tone(c, o, t, [82, 82, 98, 73][(t / 2 | 0) % 4], .25, 'sawtooth', .06, .99) }) },
+      traffic: { loop: { filters: [['lowpass', 320], ['highpass', 40]], lfo: [.15, .3] }, vol: .5, gain: () => Z() !== 'city' ? 0 : DZ().park ? .12 : Math.max(.45, 1 - Math.abs(P.z - GV) / 60) },
+      crowd: { loop: { filters: [['bandpass', 1000, .8]], lfo: [1.1, .7] }, vol: .4, gain: () => { if (Z() !== 'city') return 0; const d = DZ(); return d.park ? .12 : CENTRO[d.id] ? (NIGHT[d.id] && eve() ? 1 : .75) : .4 } },
+      pigeons: { vol: .5, gain: () => Z() === 'city' && !eve() && { sol: 1, opera: 1, latina: 1, granvia: 1 }[DZ().id] ? .8 : 0, tick: (c, t, o) => { A2.tone(c, o, t, 300, .25, 'sine', .06, .8); A2.tone(c, o, t + .28, 280, .35, 'sine', .05, .85); return t + 2 + Math.random() * 4 } },
+      birds: { vol: .45, gain: () => Z() === 'city' && !eve() ? (DZ().park ? 1 : DZ().id === 'pinar' ? Math.max(.2, near([0, 58], 50)) : .1) : 0, tick: (c, t, o) => { const f = 2400 + Math.random() * 2000; for (let i = 0; i < 3; i++) A2.tone(c, o, t + i * .1, f * (1 + i * .05), .08, 'sine', .06, 1.2); return t + 1.6 + Math.random() * 3 } },
+      busker: { vol: .6, gain: () => Z() === 'city' ? near([-14, SZ + 3], 34) : 0, tick: bpmT(210, (c, t, o) => { const sc = [52, 53, 55, 57, 59, 60, 62, 64], s = (t * 3.5 | 0); const m = sc[[0, 1, 2, 1, 0, 3, 2, 1, 0, 1, 4, 3][s % 12]]; A2.tone(c, o, t, 440 * Math.pow(2, (m - 57) / 12), .45, 'triangle', .1); if (s % 6 === 0) [40, 47, 52].forEach((n, k) => A2.tone(c, o, t + k * .02, 440 * Math.pow(2, (n - 57) / 12), .9, 'triangle', .05)) }) },
+      barmusic: { vol: .7, gain: () => Z() === 'city' && eve() ? Math.max(near([MX - 14, GV - 55], 36), near([MX, GV - 50], 30) * .6, NIGHT[DZ().id] ? .35 : 0) : 0, tick: bpmT(240, (c, t, o) => { const s = Math.round(t * 4) % 8; if (s % 4 === 0) A2.tone(c, o, t, 120, .25, 'sine', .45, .4); if (s % 4 === 2) A2.hit(c, o, t, .12, .18, 1800); A2.hit(c, o, t, .04, .05, 8000); if (s % 2 === 0) A2.tone(c, o, t, [82, 82, 98, 73][(t / 2 | 0) % 4], .25, 'sawtooth', .06, .99) }) },
       metro: { loop: { filters: [['lowpass', 140]], lfo: [.3, .5] }, vol: .9, gain: () => Z() === 'metro' ? 1 : Math.max(...STN.map(s => near([s.x, s.z], 8))) * .5 },
       dogs: { vol: .5, gain: () => (walk || Z() === 'home') ? 1 : 0, tick: (c, t, o) => { if (Math.random() < .4) { A2.tone(c, o, t, 640, .1, 'square', .04, .75); A2.tone(c, o, t + .16, 600, .1, 'square', .035, .75) } return t + 6 + Math.random() * 14 } }
     };
@@ -249,9 +252,10 @@ AV.registerWorld({
     if (AV.media) { AV.media.ducks = (AV.media.ducks || []).filter(f => !f._md); const d = () => AV.W && AV.W.id === 'madrid' && A2 && A2.on ? Math.max(A2.lv.barmusic || 0, (A2.lv.busker || 0) * .7, A2.lv.metro || 0) : 0; d._md = 1; AV.media.ducks.push(d) }
     return { name: 'Madrid', surface: surf, noStrangersAt: (x, z) => zone(x, z) === 'home' || zone(x, z) === 'metro', fog: [110, 820], sky: { tint: [0x8ab8ff, 0xa8c8f0, .16, .22], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .03, cloud: .3, glow: .4 } },
       arrivals: { default: { x: -30, z: -2, yaw: 0 }, pipe: { x: -30, z: -2, yaw: 0 }, ape_gate: { x: -30, z: -2, yaw: 0 }, sol: { x: 12, z: SZ + 6, yaw: Math.PI }, home: { x: FLAT.x + 4, z: FLAT.z, yaw: Math.PI / 2 } }, defaultArrival: 'default',
-      mapRoads: [[-92, 0, 92, 0, 10], [0, 12, 0, 34, 6], [0, SZ - 22, 0, GV + 10, 10], [R.granvia[0], GV, R.granvia[1], GV, 18], [MX, GV - 10, MX, GV - 86, 10]],
-      places: [{ id: 'pinar', name: L('Pinar de Chamartín (mi barrio)', 'Pinar de Chamartín (mi barrio)'), x: -30, z: -2, yaw: 0 }, { id: 'esquina', name: L('Bar La Esquina', 'Bar La Esquina'), x: -72, z: -6, yaw: 0 }, { id: 'parque', name: L('Parque de Pinar', 'Parque de Pinar'), x: 0, z: 40, yaw: 0 }, { id: 'home', name: L('Memory home (Boris & Lila)', 'Casa (Boris y Lila)'), x: 34, z: 9, yaw: Math.PI },
-        { id: 'sol', name: L('Puerta del Sol', 'Puerta del Sol'), x: 0, z: SZ + 8, yaw: Math.PI }, { id: 'granvia', name: L('Gran Vía', 'Gran Vía'), x: 0, z: GV + 6, yaw: Math.PI }, { id: 'cine', name: L('Cine Gran Vía', 'Cine Gran Vía'), x: -102, z: GV + 6, yaw: Math.PI }, { id: 'malasana', name: L('Malasaña', 'Malasaña'), x: MX, z: GV - 20, yaw: 0 }, { id: 'sala', name: L('Sala Malasaña', 'Sala Malasaña'), x: MX - 4, z: GV - 55, yaw: -Math.PI / 2 }],
+      noStrangersAt2: null, mapDistricts: city ? city.districts : null, mapNav: city ? city.nav : null,
+      mapRoads: (city ? city.roads : []).concat([[-92, 0, 92, 0, 10], [0, 12, 0, 34, 6], [0, SZ - 22, 0, GV + 10, 10], [R.granvia[0], GV, R.granvia[1], GV, 18], [MX, GV - 10, MX, GV - 86, 10]]),
+      places: (city ? city.places : []).concat([{ id: 'pinar', name: L('Pinar de Chamartín (mi barrio)', 'Pinar de Chamartín (mi barrio)'), x: -30, z: -2, yaw: 0 }, { id: 'esquina', name: L('Bar La Esquina', 'Bar La Esquina'), x: -72, z: -6, yaw: 0 }, { id: 'parque', name: L('Parque de Pinar', 'Parque de Pinar'), x: 0, z: 40, yaw: 0 }, { id: 'home', name: L('Memory home (Boris & Lila)', 'Casa (Boris y Lila)'), x: 34, z: 9, yaw: Math.PI },
+        { id: 'sol', name: L('Puerta del Sol', 'Puerta del Sol'), x: 0, z: SZ + 8, yaw: Math.PI }, { id: 'granvia', name: L('Gran Vía', 'Gran Vía'), x: 0, z: GV + 6, yaw: Math.PI }, { id: 'cine', name: L('Cine Gran Vía', 'Cine Gran Vía'), x: -102, z: GV + 6, yaw: Math.PI }, { id: 'malasana', name: L('Malasaña', 'Malasaña'), x: MX, z: GV - 20, yaw: 0 }, { id: 'sala', name: L('Sala Malasaña', 'Sala Malasaña'), x: MX - 4, z: GV - 55, yaw: -Math.PI / 2 }]),
       musicProfile: { bpm: 96, root: 52, scale: [0, 1, 4, 5, 7, 8, 10], style: 'amb' } };
   }
 });

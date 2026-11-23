@@ -32,7 +32,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 | **Basketball fix** (owner-reported live failure) | `js/activities.js` | `suite_play.js` 32/32 |
 | **Portal pipe only in hand when used** (P / Pipe) | `js/portal.js` | `suite_play.js` 5/5 |
 | **Songkran water fight (§35A)** | `js/songkran_water.js` | `suite_songkran.js` 40/40 desktop, 11/11 phone |
-| **Circular minimap + full atlas (§28)** | `js/minimap.js` | `suite_minimap.js` 38/38 |
+| **Circular minimap + full map with zoom, pan, routes (§28)** | `js/minimap.js` | `suite_minimap.js` 30/30 (subset) + 38/38 earlier |
 | **Full DJ mixer (§31)** | `js/dj_mixer.js` | `suite_dj.js` 33/33; the old DJ/instrument suite `suite_music.js` still passes 43/43 |
 | **Bikes, scooters, e-scooters, hover scooter, tuk-tuk fares** | `js/vehicles.js` | `suite_vehicles.js` 52/52 + 10/10 phone |
 | **Four-choice conversations** | `js/social.js` | `suite_social.js` 31/31 |
@@ -80,7 +80,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 | **Astro-9 metropolis, first district (§5)** | `js/astro9_metro.js`, `suite_astro9_metro.js` 30/30. See the list below. | Cinema 9, Orbit Lounge, Docking Bay rebuild, residential spires, Glassopy Observatory, transit rings, rooftops, upper-level bridges, chunk loading. The architecture is stylised (lathe towers + mosaic), not yet the Da Nang / Chiang Mai detail level. Shop interiors are simple rooms with a counter. |
 | **Pai (§10), rebuilt from the illustrated map** | `js/world_pai.js` + `js/ambience.js`, `suite_pai.js` 46/46. See the list below. | See the list below. |
 | **Astro-9 district 2 (§5)** | `js/astro9_district2.js`, `suite_astro9_d2.js` 23/23. The Art Avenue runs south from the plaza, with 6 living paintings that slowly change. **Cinema 9 hall:** an indoor hall with walls and one door, 5 rows of seats, "take a seat" puts you facing the screen, which plays your films (tags astro + mv); a popcorn counter. **Orbit Lounge:** a space-jazz club with its own procedural jazz (walking bass, swung ride, electric-piano comping; no files). The jazz is heard only near the lounge, and the world music ducks inside. A trio on stage, a cocktail bar, keys to jam. **Glassopy Observatory:** a glass dome; the telescope shows a live sky view that changes daily. Facades with mosaic bands, pillars and glowing arched windows. | **Film playback:** only *loading* was confirmed in the headless test; real playback depends on your video files. The halls are still simple boxes inside. Not built yet: Docking Bay rebuild, residential spires, transit rings. |
-| **Madrid first slice (§9)** | `js/world_madrid.js`, `suite_madrid.js` 45/45. See the list below. | See the list below. |
+| **Madrid (§9): one continuous city** | `js/madrid_city.js` + `js/world_madrid.js`, `suite_madrid.js` 78/78. See the list below. | See the list below. |
 | Songkran visuals | | NPCs don't look wet; crowd uses the existing throw pose; no crowd-cheer audio layer; FPS in the crowd not measured. |
 | Photoreal human faces (§34A) | Soft-body characters exist (0jc1) | Heavy; no hero-human pass yet. Needs a real Iris Xe FPS reading first. |
 
@@ -162,6 +162,51 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Characters and traffic keep drawing when you're inside the flat.
 - Not built yet: Retiro, Malasaña plazas, La Latina, Atocha, Madrid Río, Lavapiés, the other metro lines.
 
+**Madrid rebuild: one continuous city (`js/madrid_city.js`, `suite_madrid.js` 78/78):**
+- **Layout:** about 1.5 × 1.6 km of real-order Madrid, all walkable with no loading screens between districts. North to south: Pinar de Chamartín → Chamartín (Cuatro Torres) → Tetuán → Salamanca / Chueca / Malasaña / Gran Vía → Sol / Centro → Barrio de las Letras / La Latina / Lavapiés / Embajadores → Atocha → Madrid Río. West: Moncloa, Argüelles, Ciudad Universitaria, Parque del Oeste (Templo de Debod), Casa de Campo (lake, cable-car pylons). East: Retiro (lake, Palacio de Cristal, monument).
+- **Streets:** a street grid every 70 m, plus wide avenues (Castellana, Prado / Recoletos, the Rondas) with traffic. Old-town blocks are cut by narrow lanes. Real street names are on ceramic plaques.
+- **Buildings:** perimeter blocks with courtyards. Each district has its own facade style (brick, old town, Centro, elegant Salamanca, colourful Lavapiés, modern towers).
+- **Shopfronts:** generic Spanish signs from a 24-sign atlas, with each district's own mix: Farmacia (with a lit green cross), Panadería, Bar, Cafetería, Taberna, Estanco, Loterías, Supermercado, Peluquería, Hostal, Restaurante, Mercado, and more. Some shops are shuttered with posters or graffiti. No brand names.
+- **Landmarks:** Puerta de Alcalá, Cibeles, Palacio Real + Teatro Real, Plaza Mayor + Mercado de San Miguel, Atocha + Reina Sofía, Templo de Debod.
+- **Metro:** 13 extra stations across the city, plus the original Pinar / Sol / Gran Vía stations.
+- **Street life:** trees, lamps and parked cars. Bar and café terraces with seated people. Walkers dressed by district, following a sidewalk + crosswalk network.
+- **Ambience:** sound changes by district.
+- **Private rooms:** the flat and the Metro carriage moved outside the city (x 2000 / 2200).
+- **Performance:** the city is built in 180 m chunks, merged per material, and chunks are hidden by distance (330 / 430 / 560 m by quality). Parked cars are sparse and distance-culled. Headless Low probe in Salamanca: about 1.6 M triangles.
+
+**Map system (`js/minimap.js`, works in every world, `suite_minimap.js` 30/30):**
+- The full-screen map (J, or tap the minimap on a phone) zooms with the wheel or + / −, pans by dragging, and shows district names.
+- Its side list has a route button per place. Clicking the map sets a destination.
+- Routes use A* along the streets when the world provides a walking network (Madrid does), otherwise a straight line. The route is drawn on the minimap and full map with a distance readout, reroutes if you stray 45 m, and clears on arrival.
+
+**Astro-9 megacity (`js/astro9_mega.js`, `suite_astro9_mega.js` 25/25):**
+- **Skyline:** 70–150 towers in five families (lathe spires, crystal shards, dome clusters, ring towers, neon slabs with lit windows), sky bridges and floating platforms. All merged into a few draw calls.
+- **Air traffic and effects:** two giant transit rings with moving pods, flying-traffic lanes, drone swarms, six animated hologram billboards and glow motes.
+- **New walkable districts, joined to the existing plaza and Art Avenue:**
+  - **Neon Boulevard:** Tech Market, Instrument Market (ukulele, bongo, flute), Black Market lane (fictional relics), noodle bar, robot repair.
+  - **Residential Spires + Astro Inn:** rent a sleep pod.
+  - **Hangar + Docking Bay:** ships, a paint shop for the hover scooter, and the **portal hub** (opens the world picker).
+  - **Cosmic Temple:** floating crystal; meditating gives vibe.
+  - **Sky Market:** a floating platform 30 m up, reached by a lift.
+- **Crowd:** an instanced crowd of aliens (two body types) and crate-carrying robots on every street.
+- **Sound:** layered ambience (city hum, hover whooshes, market chatter, boulevard synth, temple drone, robot beeps).
+- **Fog:** Astro-9 fog was pushed out to 400 m so the skyline reads.
+
+**Still weak / TODO (honest):**
+- **Madrid:**
+  - Buildings are still one generator with style variants; there are no enterable interiors beyond the existing venues.
+  - Retiro's grass looked like paving in one headless shot; not rechecked yet.
+  - NPCs on the new streets are the cheap instanced walkers, not the realistic talkers.
+  - There are no buses or taxis on the side streets.
+  - The metro stations outside Pinar / Sol / Gran Vía are entrances only.
+- **Astro-9:**
+  - The towers are procedural primitives (stylised, not hero-modelled).
+  - The crowd walks fixed lanes and can't be talked to.
+  - Underground clubs, alien residential interiors, rooftop observatories and biotech gardens are not built; only the Temple stands in for the "cosmic district".
+  - The sky bridges can't be walked on.
+  - There is no chunk streaming; the whole megacity is always loaded.
+- **FPS:** not measured on real hardware. The headless renderer can't measure it.
+
 **Old first slice (replaced), what worked:**
 - **Walking Street:** a 190 m lane of wooden shophouses, with lanterns and night-market stalls from 17:00.
 - **Places to eat and drink:**
@@ -180,7 +225,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 ### PLANNED ONLY (no code)
 
 - **Map illustrations:** the hand-drawn maps for the 15 worlds without one. Image generation isn't available here; the briefs are in `EXTRAS/ILLUSTRATION_MAP_BRIEFS.md`.
-- **New worlds:** Madrid first slice (Pinar + metro), Ibiza 1969, Koh Tao (+ shared scuba system), Alien Maze X-9, Atlantis, Neon Nexus, Mayan, Hanoi, Cat Ba, Amsterdam 2077, Venice, New York 1926, Stonehenge eras, Angkor, Egypt, Koh Samui Jurassic, Bangkok, Resonara, Nomad-7.
+- **New worlds:** Ibiza 1969, Koh Tao (+ shared scuba system), Alien Maze X-9, Atlantis, Neon Nexus, Mayan, Hanoi, Cat Ba, Amsterdam 2077, Venice, New York 1926, Stonehenge eras, Angkor, Egypt, Koh Samui Jurassic, Bangkok, Resonara, Nomad-7.
 - **Chiang Mai:** venue spacing, 7-Eleven, outlying temples.
 - **Other systems:**
   - Ape Town plaza life (mime, busker, groups).
@@ -197,7 +242,7 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 
 1. **Owner:** play-test basketball, Songkran, the minimap, the DJ mixer, the Astro-9 plaza and Pai on the real laptop and phone. Report the F3 FPS readings.
 2. **Pai:** owner play-test; then texture and interior polish, and a scenic road transition.
-3. **Next:** Madrid district 2 (Retiro + La Latina / Lavapiés) or Ibiza 1969 / Koh Tao; Astro-9 Docking Bay + residential spires.
+3. **Next:** play-test continuous Madrid + the Astro-9 megacity on real hardware (F3 FPS); then Madrid interiors / buses, Astro-9 underground club + biotech gardens + walkable sky bridges, chunk streaming for Astro-9.
 
 ## Log (2026-11-23)
 
@@ -212,3 +257,6 @@ This is the running work ledger for the Worlds Reborn v1.1 pack (`design/worlds_
 - Pai rebuilt from the illustrated map, with layered ambience (`js/ambience.js`).
 - Madrid first slice (Pinar de Chamartín + Sol / Gran Vía / Malasaña + Metro).
 - Vehicles milestone (earlier, commit `f84ba1b`).
+- Madrid rebuilt as one continuous city (20+ neighbourhoods, landmarks, Spanish shop signage, 16 metro stations).
+- Full-screen map: zoom, pan, district names, A* street routes.
+- Astro-9 megacity (skyline, transit rings, Neon Boulevard, Astro Inn, Hangar + portal hub, Cosmic Temple, Sky Market).

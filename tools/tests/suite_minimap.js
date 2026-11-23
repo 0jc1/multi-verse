@@ -34,8 +34,11 @@ window.APE_T = (() => {
     AV.P.x = hostel.x + 5; AV.P.z = hostel.z; MM()._mk = MM().markers(); c('Giant Hostel discovered when close', MM()._mk.some(m => m.name === 'Giant Hostel')); c('far Night Bazaar still hidden', !MM()._mk.some(m => /Night Bazaar/.test(m.name)));
     c('basketball court + bike hire on the map when near', (AV.P.x = 39, AV.P.z = 70, MM().markers().some(m => m.icon === '🏀')), MM().markers().map(m => m.icon || m.kind).join(' '));
     const t = AV.W.T.find(t => /Rent a bicycle/.test(lab(t))); AV.P.x = t.x; AV.P.z = t.z; t.fn(); AV.act.cur.v = 3; $('actLeave').click(); c('your parked bike shows on the map', MM().markers().some(m => m.kind === 'veh'));
-    key('KeyJ'); c('J opens the full map', !!$('mmAtlas') && $('mmAtlas').width > 200, $('mmAtlas') && $('mmAtlas').width + 'x' + $('mmAtlas').height); c('lists found places with distance', /Giant Hostel · \d+ m/.test($('cmp').textContent));
-    $('cmp').querySelector('[data-mm="rot"]').click(); c('atlas button: north-up', S().rot === false); $('cmp').querySelector('[data-mm="rot"]').click();
+    key('KeyJ'); c('J opens the full map', !!$('mmAtlas') && $('mmAtlas').width > 200, $('mmAtlas') && $('mmAtlas').width + 'x' + $('mmAtlas').height); c('lists places with distance + route buttons', /Giant Hostel \d+ m/.test($('mmSide').textContent) && !!document.querySelector('#mmSide [data-go]'), $('mmSide').textContent.slice(0, 160));
+    const z0 = MM()._view.sc; MM().zoomFull(1.4); c('zoom in', MM()._view.sc > z0 * 1.3); MM().zoomFull(1 / 1.4);
+    const cx0 = MM()._view.cx, cv = $('mmAtlas'), r = cv.getBoundingClientRect(); cv.dispatchEvent(new PointerEvent('pointerdown', { clientX: r.left + 300, clientY: r.top + 300, pointerId: 1, bubbles: true })); cv.dispatchEvent(new PointerEvent('pointermove', { clientX: r.left + 200, clientY: r.top + 300, pointerId: 1, bubbles: true })); cv.dispatchEvent(new PointerEvent('pointerup', { clientX: r.left + 200, clientY: r.top + 300, pointerId: 1, bubbles: true })); c('drag pans the map', Math.abs(MM()._view.cx - cx0) > 1, (MM()._view.cx - cx0).toFixed(1));
+    const bar = MM().places().find(p => p.id === 'bazaar'); MM().setDest(bar.x, bar.z, 'Night Bazaar'); c('route to the Night Bazaar', MM().dest && MM().dest.path.length >= 1, MM().dest && MM().dest.path.length + ' points'); MM().clearDest();
+    document.querySelector('#mmFull [data-mm="rot"]').click(); c('atlas button: north-up', S().rot === false); document.querySelector('#mmFull [data-mm="rot"]').click();
     key('KeyJ'); c('J closes it', !MM().atlasOpen()); key('KeyJ'); c('J opens it again', MM().atlasOpen()); key('KeyJ');
     AV.act.start('photo'); await sleep(200); c('hidden in photo mode', await until(() => !MM().visible(), 60000)); AV.act.end('leave'); c('back after photo mode', await until(() => MM().visible(), 60000));
   });
@@ -48,7 +51,7 @@ window.APE_T = (() => {
   step('phone: small minimap under the buttons, tap = full map', async c => {
     $('gq').value = 'Low'; $('bNew').click(); await until(() => AV.W && AV.running, 30000); await sleep(1500); AV.save = () => { };
     c('minimap shown', await until(() => MM().visible(), 60000)); const r = $('mmWrap').getBoundingClientRect(), m = $('tM').getBoundingClientRect(); c('112 px, below the Map button, not overlapping', r.width === 112 && r.top >= m.bottom - 1, JSON.stringify([r.top, m.bottom, r.width]));
-    $('mmWrap').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); c('tap opens the full map', !!$('mmAtlas')); AV.closePanel('cmp');
+    $('mmWrap').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); c('tap opens the full map', AV.minimap.atlasOpen()); AV.minimap.closeAtlas();
   }, { mobile: true, shot: 'minimap_phone' });
 
   let active = [];

@@ -82,8 +82,10 @@ function draw() {
   c.translate(R, R); c.rotate(th); c.scale(scale, scale); c.translate(-P.x, -P.z);
   if (B && B.c) { c.imageSmoothingEnabled = true; c.drawImage(B.c, B.b.x0, B.b.z0, B.cw * B.res, B.ch * B.res) }
   const ride = AV.cm && AV.cm.ride; if (ride && ride.curve) { c.strokeStyle = '#ffd84a'; c.lineWidth = 2.2 / scale; c.setLineDash([5 / scale, 4 / scale]); c.beginPath(); ride.curve.getSpacedPoints(60).forEach((p, i) => i ? c.lineTo(p.x, p.z) : c.moveTo(p.x, p.z)); c.stroke(); c.setLineDash([]) }
+  if (MM.dest && MM.dest.path) { c.strokeStyle = '#ff4ad2'; c.lineWidth = 3.4 / scale; c.lineJoin = 'round'; c.beginPath(); c.moveTo(P.x, P.z); MM.dest.path.forEach(p => c.lineTo(p[0], p[1])); c.stroke() }   /* the route to your waypoint */
   c.setTransform(cv.width / D, 0, 0, cv.height / D, 0, 0);
   const cs = Math.cos(th), sn = Math.sin(th), scr = (x, z) => { const dx = (x - P.x) * scale, dz = (z - P.z) * scale; return [R + dx * cs - dz * sn, R + dx * sn + dz * cs] };
+  if (MM.dest) { let [x, y] = scr(MM.dest.x, MM.dest.z); const dd = Math.hypot(x - R, y - R); if (dd > R - 10) { x = R + (x - R) / dd * (R - 12); y = R + (y - R) / dd * (R - 12) } c.fillStyle = '#ff4ad2'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 6, 0, TAU); c.fill(); c.stroke() }
   c.textAlign = 'center'; c.textBaseline = 'middle';
   for (const m of MM._mk || []) { const [x, y] = scr(m.x, m.z); if (Math.hypot(x - R, y - R) > R - 6) continue;
     if (m.kind === 'place') { c.fillStyle = '#ffd84a'; c.strokeStyle = '#2a1408'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x + 4, y); c.lineTo(x, y + 5); c.lineTo(x - 4, y); c.closePath(); c.fill(); c.stroke() }
@@ -96,6 +98,7 @@ function draw() {
   c.strokeStyle = 'rgba(255,216,74,.85)'; c.lineWidth = 2.5; c.beginPath(); c.arc(R, R, R - 1.5, 0, TAU); c.stroke();
   const nx = R + Math.sin(th) * (R - 9), ny = R - Math.cos(th) * (R - 9); c.fillStyle = '#e83a30'; c.beginPath(); c.arc(nx, ny, 7, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.font = 'bold 9px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tr('N', 'N'), nx, ny + .5);
   if (B && !B.done) { c.fillStyle = 'rgba(255,255,255,.7)'; c.font = '9px sans-serif'; c.fillText(tr('mapping…', 'mapeando…'), R, D - 14) }
+  if (MM.dest) { const dm = Math.round(Math.hypot(MM.dest.x - P.x, MM.dest.z - P.z)); c.fillStyle = 'rgba(20,8,32,.8)'; c.fillRect(R - 34, D - 26, 68, 15); c.fillStyle = '#ff8ad8'; c.font = 'bold 10px sans-serif'; c.fillText('📍 ' + (dm > 999 ? (dm / 1000).toFixed(1) + ' km' : dm + ' m'), R, D - 18) }
 }
 MM.visible = () => wrap.style.display !== 'none';
 /* where a world point lands on the minimap (pixels from its top-left), same maths as draw(); used by tests */
@@ -103,32 +106,87 @@ MM._scr = (x, z) => { const s = set(), P = AV.P, R = D / 2, scale = D / (SPAN / 
 MM._px = (x, z) => { const B = MM.base; if (!B || !B.done) return null; const i = Math.floor((x - B.b.x0) / B.res), j = Math.floor((z - B.b.z0) / B.res); if (i < 0 || j < 0 || i >= B.cw || j >= B.ch) return null; return Array.from(B.g.getImageData(i, j, 1, 1).data) };
 MM._fill = () => { const B = MM.base; if (!B || !B.done) return 0; const d = B.g.getImageData(0, 0, B.cw, B.ch).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n / (B.cw * B.ch) };
 AV.frameFns.push(() => {
-  const W = AV.W, s = set(); const hide = !AV.running || !W || !s.on || (AV.act && AV.act.cur && AV.act.cur.id === 'photo') || document.body.classList.contains('nm') || AV.modals.some(m => m.id === 'viewer' || m.id === 'cinema');
+  const W = AV.W, s = set(); const hide = !AV.running || !W || !s.on || (AV.act && AV.act.cur && AV.act.cur.id === 'photo') || document.body.classList.contains('nm') || AV.modals.some(m => m.id === 'viewer' || m.id === 'cinema' || m.id === 'atlas');
   if (hide) { if (wrap.style.display !== 'none') { wrap.style.display = 'none'; layout() } return }
   if (wrap.style.display === 'none') { wrap.style.display = 'block'; layout() } else if ((phone() ? 112 : 190) !== D) layout();
   if (!MM.base || MM.base.W !== W) startBuild(W); stepBuild(3);
   const now = AV.now(); if (now - rt > .5) { rt = now; MM._mk = markers() } draw();
 });
 
-/* ---------- full atlas (J, or click / tap the minimap) ---------- */
+/* ---------- routes: A* over the world's street network (W.mapNav = {nodes, links}) or a straight line ---------- */
+function routeTo(x, z) {
+  const W = AV.W, N = W && W.mapNav, P = AV.P; if (!N || !N.nodes || !N.nodes.length) return [[x, z]];
+  const nr = (px, pz) => { let b = 0, bd = 1e18; for (let i = 0; i < N.nodes.length; i++) { const n = N.nodes[i], d = (n[0] - px) ** 2 + (n[1] - pz) ** 2; if (d < bd) { bd = d; b = i } } return b };
+  const a = nr(P.x, P.z), b = nr(x, z), n = N.nodes.length, g = new Float64Array(n).fill(1e18), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n), h = i => Math.hypot(N.nodes[i][0] - x, N.nodes[i][1] - z), heap = [];
+  const push = (f, i) => { heap.push([f, i]); let k = heap.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (heap[p][0] <= heap[k][0]) break; const t = heap[p]; heap[p] = heap[k]; heap[k] = t; k = p } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; const t = heap[m]; heap[m] = heap[k]; heap[k] = t; k = m } } return top };
+  g[a] = 0; push(h(a), a);
+  while (heap.length) { const u = pop()[1]; if (done[u]) continue; done[u] = 1; if (u === b) break; for (const v of N.links[u]) { const nd = g[u] + Math.hypot(N.nodes[u][0] - N.nodes[v][0], N.nodes[u][1] - N.nodes[v][1]); if (nd < g[v]) { g[v] = nd; prev[v] = u; push(nd + h(v), v) } } }
+  if (!done[b]) return [[x, z]]; const out = []; for (let u = b; u >= 0; u = prev[u]) out.unshift(N.nodes[u]); out.push([x, z]); return out;
+}
+MM._route = routeTo;
+const pathLen = p => { let l = Math.hypot(p[0][0] - AV.P.x, p[0][1] - AV.P.z); for (let i = 1; i < p.length; i++) l += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return l };
+MM.setDest = function (x, z, name) { MM.dest = { x, z, name: name || tr('Waypoint', 'Destino'), path: routeTo(x, z), w: AV.W }; const l = pathLen(MM.dest.path); AV.toast('📍 ' + MM.dest.name + ' · ' + (l > 999 ? (l / 1000).toFixed(1) + ' km' : Math.round(l) + ' m') + tr(' — follow the pink route', ' — sigue la ruta rosa')); return MM.dest };
+MM.clearDest = () => { MM.dest = null };
+let dt0 = 0; AV.frameFns.push(() => { const d = MM.dest; if (!d) return; if (d.w !== AV.W) { MM.dest = null; return } const P = AV.P;
+  if (Math.hypot(P.x - d.x, P.z - d.z) < 12) { AV.toast('📍 ' + tr('You have arrived: ', 'Has llegado: ') + d.name); MM.dest = null; return }
+  while (d.path.length > 1 && Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z) < 9) d.path.shift();
+  const now = AV.now(); if (now - dt0 > 2) { dt0 = now; if (Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z) > 45) d.path = routeTo(d.x, d.z) } });
+
+/* ---------- the full-screen map: zoom (wheel / + -), pan (drag), districts, places, click to set a waypoint ---------- */
+const FS = document.createElement('style'); FS.textContent = '#mmFull{position:fixed;inset:0;z-index:45;display:none;background:rgba(8,4,20,.94);font:13px Georgia,serif;color:#f4ecd8}#mmFull canvas{position:absolute;left:0;top:0;cursor:grab;touch-action:none}' +
+  '#mmFull .bar{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}#mmFull button{font:13px Georgia,serif;padding:6px 10px;border-radius:8px;border:1px solid #ffd84a;background:rgba(30,14,50,.9);color:#fff;cursor:pointer}#mmFull .side{position:absolute;right:0;top:0;bottom:0;width:min(300px,42vw);overflow:auto;background:rgba(20,8,32,.88);border-left:1px solid #6a5a9a;padding:8px;z-index:2}' +
+  '#mmFull .side .it{display:flex;justify-content:space-between;align-items:center;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.08)}#mmFull .side .it button{padding:2px 8px;font-size:12px}#mmFull .hint{position:absolute;left:10px;bottom:10px;opacity:.75;z-index:2}';
+document.head.appendChild(FS);
+const ov = document.createElement('div'); ov.id = 'mmFull'; ov.innerHTML = '<canvas id="mmAtlas"></canvas><div class="bar"><button data-mm="zin">＋</button><button data-mm="zout">－</button><button data-mm="me">⌖ ' + tr('Me', 'Yo') + '</button><button data-mm="clear">✕ ' + tr('Clear route', 'Quitar ruta') + '</button><button data-mm="rot"></button><button data-mm="on"></button><button data-mm="close">' + tr('Close (J / Esc)', 'Cerrar (J / Esc)') + '</button></div><div class="side" id="mmSide"></div><div class="hint">' + tr('Drag to pan · wheel or ＋/－ to zoom · click a place (or anywhere) to set a route', 'Arrastra para moverte · rueda o ＋/－ para zoom · clic en un lugar (o donde sea) para trazar ruta') + '</div>';
+document.body.appendChild(ov);
+const big = ov.querySelector('#mmAtlas'), bg = big.getContext('2d'), V = { cx: 0, cz: 0, sc: 1 };
+MM.atlasOpen = () => ov.style.display === 'block';
+const w2s = (x, z) => [big.clientWidth / 2 + (x - V.cx) * V.sc, big.clientHeight / 2 + (z - V.cz) * V.sc], s2w = (px, py) => [V.cx + (px - big.clientWidth / 2) / V.sc, V.cz + (py - big.clientHeight / 2) / V.sc];
+function allMarks() { const W = AV.W, P = AV.P, out = markers().map(m => Object.assign({}, m)); const seenN = new Set(out.map(m => m.name)); for (const p of MM.places()) { const n = tr(p.name[0], p.name[1]); if (!seenN.has(n)) out.push({ x: p.x, z: p.z, kind: 'place', name: n, dim: true }) } return out }
+MM.fullMarks = allMarks;
+function renderBig() {
+  if (!MM.atlasOpen()) return; const B = MM.base, W = AV.W, P = AV.P, dpr = Math.min(2, devicePixelRatio || 1), w = innerWidth, h = innerHeight;
+  if (big.width !== Math.round(w * dpr)) { big.width = Math.round(w * dpr); big.height = Math.round(h * dpr); big.style.width = w + 'px'; big.style.height = h + 'px' }
+  const c = bg; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = '#0c0818'; c.fillRect(0, 0, w, h);
+  if (B && B.c) { const [x0, y0] = w2s(B.b.x0, B.b.z0); c.imageSmoothingEnabled = V.sc < 3; c.drawImage(B.c, x0, y0, B.cw * B.res * V.sc, B.ch * B.res * V.sc) }
+  if (MM.dest && MM.dest.path) { c.strokeStyle = '#ff4ad2'; c.lineWidth = 4; c.lineJoin = 'round'; c.beginPath(); c.moveTo(...w2s(P.x, P.z)); MM.dest.path.forEach(p => c.lineTo(...w2s(p[0], p[1]))); c.stroke() }
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (const d of (W && W.mapDistricts) || []) { const [x, y] = w2s(d.x, d.z); c.font = 'bold ' + Math.max(11, Math.min(22, 8 + V.sc * 6)) + 'px Georgia, serif'; c.lineWidth = 4; c.strokeStyle = 'rgba(0,0,0,.75)'; c.strokeText(d.name, x, y); c.fillStyle = '#ffe9a8'; c.fillText(d.name, x, y) }
+  MM._big = allMarks(); for (const m of MM._big) { const [x, y] = w2s(m.x, m.z); if (x < -20 || y < -20 || x > w + 20 || y > h + 20) continue;
+    if (m.kind === 'place') { c.globalAlpha = m.dim ? .55 : 1; c.fillStyle = '#ffd84a'; c.beginPath(); c.arc(x, y, 5, 0, TAU); c.fill(); if (!m.dim || V.sc > .9) { c.font = '12px Georgia, serif'; c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.8)'; c.strokeText(m.name, x, y - 12); c.fillStyle = '#fff'; c.fillText(m.name, x, y - 12) } c.globalAlpha = 1 }
+    else if (m.kind === 'portal') { c.strokeStyle = '#c88aff'; c.lineWidth = 2.5; c.beginPath(); c.arc(x, y, 7, 0, TAU); c.stroke() } else { c.font = '15px sans-serif'; c.fillText(m.icon || '•', x, y) } }
+  if (MM.dest) { const [x, y] = w2s(MM.dest.x, MM.dest.z); c.fillStyle = '#ff4ad2'; c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 8, 0, TAU); c.fill(); c.stroke(); c.font = 'bold 13px Georgia, serif'; c.fillStyle = '#ff8ad8'; c.fillText('📍 ' + MM.dest.name, x, y - 16) }
+  { const [x, y] = w2s(P.x, P.z); c.save(); c.translate(x, y); c.rotate(-P.yaw); c.fillStyle = '#fff'; c.strokeStyle = '#ff4ad2'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(0, -11); c.lineTo(8, 9); c.lineTo(0, 4); c.lineTo(-8, 9); c.closePath(); c.fill(); c.stroke(); c.restore() }
+  c.fillStyle = '#e83a30'; c.beginPath(); c.arc(w - (parseInt(getComputedStyle(ov.querySelector('.side')).width) || 300) - 26, 30, 11, 0, TAU); c.fill(); c.fillStyle = '#fff'; c.font = 'bold 12px sans-serif'; c.fillText('N', w - (parseInt(getComputedStyle(ov.querySelector('.side')).width) || 300) - 26, 31);
+}
+function side() { const P = AV.P, rows = [], W = AV.W; for (const d of (W && W.mapDistricts) || []) rows.push({ n: '🏙 ' + d.name, x: d.x, z: d.z }); for (const m of allMarks()) if (m.kind !== 'veh') rows.push({ n: (m.kind === 'place' ? '◆ ' : m.kind === 'portal' ? '⭘ ' : (m.icon || '') + ' ') + m.name, x: m.x, z: m.z });
+  rows.forEach(r => r.d = Math.hypot(r.x - P.x, r.z - P.z)); rows.sort((a, b) => a.d - b.d); MM._rows = rows;
+  ov.querySelector('#mmSide').innerHTML = '<b>' + (W.name || W.id) + '</b><div class="note">' + tr('Places + neighbourhoods by distance', 'Lugares y barrios por distancia') + '</div>' + rows.slice(0, 80).map((r, i) => '<div class="it"><span>' + r.n + ' <small>' + (r.d > 999 ? (r.d / 1000).toFixed(1) + ' km' : Math.round(r.d) + ' m') + '</small></span><button data-go="' + i + '">' + tr('Route', 'Ruta') + '</button></div>').join('');
+  ov.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const r = MM._rows[+b.dataset.go]; MM.setDest(r.x, r.z, r.n.replace(/^\S+\s/, '')); renderBig() }) }
+function labels() { const s = set(); ov.querySelector('[data-mm="rot"]').textContent = s.rot ? tr('Minimap: rotates', 'Minimapa: gira') : tr('Minimap: north up', 'Minimapa: norte arriba'); ov.querySelector('[data-mm="on"]').textContent = s.on ? tr('Hide minimap', 'Ocultar minimapa') : tr('Show minimap', 'Mostrar minimapa') }
+const zoomAt = (f, px, py) => { const [wx, wz] = s2w(px, py); V.sc = Math.max(.08, Math.min(8, V.sc * f)); const [nx, nz] = s2w(px, py); V.cx += wx - nx; V.cz += wz - nz; renderBig() };
+MM.zoomFull = f => zoomAt(f, big.clientWidth / 2, big.clientHeight / 2); MM._view = V;
 MM.atlas = function () {
-  if (!AV.W || AV.blocking()) return; if (!MM.base || MM.base.W !== AV.W) startBuild(AV.W); MM._buildNow(); const B = MM.base, s = set(), mk = markers();
-  const p = AV.panel('cmp', '<b>🗺 ' + tr('Map of ', 'Mapa de ') + (AV.W.name || AV.W.id) + '</b><div style="position:relative;margin:6px auto"><canvas id="mmAtlas" style="width:100%;max-width:560px;display:block;margin:auto;border-radius:8px;background:#120a1e"></canvas></div>' +
-    '<div class="note">' + tr('◆ places you have found · ⭘ portals · icons: activities and your vehicles. Unvisited places stay hidden.', '◆ lugares descubiertos · ⭘ portales · iconos: actividades y tus vehículos. Los lugares sin visitar siguen ocultos.') + '</div>' +
-    '<div class="grid"><button data-mm="rot">' + (s.rot ? tr('Minimap: rotates with you', 'Minimapa: gira contigo') : tr('Minimap: north up', 'Minimapa: norte arriba')) + '</button><button data-mm="zin">' + tr('Zoom in (=)', 'Acercar (=)') + '</button><button data-mm="zout">' + tr('Zoom out (-)', 'Alejar (-)') + '</button><button data-mm="on">' + (s.on ? tr('Hide minimap', 'Ocultar minimapa') : tr('Show minimap', 'Mostrar minimapa')) + '</button></div>' +
-    '<div class="note" style="max-height:140px;overflow:auto">' + mk.filter(m => m.kind !== 'veh').map(m => (m.kind === 'place' ? '◆ ' : m.kind === 'portal' ? '⭘ ' : (m.icon || '') + ' ') + m.name + ' · ' + Math.round(Math.hypot(m.x - AV.P.x, m.z - AV.P.z)) + ' m').join('<br>') + '</div><button data-close>' + tr('Close (J)', 'Cerrar (J)') + '</button>');
-  const ac = p.querySelector('#mmAtlas'), sc = Math.min(560 / B.cw, 560 / B.ch, 4), w = Math.round(B.cw * sc), h = Math.round(B.ch * sc); ac.width = w; ac.height = h; const g = ac.getContext('2d'); g.drawImage(B.c, 0, 0, w, h);
-  const X = x => (x - B.b.x0) / B.res * sc, Z = z => (z - B.b.z0) / B.res * sc; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '11px Georgia, serif';
-  for (const m of mk) { const x = X(m.x), y = Z(m.z); if (m.kind === 'place') { g.fillStyle = '#ffd84a'; g.beginPath(); g.arc(x, y, 4, 0, TAU); g.fill(); g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.8)'; g.lineWidth = 3; g.strokeText(m.name, x, y - 10); g.fillText(m.name, x, y - 10) } else if (m.kind === 'portal') { g.strokeStyle = '#c88aff'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 6, 0, TAU); g.stroke() } else { g.font = '14px sans-serif'; g.fillText(m.icon || '•', x, y); g.font = '11px Georgia, serif' } }
-  const P = AV.P; g.save(); g.translate(X(P.x), Z(P.z)); g.rotate(-P.yaw); g.fillStyle = '#fff'; g.strokeStyle = '#ff4ad2'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -9); g.lineTo(7, 7); g.lineTo(0, 3); g.lineTo(-7, 7); g.closePath(); g.fill(); g.stroke(); g.restore();
-  g.fillStyle = '#e83a30'; g.beginPath(); g.arc(w - 16, 16, 9, 0, TAU); g.fill(); g.fillStyle = '#fff'; g.font = 'bold 11px sans-serif'; g.fillText('N', w - 16, 16.5);
-  p.querySelectorAll('[data-mm]').forEach(b => b.onclick = () => { const k = b.dataset.mm; if (k === 'rot') s.rot = !s.rot; if (k === 'zin') s.zoom = Math.min(3, (s.zoom || 1) * 1.4); if (k === 'zout') s.zoom = Math.max(.4, (s.zoom || 1) / 1.4); if (k === 'on') s.on = !s.on; AV.save(); AV.closePanel('cmp'); MM.atlas() });
+  if (!AV.W || MM.atlasOpen()) return; if (!MM.base || MM.base.W !== AV.W) startBuild(AV.W); MM._buildNow(); const B = MM.base;
+  ov.style.display = 'block'; AV.pushModal('atlas', () => MM.closeAtlas()); try { document.exitPointerLock() } catch (e) { }
+  const w = innerWidth - Math.min(300, innerWidth * .42), h = innerHeight, bw = B.b.x1 - B.b.x0, bh = B.b.z1 - B.b.z0; V.sc = Math.min(w / bw, h / bh) * .92; V.cx = AV.P.x; V.cz = AV.P.z; if (V.sc < .6) V.sc = Math.min(1.2, V.sc * 2.2);
+  labels(); side(); renderBig();
 };
+MM.closeAtlas = () => { if (!MM.atlasOpen()) return; ov.style.display = 'none'; AV.popModal('atlas') };
+let drag = null; big.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, cx: V.cx, cz: V.cz, moved: 0 }; big.setPointerCapture(e.pointerId) });
+big.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy)); V.cx = drag.cx - dx / V.sc; V.cz = drag.cz - dy / V.sc; renderBig() });
+big.addEventListener('pointerup', e => { const d = drag; drag = null; if (!d || d.moved > 6) return; const r = big.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top; let best = null, bd = 16;
+  for (const m of MM._big || []) { const [x, y] = w2s(m.x, m.z), dd = Math.hypot(x - px, y - py); if (dd < bd) { bd = dd; best = m } }
+  if (best) MM.setDest(best.x, best.z, best.name); else { const [wx, wz] = s2w(px, py); if (AV.W.surface(wx, wz) !== null) MM.setDest(wx, wz) } renderBig() });
+big.addEventListener('wheel', e => { e.preventDefault(); const r = big.getBoundingClientRect(); zoomAt(e.deltaY < 0 ? 1.18 : 1 / 1.18, e.clientX - r.left, e.clientY - r.top) }, { passive: false });
+ov.querySelectorAll('[data-mm]').forEach(b => b.onclick = () => { const k = b.dataset.mm, s = set(); if (k === 'zin') MM.zoomFull(1.4); if (k === 'zout') MM.zoomFull(1 / 1.4); if (k === 'me') { V.cx = AV.P.x; V.cz = AV.P.z; renderBig() } if (k === 'clear') { MM.clearDest(); renderBig() }
+  if (k === 'rot') { s.rot = !s.rot; AV.save() } if (k === 'on') { s.on = !s.on; AV.save() } if (k === 'close') MM.closeAtlas(); labels() });
+AV.frameFns.push(() => { if (MM.atlasOpen()) renderBig() });
 AV.keymap.KeyJ = () => MM.atlas();
-MM.atlasOpen = () => { const a = document.getElementById('mmAtlas'), p = document.getElementById('cmp'); return !!(a && p && p.contains(a) && getComputedStyle(p).display !== 'none') };
 AV.keymap.KeyL = () => { const s = set(); s.rot = !s.rot; AV.save(); AV.toast(s.rot ? tr('Minimap rotates with you', 'El minimapa gira contigo') : tr('Minimap: north up', 'Minimapa: norte arriba')) };
 AV.keymap.Equal = AV.keymap.NumpadAdd = () => { const s = set(); s.zoom = Math.min(3, (s.zoom || 1) * 1.25) };
 AV.keymap.Minus = AV.keymap.NumpadSubtract = () => { const s = set(); s.zoom = Math.max(.4, (s.zoom || 1) / 1.25) };
-/* the J key also closes the atlas (the core skips keymaps while a panel is open) */
-addEventListener('keydown', e => { if (e.code === 'KeyJ' && MM.atlasOpen()) { e.stopImmediatePropagation(); AV.closePanel('cmp') } }, true);
+/* while the full map is open: J closes it, + / - zoom it (the core skips keymaps while a modal is open) */
+addEventListener('keydown', e => { if (!MM.atlasOpen()) return; if (e.code === 'KeyJ') { e.stopImmediatePropagation(); MM.closeAtlas() } else if (e.code === 'Equal' || e.code === 'NumpadAdd') { e.stopImmediatePropagation(); MM.zoomFull(1.3) } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') { e.stopImmediatePropagation(); MM.zoomFull(1 / 1.3) } }, true);
 })(window.AV);

@@ -15,7 +15,8 @@ const PL = { x: 0, z: 94, r: 24 }, BLVD = [-5, 5, 24, 72], BAZ = [-98, -20, 70, 
 const STOPS = [{ id: 'plaza', x: 13, z: 112, n: L('Spiral Plaza', 'Plaza Espiral') }, { id: 'gate', x: 8, z: 36, n: L('South Gate', 'Puerta Sur') }, { id: 'bazaar', x: -90, z: 100, n: L('Intergalactic Bazaar', 'Bazar Intergaláctico') }, { id: 'food', x: 86, z: 100, n: L('Food Ring', 'Anillo de Comida') }, { id: 'club', x: -22, z: -6, n: L('Club Graviton', 'Club Graviton') }];
 M.STOPS = STOPS; M.PLAZA = PL;
 const inR = (x, z, r) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];   /* inclusive: shared edges (doors, street joins) stay walkable */
-M.surface = (x, z) => (Math.hypot(x - PL.x, z - PL.z) < PL.r || inR(x, z, BLVD) || inR(x, z, BAZ) || inR(x, z, FOOD)) ? 0 : AV.astro9m2 ? AV.astro9m2.surface(x, z) : null;   /* + district 2 (astro9_district2.js) */
+const MG2 = (x, z) => { const a = AV.astro9m2 ? AV.astro9m2.surface(x, z) : null; return a !== null ? a : AV.astro9mega ? AV.astro9mega.surface(x, z) : null };   /* + district 2 + megacity (astro9_mega.js) */
+M.surface = (x, z) => (Math.hypot(x - PL.x, z - PL.z) < PL.r || inR(x, z, BLVD) || inR(x, z, BAZ) || inR(x, z, FOOD)) ? 0 : MG2(x, z);   /* + district 2 (astro9_district2.js) */
 
 /* ---------- items sold here ---------- */
 Object.assign(AV.ITEMS, {
@@ -113,8 +114,8 @@ M.build = function (ctx, deps) {
   /* ---------- places (minimap, portal pipe, NPC directions) ---------- */
   const places = [{ id: 'm_plaza', name: L('Central Spiral Plaza', 'Plaza Espiral Central'), x: PL.x + 6, z: PL.z - 12, yaw: 0 }, { id: 'm_gate', name: L('South Gate & Spiral Boulevard', 'Puerta Sur y Bulevar Espiral'), x: 0, z: 40, yaw: Math.PI },
     { id: 'm_bazaar', name: L('Intergalactic Bazaar', 'Bazar Intergaláctico'), x: -60, z: 94, yaw: Math.PI / 2 }, { id: 'm_food', name: L('Food Ring & Astro Café', 'Anillo de Comida y Astro Café'), x: 50, z: 94, yaw: -Math.PI / 2 }].concat(SHOPS.map(s => ({ id: 'm_' + s.id, name: s.n, x: s.x, z: 86, yaw: Math.PI })));
-  const d2 = AV.astro9m2 ? AV.astro9m2.build(ctx) : null;
-  return { surface: M.surface, places: places.concat(d2 ? d2.places : []) };
+  const d2 = AV.astro9m2 ? AV.astro9m2.build(ctx) : null; const d3 = AV.astro9mega ? AV.astro9mega.build(ctx) : null;
+  return { surface: M.surface, places: places.concat(d2 ? d2.places : [], d3 ? d3.places : []) };
 };
 /* a street musician with the alien synth on the plaza (shared instrument activity, music_play.js) */
 addEventListener('load', () => { if (AV.act && AV.act.PLACES) AV.act.PLACES.astro9 = (AV.act.PLACES.astro9 || []).concat([{ type: 'instspot', kind: 'alien', x: -10, z: 106, name: ['Spiral Plaza buskers', 'músicos de la Plaza Espiral'] }]) });

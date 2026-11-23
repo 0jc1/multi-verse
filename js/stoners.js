@@ -208,7 +208,7 @@
     return out.slice(0, n);
   }
   function spawnWorld(W) {
-    if (!W || W.__stoners) return; W.__stoners = true;
+    if (!W || W.__stoners || W.noStoners) return; W.__stoners = true;   /* a world can opt out (Jerusalem: holy sites) */
     const ctx = W.ctx; if (!ctx || !W.surface || !AV.npc) return;
     const q = ctx.q == null ? 2 : ctx.q, n = q === 0 ? 2 : 3;
     const rng = AV.rng((AV.S.seed || 1) * 17 + hash(W.id) + (AV.S.day || 1) * 7);

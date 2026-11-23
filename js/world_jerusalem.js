@@ -1,96 +1,117 @@
-/* APEVERSE - world_jerusalem.js : JERUSALEM — City of Gold (built from the real city's layout, game-sized).
-   North = -z. ~500 × 360 m. The Old City inside its Ottoman walls (8 gates, 4 quarters: Christian, Muslim, Jewish,
-   Armenian), the Temple Mount esplanade with the Dome of the Rock + Al-Aqsa under construction hoardings, the Western
-   Wall plaza below it, the Church of the Holy Sepulchre, the Tower of David citadel by Jaffa Gate, the Cardo,
-   the covered souk alleys (spice shop, ka'ak carts outside Damascus Gate), Mamilla Avenue of shops to the west,
-   Jaffa Road + the light rail east to City Hall and Mahane Yehuda Market (rugelach bakery, spice stalls, night bars),
-   Mount Zion + the dormition dome south, the Mount of Olives + its church domes east across the Kidron valley,
-   the police/patrol post and the portal back to Ape Town by Jaffa Gate.
-   People: Dalia (guide), Yossi (founder), Karim (spice merchant), Miriam (baker), Elias (ceramicist) + businessmen,
-   soldiers, orthodox walkers, vendors, students, pilgrims, monks, nuns. Vehicles: the Jerusalem light rail on its
-   grass track, cars, buses. Interactions: tour mission, briefcase mission, ka'ak mission, tram, shops, stones of the
-   Western Wall, Market bars at night, the Portal. Press E on glowing spots for the guided tour checkpoints. */
+/* APEVERSE - world_jerusalem.js : JERUSALEM — City of Gold (game-sized map that follows the real city's layout).
+   North = -z, east = +x. The Old City inside its Ottoman walls with 7 open gates (Jaffa + New on the west, Damascus +
+   Herod's on the north, Lions' on the east, Dung + Zion on the south) and its four quarters; the Temple Mount esplanade
+   (Haram al-Sharif) in the north-east with the golden Dome of the Rock and Al-Aqsa, reached by the wooden Mughrabi
+   ramp beside the Western Wall plaza and by the west ramp from the souk; the Church of the Holy Sepulchre (with the
+   "immovable ladder"); the Tower of David citadel inside Jaffa Gate; the Roman Cardo; the covered souk from Damascus Gate
+   down to the Western Wall; ka'ak carts and the bus to the Dead Sea outside Damascus Gate. West of the walls: Mamilla
+   avenue, Jaffa Road with the light rail (grass track, 3 rideable stops), Safra Square / City Hall, and Mahane Yehuda
+   market. South: Mount Zion. East across the Kidron valley: the Mount of Olives with its church domes and olive groves.
+   People: Dalia (guide), Yossi (founder), Karim (spice merchant), Miriam (baker), Elias (ceramicist) + business people,
+   residents, vendors, students, pilgrims, monks, nuns and off-duty soldiers on their way home (soft-body characters
+   + an instanced street crowd). The holy places are treated respectfully: no smoking stoners spawn here, and the
+   backpack refuses smoking inside the walls. */
 'use strict';
 (function (AV) {
 const tr = AV.tr, TAU = AV.TAU, K = AV.kit, A = AV.arch, CY = AV.city, MD = AV.media, C = AV.chars;
-const M = K.M, BG = K.BG, deg = d => d * Math.PI / 180, npcYaw = (fx, fz, tx, tz) => Math.atan2(tx - fx, tz - fz);
-const hourNow = () => (AV.S.time / 60) % 24, night = () => { const h = hourNow(); return h < 6 || h >= 18.5 };
+const M = K.M, BG = K.BG, deg = d => d * Math.PI / 180;
+const hourNow = () => (AV.S.time / 60) % 24;
 
-/* ======================= layout (game-sized map of the real city, north = -z) ======================= */
-/* The Old City is a rough quadrilateral ~1 km wide; here it is 200 m. The Jaffa Gate is on the west side,
-   Damascus Gate north, Lions' Gate east, Dung/Zion south. The Mount of Olives is east across the Kidron. */
-const OC = { x0: -70, x1: 70, z0: -95, z1: 65 };                       // Old City walls (x 140, z 160)
-const WALL = 2.6, WALLH = 9;                                            // wall thickness / height
-const JAFFA = [-OC.x1, 8], DAMASCUS = [-14, -OC.z0], HEROD = [42, -OC.z0], LIONS = [OC.x1, -14], DUNG = [-16, OC.z1], ZION = [-52, OC.z1], NEWG = [-OC.x1, -30], GOLDEN = [OC.x1, -46];
-const TM = { x0: 12, x1: 66, z0: -88, z1: -46 };                        // Temple Mount esplanade (NE corner of the Old City)
-const WW = { x: 30, z0: -46, z1: -24 };                                 // Western Wall plaza (just south of the Mount)
-const HS = { x: -22, z: -26 };                                          // Holy Sepulchre (Christian quarter)
-const TD = { x: -58, z: 14 };                                           // Tower of David (by Jaffa Gate)
-const CARD0 = [-30, -2], CARD1 = [-58, -2];                             // the Cardo (Roman main street, Jewish quarter)
-const SOUK = [{ a: [-14, -OC.z0 + 4], b: [-14, -30] }, { a: [-14, -30], b: [8, -26] }, { a: [8, -26], b: [8, -46] }, { a: [8, -46], b: [30, -46] }];   // covered alleys -> Temple Mount
-const MAM = { x0: -OC.x1 - 46, x1: -OC.x1 - 8, z0: -4, z1: 12 };        // Mamilla avenue (west of Jaffa Gate)
-const JR = { z: -1, x0: MAM.x0 - 120, x1: MAM.x0 };                     // Jaffa Road (east-west, west of Mamilla)
-const SHUK = { x0: JR.x0 + 6, x1: JR.x0 + 58, z0: -30, z1: -12 };       // Mahane Yehuda market
-const CITYHALL = { x: JR.x0 + 6, z: 26 };                               // City Hall square
-const ZIONM = { x: -46, z: 110 };                                       // Mount Zion (dormition abbey dome)
-const OLIV = { x: 130, z: -20 };                                        // Mount of Olives (east, across the Kidron)
-const KIDRON = { x: 86, w: 14 };                                        // Kidron valley
-const POST = { x: -30, z: 40 };                                         // patrol post (south-west inside walls, game fiction)
-const PORTAL = [-OC.x1 - 8, 26];                                        // Apeverse portal west of Jaffa Gate
-const TRAM = [{ x: JR.x0, z: JR.z - 2.2 }, { x: MAM.x0, z: JR.z - 2.2 }, { x: MAM.x1 + 8, z: -6 }];   // light rail path
-const XMIN = JR.x0 - 20, XMAX = OLIV.x + 60, ZMIN = OC.z0 - 30, ZMAX = Math.max(ZIONM.z, 130) + 20;
-const GW = XMAX - XMIN, GD = ZMAX - ZMIN;
+/* ======================= layout ======================= */
+const OC = { x0: -70, x1: 70, z0: -95, z1: 65 };                 // Old City walls
+const WALL = 2.6, WALLH = 9, GAP = 4;                             // wall thickness / height, half-width of a gate opening
+const GATES = [                                                   // [name, x, z, side]
+  ['JAFFA GATE', OC.x0, 8, 'w'], ['NEW GATE', OC.x0, -30, 'w'], ['DAMASCUS GATE', -14, OC.z0, 'n'], ['HEROD’S GATE', 42, OC.z0, 'n'],
+  ['LIONS’ GATE', OC.x1, -14, 'e'], ['DUNG GATE', -16, OC.z1, 's'], ['ZION GATE', -52, OC.z1, 's']];
+const TM = { x0: 12, x1: 66, z0: -88, z1: -46 };                  // Temple Mount esplanade
+const DOME = { x: 39, z: -70, R: 9 };                             // Dome of the Rock
+const AQSA = { x0: 18, x1: 38, z0: -54.5, z1: -47.5 };            // Al-Aqsa (south end of the esplanade)
+const WW = { x0: 14, x1: 40, z0: -43.8, z1: -24 };                // Western Wall plaza (the wall is the esplanade's face at z = -46)
+const MUGH = { x0: 41, x1: 44.6, z0: -46, z1: -36 };              // Mughrabi ramp (up to the esplanade)
+const WRAMP = { x0: 0, x1: 12, z0: -64, z1: -60 };                // west ramp from the souk
+const HS = { x0: -54, x1: -30, z0: -62, z1: -42 };                // Church of the Holy Sepulchre (forecourt to its south)
+const HSF = { x0: -50, x1: -34, z0: -42, z1: -32 };
+const TD = { x0: -64, x1: -50, z0: 18, z1: 34 };                  // Tower of David citadel
+const CARDO = { x0: -58, x1: -30, z0: -7, z1: 3 };
+const SOUK = [[-14, -89], [-14, -30], [8, -26], [8, -44]];        // covered souk alleys (Damascus Gate -> Western Wall)
+const DPLAZA = { x0: -24, x1: -4, z0: -92.4, z1: -82 };           // inside Damascus Gate
+const JPLAZA = { x0: -67.4, x1: -56, z0: 0, z1: 16 };             // inside Jaffa Gate
+const BUSSTOP = { x: -32, z: -106 };                              // bus to the Dead Sea (outside Damascus Gate)
+const JR = { z: -1, x0: -236, x1: -116 };                         // Jaffa Road (+ light rail)
+const MAM = { x0: -116, x1: -78, z0: 8, z1: 22 };                 // Mamilla avenue
+const SHUK = { x0: -230, x1: -178, z0: -30, z1: -12 };            // Mahane Yehuda market
+const CITYHALL = { x0: -154, x1: -126, z0: 14, z1: 38 };          // Safra Square
+const ZIONM = { x: -46, z: 110 };                                 // Mount Zion
+const OLIV = { x: 130, z: -20 };                                  // Mount of Olives
+const KIDRON = { x: 86, w: 14 };
+const PORTAL = { x: -84, z: 38 };
+const TRAM_Z = JR.z - 2.2, CAR_Z = JR.z + 2.6;
+const XMIN = -256, XMAX = 190, ZMIN = -125, ZMAX = 150, GW = XMAX - XMIN, GD = ZMAX - ZMIN;
 const inRect = (r, x, z, m) => x > r.x0 - (m || 0) && x < r.x1 + (m || 0) && z > r.z0 - (m || 0) && z < r.z1 + (m || 0);
-/* roads (for the painted ground + traffic loops) */
-const ROADS = [];
-ROADS.push([JR.x0, JR.z, MAM.x0, JR.z, 10], [MAM.x0, JR.z, JAFFA[0], JR.z, 8]);   // Jaffa Road -> Mamilla -> Jaffa Gate
-ROADS.push([JAFFA[0], 8, -30, 8, 6], [-30, 8, -30, -8, 6]);                        // into the citadel square
-ROADS.push([DAMASCUS[0], DAMASCUS[1], DAMASCUS[0], -30, 6], [DAMASCUS[0], -30, 8, -26, 6], [8, -26, 8, -46, 5], [8, -46, WW.x, -46, 5]);   // Nablus Rd + souk chain
-ROADS.push([WW.x, -46, WW.x, WW.z1, 6]);                                           // down to the Western Wall plaza
-ROADS.push([LIONS[0], LIONS[1], TM.x1 - 4, TM.z1, 5], [TM.x1 - 4, TM.z1, TM.x1 - 4, -60, 5]);   // Lions' Gate up to the Mount
-ROADS.push([DUNG[0], DUNG[1], -16, 30, 5], [-16, 30, POST.x + 6, POST.z, 5]);      // Dung gate area
-ROADS.push([JAFFA[0], 30, ZION[0], ZION[1] - 6, 6]);                               // road south to Zion
-ROADS.push([MAM.x0, JR.z + 2, MAM.x0, 40, 7], [MAM.x0, 40, MAM.x0 - 60, 60, 7]);   // King George / south-west loop
-ROADS.push([JR.x0 + 30, JR.z, JR.x0 + 30, -OC.z0 - 6, 6]);                         // north loop
-function segD(x, z, r) { const dx = r[2] - r[0], dz = r[3] - r[1], L = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - r[0]) * dx + (z - r[1]) * dz) / L)); return Math.hypot(x - r[0] - dx * t, z - r[1] - dz * t) - r[4] / 2 }
-const roadDist = (x, z) => { let d = 1e9; for (const r of ROADS) d = Math.min(d, segD(x, z, r)); return d };
-const inOC = (x, z) => x > OC.x0 + 1 && x < OC.x1 - 1 && z > OC.z0 + 1 && z < OC.z1 - 1;
-const inTM = (x, z) => inRect(TM, x, z, 0);
 const inKidron = (x, z) => Math.abs(x - KIDRON.x) < KIDRON.w && z < 60;
+
+/* roads [x0, z0, x1, z1, width] : painted, kept free of buildings */
+const ROADS = [
+  [JR.x0, JR.z, JR.x1, JR.z, 10], [JR.x1, JR.z, OC.x0 - 6, JR.z, 8], [OC.x0 - 6, JR.z, OC.x0, 8, 7],              // Jaffa Road -> Jaffa Gate
+  [OC.x0, 8, -30, 8, 6], [-30, 8, -30, -8, 6],                                                                    // into the city
+  [-14, OC.z0, -14, -30, 6], [-14, -30, 8, -26, 6], [8, -26, 8, -46, 5],                                          // souk
+  [OC.x1, -14, 64, -14, 6], [64, -14, 64, -30, 6],                                                                // Lions' Gate
+  [-16, OC.z1, -16, 50, 5], [-52, OC.z1, -52, 50, 5],                                                             // Dung + Zion gates
+  [JR.x1, JR.z + 2, JR.x1, 44, 7],                                                                               // King David St
+  [-14, OC.z0, -14, -110, 7], [-14, -110, 60, -110, 7],                                                           // outside Damascus Gate
+  [OC.x1, -14, 110, -30, 6], [110, -30, 120, -40, 6]];                                                            // down to the Kidron + Mount of Olives
+function segD(x, z, r) { const dx = r[2] - r[0], dz = r[3] - r[1], L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((x - r[0]) * dx + (z - r[1]) * dz) / L)) : 0; return Math.hypot(x - r[0] - dx * t, z - r[1] - dz * t) - r[4] / 2 }
+const roadDist = (x, z) => { let d = 1e9; for (const r of ROADS) d = Math.min(d, segD(x, z, r)); return d };
+/* pedestrian graph polylines (also kept free of buildings) */
+const NAVL = [
+  [[-230, 5.6], [-200, 5.6], [-170, 5.6], [-140, 5.6], [-116, 5.6]],                         // Jaffa Rd south pavement
+  [[-230, -7], [-200, -7], [-170, -7], [-140, -7], [-116, -7]],                              // north pavement
+  [[-116, 5.6], [-116, 15], [-97, 15], [-78, 15], [-74, 8]],                                 // Mamilla -> Jaffa Gate
+  [[-116, -7], [-116, 5.6]],
+  [[-74, 8], [-62, 8], [-40, 8], [-30, 8], [-30, -4], [-14, -4]],                            // Jaffa Gate -> centre
+  [[-14, -89], [-14, -30], [8, -26], [8, -44], [20, -40], [30, -34]],                        // souk -> Western Wall plaza
+  [[30, -34], [36, -30], [52, -30], [64, -22], [64, -14]],                                   // plaza -> Lions' Gate
+  [[64, -14], [60, 10], [50, 40], [20, 56], [-16, 58], [-52, 58], [-44, 40], [-40, 14], [-40, 8]],   // east + south lanes
+  [[-30, -4], [-42, -20], [-42, -34], [-60, -36], [-62, -30]],                               // Sepulchre + New Gate
+  [[-176, -7], [-180, -21], [-204, -21], [-226, -21]],                                       // Mahane Yehuda
+  [[-14, -89], [-14, -100], [-32, -104]],                                                    // out of Damascus Gate to the bus
+  [[64, -14], [76, -14], [100, -24], [116, -38]]];                                           // Lions' Gate -> Gethsemane
+const navDist = (x, z) => { let d = 1e9; for (const pl of NAVL) for (let i = 1; i < pl.length; i++) d = Math.min(d, segD(x, z, [pl[i - 1][0], pl[i - 1][1], pl[i][0], pl[i][1], 0])); return d };
 
 /* ======================= painted ground ======================= */
 const TX = {};
 function canvasTex(w, h, draw, rep) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.wrapS = t.wrapT = rep ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.userData = { keep: true }; return t }
-function stoneTex(vary) { return canvasTex(256, 256, (c, w, h) => { const r = AV.rng(vary || 21); c.fillStyle = '#e8dfc8'; c.fillRect(0, 0, w, h);
+/* Jerusalem limestone ashlar (warm cream blocks) */
+function stoneTex() { return TX.stone || (TX.stone = canvasTex(256, 256, (c, w, h) => { const r = AV.rng(21); c.fillStyle = '#d8ccb0'; c.fillRect(0, 0, w, h);
   for (let y = 0; y < h; y += 32) for (let x = -(y / 32 % 2) * 24; x < w; x += 48) { const v = r() * 26 | 0; c.fillStyle = 'rgb(' + (225 + v) + ',' + (214 + v) + ',' + (188 + v * .8 | 0) + ')'; c.fillRect(x + 1.5, y + 1.5, 45, 29) }
-  for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(120,100,70,' + (r() * .12).toFixed(2) + ')'; c.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3) } for (let i = 0; i < 14; i++) { c.fillStyle = 'rgba(150,120,70,' + (.08 + r() * .12).toFixed(2) + ')'; c.beginPath(); c.arc(r() * w, r() * h, 8 + r() * 30, 0, TAU); c.fill() } }, true) }
+  for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(120,100,70,' + (r() * .12).toFixed(2) + ')'; c.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3) }
+  for (let i = 0; i < 14; i++) { c.fillStyle = 'rgba(150,120,70,' + (.08 + r() * .12).toFixed(2) + ')'; c.beginPath(); c.arc(r() * w, r() * h, 8 + r() * 30, 0, TAU); c.fill() } }, true)) }
 function groundTex(N) {
   return TX.ground || (TX.ground = canvasTex(N, Math.round(N * GD / GW), (c, w, h) => {
     const m = w / GW, P = (x, z) => [(x - XMIN) * m, (z - ZMIN) * m], r = AV.rng(31);
-    const fillC = (x, z, col) => { const a = P(x, z); c.fillStyle = col; c.fillRect(a[0], a[1], 2 * m, 2 * m) };
-    c.fillStyle = '#c9b992'; c.fillRect(0, 0, w, h);                                     // Jerusalem hillside base
-    for (let i = 0; i < 1200; i++) { const x = r() * w, y = r() * h, s = 2 + r() * 9; c.fillStyle = ['#bfae86', '#d2c49e', '#c3b28c', '#cdbd94'][i % 4]; c.globalAlpha = .3; c.beginPath(); c.arc(x, y, s, 0, TAU); c.fill() } c.globalAlpha = 1;
-    const rect = (r0, col) => { const a = P(r0.x0 != null ? r0.x0 : r0[0], r0.z0 != null ? r0.z0 : r0[1]); c.fillStyle = col; c.fillRect(a[0], a[1], ((r0.x1 != null ? r0.x1 : r0[2]) - (r0.x0 != null ? r0.x0 : r0[0])) * m, ((r0.z1 != null ? r0.z1 : r0[3]) - (r0.z0 != null ? r0.z0 : r0[1])) * m) };
-    rect({ x0: OC.x0, x1: OC.x1, z0: OC.z0, z1: OC.z1 }, '#cbb994');                      // Old City paving
-    rect(TM, '#d8cdb0'); rect({ x0: TM.x0, x1: TM.x1, z0: TM.z1, z1: WW.z1 }, '#d4c9ac');  // esplanade + approach
-    rect({ x0: WW.x - 8, x1: WW.x + 8, z0: WW.z0 - 4, z1: WW.z1 }, '#c9a97e');            // Western Wall plaza
-    rect({ x0: HS.x - 16, x1: HS.x + 16, z0: HS.z - 14, z1: HS.z + 12 }, '#c7b58e');      // Holy Sepulchre forecourt
-    rect({ x0: TD.x - 12, x1: TD.x + 10, z0: TD.z - 10, z1: TD.z + 12 }, '#c7b58e');      // citadel courtyard
-    rect(MAM, '#dcd2b8'); rect(SHUK, '#b8a888');
-    rect({ x0: MAM.x0 - 120, x1: MAM.x0, z0: JR.z - 8, z1: JR.z + 8 }, '#9a9a92');        // Jaffa Road asphalt
-    for (const s of SOUK) rect({ x0: Math.min(s.a[0], s.b[0]) - 2, x1: Math.max(s.a[0], s.b[0]) + 2, z0: Math.min(s.a[1], s.b[1]) - 2, z1: Math.max(s.a[1], s.b[1]) + 2 }, '#b09a72');   // souk alleys
-    rect({ x0: KIDRON.x - KIDRON.w, x1: KIDRON.x + KIDRON.w, z0: ZMIN, z1: 60 }, '#a89a6e');   // Kidron valley floor
-    rect({ x0: OLIV.x - 40, x1: OLIV.x + 50, z0: OLIV.z - 60, z1: OLIV.z + 60 }, '#b4a67c');   // Mount of Olives slope
-    /* green strips of the light rail (grass track) */
-    c.fillStyle = '#5a7a3a'; { const a = P(TRAM[0].x, TRAM[0].z), b = P(TRAM[TRAM.length - 1].x, TRAM[TRAM.length - 1].z); c.fillRect(a[0], a[1] - 3 * m, b[0] - a[0], 6 * m) }
-    /* roads */
+    c.fillStyle = '#c9b992'; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 1200; i++) { c.fillStyle = ['#bfae86', '#d2c49e', '#c3b28c', '#cdbd94'][i % 4]; c.globalAlpha = .3; c.beginPath(); c.arc(r() * w, r() * h, 2 + r() * 9, 0, TAU); c.fill() } c.globalAlpha = 1;
+    const rect = (q, col) => { const a = P(q.x0, q.z0); c.fillStyle = col; c.fillRect(a[0], a[1], (q.x1 - q.x0) * m, (q.z1 - q.z0) * m) };
+    rect(OC, '#cbb994'); rect(WW, '#d8c8a6'); rect(HSF, '#c7b58e'); rect(JPLAZA, '#d0c2a0'); rect(DPLAZA, '#d0c2a0'); rect(CARDO, '#bfb08a');
+    rect(MAM, '#dcd2b8'); rect(SHUK, '#b8a888'); rect(CITYHALL, '#8e8a84');
+    rect({ x0: KIDRON.x - KIDRON.w, x1: KIDRON.x + KIDRON.w, z0: ZMIN, z1: 60 }, '#a89a6e');
+    c.globalAlpha = .55; rect({ x0: OLIV.x - 46, x1: XMAX, z0: OLIV.z - 60, z1: OLIV.z + 60 }, '#a8a070'); c.globalAlpha = 1;
     c.lineCap = 'butt'; const seg = (rd, w2, col) => { const p0 = P(rd[0], rd[1]), p1 = P(rd[2], rd[3]); c.strokeStyle = col; c.lineWidth = w2 * m; c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke() };
-    for (const rd of ROADS) seg(rd, rd[4] + 3.4, '#c3b58e'); for (const rd of ROADS) seg(rd, rd[4], rd[0] > MAM.x0 ? '#a8987a' : '#8a8a82');
-    c.setLineDash([3 * m, 3 * m]); for (const rd of ROADS) if (rd[4] >= 7 && rd[0] < MAM.x0) seg(rd, .18, '#e8d890'); c.setLineDash([]);
-    for (let i = 0; i < 9000; i++) { const x = XMIN + r() * GW, z = ZMIN + r() * GD, d = roadDist(x, z); if (d < 0) { c.fillStyle = r() < .5 ? 'rgba(0,0,0,.14)' : 'rgba(255,255,255,.08)'; const q = P(x, z); c.fillRect(q[0], q[1], 1.5, 1.5) } }
-    /* olive groves on the Mount of Olives + Kidron tombs speckle */
-    for (let i = 0; i < 240; i++) { const x = OLIV.x - 40 + r() * 90, z = OLIV.z - 55 + r() * 110; if (Math.hypot(x - OLIV.x, z - OLIV.z) > 52) continue; fillC(x, z, ['#5a6a3a', '#6a7a44', '#4a5a32'][i % 3]) }
+    for (const rd of ROADS) seg(rd, rd[4] + 2.4, '#c3b58e'); for (const rd of ROADS) seg(rd, rd[4], inRect(OC, (rd[0] + rd[2]) / 2, (rd[1] + rd[3]) / 2) ? '#b4a27e' : '#85837c');
+    /* light rail grass track + car lane markings on Jaffa Road */
+    seg([JR.x0, TRAM_Z, JR.x1, TRAM_Z, 3.4], 3.4, '#5e7c3c'); c.setLineDash([3 * m, 3 * m]); seg([JR.x0, CAR_Z, JR.x1, CAR_Z, .2], .2, '#e8d890'); c.setLineDash([]);
+    for (let i = 0; i < 9000; i++) { const x = XMIN + r() * GW, z = ZMIN + r() * GD; if (roadDist(x, z) < 0) { c.fillStyle = r() < .5 ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.08)'; const q = P(x, z); c.fillRect(q[0], q[1], 1.5, 1.5) } }
+    for (let i = 0; i < 260; i++) { const x = OLIV.x - 40 + r() * 90, z = OLIV.z - 55 + r() * 110; if (Math.hypot(x - OLIV.x, z - OLIV.z) > 52) continue; const q = P(x, z); c.fillStyle = ['#5a6a3a', '#6a7a44', '#4a5a32'][i % 3]; c.fillRect(q[0], q[1], 2 * m, 2 * m) }
   }));
+}
+/* trilingual-looking ceramic street plaque (Hebrew, Arabic, English) */
+function plaqueTex(he, ar, en) {
+  const key = 'pl' + en; if (TX[key]) return TX[key];
+  return TX[key] = canvasTex(512, 256, (c, w, h) => { c.fillStyle = '#f4f0e6'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2a3a7a'; c.lineWidth = 10; c.strokeRect(8, 8, w - 16, h - 16);
+    c.fillStyle = '#1a2a6a'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = 'bold 54px "Arial Hebrew","Noto Sans Hebrew",Arial,sans-serif'; c.fillText(he, w / 2, 64, w - 50);
+    c.font = 'bold 50px "Geeza Pro","Noto Naskh Arabic",Arial,sans-serif'; c.fillText(ar, w / 2, 132, w - 50);
+    c.font = 'bold 42px Arial,Helvetica,sans-serif'; c.fillText(en, w / 2, 200, w - 50) });
 }
 
 /* ======================= the world ======================= */
@@ -98,400 +119,365 @@ AV.registerWorld({
   id: 'jerusalem',
   build(ctx) {
     const S = AV.S, q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk();
-    if (!S.jlm) S.jlm = { met: {}, tour: [], bought: {} }; S.items = S.items || {};
-    const SKY = { tint: [0xffd8a0, 0xffe8c0, .12, .2], dome: { s1: 0xffc878, s2: 0xff9a4a, swirl: .08, cloud: .5, glow: .55 } };
-    const B = { city: K.batch(), stone: K.batch(), dome: K.batch(), decor: K.batch(), night: K.batch(), shuk: K.batch() };
-    const jer = K.floraMat(0, { map: stoneTex(21), rough: .92 }), gold = MT.shiny;
-    const goldMat = K.floraMat(0, { rough: .18, metal: .75 });
+    if (!S.jlm) S.jlm = { met: {}, tour: [] }; if (!S.jlm.tour) S.jlm.tour = []; if (!S.jlm.met) S.jlm.met = {}; S.items = S.items || {};
+    const SKY = { tint: [0xffd8a0, 0xffe8c0, .12, .2], dome: { s1: 0xffc878, s2: 0xff9a4a, swirl: .04, cloud: .45, glow: .55 } };
+    const B = { city: K.batch(), stone: K.batch(), dome: K.batch(), decor: K.batch(), shuk: K.batch() }, NIGHT = K.batch();
+    const jer = K.floraMat(0, { map: stoneTex(), rough: .92 });
+    const goldMat = K.floraMat(0, { rough: .22, metal: .7 }); if (AV.pbr && AV.pbr.env) { goldMat.envMap = AV.pbr.env(); goldMat.envMapIntensity = 1.1 }
     const occ = [];
     const box = (b, mat, col, x0, x1, y0, y1, z0, z1, glow) => b.add(mat, BG.box, col, M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0), glow);
     const solid = (x0, x1, z0, z1) => { ctx.cols.push([x0, x1, z0, z1]); occ.push({ x0, x1, z0, z1 }) };
-    const sign = (txt, x, y, z, ry, w, col, posts) => ctx.sign(txt, x, y, z, ry, w, col, posts ? { posts: true } : undefined);
     MD.resetFrames();
 
-    /* ---------- terrain ---------- */
-    const H = (x, z) => {                                     // gentle hills: Old City on a ridge, Mount of Olives + Zion rise, Kidron dips
-      const ridge = Math.max(0, 6 - Math.abs(z - (OC.z0 + OC.z1) / 2) * .06 - Math.abs(x - 0) * .012);
-      const oliv = Math.max(0, 22 - Math.hypot(x - OLIV.x, z - OLIV.z) * .34);
-      const zion = Math.max(0, 12 - Math.hypot(x - ZIONM.x, z - ZIONM.z) * .3);
-      const kid = -3.2 * Math.max(0, 1 - Math.abs(x - KIDRON.x) / (KIDRON.w + 8)) * (z < 70 ? 1 : .3);
-      const edge = Math.max(0, XMIN + 25 - x, x - (XMAX - 25), ZMIN + 20 - z, z - (ZMAX - 20));
-      return ridge + oliv + zion + kid + Math.min(16, edge * .6) - (inTM(x, z) ? ridge : 0);
+    /* ---------- terrain: the Old City sits on a ridge; Mount of Olives + Mount Zion rise, the Kidron dips ---------- */
+    const H = (x, z) => {
+      const ridge = Math.max(0, 5 - Math.abs(z + 15) * .045 - Math.abs(x) * .01);
+      const oliv = Math.max(0, 20 - Math.hypot(x - OLIV.x, z - OLIV.z) * .3);
+      const zion = Math.max(0, 8 - Math.hypot(x - ZIONM.x, z - ZIONM.z) * .22);
+      const kid = -3 * Math.max(0, 1 - Math.abs(x - KIDRON.x) / (KIDRON.w + 8)) * (z < 70 ? 1 : .3);
+      const edge = Math.max(0, XMIN + 22 - x, x - (XMAX - 22), ZMIN + 18 - z, z - (ZMAX - 18));
+      return ridge + oliv + zion + kid + Math.min(16, edge * .6);
     };
+    /* raised surfaces: flat rectangles (y) and ramps (ya at the min coordinate -> yb at the max along ax) */
+    const RECTS = [];
+    const rectAt = (x, z) => { let h; for (const r of RECTS) { if (x < r.x0 || x > r.x1 || z < r.z0 || z > r.z1) continue; const y = r.ax ? r.ya + (r.yb - r.ya) * (r.ax === 'x' ? (x - r.x0) / (r.x1 - r.x0) : (z - r.z0) / (r.z1 - r.z0)) : r.y; if (h === undefined || y > h) h = y } return h };
+    const SURF = (x, z) => { const r = rectAt(x, z); if (r !== undefined) return r; const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) };
     const sx = [150, 230, 300][q], sz = Math.round(sx * GD / GW), tg = new THREE.PlaneGeometry(GW, GD, sx, sz); tg.rotateX(-Math.PI / 2); tg.translate((XMIN + XMAX) / 2, 0, (ZMIN + ZMAX) / 2);
     const tp = tg.attributes.position; for (let i = 0; i < tp.count; i++) tp.setY(i, H(tp.getX(i), tp.getZ(i))); tg.computeVertexNormals();
     const gmat = new THREE.MeshStandardMaterial({ map: groundTex([1024, 2048, 2048][q]), roughness: .95 }), grain = A.tex('grain');
     gmat.onBeforeCompile = sh => { sh.uniforms.detailMap = { value: grain }; sh.fragmentShader = 'uniform sampler2D detailMap;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb *= mix(1.0, texture2D(detailMap, vUv * 150.0).r * 1.4, .3);') };
     gmat.customProgramCacheKey = () => 'jlmGround'; gmat.userData.lin = 1; const ground = new THREE.Mesh(tg, gmat); ground.receiveShadow = true; grp.add(ground);
     { const sk = new THREE.RingGeometry(Math.max(GW, GD) / 2, 900, 64, 2); sk.rotateX(-Math.PI / 2); sk.translate((XMIN + XMAX) / 2, -2.4, (ZMIN + ZMAX) / 2); grp.add(new THREE.Mesh(sk, AV.std(0xb8a878, 1))) }
-    /* Jordan hills + Moab mountains on the far horizon (east), hazy */
+    /* the hills of Moab on the far eastern horizon (hazy, unlit) */
     { const parts = [], r = AV.rng(41); for (let i = 0; i < 26; i++) { const a = deg(-70 + i * 7 + r() * 4), d = 780 + r() * 180, h = 110 + r() * 170; parts.push([BG.ico, [0x9ab0c0, 0x8aa4b8, 0xa4b8c8][i % 3], M((XMIN + XMAX) / 2 + Math.cos(a) * d, h * .34 - 24, (ZMIN + ZMAX) / 2 + Math.sin(a) * d, 150 + r() * 90, h, 120 + r() * 70), 0]) }
       const mm = new THREE.Mesh(K.merge(parts), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false })); mm.material.userData.lin = 1; grp.add(mm);
       ctx.upd.push(() => mm.material.color.setScalar(1 - (AV.nightK || 0) * .7)) }
 
     /* ---------- helpers ---------- */
-    const stoneH = (x, z) => { const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) };
-    /* walkable pads for rectangles (a ring of overlapping discs) and ramps that respect the 0.9 m step limit */
-    const padRect = (x0, x1, z0, z1, y) => { const step = 12; for (let x = x0; x <= x1 + .1; x += Math.min(step, (x1 - x0) || 1)) for (let z = z0; z <= z1 + .1; z += Math.min(step, (z1 - z0) || 1)) walk.pad(Math.min(x, x1), Math.min(z, z1), Math.max(7, step * .75), y) };
-    const ramp = (x0, z0, x1, z1, y0, y1, n) => { n = n || Math.max(4, Math.ceil(Math.abs(y1 - y0) / .6)); for (let i = 0; i <= n; i++) { const f = i / n; walk.pad(x0 + (x1 - x0) * f, z0 + (z1 - z0) * f, 2.4, y0 + (y1 - y0) * f) } };
-    const domeOn = (b, x, z, r0, col, y, gold2) => { const yy = y != null ? y : stoneH(x, z); b.add(MT.v, A.geo('dome'), col, M(x, yy, z, r0, r0 * 1.05, r0), gold2 ? .3 : .1); b.add(goldMat, A.geo('cyl'), 0xe8c040, M(x, yy + r0 * 1.1, z, r0 * .1, r0 * .28, r0 * .1)) };
-    const minaret = (b, x, z, h) => { const yy = stoneH(x, z); b.add(jer, new THREE.CylinderGeometry(1.5, 1.9, h, 10), 0xffffff, M(x, yy + h / 2, z)); b.add(jer, new THREE.CylinderGeometry(2.1, 2.1, 1.6, 10), 0xf2ecdc, M(x, yy + h - 1, z)); b.add(jer, new THREE.ConeGeometry(1.5, 3.4, 10), 0x2a5a3a, M(x, yy + h + 2.6, z)); b.add(goldMat, A.geo('sph'), 0xe8c040, M(x, yy + h + 4.4, z, .3, .3, .3), .5); solid(x - 2, x + 2, z - 2, z + 2) };
-    const archRow = (b, x0, x1, z, y, n, col, r0) => { for (let i = 0; i < n; i++) { const x = x0 + (i + .5) * (x1 - x0) / n; b.add(MT.v, new THREE.TorusGeometry(r0 || 1.5, .22, 6, 12, Math.PI), col, M(x, y, z, 1, 1, 1, 0, 0, 0)) } };
-    const house = (b, x, z, w, d, h, col, opt) => {   // Jerusalem stone house, flat roof or dome, arched windows
-      opt = opt || {}; const yy = H(x, z); const domed = opt.dome;
-      box(b, jer, col, x - w / 2, x + w / 2, yy, yy + h, z - d / 2, z + d / 2); solid(x - w / 2, x + w / 2, z - d / 2, z + d / 2);
-      if (domed) domeOn(b, x, z, Math.min(w, d) * .52, opt.domeCol || 0x9ab8c8, yy + h);
-      else box(b, jer, col, x - w / 2 - .3, x + w / 2 + .3, yy + h, yy + h + .4, z - d / 2 - .3, z + d / 2 + .3);
-      /* arched windows + door (glow at night) */
-      const nW = Math.max(1, Math.round(w / 3));
-      for (let i = 0; i < nW; i++) for (const sd of [-1, 1]) { const wx = x + (i - (nW - 1) / 2) * (w - 1.6) / Math.max(1, nW - 1 || 1), wz = z + sd * (d / 2 + .03);
-        box(b, MT.v, 0x3a2a1a, wx - .55, wx + .55, yy + h * .45, yy + h * .8, wz - .05, wz + .05); b.add(MT.v, A.geo('arc'), 0x3a2a1a, M(wx, yy + h * .8, wz, .55, .55, .55, 0, sd > 0 ? 0 : Math.PI, 0), .0);
-        if (nightish()) B.night.add(MT.v, BG.box, 0xffd890, M(wx, yy + h * .62, wz + sd * .04, 1.05, 1.3, .12, 0, 0, 0), .8) }
-      if (opt.door) { const dz = z + d / 2 + .04; box(b, MT.wood, 0x5a3a20, x - .9, x + .9, yy, yy + 2.6, dz - .05, dz + .05); b.add(MT.v, A.geo('arc'), 0x5a3a20, M(x, yy + 2.6, dz + .05, .9, .9, .9)) }
-      return { y: yy, top: yy + h };
-    };
-    let nightish = () => false;   // set below before houses are built (windows glow only on High where the night batch flushes late)
-    /* a row of Old-City houses along a line (face: 'n'|'s'|'e'|'w' side towards the street) */
-    const houses = (b, x0, z0, x1, z1, face, r) => {
-      const along = face === 'n' || face === 's', L = along ? Math.abs(x1 - x0) : Math.abs(z1 - z0); let a = 0;
-      const sx1 = Math.sign(x1 - x0) || 1, sz1 = Math.sign(z1 - z0) || 1;
-      while (a < L - 3) { const w = 5 + r() * 4, d = 6 + r() * 3, h = 4.5 + r() * 2.5;
-        const domed = r() < .18, col = [0xe8dfc8, 0xefe6d0, 0xdfd2b4, 0xe6d8bc][r() * 4 | 0];
-        /* centre of the house: along the line, offset inward (away from the street side) by d/2 */
-        const inward = face === 'n' ? -1 : face === 's' ? 1 : face === 'e' ? 1 : -1;
-        const cx = along ? x0 + sx1 * (a + w / 2) : x0 + inward * d / 2, cz = along ? z0 + inward * d / 2 : z0 + sz1 * (a + w / 2);
-        house(b, cx, cz, along ? w : d, along ? d : w, h, col, { dome: domed, door: r() < .5 });
-        a += w + .3 } };
+    const signAt = (txt, x, dy, z, ry, w, col) => ctx.sign(txt, x, SURF(x, z) + dy, z, ry, w, col, { posts: true });
+    const plaque = (he, ar, en, x, y, z, ry, w) => { const m = new THREE.Mesh(AV.G.pln, new THREE.MeshBasicMaterial({ map: plaqueTex(he, ar, en) })); m.material.userData.lin = 1; m.scale.set(w, w / 2, 1); m.position.set(x, y, z); m.rotation.y = ry; grp.add(m) };
+    const domeOn = (b, x, z, r0, col, y) => { b.add(MT.v, A.geo('dome'), col, M(x, y, z, r0, r0 * 1.05, r0), .1); b.add(goldMat, A.geo('cyl'), 0xe8c040, M(x, y + r0 * 1.1, z, r0 * .1, r0 * .28, r0 * .1)) };
+    const minaret = (b, x, z, h) => { const yy = SURF(x, z); b.add(jer, new THREE.CylinderGeometry(1.4, 1.8, h, 10), 0xffffff, M(x, yy + h / 2, z)); b.add(jer, new THREE.CylinderGeometry(2, 2, 1.4, 10), 0xf2ecdc, M(x, yy + h - 1, z)); b.add(MT.v, new THREE.ConeGeometry(1.4, 3.2, 10), 0x2a5a3a, M(x, yy + h + 1.6, z)); b.add(goldMat, A.geo('sph'), 0xe8c040, M(x, yy + h + 3.4, z, .3, .3, .3), .5); ctx.circles.push([x, z, 2]); occ.push({ x0: x - 2, x1: x + 2, z0: z - 2, z1: z + 2 }) };
 
-    /* ---------- Old City wall + gates ---------- */
-    const merlon = (b, x0, x1, y, z0, z1) => { const L = Math.max(x1 - x0, z1 - z0), n = Math.max(2, Math.floor(L / 3)); for (let i = 0; i < n; i += 2) { const t = i / n; if (x1 - x0 > z1 - z0) box(b, jer, 0xffffff, x0 + t * L, x0 + t * L + 1.2, y, y + 1.1, z0, z1); else box(b, jer, 0xffffff, x0, x1, y, y + 1.1, z0 + t * L, z0 + t * L + 1.2) } };
-    const wallSeg = (x0, x1, z0, z1) => { box(B.stone, jer, 0xffffff, x0, x1, H((x0 + x1) / 2, (z0 + z1) / 2), H((x0 + x1) / 2, (z0 + z1) / 2) + WALLH, z0, z1); merlon(B.stone, x0, x1, H((x0 + x1) / 2, (z0 + z1) / 2) + WALLH, z0, z1); solid(x0, x1, z0, z1) };
-    const GAP = 5.5;
-    const GATES = [
-      { p: JAFFA, name: 'JAFFA GATE', ry: Math.PI / 2, tower: true }, { p: DAMASCUS, name: 'DAMASCUS GATE', ry: 0, tower: true },
-      { p: HEROD, name: 'HEROD’S GATE', ry: 0 }, { p: LIONS, name: 'LIONS’ GATE', ry: Math.PI / 2 },
-      { p: DUNG, name: 'DUNG GATE', ry: Math.PI / 2 }, { p: ZION, name: 'ZION GATE', ry: Math.PI / 2 }, { p: NEWG, name: 'NEW GATE', ry: Math.PI / 2 }];
-    /* wall segments with gaps at the gates */
-    for (const side of ['n', 's', 'e', 'w']) {
-      const gates = GATES.filter(g => side === 'n' ? g.p[1] === OC.z0 : side === 's' ? g.p[1] === OC.z1 : side === 'w' ? g.p[0] === OC.x0 : g.p[0] === OC.x1).map(g => g.p[side === 'n' || side === 's' ? 0 : 1]).sort((a, b) => a - b);
-      let cur = side === 'n' || side === 's' ? OC.x0 : OC.z0;
-      const spans = gates.length ? gates : []; const end = side === 'n' || side === 's' ? OC.x1 : OC.z1;
-      const put = (a0, a1) => { if (a1 - a0 < .5) return; if (side === 'n') wallSeg(a0, a1, OC.z0, OC.z0 + WALL); else if (side === 's') wallSeg(a0, a1, OC.z1 - WALL, OC.z1); else if (side === 'w') wallSeg(OC.x0, OC.x0 + WALL, a0, a1); else wallSeg(OC.x1 - WALL, OC.x1, a0, a1) };
-      if (!spans.length) put(cur, end); else for (const g of spans) { put(cur, g - GAP); cur = g + GAP } if (spans.length) put(cur, end);
-    }
-    /* gate towers + crenellated gatehouse + signs */
-    GATES.forEach((g, i) => { const [gx, gz] = g.p, yy = H(gx, gz), tw = g.tower ? 12 : 9;
-      box(B.stone, jer, 0xffffff, gx - (g.ry === 0 ? 3.4 : 2.2), gx + (g.ry === 0 ? 3.4 : 2.2), yy, yy + tw, gz - (g.ry === 0 ? 2.2 : 3.4), gz + (g.ry === 0 ? 2.2 : 3.4)); solid(gx - (g.ry === 0 ? 3.4 : 2.2), gx + (g.ry === 0 ? 3.4 : 2.2), gz - (g.ry === 0 ? 2.2 : 3.4), gz + (g.ry === 0 ? 2.2 : 3.4));
-      box(B.stone, jer, 0xf2ecdc, gx - (g.ry === 0 ? 3.8 : 2.6), gx + (g.ry === 0 ? 3.8 : 2.6), yy + tw, yy + tw + 1, gz - (g.ry === 0 ? 2.6 : 3.8), gz + (g.ry === 0 ? 2.6 : 3.8));
-      merlon(B.stone, gx - (g.ry === 0 ? 3.8 : 2.6), gx + (g.ry === 0 ? 3.8 : 2.6), yy + tw + 1, gz - (g.ry === 0 ? 2.6 : 3.8), gz + (g.ry === 0 ? 2.6 : 3.8));
-      const ox = g.ry === 0 ? 0 : Math.sign(gx || 1) * 10, oz = g.ry === 0 ? Math.sign(gz) * 10 : 0;
-      sign(g.name, gx + ox, yy + 6.5, gz + oz + (g.ry === 0 ? 0 : 0), g.ry === 0 ? 0 : gx < 0 ? Math.PI / 2 : -Math.PI / 2, 4.6, '#ffd84a', true);
-    });
-    /* ramparts walk (the wall-walk is a real thing; make the top walkable via pads along the wall) — simple: pads over each wall run */
-    for (const [x0, x1, z0, z1] of [[OC.x0, OC.x1, OC.z0, OC.z0 + WALL], [OC.x0, OC.x1, OC.z1 - WALL, OC.z1], [OC.x0, OC.x0 + WALL, OC.z0, OC.z1], [OC.x1 - WALL, OC.x1, OC.z0, OC.z1]])
-      for (let x = x0 + 4; x < x1 - 4; x += 8) for (let z = z0 + 4; z < z1 - 4; z += 8) walk.pad(x, z, 6, H(x, z) + WALLH - .2);
-
-    /* ---------- Temple Mount: esplanade, Dome of the Rock, Al-Aqsa ---------- */
-    { const yy0 = H((TM.x0 + TM.x1) / 2, TM.z1 + 2);
-      /* retaining wall + esplanade platform */
-      box(B.stone, jer, 0xf2ecdc, TM.x0 - 2, TM.x1 + 2, yy0 - 1, yy0 + 1.6, TM.z1 - 2, TM.z1 + 1); solid(TM.x0 - 2, TM.x1 + 2, TM.z1 - 2, TM.z1 + 1);
-      padRect(TM.x0, TM.x1, TM.z0, TM.z1, yy0 + 1.8);   // the whole esplanade is walkable
-      ramp(WW.x + 3, TM.z1 + 3.6, WW.x + 3, TM.z1 - 1.2, yy0 + .2, yy0 + 1.8, 8);   // Mughrabi ramp up from the Western Wall plaza
-      box(B.stone, MT.wood, 0x8a6a44, WW.x + 1.6, WW.x + 4.4, yy0 + .2, yy0 + 1.9, TM.z1 - 1.4, TM.z1 + .1);   // the wooden bridge deck
-      ramp(TM.x0 + 8, TM.z1 + 4, TM.x0 + 8, TM.z1 - 2, yy0 + .2, yy0 + 1.8, 8);
-      for (let x = TM.x0; x < TM.x1; x += 7) { box(B.stone, jer, 0xe8dfc8, x, x + 5, yy0 + 1.8, yy0 + 2.2, TM.z1 - 1.5, TM.z1 - .5) }   // stair band on the south edge
-      /* Dome of the Rock (center of the esplanade) */
-      const dx = (TM.x0 + TM.x1) / 2 - 8, dz = (TM.z0 + TM.z1) / 2 + 2, dy = yy0 + 1.8, R = 11;
-      B.dome.add(jer, new THREE.CylinderGeometry(R + 2, R + 2.6, 2.2, 24), 0xe8dfc8, M(dx, dy + 1.1, dz)); solid(dx - R - 2, dx + R + 2, dz - R - 2, dz + R + 2);
-      B.dome.add(jer, new THREE.CylinderGeometry(R, R, 6.5, 24), 0xf2ecdc, M(dx, dy + 5.5, dz));
-      for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, wx = dx + Math.cos(a) * (R + .1), wz = dz + Math.sin(a) * (R + .1); box(B.dome, MT.v, 0x2a5a6a, wx - .4, wx + .4, dy + 2, dy + 8.4, wz - .4, wz + .4) }
-      B.dome.add(jer, new THREE.CylinderGeometry(R * .72, R * .8, 2.4, 24), 0xf2ecdc, M(dx, dy + 9.6, dz));
-      { const g = new THREE.Mesh(new THREE.SphereGeometry(R * .92, 24, 14, 0, TAU, 0, Math.PI / 2), goldMat); g.position.set(dx, dy + 10.6, dz); g.scale.y = .62; grp.add(g); }
-      B.dome.add(goldMat, new THREE.CylinderGeometry(.5, .5, 4.6, 8), 0xe8c040, M(dx, dy + 18, dz), .4); B.dome.add(goldMat, new THREE.CylinderGeometry(1.5, .1, 1.6, 10), 0xe8c040, M(dx, dy + 20.6, dz), .5);
-      /* octagon drum accents (turquoise tiles band) */
-      B.dome.add(MT.v, new THREE.CylinderGeometry(R * 1.01, R * 1.01, 1.4, 24, 1, true), 0x2a7a8a, M(dx, dy + 3, dz), .1);
-      /* Al-Aqsa (south end, under restoration hoardings) */
-      const ax = TM.x0 + 16, az = TM.z1 - 12, ay = yy0 + 1.8;
-      box(B.dome, jer, 0xe8dfc8, ax - 12, ax + 12, ay, ay + 7, az - 7, az + 7); solid(ax - 12, ax + 12, az - 7, az + 7);
-      B.dome.add(jer, new THREE.CylinderGeometry(7, 7.4, 1.2, 20), 0xd8d0b4, M(ax, ay + 7.4, az));
-      { const g = new THREE.Mesh(new THREE.SphereGeometry(6.6, 22, 12, 0, TAU, 0, Math.PI / 2), MT.v); g.material.color.setHex(0x4a5a68); g.position.set(ax, ay + 7.8, az); g.scale.y = .55; grp.add(g) }
-      box(B.dome, MT.v, 0x8a8a7a, ax - 13, ax + 13, ay + 8.4, ay + 9.2, az - 8, az + 8, 0);   // hoarding platform
-      for (let x = ax - 12; x < ax + 12; x += 2.6) box(B.dome, MT.wood, 0x8a6a4a, x, x + .2, ay + 7.4, ay + 9, az - 8.1, az - 7.9);   // scaffolding poles
-      sign('AL-AQSA · restoration in progress', ax, ay + 10.6, az - 8.6, 0, 5, '#e8d890', true);
-      /* free-standing arcades on the esplanade */
-      for (const [x0, x1, z] of [[TM.x0 + 2, TM.x0 + 18, TM.z0 + 4], [TM.x1 - 16, TM.x1 - 2, TM.z0 + 4]]) { for (let x = x0; x <= x1; x += 3.2) B.dome.add(MT.v, A.geo('cyl'), 0xf2ecdc, M(x, yy0 + 4.2, z, .4, 4.6, .4)); B.dome.add(MT.v, BG.box, 0xe8dfc8, M((x0 + x1) / 2, yy0 + 6.8, z, x1 - x0 + 1, .5, 1.4)); }
-      minaret(B.stone, TM.x0 + 3, TM.z1 - 3, 18); minaret(B.stone, TM.x1 - 3, TM.z1 - 3, 18); minaret(B.stone, TM.x0 + 3, TM.z0 + 3, 17); minaret(B.stone, TM.x1 - 3, TM.z0 + 3, 17);
-      sign('TEMPLE MOUNT · الحرم الشريف · הר הבית', dx, dy + 23, dz, 0, 6.4, '#7ff0ff', true);
-    }
-    /* ---------- Western Wall plaza (below the Mount, south) ---------- */
-    { const wy0 = H(WW.x, WW.z1 + 4);
-      padRect(WW.x - 9, WW.x + 8, WW.z0, WW.z1, wy0);      // plaza pad (the wall itself is solid)
-      /* the wall itself: 7 courses of giant ashlar with the little notes (papers) tucked between */
-      for (let z = WW.z0; z < WW.z1; z += 1.3) { for (let c = 0; c < 8; c++) { const y = wy0 + c * 1.05, inset = c % 2 ? .65 : 0; box(B.stone, jer, 0xd8ccb2, WW.x - 2.2 + inset, WW.x + 2.2 + inset, y, y + 1, z, z + 1.25) } }
-      solid(WW.x - 2.6, WW.x + 2.6, WW.z0, WW.z1);
-      /* notes in the cracks */
-      const noteM = new THREE.MeshBasicMaterial({ color: 0xfff8e0 }); for (let i = 0; i < 40; i++) { const z = WW.z0 + 1 + rng() * (WW.z1 - WW.z0 - 2), y = wy0 + .4 + rng() * 6.4; const n = new THREE.Mesh(BG.box, noteM); n.scale.set(.16, .22, .02); n.position.set(WW.x - 2.35 + (rng() < .5 ? 0 : 4.55), y, z); n.rotation.y = Math.PI / 2; grp.add(n) }
-      /* mehitza partitions + wooden benches + the big menorah by the Dung side */
-      for (const z of [WW.z0 + 5, WW.z0 + 12]) { box(B.decor, MT.wood, 0xc8b088, WW.x - 5.4, WW.x - 4.9, wy0, wy0 + 1.8, z, z + 10) }
-      for (let z = WW.z0 + 2; z < WW.z1 - 2; z += 3) box(B.decor, MT.wood, 0x8a6a4a, WW.x + 3.2, WW.x + 5.6, wy0 + .3, wy0 + .55, z, z + .4);
-      B.decor.add(goldMat, new THREE.CylinderGeometry(.5, .6, 2.2, 8), 0xe8c040, M(WW.x - 8, wy0 + 1.1, WW.z1 - 1), .3);
-      for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + k * .3; B.decor.add(goldMat, new THREE.CylinderGeometry(.045, .045, 1.7, 6), 0xe8c040, M(WW.x - 8 + Math.cos(a) * .55, wy0 + 2.6 + Math.abs(Math.sin(a)) * .5, WW.z1 - 1), .4) }
-      solid(WW.x - 8.6, WW.x - 7.4, WW.z1 - 1.6, WW.z1 - .4);
-      /* divider arches (Wilson's Arch suggestion) */
-      archRow(B.stone, WW.x - 12, WW.x - 4, WW.z0 + 2, wy0 + 4.5, 3, 0xe8dfc8, 1.8);
-      sign('THE WESTERN WALL · הכותל', WW.x - 10, wy0 + 8, WW.z0 - 1, Math.PI, 5.4, '#ffd84a', true);
+    /* ---------- the Temple Mount esplanade (built first: everything else keeps clear of it) ---------- */
+    const TMY = Math.max(H(TM.x0, TM.z0), H(TM.x1, TM.z0), H(TM.x0, TM.z1), H(TM.x1, TM.z1)) + 6;
+    RECTS.push({ x0: TM.x0, x1: TM.x1, z0: TM.z0, z1: TM.z1, y: TMY });
+    RECTS.push({ x0: MUGH.x0, x1: MUGH.x1, z0: MUGH.z0 - 2, z1: MUGH.z0, y: TMY });                                         // ramp landing on the esplanade
+    RECTS.push({ x0: MUGH.x0, x1: MUGH.x1, z0: MUGH.z0, z1: MUGH.z1, ax: 'z', ya: TMY, yb: H((MUGH.x0 + MUGH.x1) / 2, MUGH.z1) });   // Mughrabi ramp
+    RECTS.push({ x0: WRAMP.x0, x1: WRAMP.x1, z0: WRAMP.z0, z1: WRAMP.z1, ax: 'x', ya: H(WRAMP.x0, (WRAMP.z0 + WRAMP.z1) / 2), yb: TMY });   // west ramp
+    occ.push(TM, MUGH, WRAMP);
+    { const lo = Math.min(H(TM.x0, TM.z0), H(TM.x1, TM.z1), H(TM.x0, TM.z1), H(TM.x1, TM.z0)) - 1.5;
+      box(B.stone, jer, 0xf2ecdc, TM.x0, TM.x1, lo, TMY, TM.z0, TM.z1);                                                  // the platform with its retaining walls
+      for (let x = TM.x0; x < TM.x1; x += 2.4) box(B.stone, jer, 0xe8dfc8, x, x + 1.2, TMY, TMY + .7, TM.z0, TM.z0 + .6);   // parapet (north)
+      /* the Western Wall: courses of giant ashlar on the south face, with notes tucked in the cracks */
+      const wy0 = H((WW.x0 + WW.x1) / 2, WW.z0 + 2);
+      for (let c = 0; wy0 + c * 1.1 < TMY + .9; c++) for (let x = WW.x0; x < WW.x1; x += 3.2) { const off = c % 2 ? 1.6 : 0; if (x + off + 3.1 > WW.x1) continue; box(B.stone, jer, c < 4 ? 0xcdbf9e : 0xd8ccb0, x + off, x + off + 3.1, wy0 + c * 1.1, wy0 + c * 1.1 + 1.05, -46, -45.4) }
+      const noteM = new THREE.MeshBasicMaterial({ color: 0xfff6dc }); noteM.userData.lin = 1;
+      for (let i = 0; i < 46; i++) { const n = new THREE.Mesh(BG.box, noteM); n.scale.set(.18, .14, .03); n.position.set(WW.x0 + 1 + rng() * (WW.x1 - WW.x0 - 2), wy0 + .5 + rng() * 2.6, -45.36); grp.add(n) }
+      ctx.cols.push([WW.x0, WW.x1, -46, -45.3]);
+      /* Mughrabi ramp: covered wooden walkway */
+      { const ya = TMY, yb = H((MUGH.x0 + MUGH.x1) / 2, MUGH.z1), L = Math.hypot(MUGH.z1 - MUGH.z0, ya - yb), th = Math.atan2(ya - yb, MUGH.z1 - MUGH.z0), cx = (MUGH.x0 + MUGH.x1) / 2, cz = (MUGH.z0 + MUGH.z1) / 2, cy = (ya + yb) / 2;
+        B.decor.add(MT.wood, BG.box, 0xb08a5a, M(cx, cy - .15, cz, MUGH.x1 - MUGH.x0, .3, L, th, 0, 0));
+        for (const sd of [MUGH.x0 + .1, MUGH.x1 - .1]) { B.decor.add(MT.wood, BG.box, 0x8a6a44, M(sd, cy + 1.1, cz, .15, 2.2, L, th, 0, 0)); ctx.cols.push([sd - .1, sd + .1, MUGH.z0, MUGH.z1]) }
+        B.decor.add(MT.wood, BG.box, 0x6a5034, M(cx, cy + 2.4, cz, MUGH.x1 - MUGH.x0 + .4, .12, L, th, 0, 0)) }
+      /* west ramp: stone causeway from the souk */
+      { const ya = H(WRAMP.x0, (WRAMP.z0 + WRAMP.z1) / 2), L = Math.hypot(WRAMP.x1 - WRAMP.x0, TMY - ya), th = Math.atan2(TMY - ya, WRAMP.x1 - WRAMP.x0);
+        B.stone.add(jer, BG.box, 0xe8dfc8, M((WRAMP.x0 + WRAMP.x1) / 2, (ya + TMY) / 2 - .25, (WRAMP.z0 + WRAMP.z1) / 2, L, .5, WRAMP.z1 - WRAMP.z0, 0, 0, th));
+        for (const z of [WRAMP.z0 + .1, WRAMP.z1 - .1]) { B.stone.add(jer, BG.box, 0xd8ccb0, M((WRAMP.x0 + WRAMP.x1) / 2, (ya + TMY) / 2 + .5, z, L, 1, .2, 0, 0, th)); ctx.cols.push([WRAMP.x0, WRAMP.x1, z - .1, z + .1]) } }
+      /* Dome of the Rock: base, octagon with turquoise tile bands, drum, golden dome, finial */
+      const dy = TMY, R = DOME.R;
+      B.dome.add(jer, new THREE.CylinderGeometry(R + 2, R + 2.4, 1, 24), 0xe8dfc8, M(DOME.x, dy + .5, DOME.z)); ctx.circles.push([DOME.x, DOME.z, R + 2.2]);
+      B.dome.add(jer, new THREE.CylinderGeometry(R, R, 7, 8).rotateY(Math.PI / 8), 0xf2ecdc, M(DOME.x, dy + 4.5, DOME.z));
+      B.dome.add(MT.v, new THREE.CylinderGeometry(R * 1.01, R * 1.01, 3.6, 8, 1, true).rotateY(Math.PI / 8), 0x2a7a9a, M(DOME.x, dy + 5.6, DOME.z), .08);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, wx = DOME.x + Math.cos(a) * R * .93, wz = DOME.z + Math.sin(a) * R * .93; B.dome.add(MT.v, BG.box, 0x1a3a5a, M(wx, dy + 5.4, wz, 1.2, 2.2, .3, 0, -a + Math.PI / 2, 0)) }
+      B.dome.add(MT.v, new THREE.CylinderGeometry(R * .66, R * .7, 3, 16), 0x2a6a8a, M(DOME.x, dy + 9.5, DOME.z), .08);
+      { const g = new THREE.Mesh(new THREE.SphereGeometry(R * .7, 28, 14, 0, TAU, 0, Math.PI / 2), goldMat); g.position.set(DOME.x, dy + 11, DOME.z); g.scale.y = 1.1; g.castShadow = q === 2; grp.add(g) }
+      B.dome.add(goldMat, new THREE.CylinderGeometry(.18, .18, 3, 8), 0xe8c040, M(DOME.x, dy + 19.2, DOME.z), .4); B.dome.add(goldMat, new THREE.TorusGeometry(.7, .12, 6, 16, Math.PI * 1.4), 0xe8c040, M(DOME.x, dy + 21.1, DOME.z, 1, 1, 1, 0, 0, Math.PI * .8), .5);
+      /* arcades (qanatir) at the top of the dome's steps */
+      for (const [ax, az, ry] of [[DOME.x, DOME.z - R - 5, 0], [DOME.x, DOME.z + R + 5, 0], [DOME.x - R - 5, DOME.z, Math.PI / 2], [DOME.x + R + 5, DOME.z, Math.PI / 2]]) {
+        for (let k = -1; k <= 1; k++) { const px = ax + Math.cos(ry) * k * 2.8, pz = az - Math.sin(ry) * k * 2.8; B.dome.add(MT.v, A.geo('cyl'), 0xf2ecdc, M(px, dy + 2, pz, .3, 4, .3)); ctx.circles.push([px, pz, .4]) }
+        B.dome.add(MT.v, BG.box, 0xe8dfc8, M(ax, dy + 4.2, az, ry ? .8 : 7, .5, ry ? 7 : .8)) }
+      /* Al-Aqsa with its lead-grey dome */
+      box(B.dome, jer, 0xe8dfc8, AQSA.x0, AQSA.x1, dy, dy + 8, AQSA.z0, AQSA.z1); solid(AQSA.x0, AQSA.x1, AQSA.z0, AQSA.z1);
+      for (let x = AQSA.x0 + 1.5; x < AQSA.x1 - 1; x += 2.6) B.dome.add(MT.v, A.geo('arc'), 0x8a7a5a, M(x, dy + 3.2, AQSA.z0 - .05, 1, 1.2, 1), 0);
+      B.dome.add(MT.v, new THREE.CylinderGeometry(3.4, 3.6, 1.6, 16), 0xd8d0b4, M((AQSA.x0 + AQSA.x1) / 2, dy + 8.8, (AQSA.z0 + AQSA.z1) / 2));
+      domeOn(B.dome, (AQSA.x0 + AQSA.x1) / 2, (AQSA.z0 + AQSA.z1) / 2, 3.3, 0x7a8a98, dy + 9.6);
+      /* arcades + minarets at the corners, cypress planted later */
+      for (const [x0, x1, z] of [[TM.x0 + 4, TM.x0 + 14, -80], [TM.x1 - 14, TM.x1 - 4, -80]]) { for (let x = x0; x <= x1; x += 3.3) B.dome.add(MT.v, A.geo('cyl'), 0xf2ecdc, M(x, dy + 2.2, z, .35, 4.4, .35)); B.dome.add(MT.v, BG.box, 0xe8dfc8, M((x0 + x1) / 2, dy + 4.6, z, x1 - x0 + 1, .5, 1.2)) }
+      minaret(B.stone, TM.x0 + 2.5, TM.z0 + 2.5, 18); minaret(B.stone, TM.x1 - 2.5, TM.z0 + 2.5, 16); minaret(B.stone, TM.x0 + 2.5, TM.z1 - 2.5, 18); minaret(B.stone, TM.x1 - 2.5, TM.z1 - 2.5, 17);
+      ctx.sign('HARAM AL-SHARIF · TEMPLE MOUNT', DOME.x, dy + 25, DOME.z, 0, 6.4, '#7ff0ff');
+      ctx.sign('THE WESTERN WALL', (WW.x0 + WW.x1) / 2, TMY + 2.2, -45, 0, 5, '#ffd84a');
+      /* Western Wall plaza furnishings: partition, prayer benches, menorah */
+      box(B.decor, MT.wood, 0xc8b088, 26.8, 27.2, wy0, wy0 + 1.6, WW.z0, WW.z0 + 7); ctx.cols.push([26.8, 27.2, WW.z0, WW.z0 + 7]);
+      for (let z = -34; z <= -27; z += 3.5) box(B.decor, MT.wood, 0x8a6a4a, 30, 38, wy0 + .35, wy0 + .5, z, z + .4);
+      { const mx = WW.x0 + 2.5, mz = WW.z1 - 2, my = H(mx, mz); B.decor.add(goldMat, new THREE.CylinderGeometry(.45, .6, 1.6, 8), 0xe8c040, M(mx, my + .8, mz), .3);
+        for (let k = -3; k <= 3; k++) { const r0 = Math.abs(k) * .32; B.decor.add(goldMat, new THREE.CylinderGeometry(.05, .05, 1.2 + r0, 6), 0xe8c040, M(mx + k * .32, my + 2.1 + r0 * .3, mz), .4) } ctx.circles.push([mx, mz, .7]) }
     }
 
-    /* ---------- Church of the Holy Sepulchre ---------- */
-    { const hx = HS.x, hz = HS.z, hy = H(hx, hz);
-      box(B.stone, jer, 0xd8ccb2, hx - 14, hx + 12, hy, hy + 10, hz - 12, hz + 10); solid(hx - 14, hx + 12, hz - 12, hz + 10);
-      /* two domes: the bigger one over the rotunda, grey-blue */
-      domeOn(B.dome, hx + 4, hz - 2, 6.4, 0x8a9ab0, hy + 10); domeOn(B.dome, hx - 8, hz - 2, 3.6, 0x8a9ab0, hy + 10);
-      B.dome.add(goldMat, new THREE.CylinderGeometry(.35, .35, 3, 8), 0xe8c040, M(hx + 4, hy + 18, hz - 2), .4);
-      /* facade with two blue doors + ladder (the immovable ladder!) */
-      box(B.stone, jer, 0xcbbf9e, hx - 14, hx - 12.6, hy, hy + 8.5, hz - 8, hz + 6);
-      box(B.dome, MT.v, 0x2a4a6a, hx - 12.5, hx - 12.3, hy + .2, hy + 3.2, hz - 3.4, hz - 1.4); box(B.dome, MT.v, 0x2a4a6a, hx - 12.5, hx - 12.3, hy + .2, hy + 3.2, hz + 1.4, hz + 3.4);
-      box(B.dome, MT.wood, 0x8a6a3a, hx - 12.6, hx - 12.4, hy + 3.6, hy + 5.2, hz - .6, hz + .8);   // the ladder
-      for (const [ax2, az2] of [[hx - 13, hz + 8], [hx + 12, hz + 8], [hx - 13, hz - 12], [hx + 12, hz - 12]]) { B.dome.add(MT.v, A.geo('cyl'), 0x9ab0c0, M(ax2, hy + 4, az2, .5, 8, .5)); ctx.circles.push([ax2, az2, .7]) }
-      sign('CHURCH OF THE HOLY SEPULCHRE', hx, hy + 11.6, hz + 12.6, 0, 6, '#9ad8ff', true);
+    /* ---------- the Old City wall, gates, plaques ---------- */
+    const wallRun = (x0, x1, z0, z1) => {   // split into short chunks so the wall follows the slope
+      const alongX = x1 - x0 > z1 - z0, L = alongX ? x1 - x0 : z1 - z0, n = Math.max(1, Math.ceil(L / 10));
+      for (let i = 0; i < n; i++) { const a = i / n, b = (i + 1) / n, cx0 = alongX ? x0 + L * a : x0, cx1 = alongX ? x0 + L * b : x1, cz0 = alongX ? z0 : z0 + L * a, cz1 = alongX ? z1 : z0 + L * b, y = H((cx0 + cx1) / 2, (cz0 + cz1) / 2) - 1;
+        box(B.stone, jer, 0xffffff, cx0, cx1, y, y + WALLH + 1, cz0, cz1, .06);
+        const segL = alongX ? cx1 - cx0 : cz1 - cz0; for (let k = 0; k + 1.1 < segL; k += 2.4) { if (alongX) box(B.stone, jer, 0xffffff, cx0 + k, cx0 + k + 1.1, y + WALLH + 1, y + WALLH + 2, cz0, cz1, .06); else box(B.stone, jer, 0xffffff, cx0, cx1, y + WALLH + 1, y + WALLH + 2, cz0 + k, cz0 + k + 1.1, .06) } }
+      solid(x0, x1, z0, z1) };
+    const SIDES = { n: [OC.x0, OC.x1, OC.z0, OC.z0 + WALL], s: [OC.x0, OC.x1, OC.z1 - WALL, OC.z1], w: [OC.x0, OC.x0 + WALL, OC.z0, OC.z1], e: [OC.x1 - WALL, OC.x1, OC.z0, OC.z1] };
+    for (const sd in SIDES) {
+      const [x0, x1, z0, z1] = SIDES[sd], alongX = sd === 'n' || sd === 's', gs = GATES.filter(g => g[3] === sd).map(g => alongX ? g[1] : g[2]).sort((a, b) => a - b);
+      let cur = alongX ? x0 : z0; const end = alongX ? x1 : z1;
+      for (const g of gs.concat([end + GAP])) { const a1 = g - GAP; if (a1 - cur > .5) { if (alongX) wallRun(cur, a1, z0, z1); else wallRun(x0, x1, cur, a1) } cur = g + GAP }
     }
-
-    /* ---------- Tower of David citadel (by Jaffa Gate) ---------- */
-    { const tx = TD.x, tz = TD.z, ty = H(tx, tz);
-      box(B.stone, jer, 0xe8dfc8, tx - 9, tx + 5, ty, ty + 7, tz - 9, tz + 9); solid(tx - 9, tx + 5, tz - 9, tz + 9);
-      minaret(B.stone, tx + 1, tz + 4, 20);   // the famous tower
-      for (const [mx, mz] of [[tx - 7, tz - 7], [tx - 7, tz + 7]]) box(B.stone, jer, 0xd8ccb2, mx - 2, mx + 2, ty, ty + 10, mz - 2, mz + 2);
-      walk.pad(tx - 2, tz, 6, ty + 7.2);      // courtyard roof deck (viewpoint)
-      sign('TOWER OF DAVID', tx + 8, ty + 9, tz, -Math.PI / 2, 4.6, '#ffd84a', true);
+    for (const [name, gx, gz, sd] of GATES) {
+      const alongX = sd === 'n' || sd === 's', y = H(gx, gz) - 1, big = name === 'JAFFA GATE' || name === 'DAMASCUS GATE', tw = big ? 13 : 11;
+      for (const s of [-1, 1]) { const tx = alongX ? gx + s * (GAP + 1.8) : gx, tz = alongX ? gz : gz + s * (GAP + 1.8), hx = alongX ? 1.8 : 2.4, hz = alongX ? 2.4 : 1.8;
+        box(B.stone, jer, 0xf4ecd8, tx - hx, tx + hx, y, y + tw, tz - hz, tz + hz, .06); solid(tx - hx, tx + hx, tz - hz, tz + hz);
+        for (let k = -1; k <= 1; k += 2) box(B.stone, jer, 0xf4ecd8, tx - hx * (alongX ? .4 : 1) + (alongX ? k * .9 : 0), tx + hx * (alongX ? .4 : 1) + (alongX ? k * .9 : 0), y + tw, y + tw + 1.1, tz - hz * (alongX ? 1 : .4) + (alongX ? 0 : k * .9), tz + hz * (alongX ? 1 : .4) + (alongX ? 0 : k * .9), .06) }
+      /* lintel + arch over the opening (no collider: it is above head height) */
+      if (alongX) box(B.stone, jer, 0xf4ecd8, gx - GAP, gx + GAP, y + 7, y + tw - 1, gz - WALL, gz + WALL, .06); else box(B.stone, jer, 0xf4ecd8, gx - WALL, gx + WALL, y + 7, y + tw - 1, gz - GAP, gz + GAP, .06);
+      B.stone.add(jer, new THREE.TorusGeometry(GAP - .2, .45, 6, 14, Math.PI), 0xe8dcc0, M(gx, y + 6.6, gz, 1, 1, alongX ? 3 : 1, 0, alongX ? 0 : Math.PI / 2, 0), .06);
+      /* plaques on both faces */
+      const he = { 'JAFFA GATE': 'שער יפו', 'NEW GATE': 'השער החדש', 'DAMASCUS GATE': 'שער שכם', 'HEROD’S GATE': 'שער הפרחים', 'LIONS’ GATE': 'שער האריות', 'DUNG GATE': 'שער האשפות', 'ZION GATE': 'שער ציון' }[name];
+      const ar = { 'JAFFA GATE': 'باب الخليل', 'NEW GATE': 'الباب الجديد', 'DAMASCUS GATE': 'باب العامود', 'HEROD’S GATE': 'باب الساهرة', 'LIONS’ GATE': 'باب الأسباط', 'DUNG GATE': 'باب المغاربة', 'ZION GATE': 'باب النبي داود' }[name];
+      for (const s of [-1, 1]) { const off = WALL + .06; if (alongX) plaque(he, ar, name, gx + GAP + 1.8, y + 4.2, gz + s * off, s > 0 ? 0 : Math.PI, 2.6); else plaque(he, ar, name, gx + s * off, y + 4.2, gz + GAP + 1.8, s > 0 ? Math.PI / 2 : -Math.PI / 2, 2.6) }
     }
-    /* ---------- the Cardo + Jewish quarter houses ---------- */
-    { for (let x = CARD1[0]; x < CARD0[0]; x += 4) { box(B.stone, MT.stone, 0xd8ccb2, x, x + 2.4, H(x + 1.2, CARD0[1]), H(x + 1.2, CARD0[1]) + .25, CARD0[1] - 5, CARD0[1] + 5) }   // paved cardo strip
-      for (let z = -10; z < 50; z += 6) { box(B.decor, MT.v, 0x8a8a7a, CARD1[0] + 1, CARD1[0] + 2, H(CARD1[0] + 1, z), H(CARD1[0] + 1, z) + 1.1, z, z + .3) }   // columns
-      const r = rng; houses(B.city, OC.x0 + 8, 18, OC.x1 - 40, 18, 'n', r); houses(B.city, OC.x0 + 8, 46, OC.x1 - 60, 46, 'n', r); houses(B.city, OC.x0 + 10, 10, OC.x0 + 10, 55, 'w', r); houses(B.city, 40, 12, 40, 50, 'e', r); }
+    /* Golden Gate (sealed) on the east wall */
+    { const gz = -40, y = H(OC.x1, gz) - 1; box(B.stone, jer, 0xf4ecd8, OC.x1, OC.x1 + 3, y, y + 11, gz - 6, gz + 6, .06); solid(OC.x1, OC.x1 + 3, gz - 6, gz + 6); for (const s of [-1, 1]) domeOn(B.stone, OC.x1 + 1.5, gz + s * 3, 2, 0xd8ccb0, y + 11) }
 
-    /* ---------- souk alleys (covered markets with striped awnings) ---------- */
-    const stalls = [];
-    const SOUKC = [0xe83a3a, 0x2a8a4a, 0xffd84a, 0x3a6ad8, 0xff8a3a, 0x8a3ab8];
-    { let si = 0; for (const s of SOUK) { const dx = s.b[0] - s.a[0], dz = s.b[1] - s.a[1], L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, ry = Math.atan2(dx, dz);
-        const y0 = H(s.a[0], s.a[1]), y1 = H(s.b[0], s.b[1]);
-        /* striped canopy along the alley */
-        const n = Math.max(2, Math.round(L / 4));
-        for (let i = 0; i < n; i++) { const f = (i + .5) / n, cx = s.a[0] + dx * f, cz = s.a[1] + dz * f, cy = y0 + (y1 - y0) * f + 3.4;
-          B.shuk.add(MT.roof, A.geo('hip'), SOUKC[(si + i) % SOUKC.length], M(cx, cy, cz, 2.6, 1.1, L / n + .5, 0, ry, 0));
-          for (const sd of [-1, 1]) B.shuk.add(MT.v, A.geo('cyl'), 0x8a6a4a, M(cx - uz * sd * 2.2, cy - 1.7, cz + ux * sd * 2.2, .07, 3.4, .07)); ctx.circles.push([cx - uz * 2.2, cz + ux * 2.2, .25], [cx + uz * 2.2, cz - ux * 2.2, .25]) }
-        /* stalls along both sides */
-        for (let d = 3; d < L - 2; d += 5) { const cx = s.a[0] + ux * d, cz = s.a[1] + uz * d; for (const sd of [-1, 1]) { const sx0 = cx - uz * sd * 3.1, sz0 = cz + ux * sd * 3.1, sy = H(sx0, sz0);
-            B.shuk.add(MT.wood, BG.box, 0xffffff, M(sx0, sy + .5, sz0, 2.4, 1, 1, 0, ry, 0)); B.shuk.add(MT.wood, BG.box, 0x6a4a2a, M(sx0 - ux * .5, sy + 1.06, sz0 - uz * .5, 2.2, .1, .9, 0, ry, 0));
-            for (let k = 0; k < 6; k++) B.shuk.add(MT.v, BG.box, [0xc8682a, 0x8a3a3a, 0x3a8a5a, 0xd8b040, 0x6a4a8a, 0xa86a3a][(si + k) % 6], M(sx0 + Math.cos(ry + k) * .7, sy + 1.3, sz0 - Math.sin(ry + k) * .7, .3, .22, .3, 0, ry, 0), .05);
-            ctx.cols.push([sx0 - 1.2, sx0 + 1.2, sz0 - 1.2, sz0 + 1.2]); stalls.push({ x: sx0, z: sz0, ry }) } }
-        si++ } }
-    sign('OLD CITY SOUK', -14, 5.6, -OC.z0 + 6, 0, 4.6, '#ffb04a', true);
+    /* ---------- Holy Sepulchre ---------- */
+    { const hy = H((HS.x0 + HS.x1) / 2, HS.z1); box(B.stone, jer, 0xd8ccb2, HS.x0, HS.x1, hy - 1, hy + 11, HS.z0, HS.z1); solid(HS.x0, HS.x1, HS.z0, HS.z1);
+      domeOn(B.dome, HS.x0 + 7, (HS.z0 + HS.z1) / 2, 6, 0x8a9ab0, hy + 11); domeOn(B.dome, HS.x1 - 7, (HS.z0 + HS.z1) / 2, 3.6, 0x8a9ab0, hy + 11);
+      box(B.stone, jer, 0xcdbf9e, HS.x1 - 5, HS.x1 - 1, hy, hy + 18, HS.z0 + 1, HS.z0 + 5); B.stone.add(MT.v, A.geo('hip'), 0x8a9ab0, M(HS.x1 - 3, hy + 19.4, HS.z0 + 3, 2.9, 2.8, 2.9));   // bell tower
+      const fz = HS.z1 + .06, mx = (HS.x0 + HS.x1) / 2;
+      for (const s of [-1, 1]) { box(B.dome, MT.v, s < 0 ? 0x3a2a1a : 0xcdbf9e, mx + s * 3 - 1.2, mx + s * 3 + 1.2, hy, hy + 3.4, fz - .05, fz + .05); B.dome.add(MT.v, A.geo('arc'), 0x8a7a5a, M(mx + s * 3, hy + 3.4, fz + .06, 1.3, 1.3, 1.3)); B.dome.add(MT.v, A.geo('arc'), 0x8a7a5a, M(mx + s * 3, hy + 7.4, fz + .06, 1, 1, 1)); box(B.dome, MT.v, 0x2a3a4a, mx + s * 3 - .8, mx + s * 3 + .8, hy + 5.6, hy + 7.4, fz - .05, fz + .05) }
+      for (const [k, h] of [[0, 0], [1, .45], [2, .9], [3, 1.35]]) box(B.dome, MT.wood, 0x7a5a32, mx + 2.2, mx + 3.4, hy + 5 + h, hy + 5.06 + h, fz + .1, fz + .16);   // the immovable ladder (rungs)
+      for (const s of [-1, 1]) box(B.dome, MT.wood, 0x7a5a32, mx + 2.8 + s * .6 - .04, mx + 2.8 + s * .6 + .04, hy + 4.6, hy + 6.6, fz + .1, fz + .2);
+      for (const [cx, cz] of [[HSF.x0 + 1, HSF.z1 - 1], [HSF.x1 - 1, HSF.z1 - 1]]) { B.dome.add(MT.v, A.geo('cyl'), 0xd8ccb0, M(cx, H(cx, cz) + 2.5, cz, .45, 5, .45)); ctx.circles.push([cx, cz, .6]) }
+      signAt('CHURCH OF THE HOLY SEPULCHRE', mx, 13.2, HS.z1 + .4, 0, 6, '#9ad8ff') }
 
-    /* ---------- Damascus Gate: ka'ak carts outside ---------- */
-    { const gy = H(DAMASCUS[0], DAMASCUS[1] - 8); for (let k = 0; k < 3; k++) { const cx = DAMASCUS[0] - 6 + k * 6, cz = DAMASCUS[1] - 9;
-        B.decor.add(MT.wood, BG.box, 0xffffff, M(cx, gy + .7, cz, 2.2, 1.4, 1.4)); B.decor.add(MT.roof, A.geo('hip'), SOUKC[k], M(cx, gy + 2.4, cz, 1.9, .7, 1.5));
-        for (let j = 0; j < 5; j++) B.decor.add(MT.v, A.geo('ring'), 0xd8a050, M(cx - .8 + j * .4, gy + 1.5, cz + .1, .16, .16, .05, Math.PI / 2, 0, 0));
-        solid(cx - 1.2, cx + 1.2, cz - .8, cz + .8); stalls.push({ x: cx, z: cz - 1.6, ry: Math.PI, kaak: true }) }
-      sign('KA’AK · sesame bread', DAMASCUS[0] - 6, gy + 4.4, DAMASCUS[1] - 9, Math.PI, 3.4, '#ffd84a', true) }
+    /* ---------- Tower of David citadel ---------- */
+    { const ty = H((TD.x0 + TD.x1) / 2, (TD.z0 + TD.z1) / 2); box(B.stone, jer, 0xe8dfc8, TD.x0, TD.x1, ty - 1, ty + 8, TD.z0, TD.z1, .05); solid(TD.x0, TD.x1, TD.z0, TD.z1);
+      for (const [cx, cz] of [[TD.x0 + 2, TD.z0 + 2], [TD.x1 - 2.5, TD.z0 + 2.5]]) box(B.stone, jer, 0xd8ccb2, cx - 2.4, cx + 2.4, ty - 1, ty + 12, cz - 2.4, cz + 2.4, .05);
+      minaret(B.stone, TD.x0 + 4, TD.z1 - 4, 22);
+      signAt('TOWER OF DAVID', (TD.x0 + TD.x1) / 2, 4.6, TD.z0 - .6, Math.PI, 4.4, '#ffd84a') }
+    /* ---------- the Cardo: sunken Roman street with columns ---------- */
+    { for (let x = CARDO.x0 + 2; x < CARDO.x1; x += 4) for (const z of [CARDO.z0 + .4, CARDO.z1 - .4]) { B.decor.add(MT.v, A.geo('cyl'), 0xcac0a8, M(x, H(x, z) + 2.2, z, .32, 4.4, .32)); ctx.circles.push([x, z, .4]) }
+      signAt('THE CARDO · Roman street', CARDO.x0 + 3, 3.4, CARDO.z1 + .4, 0, 3.6, '#ffd84a') }
+    /* ---------- souk: striped canopies + stalls along the alleys ---------- */
+    const SOUKC = [0xe83a3a, 0x2a8a4a, 0xffd84a, 0x3a6ad8, 0xff8a3a, 0x8a3ab8], stalls = [];
+    for (let si = 1; si < SOUK.length; si++) { const a = SOUK[si - 1], b = SOUK[si], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, ry = Math.atan2(dx, dz);
+      const n = Math.max(2, Math.round(L / 4));
+      for (let i = 0; i < n; i++) { const f = (i + .5) / n, cx = a[0] + dx * f, cz = a[1] + dz * f, cy = H(cx, cz) + 3.6;
+        B.shuk.add(MT.roof, A.geo('hip'), SOUKC[(si + i) % SOUKC.length], M(cx, cy, cz, 2.8, 1, L / n + .4, 0, ry, 0)); for (const sd of [-1, 1]) { const px = cx - uz * sd * 2.5, pz = cz + ux * sd * 2.5; B.shuk.add(MT.v, A.geo('cyl'), 0x7a5a3a, M(px, cy - 1.8, pz, .07, 3.6, .07)) } }
+      for (let d = 3; d < L - 2; d += 5) { const cx = a[0] + ux * d, cz = a[1] + uz * d; for (const sd of [-1, 1]) { const sx0 = cx - uz * sd * 3, sz0 = cz + ux * sd * 3, sy = H(sx0, sz0);
+          B.shuk.add(MT.wood, BG.box, 0xffffff, M(sx0, sy + .5, sz0, 2.2, 1, .9, 0, ry, 0));
+          for (let k = 0; k < 5; k++) B.shuk.add(MT.v, A.geo('cone'), [0xc8682a, 0x8a3a3a, 0x3a8a5a, 0xd8b040, 0x6a4a8a, 0xa86a3a][(si + k + d) % 6], M(sx0 + Math.sin(ry) * (k - 2) * .4, sy + 1.2, sz0 + Math.cos(ry) * (k - 2) * .4, .18, .3, .18), .05);
+          ctx.circles.push([sx0, sz0, .9]); occ.push({ x0: sx0 - 1.1, x1: sx0 + 1.1, z0: sz0 - 1.1, z1: sz0 + 1.1 }); stalls.push({ x: sx0, z: sz0 }) } } }
+    signAt('OLD CITY SOUK', -14, 4.6, DPLAZA.z1 + 1, Math.PI, 4.4, '#ffb04a');
+    /* ---------- outside Damascus Gate: ka'ak carts + the bus stop ---------- */
+    const carts = [];
+    { for (const cx of [-28, -23, -4]) { const cz = OC.z0 - 8, gy = H(cx, cz); B.decor.add(MT.wood, BG.box, 0xffffff, M(cx, gy + .7, cz, 2.2, 1.4, 1.4)); B.decor.add(MT.roof, A.geo('hip'), SOUKC[(cx + 30) % 6 | 0], M(cx, gy + 2.4, cz, 1.9, .7, 1.5));
+        for (let j = 0; j < 5; j++) B.decor.add(MT.v, A.geo('ring'), 0xd8a050, M(cx - .8 + j * .4, gy + 1.5, cz + .1, .16, .16, .05, Math.PI / 2, 0, 0)); solid(cx - 1.2, cx + 1.2, cz - .8, cz + .8); carts.push([cx, cz + 1.8]) }
+      signAt('KA’AK · sesame bread', -25.5, 3.8, OC.z0 - 9.4, Math.PI, 3.4, '#ffd84a');
+      const by = H(BUSSTOP.x, BUSSTOP.z); box(B.decor, MT.shiny, 0x2a8a4a, BUSSTOP.x - .15, BUSSTOP.x + .15, by, by + 3.4, BUSSTOP.z - .8, BUSSTOP.z + .8); B.decor.add(MT.v, BG.box, 0x2a8a4a, M(BUSSTOP.x, by + 3.6, BUSSTOP.z, .2, .9, 1.6), .6); ctx.circles.push([BUSSTOP.x, BUSSTOP.z, .4]);
+      box(B.decor, MT.shiny, 0x8a9aa8, BUSSTOP.x - 3, BUSSTOP.x + 3, by + 2.6, by + 2.75, BUSSTOP.z - 2.4, BUSSTOP.z - .9); signAt('BUS 486 · DEAD SEA · ים המלח', BUSSTOP.x + 5, 2.6, BUSSTOP.z - 2, 0, 4.2, '#9ad8ff') }
 
-    /* ---------- Mamilla avenue (open-air mall west of Jaffa Gate) ---------- */
-    { const r = rng; for (let x = MAM.x0; x < MAM.x1 - 6; x += 13) { house(B.city, x + 4, MAM.z0 - 5, 10, 8, 5 + r() * 2, [0xe8dfc8, 0xefe6d0, 0xe6d8bc][r() * 3 | 0], { door: true }); house(B.city, x + 4, MAM.z1 + 5, 10, 8, 5 + r() * 2, [0xdfd2b4, 0xe8dfc8][r() * 2 | 0], { door: true }) }
-      for (let x = MAM.x0 + 6; x < MAM.x1; x += 7) { B.decor.add(MT.v, A.geo('cyl'), 0x6a5a3a, M(x, H(x, MAM.z0 + 4) + 1.6, MAM.z0 + 4, .1, 3.2, .1)); B.night.add(MT.v, BG.sph, 0xfff0c0, M(x, H(x, MAM.z0 + 4) + 3.4, MAM.z0 + 4, .22, .22, .22), 1); ctx.circles.push([x, MAM.z0 + 4, .2]) }
-      sign('MAMILLA AVENUE', (MAM.x0 + MAM.x1) / 2, 5.8, MAM.z0 - 6, Math.PI, 5, '#ff8ac0', true) }
-
-    /* ---------- Jaffa Road + light rail + City Hall + Mahane Yehuda ---------- */
-    { const r = rng; for (let x = JR.x0 + 4; x < JR.x1 - 10; x += 15) { house(B.city, x + 5, JR.z - 11, 11, 9, 9 + r() * 7, [0xe8dfc8, 0xefe6d0, 0xdcd2b8][r() * 3 | 0]); house(B.city, x + 5, JR.z + 12, 11, 9, 8 + r() * 8, [0xdfd2b4, 0xe8dfc8][r() * 2 | 0]) }
-      /* City Hall plaza: dark stone plaza + flag poles */
-      { const cy0 = H(CITYHALL.x, CITYHALL.z); box(B.city, MT.stone, 0x8a8a84, CITYHALL.x - 14, CITYHALL.x + 14, cy0, cy0 + .2, CITYHALL.z - 12, CITYHALL.z + 12); walk.pad(CITYHALL.x, CITYHALL.z, 13, cy0 + .2);
-        house(B.city, CITYHALL.x, CITYHALL.z - 22, 26, 12, 22, 0xcbbf9e); for (let k = 0; k < 3; k++) { B.decor.add(MT.v, A.geo('cyl'), 0x8a8a8a, M(CITYHALL.x - 8 + k * 8, cy0 + 6, CITYHALL.z + 8, .12, 12, .12)); ctx.circles.push([CITYHALL.x - 8 + k * 8, CITYHALL.z + 8, .2]) }
-        sign('SAFRA SQUARE · CITY HALL', CITYHALL.x, cy0 + 5, CITYHALL.z + 13, 0, 5, '#9ad8ff', true) }
-      /* Mahane Yehuda: roofed market hall + painted shutter bars (night) */
-      { const sy = H((SHUK.x0 + SHUK.x1) / 2, (SHUK.z0 + SHUK.z1) / 2);
-        B.shuk.add(MT.roof, BG.box, 0x6a5a4a, M((SHUK.x0 + SHUK.x1) / 2, sy + 4.6, (SHUK.z0 + SHUK.z1) / 2, SHUK.x1 - SHUK.x0 + 2, .4, SHUK.z1 - SHUK.z0 + 2));
-        for (let x = SHUK.x0 + 2; x < SHUK.x1; x += 4.4) for (const sd of [-1, 1]) B.shuk.add(MT.v, A.geo('cyl'), 0x8a6a4a, M(x, sy + 2.3, (SHUK.z0 + SHUK.z1) / 2 + sd * (SHUK.z1 - SHUK.z0) / 2, .12, 4.6, .12));
-        for (let x = SHUK.x0 + 4; x < SHUK.x1 - 2; x += 6) { for (const sd of [-1, 1]) { const sz0 = (SHUK.z0 + SHUK.z1) / 2 + sd * (SHUK.z1 - SHUK.z0) / 2 - sd * 1.6;
-            B.shuk.add(MT.wood, BG.box, 0xffffff, M(x, sy + .5, sz0, 3, 1, 1.4)); ctx.cols.push([x - 1.5, x + 1.5, sz0 - .8, sz0 + .8]); stalls.push({ x, z: sz0 - sd * 1.4, ry: sd < 0 ? 0 : Math.PI, shuk: true }) } }
-        sign('MAHANE YEHUDA MARKET', (SHUK.x0 + SHUK.x1) / 2, sy + 6.2, SHUK.z1 + 1, Math.PI, 6, '#ffd84a', true) } }
-    /* light rail track + overhead wires + stations */
-    { const railM = MT.shiny; for (let i = 0; i < TRAM.length - 1; i++) { const a = TRAM[i], b = TRAM[i + 1], L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.floor(L / 6);
-        for (let k = 0; k <= n; k++) { const f = k / n, x = a.x + (b.x - a.x) * f, z = a.z + (b.z - a.z) * f, y = H(x, z);
-          box(B.decor, railM, 0x8a8a90, x - .7, x + .7, y + .02, y + .12, z - 2.6, z + 2.6); box(B.decor, railM, 0x6a7a3a, x - .7, x + .7, y, y + .02, z - 2.6, z + 2.6);
-          if (k % 2 === 0) { B.decor.add(MT.v, A.geo('cyl'), 0x5a5a5a, M(x + 3.4, y + 3, z, .09, 6, .09)); ctx.circles.push([x + 3.4, z, .2]) } } }
-      const STOPS = [['Mahane Yehuda', SHUK.x1 + 10, JR.z - 2.2], ['City Hall', CITYHALL.x - 12, JR.z - 2.2], ['Jaffa Center', JR.x0 + 40, JR.z - 2.2]];
-      STOPS.forEach(([n, x, z]) => { const y = H(x, z); box(B.decor, MT.shiny, 0x2a4ab8, x - .15, x + .15, y, y + 4.8, z - .8, z + .8); B.decor.add(MT.v, BG.box, 0x3a6aff, M(x, y + 5.2, z, .3, 1.2, 1.2), 1); ctx.circles.push([x, z, .5]);
-        ctx.T.push({ x: x + 1.8, z, r: 2.4, label: () => tr('Light rail: ', 'Tranvía: ') + n + tr(' (3 credits)', ' (3 créditos)'), fn: () => { if (!AV.txn(-3, 'Light rail')) return; AV.audio && AV.audio.blip(660, .2, 'sine', .1); AV.fadeTo(1, 350); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, x + 2.2, z + 1.4); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; S.time += 6; AV.fadeTo(0, 500); AV.toast(tr('“Hashava mehu PendingIntent” — the recorded lady says the doors are closing. You are somewhere else now.', 'La grabación dice que las puertas se cierran. Ahora estás en otra parte.')) }, 900) } }) }) }
-    /* ---------- Mount Zion (dormition abbey) ---------- */
-    { const zx = ZIONM.x, zz = ZIONM.z, zy = H(zx, zz); box(B.stone, jer, 0xd8ccb2, zx - 12, zx + 12, zy, zy + 12, zz - 12, zz + 12); solid(zx - 12, zx + 12, zz - 12, zz + 12);
-      domeOn(B.dome, zx, zz, 8.5, 0x6a7a8a, zy + 12); B.dome.add(goldMat, new THREE.CylinderGeometry(.4, .4, 4, 8), 0xe8c040, M(zx, zy + 23, zz), .4);
-      for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .4; B.dome.add(MT.v, A.geo('cyl'), 0x8a9ab0, M(zx + Math.cos(a) * 11, zy + 6, zz + Math.sin(a) * 11, 1, 12, 1)) }
-      sign('MOUNT ZION', zx + 14, zy + 8, zz + 8, -Math.PI / 4, 4.6, '#9ad8ff', true) }
-    /* ---------- Mount of Olives + Kidron + church domes ---------- */
-    { const ox = OLIV.x, oz = OLIV.z;
-      for (const [cx2, cz2, r0, col] of [[ox - 16, oz - 8, 6, 0x9ab8c8], [ox + 6, oz - 14, 4.4, 0x9ab8c8], [ox + 14, oz + 6, 4, 0x9ab8c8]]) { const cy0 = H(cx2, cz2); box(B.stone, jer, 0xd8ccb2, cx2 - r0 - 2, cx2 + r0 + 2, cy0, cy0 + 6, cz2 - r0 - 2, cz2 + r0 + 2); domeOn(B.dome, cx2, cz2, r0, col, cy0 + 6) }
-      sign('MOUNT OF OLIVES', ox - 24, H(ox - 24, oz + 30) + 4, oz + 30, -Math.PI / 2, 5, '#9ad8ff', true);
-      /* Kidron: ancient tomb cubes in the valley */
-      for (const [tx2, tz2, s] of [[KIDRON.x - 6, 10, 4], [KIDRON.x + 4, -6, 3.4], [KIDRON.x - 4, 26, 3]]) { const ty0 = H(tx2, tz2); box(B.stone, jer, 0xcabf9e, tx2 - s, tx2 + s, ty0, ty0 + s * 1.6, tz2 - s, tz2 + s); solid(tx2 - s, tx2 + s, tz2 - s, tz2 + s) } }
-    /* ---------- patrol post (game fiction) ---------- */
-    { const px0 = POST.x, pz0 = POST.z, py0 = H(px0, pz0); box(B.city, MT.stucco, 0xcabf9e, px0 - 5, px0 + 5, py0, py0 + 3.6, pz0 - 4, pz0 + 4); solid(px0 - 5, px0 + 5, pz0 - 4, pz0 + 4);
-      box(B.decor, MT.v, 0xe8e4d8, px0 - 1, px0 + 1, py0 + 3.6, py0 + 5.4, pz0 - .3, pz0 + .3); sign('DESERT PATROL · JERUSALEM POST', px0, py0 + 4.6, pz0 - 4.6, 0, 4.4, '#e8d08a', true) }
-
-    /* ---------- Apeverse portal (west of Jaffa Gate) ---------- */
-    { const px0 = PORTAL[0], pz0 = PORTAL[1], py0 = H(px0, pz0);
-      const portal = new THREE.Group(); portal.position.set(px0, py0 + 1.7, pz0); grp.add(portal);
+    /* ---------- Jaffa Road: light rail, stops, City Hall, Mahane Yehuda ---------- */
+    const STOPS = [['Mahane Yehuda', 'Mahane Yehuda', -204], ['Jaffa Center', 'Jaffa Center', -170], ['City Hall', 'Ayuntamiento', -136]];
+    { for (let x = JR.x0; x < JR.x1; x += 2) { const y = H(x, TRAM_Z); for (const o of [-.72, .72]) box(B.decor, MT.shiny, 0x8a8a90, x, x + 2.02, y + .02, y + .1, TRAM_Z + o - .05, TRAM_Z + o + .05) }
+      for (let x = JR.x0 + 4; x < JR.x1; x += 14) { const y = H(x, TRAM_Z - 2.6); B.decor.add(MT.v, A.geo('cyl'), 0x5a5a5a, M(x, y + 3, TRAM_Z - 2.6, .09, 6, .09)); B.decor.add(MT.v, BG.box, 0x5a5a5a, M(x, y + 5.9, TRAM_Z - 1.3, .06, .06, 2.6)); ctx.circles.push([x, TRAM_Z - 2.6, .2]) }
+      STOPS.forEach(([en, es, x]) => { const z = JR.z - 5.6, y = H(x, z); box(B.decor, MT.shiny, 0x9aa8b8, x - 3, x + 3, y + 2.6, y + 2.75, z - .8, z + .8); for (const s of [-1, 1]) { box(B.decor, MT.shiny, 0x6a6a72, x + s * 2.8 - .06, x + s * 2.8 + .06, y, y + 2.6, z - .06, z + .06); ctx.circles.push([x + s * 2.8, z, .2]) }
+        NIGHT.add(MT.v, BG.box, 0xd8202a, M(x, y + 3.1, z, 1.6, .5, .1), 1); ctx.sign(en.toUpperCase(), x, y + 3.6, z - .2, Math.PI, 2.6, '#ff6a6a') }) }
+    /* City Hall (Safra Square): flag poles + the hall */
+    { for (let k = 0; k < 4; k++) { const fx = CITYHALL.x0 + 6 + k * 5.5, fz = CITYHALL.z0 + 3, y = H(fx, fz); B.decor.add(MT.shiny, A.geo('cyl'), 0xc8c8c8, M(fx, y + 5, fz, .1, 10, .1)); B.decor.add(MT.v, BG.box, [0x2a4ab8, 0xf2f0ea, 0xe8c040, 0x2a8a4a][k], M(fx + .9, y + 9.2, fz, 1.8, 1.1, .04)); ctx.circles.push([fx, fz, .2]) }
+      signAt('SAFRA SQUARE · CITY HALL', (CITYHALL.x0 + CITYHALL.x1) / 2, 4, CITYHALL.z0 + .5, Math.PI, 5, '#9ad8ff') }
+    /* Mahane Yehuda: roofed hall over the middle alley + produce stalls */
+    { const cz = (SHUK.z0 + SHUK.z1) / 2, sy = H((SHUK.x0 + SHUK.x1) / 2, cz);
+      B.shuk.add(MT.roof, BG.box, 0x8a9aa0, M((SHUK.x0 + SHUK.x1) / 2, sy + 5, cz, SHUK.x1 - SHUK.x0, .25, 8));
+      for (let x = SHUK.x0 + 2; x < SHUK.x1; x += 6) for (const s of [-1, 1]) { B.shuk.add(MT.v, A.geo('cyl'), 0x5a5a5a, M(x, sy + 2.5, cz + s * 3.8, .1, 5, .1)); ctx.circles.push([x, cz + s * 3.8, .2]) }
+      for (let x = SHUK.x0 + 4; x < SHUK.x1 - 2; x += 5.5) for (const s of [-1, 1]) { const z0 = cz + s * 3, y = H(x, z0); B.shuk.add(MT.wood, BG.box, 0xffffff, M(x, y + .45, z0, 3.6, .9, 1.3));
+        for (let k = 0; k < 6; k++) B.shuk.add(MT.v, BG.sph, [0xe83a3a, 0xff8a2a, 0xffd84a, 0x6ab83a, 0x8a3a6a, 0xd8a050][(k + (x | 0)) % 6], M(x - 1.4 + k * .56, y + 1.05, z0, .26, .22, .26), .05);
+        ctx.cols.push([x - 1.8, x + 1.8, z0 - .65, z0 + .65]); occ.push({ x0: x - 1.8, x1: x + 1.8, z0: z0 - .65, z1: z0 + .65 }) }
+      signAt('MAHANE YEHUDA · שוק מחנה יהודה', (SHUK.x0 + SHUK.x1) / 2, 5.8, SHUK.z1 - 1, Math.PI, 6, '#ffd84a') }
+    /* ---------- Mount Zion: the round abbey with its conical roof ---------- */
+    { const zy = H(ZIONM.x, ZIONM.z); B.stone.add(jer, new THREE.CylinderGeometry(8, 8, 11, 20), 0xd8ccb2, M(ZIONM.x, zy + 4.5, ZIONM.z)); B.stone.add(MT.v, new THREE.ConeGeometry(9, 6, 20), 0x5a6a7a, M(ZIONM.x, zy + 13, ZIONM.z)); ctx.circles.push([ZIONM.x, ZIONM.z, 8.4]);
+      box(B.stone, jer, 0xd8ccb2, ZIONM.x + 9, ZIONM.x + 13, zy - 1, zy + 20, ZIONM.z - 2, ZIONM.z + 2); B.stone.add(MT.v, new THREE.ConeGeometry(2.6, 4, 4).rotateY(Math.PI / 4), 0x5a6a7a, M(ZIONM.x + 11, zy + 22, ZIONM.z)); solid(ZIONM.x + 9, ZIONM.x + 13, ZIONM.z - 2, ZIONM.z + 2);
+      signAt('MOUNT ZION', ZIONM.x, 3, ZIONM.z - 11, Math.PI, 4, '#9ad8ff') }
+    /* ---------- Mount of Olives + Kidron ---------- */
+    { for (const [cx, cz, r0, col] of [[116, -42, 4.5, 0x9ab8c8], [140, -30, 3.6, 0xe8c040], [150, -10, 3.2, 0x9ab8c8]]) { const cy = H(cx, cz); box(B.stone, jer, 0xd8ccb2, cx - r0 - 2, cx + r0 + 2, cy - 1, cy + 6, cz - r0 - 2, cz + r0 + 2); solid(cx - r0 - 2, cx + r0 + 2, cz - r0 - 2, cz + r0 + 2);
+        if (col === 0xe8c040) for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; B.dome.add(goldMat, A.geo('onion'), 0xe8c040, M(cx + (k ? Math.cos(a) * 3 : 0), cy + 6, cz + (k ? Math.sin(a) * 3 : 0), k ? 1.1 : 1.6, k ? 2.2 : 3, k ? 1.1 : 1.6), .3) }
+        else domeOn(B.dome, cx, cz, r0, col, cy + 6) }
+      signAt('MOUNT OF OLIVES', 108, 3.4, -24, -Math.PI / 2, 4.6, '#9ad8ff');
+      for (const [tx, tz, s] of [[KIDRON.x - 6, 10, 3], [KIDRON.x + 4, -2, 2.6], [KIDRON.x - 3, 26, 2.4]]) { const ty = H(tx, tz); box(B.stone, jer, 0xcabf9e, tx - s, tx + s, ty - .5, ty + s * 1.6, tz - s, tz + s); B.stone.add(jer, new THREE.ConeGeometry(s, s * 1.6, 10), 0xcabf9e, M(tx, ty + s * 2.4, tz)); solid(tx - s, tx + s, tz - s, tz + s) } }
+    /* ---------- the Apeverse portal ---------- */
+    { const py = H(PORTAL.x, PORTAL.z), portal = new THREE.Group(); portal.position.set(PORTAL.x, py + 1.7, PORTAL.z); portal.rotation.y = Math.PI / 2; grp.add(portal);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, .14, 10, 40), new THREE.MeshBasicMaterial({ color: 0xb07aff })); portal.add(ring);
       const disc = new THREE.Mesh(new THREE.CircleGeometry(1.25, 40), new THREE.MeshBasicMaterial({ color: 0x7a3aff, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false })); portal.add(disc);
-      ctx.upd.push((dt, t) => { ring.rotation.z = t * .8; disc.material.opacity = .35 + Math.sin(t * 2) * .12; disc.material.color.setHSL((t * .05) % 1, .8, .5) }); ctx.circles.push([px0, pz0, 1]);
-      for (const s of [-1, 1]) { box(B.decor, MT.stone, 0x9a8a7a, px0 - .6, px0 + .6, py0, py0 + 4.4, pz0 + s * 2.2 - .3, pz0 + s * 2.2 + .3); ctx.circles.push([px0, pz0 + s * 2.2, .5]) }
-      sign('PORTAL TO APE TOWN', px0, py0 + 6.4, pz0, Math.PI / 2, 4, '#d8a0ff', true) }
-    nightish = () => true;   // window glow from here on
+      ctx.upd.push((dt, t) => { ring.rotation.z = t * .8; disc.material.opacity = .35 + Math.sin(t * 2) * .12; disc.material.color.setHSL((t * .05) % 1, .8, .5) }); ctx.circles.push([PORTAL.x, PORTAL.z, 1]);
+      for (const s of [-1, 1]) { box(B.decor, MT.stone, 0x9a8a7a, PORTAL.x - .3, PORTAL.x + .3, py, py + 4.4, PORTAL.z + s * 2.2 - .3, PORTAL.z + s * 2.2 + .3); ctx.circles.push([PORTAL.x, PORTAL.z + s * 2.2, .5]) }
+      ctx.sign('PORTAL TO APE TOWN', PORTAL.x, py + 5.6, PORTAL.z, Math.PI / 2, 3.6, '#d8a0ff') }
 
-    /* ---------- vegetation: cypress + olive trees ---------- */
-    const freeV = (x, z, pad) => x > XMIN + 6 && x < XMAX - 6 && z > ZMIN + 6 && z < ZMAX - 6 && roadDist(x, z) > (pad || 3) && !occ.some(o => inRect(o, x, z, (pad || 1.5))) && !inRect(TM, x, z, 2) && !inRect(SHUK, x, z, 2) && !inRect(MAM, x, z, 1) && !inKidron(x, z);
-    const pickV = (n, area, ok, s0, s1) => { const out = []; for (let i = 0, t = 0; i < n && t < n * 30; t++) { const x = area.x0 + rng() * (area.x1 - area.x0), z = area.z0 + rng() * (area.z1 - area.z0); if (!ok(x, z)) continue; out.push({ x, y: H(x, z), z, s: s0 + rng() * (s1 - s0), ry: rng() * TAU }); i++ } return out };
-    const WORLD = { x0: XMIN, x1: XMAX, z0: ZMIN, z1: ZMAX };
-    /* cypress: tall dark cones */
-    const cyp = pickV(K.n(36), WORLD, (x, z) => freeV(x, z, 3), 1.6, 2.6); cyp.forEach(p => ctx.circles.push([p.x, p.z, .4]));
-    K.scatter(ctx, K.species.candyTree(0x5a4a32, 0x2a4a2a, 0x345a34, 0x2a4a2a), K.floraMat(.005), cyp.map(o => Object.assign({}, o, { s: o.s * .55, sy: 1.7 })), { far: K.far(false), cell: 70 });
-    /* olive trees: gnarled, silver-green (Mount of Olives + scattered) */
-    const olive = pickV(K.n(30), { x0: OLIV.x - 50, x1: OLIV.x + 50, z0: OLIV.z - 55, z1: OLIV.z + 55 }, (x, z) => Math.hypot(x - OLIV.x, z - OLIV.z) < 55 && freeV(x, z, 3.4), 1.4, 2.2)
-      .concat(pickV(K.n(12), WORLD, (x, z) => freeV(x, z, 3.4) && x < OC.x0, 1.2, 2));
-    olive.forEach(p => ctx.circles.push([p.x, p.z, .5]));
-    K.scatter(ctx, (() => { const p = [ [BG.cyl, 0x6a5a42, M(0, .9, 0, .2, 1.8, .2, .12, 0, .1)], [BG.ico, 0x7a8a5a, M(.25, 2.05, .1, 1.1, .75, 1.0)], [BG.ico0, 0x8a9a66, M(-.55, 1.6, -.3, .75, .55, .7)] ]; return K.merge(p) })(), K.floraMat(.004), olive, { far: K.far(false), cell: 70 });
-    K.field(ctx, K.species.bush(0x5a6a3a, 0xc8b860), K.floraMat(.02), K.n(40), WORLD, { H, s0: .8, s1: 1.3, shadow: false, cell: 64, ok: (x, z) => freeV(x, z, 1.6) });
-    K.field(ctx, K.species.flower(0xe8c040, 0xc8a030), K.floraMat(.1), K.n(40), WORLD, { H, s0: .8, s1: 1.3, shadow: false, cell: 48, far: K.far(true), ok: (x, z) => freeV(x, z, 1.4) });
-
-    /* ======================= PEOPLE ======================= */
-    /* --- named characters (soft-body puppets) --- */
-    const crew = {}, H0 = x => stoneH(x, 0);
-    const spawn = (id, body, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body: body || C.regional.body(null, 0), H: (px, pz) => stoneH(px, pz), r: 2.6, anim, speed: 1.25 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
-    spawn('dalia', C.regional.body('guide', 11), JAFFA[0] + 4, JAFFA[1] + 5, Math.PI / 2);
-    spawn('yossi', C.regional.body('business', 22), (MAM.x0 + MAM.x1) / 2, MAM.z0 + 3, 0, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking && Math.hypot(n.g.position.x - (MAM.x0 + MAM.x1) / 2, n.g.position.z - (MAM.z0 + 3)) < .5) { u.aR.rotation.x = -1.9 + Math.sin(t * 3) * .06; if (u.st) u.head.rotation.y = Math.sin(t * .8) * .3 } });
-    spawn('karim', C.regional.body('vendor', 33), 4, -34, 0, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking) u.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
-    spawn('miriam', C.regional.body('businesswoman', 44), (SHUK.x0 + SHUK.x1) / 2 - 2, (SHUK.z0 + SHUK.z1) / 2, Math.PI);
-    spawn('elias', C.regional.body('elder', 55), HS.x - 18, HS.z + 14, Math.PI * .8);
-    /* --- interactions --- */
-    const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
-    const buy = (cost, what, msg, item) => { if (!AV.txn(-cost, what)) return false; if (item) { if (AV.bag) AV.bag.add(item, 1, true); else S.items[item] = (S.items[item] || 0) + 1; AV.quests && AV.quests.check(); msg += tr(' → backpack (I)', ' → mochila (I)') } AV.toast(msg); AV.audio && AV.audio.blip(660, .15, 'triangle', .12); return true };
-    /* tour checkpoints (jlm_tour) */
-    const SPOTS = [['western_wall', tr('Stand at the Western Wall', 'Quédate en el Muro Occidental'), tr('You place your palm on stones polished by centuries. The paper notes flutter. Somebody is singing quietly.', 'Apoyas la mano en piedras pulidas por siglos. Las notas de papel tiemblan. Alguien canta bajito.'), WW.x + 3, (WW.z0 + WW.z1) / 2],
-      ['sepulchre', tr('Visit the Holy Sepulchre', 'Visita el Santo Sepulcro'), tr('Candlelight, incense, marble, six languages of prayer at once. The ladder is still there. It has been there for a century.', 'Luz de velas, incienso, mármol, seis idiomas rezando a la vez. La escalera sigue ahí. Lleva ahí un siglo.'), HS.x - 10, HS.z + 9],
-      ['dome', tr('Look at the Dome of the Rock', 'Mira la Cúpula de la Roca'), tr('The golden dome holds the morning sun like a bowl. The turquoise tiles hum with colour.', 'La cúpula dorada sostiene el sol de la mañana como un cuenco. Los azulejos turquesa vibran de color.'), TM.x0 - 4, TM.z1 + 3],
-      ['tower', tr('Climb the Tower of David courtyard', 'Sube al patio de la Torre de David'), tr('From the citadel walls the whole city unfolds: domes, rooftops, hills, haze.', 'Desde las murallas de la ciudadela la ciudad entera se despliega: cúpulas, tejados, colinas y bruma.'), TD.x - 2, TD.z],
-      ['shuk', tr('Taste Mahane Yehuda', 'Prueba Mahane Yehuda'), tr('You eat rugelach in the crowd. Spices, fish, chocolate, shouts of “motek!”. The market breathes.', 'Comes rugelach entre la multitud. Especias, pescado, chocolate, gritos de “¡motek!”. El mercado respira.'), (SHUK.x0 + SHUK.x1) / 2, (SHUK.z0 + SHUK.z1) / 2]];
-    for (const [id, label, msg, x, z] of SPOTS) {
-      const y = stoneH(x, z), ring = new THREE.Mesh(new THREE.TorusGeometry(.6, .07, 6, 24), new THREE.MeshBasicMaterial({ color: 0x7ff0c8 })); ring.position.set(x, y + .1, z); ring.rotation.x = Math.PI / 2; grp.add(ring);
-      ctx.upd.push((dt, t) => { ring.position.y = y + .12 + Math.sin(t * 2) * .05; ring.rotation.z = t; const done = S.jlm.tour.includes(id); ring.material.color.setHex(done ? 0x3a5a4a : 0x7ff0c8) });
-      T(x, z, 2.4, () => label, () => { if (S.jlm.tour.includes(id)) return AV.toast(tr('Checkpoint done ✔', 'Punto hecho ✔')); S.jlm.tour.push(id); AV.toast(msg); AV.quests && AV.quests.check(); AV.audio && AV.audio.blip(880, .3, 'sine', .12) }, () => !(S.jlm && S.jlm.tour && S.jlm.tour.includes(id)));
-    }
-    /* Western Wall: press a note */
-    T(WW.x + 3.2, WW.z0 + 4, 1.8, () => tr('Tuck your note into the wall', 'Mete tu nota en la muralla'), () => { AV.toast(tr('You fold your wish small and push it between the giant stones. Old ones crunch under your fingers.', 'Doblas tu deseo pequeñito y lo metes entre las piedras gigantes. Las viejas crujen bajo tus dedos.')); AV.dlg && AV.dlg.event('western_wall'); AV.vitals && AV.vitals.add(0, 4) });
-    /* shops */
+    /* ======================= named characters + interactions (positions reserved before the houses are placed) ======================= */
+    const NPC = { dalia: [-62, 12, -Math.PI / 2], yossi: [-97, 15, 0], karim: [8, -36, -Math.PI / 2], miriam: [-206, -21, 0], elias: [-60, -38, Math.PI / 2] };
+    const SPOTS = [['western_wall', 'Stand at the Western Wall', 'Quédate ante el Muro Occidental', 'You place your palm on stones polished by centuries. The paper notes flutter; somebody nearby is singing quietly.', 'Apoyas la mano en piedras pulidas por siglos. Las notas de papel tiemblan; alguien canta bajito.', 21, -38],
+      ['sepulchre', 'Visit the Holy Sepulchre', 'Visita el Santo Sepulcro', 'Candlelight, incense, marble, prayers in six languages at once. The ladder above the door has not moved in a century.', 'Velas, incienso, mármol, rezos en seis idiomas a la vez. La escalera sobre la puerta lleva un siglo sin moverse.', -42, -37],
+      ['dome', 'Admire the Dome of the Rock', 'Admira la Cúpula de la Roca', 'The golden dome holds the sun like a bowl. The turquoise tiles hum with colour.', 'La cúpula dorada sostiene el sol como un cuenco. Los azulejos turquesa vibran de color.', DOME.x, DOME.z + DOME.R + 8],
+      ['tower', 'Look up at the Tower of David', 'Contempla la Torre de David', 'The citadel’s tall minaret catches the light. Herod’s stones below, Ottoman ones above — typical Jerusalem.', 'El alto minarete de la ciudadela atrapa la luz. Piedras de Herodes abajo, otomanas arriba: muy de Jerusalén.', -57, 14],
+      ['shuk', 'Taste Mahane Yehuda', 'Prueba Mahane Yehuda', 'Spices, fresh bread, chocolate, shouts of “motek!”. The market breathes around you.', 'Especias, pan, chocolate, gritos de “¡motek!”. El mercado respira a tu alrededor.', -196, -21]];
     const SHOPS = [
-      [4, -35.4, 'Karim’s spices: za’atar (8)', 'Especias de Karim: za’atar (8)', 8, 'kaak', tr('The smell follows you for an hour. Worth it.', 'El olor te acompaña una hora. Merece la pena.'), 'halva'],
-      [(MAM.x0 + MAM.x1) / 2, MAM.z1 + 3, 'Mamilla café: cardamom coffee (6)', 'Café de Mamilla: café con cardamomo (6)', 6, 'cardamom_coffee', tr('Small cup, big wake-up.', 'Taza pequeña, despertar grande.'), 'cardamom_coffee'],
-      [(MAM.x0 + MAM.x1) / 2 - 6, MAM.z1 + 3, 'Ceramics: Armenian tile (45)', 'Cerámica: azulejo armenio (45)', 45, 'armenian_tile', tr('Cobalt and turquoise, painted by hand.', 'Cobalto y turquesa, pintado a mano.'), 'armenian_tile'],
-      [(SHUK.x0 + SHUK.x1) / 2 + 4, (SHUK.z0 + SHUK.z1) / 2, 'Miriam’s bakery: rugelach (10)', 'Panadería de Miriam: rugelach (10)', 10, 'rugelach', tr('Still warm. “Motek!”', 'Aún caliente. “¡Motek!”'), 'rugelach'],
-      [SHUK.x0 + 10, (SHUK.z0 + SHUK.z1) / 2, 'Shuk falafel: pita (12)', 'Falafel del mercado: pita (12)', 12, 'falafel', tr('Crunch, tahini, pickles. Perfect.', 'Crujiente, tahini, encurtidos. Perfecto.'), 'falafel'],
-      [SHUK.x1 - 8, (SHUK.z0 + SHUK.z1) / 2, 'Juice stand: pomegranate (10)', 'Zumo: granada (10)', 10, 'pomegranate', tr('Deep red, pressed while you wait.', 'Rojo intenso, exprimido delante de ti.'), 'pomegranate'],
-      [-10, -34, 'Souk coffee: mint tea (5)', 'Café del zoco: té de menta (5)', 5, 'mint_tea', tr('Sweet, hot, endless refills.', 'Dulce, caliente, con rellenos infinitos.'), 'mint_tea']];
-    for (const [x, z, en, es, cost, item, msg, item2] of SHOPS) T(x, z, 2.2, () => tr(en, es), () => buy(cost, en.split(':')[0], msg, item));
-    /* ka'ak cart (quest-related) */
-    const kaakCart = stalls.find(s => s.kaak);
-    T(kaakCart.x, kaakCart.z, 2.2, () => tr('Ka’ak cart: sesame bread (6)', 'Carrito de ka’ak: pan de sésamo (6)'), () => buy(6, 'Ka’ak cart', tr('A long sesame ring, warm in your hand.', 'Un aro largo de sésamo, caliente en la mano.'), 'kaak'));
-    /* Miriam hands over the briefcase (quest) */
-    T((SHUK.x0 + SHUK.x1) / 2 - 2, (SHUK.z0 + SHUK.z1) / 2 + 2, 2.4, () => (S.quests || {}).jlm_briefcase === 'active' && !((S.items || {}).briefcase) ? tr('Miriam’s counter: take Yossi’s briefcase', 'Mostrador de Miriam: coger el maletín de Yossi') : tr('Miriam’s counter', 'Mostrador de Miriam'), () => { if ((S.quests || {}).jlm_briefcase === 'active' && !((S.items || {}).briefcase)) { if (AV.bag) AV.bag.add('briefcase', 1, true); else S.items.briefcase = 1; AV.quests && AV.quests.check(); AV.toast(tr('Miriam: “There. And tell that boy to EAT something.”', 'Miriam: “Ten. Y dile a ese chico que COMA algo.”')) } else AV.toast(tr('Rugelach trays, flour, and one brown briefcase (sometimes).', 'Bandejas de rugelach, harina y, a veces, un maletín marrón.')) });
-    /* tram note + portal */
-    T(PORTAL[0], PORTAL[1] - 1.6, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'jerusalem');
+      [8, -33.6, 'Karim’s spices: za’atar halva (8)', 'Especias de Karim: halva con za’atar (8)', 8, 'halva', 'A sweet crumble of sesame with a pinch of thyme.', 'Un dulce de sésamo con una pizca de tomillo.'],
+      [-14, -60, 'Souk café: mint tea (5)', 'Café del zoco: té de menta (5)', 5, 'mint_tea', 'Sweet, hot, endless refills.', 'Dulce, caliente, con rellenos infinitos.'],
+      [-14, -48, 'Souk: hummus plate (15)', 'Zoco: plato de hummus (15)', 15, 'hummus', 'Warm, silky, olive oil, a pile of pita.', 'Caliente, sedoso, aceite de oliva y una montaña de pita.'],
+      [-88, 15, 'Mamilla café: cardamom coffee (6)', 'Café de Mamilla: café con cardamomo (6)', 6, 'cardamom_coffee', 'Small cup, big wake-up.', 'Taza pequeña, despertar grande.'],
+      [-106, 15, 'Ceramics: Armenian tile (45)', 'Cerámica: azulejo armenio (45)', 45, 'armenian_tile', 'Cobalt and turquoise, painted by hand.', 'Cobalto y turquesa, pintado a mano.'],
+      [-112, 15, 'Olive-wood carver: camel (30)', 'Tallista: camello de olivo (30)', 30, 'olive_camel', 'It smells faintly of the tree it came from.', 'Huele un poco al árbol del que salió.'],
+      [-202, -21, 'Miriam’s bakery: rugelach (10)', 'Panadería de Miriam: rugelach (10)', 10, 'rugelach', 'Still warm. “Motek!”', 'Aún caliente. “¡Motek!”'],
+      [-222, -21, 'Shuk falafel: pita (12)', 'Falafel del mercado: pita (12)', 12, 'falafel', 'Crunch, tahini, pickles. Perfect.', 'Crujiente, tahini, encurtidos. Perfecto.'],
+      [-186, -21, 'Juice stand: pomegranate (10)', 'Zumo: granada (10)', 10, 'pomegranate', 'Deep red, pressed while you wait.', 'Rojo intenso, exprimido al momento.'],
+      [-160, 5.6, 'Jaffa Road café: shakshuka (18)', 'Café de Jaffa: shakshuka (18)', 18, 'shakshuka', 'Bubbling tomatoes, soft eggs, bread for dipping.', 'Tomate burbujeante, huevos tiernos y pan para mojar.']];
+    /* clear zones: houses never cover a character, a checkpoint or a shop counter */
+    const KEEP = [];
+    for (const k in NPC) KEEP.push([NPC[k][0], NPC[k][1], 4]);
+    for (const s of SPOTS) KEEP.push([s[5], s[6], 3.5]); for (const s of SHOPS) KEEP.push([s[0], s[1], 3]); for (const c of carts) KEEP.push([c[0], c[1], 2.5]);
+    KEEP.push([PORTAL.x, PORTAL.z, 6], [BUSSTOP.x, BUSSTOP.z, 5]);
+    for (const g of GATES) KEEP.push([g[1], g[2], 10]);
+    const CLEAR = [WW, HSF, JPLAZA, DPLAZA, CARDO, MAM, SHUK, CITYHALL, { x0: MUGH.x0 - 2, x1: MUGH.x1 + 3, z0: MUGH.z0, z1: MUGH.z1 + 3 }, { x0: WRAMP.x0 - 4, x1: WRAMP.x1, z0: WRAMP.z0 - 1, z1: WRAMP.z1 + 1 }, { x0: TD.x0 - 2, x1: TD.x1 + 2, z0: TD.z0 - 6, z1: TD.z0 }];
+    const rectFree = (x0, x1, z0, z1) => {
+      if (occ.some(o => x0 < o.x1 + .4 && x1 > o.x0 - .4 && z0 < o.z1 + .4 && z1 > o.z0 - .4)) return false;
+      if (CLEAR.some(o => x0 < o.x1 && x1 > o.x0 && z0 < o.z1 && z1 > o.z0)) return false;
+      for (const [cx, cz, r0] of KEEP) { const nx = Math.max(x0, Math.min(cx, x1)), nz = Math.max(z0, Math.min(cz, z1)); if (Math.hypot(cx - nx, cz - nz) < r0) return false }
+      for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) { const x = x0 + (x1 - x0) * i / 4, z = z0 + (z1 - z0) * j / 4; if (roadDist(x, z) < .6 || navDist(x, z) < 2.6 || inKidron(x, z)) return false }
+      return true;
+    };
+
+    /* ---------- houses: Jerusalem stone, flat roofs or small domes, arched windows (glow at night) ---------- */
+    const house = (b, x, z, w, d, h, col, domed) => {
+      const x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2; if (!rectFree(x0, x1, z0, z1)) return false;
+      const yy = Math.min(H(x0, z0), H(x1, z0), H(x0, z1), H(x1, z1)) - .6, top = Math.max(H(x0, z0), H(x1, z0), H(x0, z1), H(x1, z1)) + h;
+      box(b, jer, col, x0, x1, yy, top, z0, z1); solid(x0, x1, z0, z1);
+      if (domed) domeOn(b, x, z, Math.min(w, d) * .36, 0xe8dcc0, top); else { box(b, jer, col, x0 - .2, x1 + .2, top, top + .35, z0 - .2, z1 + .2); if (rng() < .5) { b.add(MT.v, A.geo('cyl'), 0x2a2a2a, M(x + w * .25, top + .9, z, .45, 1.1, .45)); b.add(MT.shiny, BG.box, 0x2a3a5a, M(x - w * .2, top + .7, z, 1.6, .06, 1.1, -.6, 0, 0)) } }
+      const floors = Math.max(1, Math.round((top - yy - .6) / 3.2)), nW = Math.max(1, Math.floor(w / 2.8));
+      for (let f = 0; f < floors; f++) for (let i = 0; i < nW; i++) for (const sd of [-1, 1]) { const wx = x0 + (i + .5) * w / nW, wz = sd > 0 ? z1 + .04 : z0 - .04, wy = yy + 1.9 + f * 3.2;
+        if (wy + 1.4 > top) continue; b.add(MT.v, BG.box, 0x2a2218, M(wx, wy, wz, .9, 1.3, .08)); b.add(MT.v, A.geo('arc'), 0x2a2218, M(wx, wy + .65, wz, .45, .45, .45), 0);
+        if (rng() < .45) NIGHT.add(MT.v, BG.box, 0xffd890, M(wx, wy, wz + sd * .03, .8, 1.15, .04), 1) }
+      return true;
+    };
+    const COLS = [0xe8dfc8, 0xefe6d0, 0xdfd2b4, 0xe6d8bc, 0xf2e8d4];
+    /* Old City fabric: a jittered grid inside the walls; streets appear where roads, lanes and landmarks keep it clear */
+    for (let gx = OC.x0 + WALL + 5; gx < OC.x1 - WALL - 4; gx += 8.5) for (let gz = OC.z0 + WALL + 5; gz < OC.z1 - WALL - 4; gz += 8.5) {
+      const w = 5.6 + rng() * 2.4, d = 5.6 + rng() * 2.4, x = gx + (rng() - .5) * 1.2, z = gz + (rng() - .5) * 1.2;
+      if (x - w / 2 < OC.x0 + WALL + .6 || x + w / 2 > OC.x1 - WALL - .6 || z - d / 2 < OC.z0 + WALL + .6 || z + d / 2 > OC.z1 - WALL - .6) continue;
+      house(B.city, x, z, w, d, 4 + rng() * 4, COLS[rng() * COLS.length | 0], rng() < .2) }
+    /* new city: Jaffa Road frontages, Mamilla shops, the blocks between */
+    for (let x = JR.x0 + 6; x < JR.x1 - 4; x += 12.5) { house(B.city, x, JR.z - 13, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]); house(B.city, x, JR.z + 13, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]) }
+    for (let x = MAM.x0 + 6; x < MAM.x1 - 2; x += 11) { house(B.city, x, MAM.z0 - 2.4, 10, 4.4, 5, COLS[rng() * 5 | 0]); house(B.city, x, MAM.z1 + 4.6, 10, 8, 6 + rng() * 3, COLS[rng() * 5 | 0]) }
+    house(B.city, (CITYHALL.x0 + CITYHALL.x1) / 2, CITYHALL.z1 + 8, 26, 12, 18, 0xcbbf9e);
+    for (let gx = XMIN + 26; gx < OC.x0 - 16; gx += 14) for (let gz = ZMIN + 24; gz < ZMAX - 24; gz += 14) { if (Math.abs(gz - JR.z) < 22) continue; house(B.city, gx + (rng() - .5) * 2, gz + (rng() - .5) * 2, 8 + rng() * 3, 8 + rng() * 3, 7 + rng() * 9, COLS[rng() * 5 | 0], rng() < .08) }
+    /* East Jerusalem neighbourhood north of the walls */
+    for (let gx = -60; gx < 70; gx += 11) for (let gz = ZMIN + 18; gz < OC.z0 - 20; gz += 11) house(B.city, gx + (rng() - .5) * 2, gz + (rng() - .5) * 2, 7 + rng() * 2, 7 + rng() * 2, 5 + rng() * 4, COLS[rng() * 5 | 0], rng() < .15);
+
+    /* ---------- vegetation: cypress + olive groves (never on roads, lanes, plazas or landmarks) ---------- */
+    const freeV = (x, z, pad) => x > XMIN + 6 && x < XMAX - 6 && z > ZMIN + 6 && z < ZMAX - 6 && roadDist(x, z) > pad && navDist(x, z) > pad + 1 && !occ.some(o => inRect(o, x, z, pad)) && !CLEAR.some(o => inRect(o, x, z, pad)) && !KEEP.some(k => Math.hypot(x - k[0], z - k[1]) < k[2]) && !inKidron(x, z) && !inRect(OC, x, z, 2);
+    const pickV = (n, area, ok, s0, s1) => { const out = []; for (let i = 0, t = 0; i < n && t < n * 40; t++) { const x = area.x0 + rng() * (area.x1 - area.x0), z = area.z0 + rng() * (area.z1 - area.z0); if (!ok(x, z)) continue; out.push({ x, y: H(x, z), z, s: s0 + rng() * (s1 - s0), ry: rng() * TAU }); i++ } return out };
+    const WORLD = { x0: XMIN, x1: XMAX, z0: ZMIN, z1: ZMAX };
+    const cyp = pickV(K.n(26), WORLD, (x, z) => freeV(x, z, 2.4), 1, 1.5);
+    /* cypress on the esplanade too (a few, clear of the buildings) */
+    for (const [x, z] of [[20, -84], [30, -84], [52, -84], [60, -60], [56, -76], [18, -64]]) cyp.push({ x, y: TMY, z, s: 1.2, ry: 0 });
+    cyp.forEach(p => ctx.circles.push([p.x, p.z, .45]));
+    K.scatter(ctx, K.merge([[BG.cyl, 0x5a4a32, M(0, .6, 0, .16, 1.2, .16)], [BG.cone, 0x2a4a2a, M(0, 4.2, 0, .95, 7.2, .95)], [BG.sph, 0x2f5230, M(0, 2.4, 0, .85, 1.6, .85)]]), K.floraMat(.004), cyp, { far: K.far(false), cell: 70 });
+    const olive = pickV(K.n(34), { x0: OLIV.x - 55, x1: OLIV.x + 55, z0: OLIV.z - 60, z1: OLIV.z + 60 }, (x, z) => Math.hypot(x - OLIV.x, z - OLIV.z) < 58 && freeV(x, z, 3), 1.1, 1.8)
+      .concat(pickV(K.n(12), WORLD, (x, z) => freeV(x, z, 3), 1, 1.6));
+    olive.forEach(p => ctx.circles.push([p.x, p.z, .5]));
+    K.scatter(ctx, K.merge([[BG.cyl, 0x6a5a42, M(0, .9, 0, .2, 1.8, .2, .12, 0, .1)], [BG.ico, 0x7a8a5a, M(.25, 2.05, .1, 1.1, .75, 1.0)], [BG.ico0, 0x8a9a66, M(-.55, 1.6, -.3, .75, .55, .7)]]), K.floraMat(.004), olive, { far: K.far(false), cell: 70 });
+    K.field(ctx, K.species.bush(0x5a6a3a, 0xc8b860), K.floraMat(.02), K.n(36), WORLD, { H, s0: .7, s1: 1.2, shadow: false, cell: 64, ok: (x, z) => freeV(x, z, 1.4) });
+    K.field(ctx, K.species.flower(0xe86a8a, 0xc8a030), K.floraMat(.1), K.n(30), WORLD, { H, s0: .7, s1: 1.2, shadow: false, cell: 48, far: K.far(true), ok: (x, z) => freeV(x, z, 1.2) });
+
+    /* ======================= people ======================= */
+    const crew = {};
+    const spawn = (id, role, seed, anim) => { const [x, z, yaw] = NPC[id], n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
+    spawn('dalia', 'guide', 11); spawn('yossi', 'business', 22, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -1.9 + Math.sin(t * 3) * .06 });
+    spawn('karim', 'vendor', 33, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
+    spawn('miriam', 'businesswoman', 44); spawn('elias', 'elder', 55);
+    /* soft-body residents at the hotspots (priority order: Low gets the first few) */
+    const HOT = [['business', -150, 6.4, 'idle', 0], ['soldier', -168, -8.4, 'idle', Math.PI], ['orthodox', 24, -40, 'idle', Math.PI], ['vendor', -8, -40, 'idle', -Math.PI / 2], ['student', -165, 5.6, 'wander', 0], ['pilgrim', -42, -35, 'wander', 0], ['hijabi', -14, -82, 'wander', 0],
+      ['businesswoman', -128, 22, 'wander', 0], ['soldier', -171, -8.4, 'idle', Math.PI], ['monk', -40, -20, 'wander', 0], ['embroidered', -8, -84, 'idle', Math.PI], ['nun', -46, 50, 'wander', 0], ['elder', -60, 8, 'idle', Math.PI / 2], ['pilgrim', 34, -30, 'wander', 0]];
+    AV.beings.spawn(ctx, HOT.slice(0, AV.beings.n(ctx, 4, 8, 14)).map(([role, x, z, mode, yaw], i) => C.regional.being(role, x, z, 500 + i * 17, { mode, yaw, y0: SURF(x, z), area: { x, z, r: 6 } })));
+    /* instanced street crowd: walk the pedestrian graph, follow the terrain */
+    const nodes = [], edges = [];
+    for (const pl of NAVL) { let prev = null; for (const [x, z] of pl) { let id = nodes.findIndex(n => Math.hypot(n[0] - x, n[1] - z) < .8); if (id < 0) { nodes.push([x, z]); id = nodes.length - 1 } if (prev != null && prev !== id) edges.push([prev, id]); prev = id } }
+    const NAV = CY.nav(nodes, edges), crowd = CY.crowd(ctx, { H });
+    const VLIST = ['man', 'woman', 'tourist', 'suit', 'orthodox', 'keff', 'hijab', 'robe', 'woman', 'tourist', 'monk', 'nun', 'suit', 'man'];
+    for (let i = 0; i < [18, 32, 48][q]; i++) { const v = VLIST[i % VLIST.length], n0 = nodes[rng() * nodes.length | 0]; crowd.add({ v, x: n0[0], z: n0[1], nav: NAV, idleProb: .22, cols: C.regional.walkCols(v, rng) || undefined }) }
+    /* off-duty soldiers waiting for the light rail at Jaffa Center, vendors sitting in the souk */
+    for (const [x, z, yaw] of [[-173, -8, Math.PI], [-167, -8.2, Math.PI]]) crowd.add({ v: 'soldier', x, z, yaw, mode: 'talk', cols: C.regional.walkCols('soldier', rng) });
+    for (const st of stalls.filter((_, i) => i % 5 === 2).slice(0, 6)) crowd.add({ v: rng() < .5 ? 'keff' : 'man', x: st.x, z: st.z, yaw: 0, mode: 'idle', cols: C.regional.walkCols('keff', rng) || undefined });
+    crowd.build();
+    /* traffic: cars + green city buses on Jaffa Road, the light rail on its grass track */
+    const CARC = [0xf2f2f0, 0xe8e6e0, 0xb8bcc0, 0x5a5e62, 0x15171a, 0x1f3e72, 0x9a1a1a];
+    CY.traffic(ctx, [{ pts: [[JR.x0 + 6, CAR_Z], [JR.x1 - 4, CAR_Z]], off: 1.6, w: 6.4 }], [{ type: 'car', cols: CARC, n: [2, 4, 6][q], speed: 7 }, { type: 'bus', col: 0x2a8a4a, n: [1, 1, 2][q], speed: 5.5 }], { H, density: () => { const h = hourNow(); return h < 5 ? .3 : 1 } });
+    CY.traffic(ctx, [{ pts: [[JR.x0 + 8, TRAM_Z], [JR.x1 - 8, TRAM_Z]], off: 0 }], [{ type: 'tram', col: 0xe8e8ec, n: 1, speed: 6 }], { H, density: () => 1 });
+    CY.birds(ctx, [{ x: (HS.x0 + HS.x1) / 2, z: HS.z0, r: 16, y: 26, n: 8 }, { x: DOME.x, z: DOME.z, r: 22, y: 34, n: 10 }, { x: OLIV.x, z: OLIV.z, r: 30, y: 36, n: 8 }]);
+
+    /* ---------- interactions ---------- */
+    const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
+    const give = item => { if (AV.bag) AV.bag.add(item, 1, true); else S.items[item] = (S.items[item] || 0) + 1; AV.quests && AV.quests.check() };
+    const buy = (cost, what, msg, item) => { if (!AV.txn(-cost, what)) return false; give(item); AV.toast(msg + tr(' → backpack (I)', ' → mochila (I)')); AV.audio && AV.audio.blip(660, .15, 'triangle', .12); return true };
+    for (const [x, z, en, es, cost, item, men, mes] of SHOPS) T(x, z, 2.2, () => tr(en, es), () => { if (buy(cost, en.split(':')[0], tr(men, mes), item) && x < -176 && x > -232 && !S.jlm.tour.includes('shuk') && false) S.jlm.tour.push('shuk') });
+    for (const [cx, cz] of carts) T(cx, cz, 2, () => tr('Ka’ak cart: sesame bread (6)', 'Carrito de ka’ak: pan de sésamo (6)'), () => buy(6, 'Ka’ak cart', tr('A long ring of sesame bread, warm in your hand.', 'Un aro largo de pan de sésamo, caliente en la mano.'), 'kaak'));
+    /* tour checkpoints (glowing rings) */
+    for (const [id, en, es, men, mes, x, z] of SPOTS) {
+      const y = SURF(x, z), ring = new THREE.Mesh(new THREE.TorusGeometry(.6, .07, 6, 24), new THREE.MeshBasicMaterial({ color: 0x7ff0c8 })); ring.material.userData.lin = 1; ring.position.set(x, y + .1, z); ring.rotation.x = Math.PI / 2; grp.add(ring);
+      ctx.upd.push((dt, t) => { ring.position.y = y + .12 + Math.sin(t * 2) * .05; ring.rotation.z = t; ring.visible = !S.jlm.tour.includes(id) });
+      T(x, z, 2.4, () => tr(en, es), () => { if (S.jlm.tour.includes(id)) return; S.jlm.tour.push(id); AV.toast(tr(men, mes) + '  (' + S.jlm.tour.length + '/5)'); AV.quests && AV.quests.check(); AV.audio && AV.audio.blip(880, .3, 'sine', .12) }, () => !S.jlm.tour.includes(id));
+    }
+    T(30, -44, 2.2, () => tr('Tuck a note into the Western Wall', 'Mete una nota en el Muro Occidental'), () => { AV.toast(tr('You fold your wish small and push it between the giant stones, next to hundreds of others.', 'Doblas tu deseo y lo metes entre las piedras gigantes, junto a cientos de otros.')); AV.vitals && AV.vitals.add(0, 4) });
+    /* Miriam hands over Yossi's briefcase */
+    T(-206, -19.2, 2.4, () => (S.quests || {}).jlm_briefcase === 'active' && !(S.items.briefcase > 0) ? tr('Miriam’s counter: take Yossi’s briefcase', 'Mostrador de Miriam: coger el maletín de Yossi') : tr('Miriam’s counter', 'Mostrador de Miriam'),
+      () => { if ((S.quests || {}).jlm_briefcase === 'active' && !(S.items.briefcase > 0)) { give('briefcase'); AV.toast(tr('Miriam: “There. And tell that boy to EAT something.”', 'Miriam: “Ten. Y dile a ese chico que COMA algo.”')) } else AV.toast(tr('Trays of rugelach, flour everywhere, and Miriam humming.', 'Bandejas de rugelach, harina por todas partes y Miriam tarareando.')) });
+    /* light rail rides */
+    for (const [en, es, x] of STOPS) T(x, JR.z - 5.6, 2.6, () => tr('Light rail · ', 'Tranvía · ') + tr(en, es) + tr(': ride (3 credits)', ': viajar (3 créditos)'), () => {
+      const p = AV.panel('cmp', '<b>' + tr('Jerusalem Light Rail', 'Tranvía de Jerusalén') + '</b><div class="note">' + tr('3 credits per ride. Mind the gap.', '3 créditos por viaje. Cuidado con el hueco.') + '</div><div class="grid">' + STOPS.filter(s => s[2] !== x).map(s => '<button data-x="' + s[2] + '">' + tr(s[0], s[1]) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
+      p.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { const tx = +b.dataset.x; if (!AV.txn(-3, 'Light rail')) return; AV.closePanel('cmp'); AV.fadeTo(1, 350); AV.audio && AV.audio.blip(660, .2, 'sine', .1);
+        setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, tx + 2, JR.z - 7.2); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; S.time += 6; AV.fadeTo(0, 500); AV.toast(tr('“Next stop: ', '“Próxima parada: ') + tr(STOPS.find(s => s[2] === tx)[0], STOPS.find(s => s[2] === tx)[1]) + '.”') }, 900) }) });
+    /* bus to the Dead Sea + the portal */
+    T(BUSSTOP.x, BUSSTOP.z + 1.6, 2.6, () => tr('Bus 486 to the Dead Sea (8 credits)', 'Autobús 486 al Mar Muerto (8 créditos)'), () => { if (!AV.txn(-8, 'Bus to the Dead Sea')) return; AV.audio && AV.audio.blip(392, .3, 'sine', .1); AV.travel('judean_desert', 'bus') });
+    T(PORTAL.x - 1.6, PORTAL.z, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'jerusalem');
       const p = AV.panel('cmp', '<b>' + tr('Apeverse Portal', 'Portal Apeverse') + '</b><div class="grid">' + ws.map(id => '<button data-w="' + id + '">' + ((AV.worldMeta(id) || {}).name || id) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
       p.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { AV.closePanel('cmp'); AV.audio && AV.audio.whoosh(); AV.travel(b.dataset.w, 'jerusalem') }) });
+    /* the named characters chat to passers-by */
+    { const BARKS = { dalia: [['Tours here! History included!', '¡Tours aquí! ¡Con historia!']], yossi: [['One minute! Big news coming!', '¡Un minuto! ¡Viene una noticia enorme!']], karim: [['Za’atar! Coffee! Welcome!', '¡Za’atar! ¡Café! ¡Bienvenidos!']], miriam: [['Rugelach, motek!', '¡Rugelach, motek!']], elias: [['Hand-painted. One of a kind.', 'Pintado a mano. Pieza única.']] };
+      let acc = 0; ctx.upd.push(dt => { acc += dt; if (acc < 18) return; acc = 0; if (AV.blocking()) return; const ids = Object.keys(BARKS), id = ids[Math.random() * ids.length | 0], n = crew[id]; if (!n) return; if (Math.hypot(AV.P.x - n.g.position.x, AV.P.z - n.g.position.z) < 14) { const l = BARKS[id][0]; AV.npc.bark(n, tr(l[0], l[1])) } }) }
+    ctx.upd.push(() => { if (AV.chat.open && crew[AV.chat.who] && !S.jlm.met[AV.chat.who]) { S.jlm.met[AV.chat.who] = 1; AV.quests && AV.quests.check() } });
 
-    /* --- crowd: instanced walkers on a street graph --- */
-    const nodes = [], edges = []; const addN = (x, z) => { nodes.push([x, z]); return nodes.length - 1 };
-    /* a polyline of waypoints -> nodes + edges; returns { first, last, ids } */
-    const chain = pts => { let prev = null; const ids = pts.map(([x, z]) => { const id = addN(x, z); if (prev != null) edges.push([prev, id]); prev = id; return id }); return { first: ids[0], last: ids[ids.length - 1], ids } };
-    { const S1 = chain([[JR.x0 + 6, JR.z + 3], [JR.x0 + 40, JR.z + 3], [JR.x0 + 80, JR.z + 3], [MAM.x0 + 4, JR.z + 3], [MAM.x0 + 30, JR.z + 3], [MAM.x1 + 2, JR.z + 3]]);   // Jaffa Rd, south pavement
-      const N1 = chain([[JR.x0 + 6, JR.z - 3], [JR.x0 + 40, JR.z - 3], [JR.x0 + 80, JR.z - 3], [MAM.x0 + 4, JR.z - 3], [MAM.x0 + 30, JR.z - 3], [MAM.x1 + 2, JR.z - 3]]);  // north pavement
-      edges.push([S1.last, N1.last]);                                                            // link the two pavements at the east end
-      const MM = chain([[MAM.x1 + 2, JR.z + 3], [MAM.x0 + 30, 14], [MAM.x0 + 10, 12], [JAFFA[0] + 6, 10]]);   // Mamilla avenue -> Jaffa Gate plaza
-      edges.push([S1.ids[5], MM.first], [S1.ids[4], MM.ids[1]]);
-      const JG = chain([[JAFFA[0] + 6, 10], [JAFFA[0] + 8, 2], [JAFFA[0] + 8, -12], [JAFFA[0] + 10, -30], [DAMASCUS[0] - 6, DAMASCUS[1] - 6]]);   // west lane up to Damascus Gate
-      edges.push([MM.last, JG.first], [S1.ids[5], MM.ids[1]]);
-      const SOU = chain([[DAMASCUS[0] - 4, DAMASCUS[1] - 4], [DAMASCUS[0], -40], [DAMASCUS[0] + 2, -30], [4, -32], [2, -40], [WW.x, -44], [WW.x + 3, -38]]);   // souk alley chain
-      edges.push([JG.last, SOU.first], [N1.ids[5], JG.first]);
-      const E1 = chain([[WW.x + 3, -38], [WW.x + 3, -30], [TM.x1 - 6, -44], [TM.x1 - 6, -58], [LIONS[0] - 6, LIONS[1] - 4]]);   // Western Wall -> Lions' Gate
-      edges.push([SOU.last, E1.first], [SOU.ids[4], E1.first]);
-      const S2 = chain([[LIONS[0] - 6, LIONS[1] - 4], [OC.x1 - 8, 6], [OC.x1 - 10, 30], [-10, OC.z1 - 6], [-40, OC.z1 - 6], [JAFFA[0] + 8, 20]]);   // east + south lanes back to Jaffa
-      edges.push([E1.last, S2.first], [S2.last, JG.ids[1]]);
-      const SH = chain([[JR.x0 + 60, JR.z - 3], [JR.x0 + 62, JR.z - 8], [SHUK.x0 + 6, SHUK.z0 + 2], [(SHUK.x0 + SHUK.x1) / 2, (SHUK.z0 + SHUK.z1) / 2], [SHUK.x1 - 4, (SHUK.z0 + SHUK.z1) / 2]]);   // off the north pavement into Mahane Yehuda
-      edges.push([N1.ids[2], SH.first], [SH.ids[3], SH.last]);
-    }
-    const NAV = CY.nav(nodes, edges);
-    const crowd = CY.crowd(ctx), nPed = [20, 36, 54][q];
-    const VLIST = ['man', 'woman', 'tourist', 'suit', 'orthodox', 'keff', 'hijab', 'soldier', 'robe', 'student', 'monk', 'nun'];
-    for (let i = 0; i < nPed; i++) { const v = VLIST[i % VLIST.length], n0 = nodes[rng() * nodes.length | 0];
-      const cols = (C.regional && C.regional.walkCols) ? C.regional.walkCols(v, rng) : null;
-      crowd.add({ v, x: n0[0], z: n0[1], nav: NAV, idleProb: .22, cols: cols || undefined }) }
-    /* soldiers by the gates + Mount (patrol pairs) */
-    const pat = []; for (const [x, z, x2, z2] of [[JAFFA[0] + 6, 12, JAFFA[0] + 10, -8], [DAMASCUS[0] - 5, DAMASCUS[1] - 5, DAMASCUS[0] + 4, DAMASCUS[1] - 5], [TM.x1 - 6, TM.z1 - 2, TM.x1 - 10, TM.z1 - 6]]) {
-      for (const [px, pz] of [[x, z], [x2, z2]]) pat.push(crowd.add({ v: 'soldier', x: px, z: pz, cols: { skin: 0xd8a47a, hair: 0x14100c, shirt: 0xb8a27a, pants: 0xa8946c }, yaw: Math.atan2(px - x2 || 1, pz - z2 || 1), mode: 'idle' })) }
-    crowd.build();
-    /* rigged characters at the hotspots (V0.9.7 pattern) */
-    const roles = ['business', 'businesswoman', 'orthodox', 'vendor', 'student', 'pilgrim', 'hijabi', 'soldier', 'monk', 'nun', 'elder', 'embroidered', 'bedouin'];
-    const spots = [[JAFFA[0] + 8, 8, 14], [MAM.x0 + 20, MAM.z0 + 3, 12], [(MAM.x0 + MAM.x1) / 2, MAM.z0 + 3, 10], [4, -30, 12], [-10, -36, 10], [8, -30, 10], [WW.x + 5, -36, 10], [TM.x0 - 2, TM.z1 + 4, 10], [HS.x - 12, HS.z + 14, 10], [HS.x + 16, HS.z + 8, 8], [CITYHALL.x - 10, CITYHALL.z + 4, 12], [(SHUK.x0 + SHUK.x1) / 2 + 6, (SHUK.z0 + SHUK.z1) / 2, 12], [-30, 30, 10]];
-    AV.beings.spawn(ctx, spots.slice(0, AV.beings.n(ctx, 2, 4, 6)).map(([x, z, r], i) => { const role = roles[i % roles.length], a = C.regional.actor(role, 500 + i * 17);
-      return { kind: 'human', x, z, area: { x, z, r }, seed: 500 + i, look: a.look, dress: a.dress, role,
-        lines: [tr('The light rail is free with a daily pass. Cheap and slow and perfect.', 'El tranvía es gratis con el pase de un día. Barato, lento y perfecto.'), tr('Best falafel is a matter of religion. And of the queue length.', 'El mejor falafel es cuestión de religión. Y del tamaño de la cola.'), tr('The stones here are golden at seven. Every photographer knows.', 'Las piedras se vuelven doradas a las siete. Todo fotógrafo lo sabe.'), tr('Watch the cats of the Old City. They own everything.', 'Cuidado con los gatos de la Ciudad Vieja. Ellos son los dueños.')][i % 4],
-        greet: [tr('Shalom! Nice day for stones.', '¡Shalom! Buen día para piedras.'), tr('Salaam! Welcome to the Old City.', '¡Salam! Bienvenido a la Ciudad Vieja.'), tr('Water, hat, and comfortable shoes — the holy trinity of Jerusalem.', 'Agua, sombrero y zapatos cómodos: la sagrada trinidad de Jerusalén.')][i % 3] } }));
-    /* traffic: cars + buses on Jaffa Rd / Mamilla loop */
-    const CARC = [0xf2f2f0, 0xe8e6e0, 0xb8bcc0, 0x5a5e62, 0x15171a, 0x1f3e72, 0x9a1a1a, 0x2a6a4a];
-    const traffic = CY.traffic(ctx, [{ pts: [[JR.x0 + 8, JR.z - 2], [MAM.x0, JR.z - 2], [MAM.x0, 30], [MAM.x0 - 30, 44], [MAM.x0 - 80, 44], [MAM.x0 - 120, 20], [JR.x0 + 20, JR.z], [JR.x0 + 8, JR.z]], off: -2, w: 10 }].concat(JR.x0 > MAM.x0 - 130 ? [{ pts: [[JR.x0 + 8, JR.z + 2], [JR.x0 + 90, JR.z + 2], [JR.x0 + 130, JR.z - 10], [JR.x0 + 90, JR.z - 2], [JR.x0 + 8, JR.z + 2]], off: -2, w: 10 }] : []),
-      [{ type: 'car', cols: CARC, n: [2, 4, 6][q], speed: 7 }, { type: 'bus', cols: [0x2a8a4a, 0x2a6a4a], n: [1, 2, 2][q], speed: 5.5 }, { type: 'scooter', cols: [0x15171a, 0xf0f0ec, 0xb01e1e], n: [1, 3, 4][q], speed: 8 }], { density: () => { const h = hourNow(); return h < 5 ? .3 : 1 } });
-    /* parked cars along Jaffa Rd */
-    { const list = []; for (let x = JR.x0 + 14; x < JR.x1 - 6; x += 9) { if (rng() < .5) continue; list.push({ type: rng() < .7 ? 'car' : 'pickup', x, z: JR.z - 6.6, yaw: 0, col: CARC[rng() * CARC.length | 0] }); ctx.cols.push([x - 1, x + 1, JR.z - 8.6, JR.z - 4.6]) } CY.parked(ctx, list) }
-    CY.birds(ctx, [{ x: HS.x, z: HS.z, r: 16, y: 24, n: 8 }, { x: (TM.x0 + TM.x1) / 2, z: (TM.z0 + TM.z1) / 2, r: 20, y: 30, n: 10 }, { x: OLIV.x, z: OLIV.z, r: 30, y: 34, n: 8 }]);
-
-    /* ---------- quests ---------- */
-    const Q = AV.quests;
-    const def = (id, giver, turnIn, title, hint, ready, reward) => Q.define(id, { giver, turnIn, title, hint, ready, reward });
-    def('jlm_tour', 'dalia', 'dalia', ['Dalia’s Grand Tour', 'El gran tour de Dalia'], ['Stand at 5 glowing checkpoints: the Western Wall, the Holy Sepulchre, the Dome of the Rock, the Tower of David courtyard and Mahane Yehuda.', 'Quédate en 5 puntos brillantes: el Muro Occidental, el Santo Sepulcro, la Cúpula de la Roca, el patio de la Torre de David y Mahane Yehuda.'],
-      S2 => S2.jlm.tour.length >= 5, () => { AV.txn(40, 'Mission: Grand Tour'); return tr('Dalia: “A fine student of stones!” +40 credits.', 'Dalia: “¡Buen alumno de piedras!” +40 créditos.') });
-    def('jlm_briefcase', 'yossi', 'yossi', ['The Lost Briefcase', 'El maletín perdido'], ['Yossi left his briefcase at Mahane Yehuda. Talk to Miriam at her bakery counter, take the briefcase, bring it to Yossi at Mamilla.', 'Yossi dejó su maletín en Mahane Yehuda. Habla con Miriam, coge el maletín en su mostrador y llévaselo a Yossi en Mamilla.'],
-      S2 => (S2.items.briefcase || 0) > 0 && S2.jlm.met && S2.jlm.met.yossi, S2 => { S2.items.briefcase--; AV.txn(60, 'Mission: the briefcase'); return tr('Yossi: “PITCH SAVED. You’re in the deck credits. Slide 3.” +60 credits.', 'Yossi: “¡PITCH SALVADO! Sales en los créditos. Diapositiva 3.” +60 créditos.') });
-    def('jlm_kaak', 'karim', 'karim', ['Ka’ak for Karim', 'Ka’ak para Karim'], ['Buy a sesame ka’ak from the carts outside Damascus Gate and bring it to Karim at his spice shop.', 'Compra un ka’ak de sésamo en los carritos junto a la Puerta de Damasco y llévaselo a Karim en su tienda de especias.'],
-      S2 => (S2.items.kaak || 0) > 0, S2 => { S2.items.kaak--; AV.txn(20, 'Mission: ka’ak for Karim'); return tr('Karim: “Warm! Perfect! Coffee is compulsory now.” +20 credits.', 'Karim: “¡Caliente! ¡Perfecto! Ahora el café es obligatorio.” +20 créditos.') });
-    /* meeting the named characters (tour mission turn-in requires Dalia talk) */
-    ctx.upd.push(() => { if (AV.chat.open && !S.jlm.met[AV.chat.who]) { S.jlm.met[AV.chat.who] = 1; AV.quests && AV.quests.check() } });
-    /* the named crew also greet passers-by */
-    { const BARKS = [['dalia', [tr('Tours here! History included!', '¡Tours aquí! ¡Con historia!')]], ['yossi', [tr('One minute! Big news coming!', '¡Un minuto! ¡Viene una noticia enorme!')]], ['karim', [tr('Za’atar! Coffee! Welcome!', '¡Za’atar! ¡Café! ¡Bienvenidos!')]], ['miriam', [tr('Rugelach, motek!', '¡Rugelach, motek!')]], ['elias', [tr('Hand-painted. One of a kind.', 'Pintado a mano. Pieza única.')]]];
-      ctx.upd.push((() => { let acc = 0; return (dt, t) => { acc += dt; if (acc < 18) return; acc = 0; if (AV.blocking()) return; const [id, arr] = BARKS[Math.random() * BARKS.length | 0], n = crew[id]; if (!n) return; const d = Math.hypot(AV.P.x - n.g.position.x, AV.P.z - n.g.position.z); if (d < 14) AV.npc.bark(n, arr[Math.random() * arr.length | 0]) } })()) }
-
-    /* ---------- time of day + music ---------- */
-    let lastHour = -1;
-    ctx.upd.push((dt, t) => { const h = Math.floor(hourNow()); if (h !== lastHour) { if (lastHour >= 0) { if (h === 18) AV.toast(tr('The stone turns gold. Jerusalem of gold.', 'La piedra se vuelve dorada. Jerusalén de oro.')) } lastHour = h }
-      if (AV.audio && AV.audio.track && AV.audio.track.active) AV.audio.track.pos = { x: (SHUK.x0 + SHUK.x1) / 2, y: 3, z: (SHUK.z0 + SHUK.z1) / 2 } });
-    /* night window glow + lamp bulbs follow the sky (B.night flush) */
-    const nightMeshes = B.night.flush(ctx, { noShadow: true }); delete B.night;
-
-    /* ---------- flush ---------- */
+    /* ---------- night lights + flush ---------- */
+    const nightMeshes = NIGHT.flush(ctx, { noShadow: true });
+    ctx.upd.push(() => { const on = (AV.nightK || 0) > .35; for (const m of nightMeshes) m.visible = on });
     for (const k in B) B[k].flush(ctx);
     return {
-      name: 'Jerusalem · City of Gold', fog: [90, 430], sky: SKY,
-      surface: (x, z) => { if (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) return null; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
-      arrivals: { default: { x: JAFFA[0] - 6, z: 8, yaw: -Math.PI / 2 }, pipe: { x: JAFFA[0] - 6, z: 12, yaw: -Math.PI / 2 }, jerusalem: { x: PORTAL[0] - 1, z: PORTAL[1], yaw: -Math.PI / 2 }, ape_gate: { x: JAFFA[0] - 6, z: 8, yaw: -Math.PI / 2 } }, defaultArrival: 'default',
-      places: [{ id: 'jaffa', name: ['Jaffa Gate', 'Puerta de Jaffa'], x: JAFFA[0] - 4, z: 8, yaw: -Math.PI / 2 }, { id: 'wall', name: ['Western Wall', 'Muro Occidental'], x: WW.x + 3, z: (WW.z0 + WW.z1) / 2, yaw: -Math.PI / 2 },
-        { id: 'dome', name: ['Dome of the Rock', 'Cúpula de la Roca'], x: TM.x0 - 3, z: TM.z1 + 3, yaw: -Math.PI / 2 }, { id: 'sepulchre', name: ['Holy Sepulchre', 'Santo Sepulcro'], x: HS.x - 12, z: HS.z + 10, yaw: Math.PI },
-        { id: 'shuk', name: ['Mahane Yehuda', 'Mahane Yehuda'], x: (SHUK.x0 + SHUK.x1) / 2, z: (SHUK.z0 + SHUK.z1) / 2, yaw: Math.PI }, { id: 'mamilla', name: ['Mamilla Avenue', 'Avenida Mamilla'], x: (MAM.x0 + MAM.x1) / 2, z: 4, yaw: Math.PI / 2 },
-        { id: 'olives', name: ['Mount of Olives', 'Monte de los Olivos'], x: OLIV.x - 30, z: OLIV.z + 20, yaw: 0 }],
-      chatLines: [tr('Every stone here has three stories and they all disagree.', 'Cada piedra tiene tres historias y todas se contradicen.'), tr('The light rail is slow but the dome makes up for it.', 'El tranvía es lento, pero la cúpula lo compensa.'), tr('Friday afternoon the whole city smells of baking.', 'El viernes por la tarde toda la ciudad huele a pan horneándose.'), tr('Best view: Tower of David walls at seven.', 'La mejor vista: las murallas de la Torre de David a las siete.')],
-      musicProfile: { bpm: 92, root: 43, scale: [0, 1, 4, 5, 7, 8, 10], style: 'maqam' },
-      music: { playlist: 'chiang_mai', pos: { x: (SHUK.x0 + SHUK.x1) / 2, y: 3, z: (SHUK.z0 + SHUK.z1) / 2 }, bed: .4 }
+      name: 'Jerusalem · City of Gold', fog: [90, 430], sky: SKY, noStoners: true,
+      noSmoke: (x, z) => inRect(OC, x, z, 4) || Math.hypot(x - OLIV.x, z - OLIV.z) < 50 || Math.hypot(x - ZIONM.x, z - ZIONM.z) < 20,
+      surface: (x, z) => (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) ? null : SURF(x, z),
+      arrivals: { default: { x: OC.x0 - 7, z: 8, yaw: -Math.PI / 2 }, pipe: { x: OC.x0 - 7, z: 12, yaw: -Math.PI / 2 }, ape_gate: { x: PORTAL.x - 3, z: PORTAL.z, yaw: -Math.PI / 2 }, jerusalem: { x: PORTAL.x - 3, z: PORTAL.z, yaw: -Math.PI / 2 }, bus: { x: BUSSTOP.x + 2, z: BUSSTOP.z + 3, yaw: 0 } }, defaultArrival: 'default',
+      places: [{ id: 'jaffa', name: ['Jaffa Gate', 'Puerta de Jaffa'], x: OC.x0 - 6, z: 8, yaw: -Math.PI / 2 }, { id: 'wall', name: ['Western Wall plaza', 'Plaza del Muro Occidental'], x: 22, z: -34, yaw: 0 },
+        { id: 'dome', name: ['Temple Mount · Dome of the Rock', 'Explanada · Cúpula de la Roca'], x: DOME.x, z: DOME.z + DOME.R + 9, yaw: 0 }, { id: 'sepulchre', name: ['Holy Sepulchre', 'Santo Sepulcro'], x: -42, z: -35, yaw: 0 },
+        { id: 'souk', name: ['Old City souk', 'Zoco de la Ciudad Vieja'], x: -14, z: -60, yaw: Math.PI }, { id: 'damascus', name: ['Damascus Gate', 'Puerta de Damasco'], x: -14, z: OC.z0 - 6, yaw: Math.PI },
+        { id: 'shuk', name: ['Mahane Yehuda', 'Mahane Yehuda'], x: -196, z: -21, yaw: Math.PI / 2 }, { id: 'mamilla', name: ['Mamilla Avenue', 'Avenida Mamilla'], x: -97, z: 17, yaw: -Math.PI / 2 },
+        { id: 'zion', name: ['Mount Zion', 'Monte Sion'], x: ZIONM.x, z: ZIONM.z - 14, yaw: 0 }, { id: 'olives', name: ['Mount of Olives', 'Monte de los Olivos'], x: 104, z: -22, yaw: -Math.PI / 2 }],
+      chatLines: [['Every stone here has three stories, and they all disagree.', 'Cada piedra tiene tres historias y todas se contradicen.'], ['Friday afternoon the whole city smells of baking bread.', 'El viernes por la tarde toda la ciudad huele a pan.'], ['Best light: the walls at seven in the evening.', 'La mejor luz: las murallas a las siete de la tarde.'], ['The light rail is slow, but the view makes up for it.', 'El tranvía es lento, pero la vista lo compensa.']],
+      musicProfile: { bpm: 92, root: 43, scale: [0, 1, 4, 5, 7, 8, 10], style: 'maqam' }
     };
   }
 });
 
+/* ---------- quests (defined at load time so saves with active tasks always list them) ---------- */
+{ const Q = AV.quests, tr = AV.tr;
+  Q.define('jlm_tour', { giver: 'dalia', turnIn: 'dalia', title: ['Dalia’s Grand Tour', 'El gran tour de Dalia'], hint: ['Find the 5 glowing rings: the Western Wall, the Holy Sepulchre, the Dome of the Rock, the Tower of David and Mahane Yehuda. Then talk to Dalia by Jaffa Gate.', 'Encuentra los 5 anillos brillantes: el Muro Occidental, el Santo Sepulcro, la Cúpula de la Roca, la Torre de David y Mahane Yehuda. Luego habla con Dalia junto a la Puerta de Jaffa.'],
+    ready: S => ((S.jlm && S.jlm.tour) || []).length >= 5, reward: () => { AV.txn(40, 'Mission: Grand Tour'); return tr('Dalia: “A fine student of stones!” +40 credits.', 'Dalia: “¡Buen alumno de piedras!” +40 créditos.') } });
+  Q.define('jlm_briefcase', { giver: 'yossi', turnIn: 'yossi', title: ['The Lost Briefcase', 'El maletín perdido'], hint: ['Yossi left his briefcase at Mahane Yehuda (light rail west along Jaffa Road). Take it from Miriam’s counter and bring it to Yossi on Mamilla.', 'Yossi dejó su maletín en Mahane Yehuda (tranvía al oeste por la calle Jaffa). Cógelo del mostrador de Miriam y llévaselo a Yossi en Mamilla.'],
+    ready: S => ((S.items || {}).briefcase || 0) > 0, reward: S => { S.items.briefcase = 0; delete S.items.briefcase; AV.txn(60, 'Mission: the briefcase'); return tr('Yossi: “PITCH SAVED. You’re in the credits — slide 3.” +60 credits.', 'Yossi: “¡PITCH SALVADO! Sales en los créditos, diapositiva 3.” +60 créditos.') } });
+  Q.define('jlm_kaak', { giver: 'karim', turnIn: 'karim', title: ['Ka’ak for Karim', 'Ka’ak para Karim'], hint: ['Buy a sesame ka’ak from the carts outside Damascus Gate and bring it to Karim in the souk.', 'Compra un ka’ak de sésamo en los carritos de fuera de la Puerta de Damasco y llévaselo a Karim en el zoco.'],
+    ready: S => ((S.items || {}).kaak || 0) > 0, reward: S => { S.items.kaak--; AV.txn(20, 'Mission: ka’ak for Karim'); if (AV.bag) AV.bag.add('cardamom_coffee', 1, true); return tr('Karim: “Warm! Perfect! Now coffee is compulsory.” +20 credits and a coffee.', 'Karim: “¡Caliente! ¡Perfecto! Ahora el café es obligatorio.” +20 créditos y un café.') } }) }
 /* ---------- world-side helpers used by dialogue (Dalia's checklist) ---------- */
 AV.jlm = AV.jlm || {};
 AV.jlm.SPOTS = [['western_wall', 'Western Wall', 'Muro Occidental'], ['sepulchre', 'Holy Sepulchre', 'Santo Sepulcro'], ['dome', 'Dome of the Rock', 'Cúpula de la Roca'], ['tower', 'Tower of David', 'Torre de David'], ['shuk', 'Mahane Yehuda', 'Mahane Yehuda']];
-AV.jlm.tourList = function () { const S = AV.S || {}, done = (S.jlm && S.jlm.tour) || []; return AV.jlm.SPOTS.map(([id, en, es]) => (done.indexOf(id) >= 0 ? '✔ ' : '○ ') + AV.tr(en, es)).join(' · ') };
-AV.jlm.done = function () { const S = AV.S || {}; return ((S.jlm && S.jlm.tour) || []).length };
+AV.jlm.tourList = function () { const done = (AV.S && AV.S.jlm && AV.S.jlm.tour) || []; return AV.jlm.SPOTS.map(([id, en, es]) => (done.indexOf(id) >= 0 ? '✔ ' : '○ ') + AV.tr(en, es)).join(' · ') };
 })(window.AV);

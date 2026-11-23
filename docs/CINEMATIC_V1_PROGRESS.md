@@ -137,3 +137,21 @@ Filled in at the end of each milestone. See `## Milestone log`.
 - **Vertical blade signs:** 15 of them, double-sided and jutting over the sidewalk, from an 8-design atlas (stacked alien glyphs + English word).
 - **Steam:** rising from the ramen pots and four street grates.
 - **Tests:** `suite_astro9_neon` 37/37, with walk-in checks for all four shops and interior screenshots.
+
+### Milestone 3c: Neon Boulevard storefront identities
+
+- **Comet Ramen:** timber slats on the fascia, red noren curtains with glyphs over the door, a lantern row under the canopy, and a giant 3D ramen bowl sign (glowing broth, chopsticks, noodles) on the canopy with steam rising from it.
+- **Tech Market:** a cyan holographic portal frame around the door with scan lines, and a floating holo-gadget on a mast.
+- **Synth & Strings:** a giant neon guitar outline climbing the facade, and speaker-grill panels flanking the door.
+- **Robot Repair:** a half-raised garage shutter with hazard stripes, and a 3D glowing gear.
+- **Every building:** floor ledges every 4.5 m, neon rooflines on each mass, and an uplight strip above the shopfront. The industrial and crystal facade bases are brighter so their detail reads at night.
+- **Street:** lane chevrons showing the direction of travel, amber tactile paving along both kerbs, and alien trees in kerbside pits (only in free kerb slots, clear of benches, lamps and crossings).
+- **Bug caught by the suite before commit:** the ramen bowl's steam emitter was used before its list existed, which crashed the Astro-9 load. It's fixed.
+- **Tests:** `suite_astro9_neon` 37/37.
+
+### Remaining work (Astro-9)
+
+- Other Astro-9 districts still use the older look: plaza, bazaar, Food Ring, Art Avenue, Biotech Garden, homes and hangar.
+- Clerks and customers are static species meshes, not rigged characters.
+- No daytime lighting; real-GPU FPS not yet measured on the owner's laptop.
+- Next in order after Astro-9: Pai, Vienna, clothing stores.

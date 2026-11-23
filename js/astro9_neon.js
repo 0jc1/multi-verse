@@ -36,7 +36,7 @@ const FAM = ['industrial', 'organic', 'crystal', 'dense', 'ceramic'];
 function facade(fam) { if (TX['f' + fam]) return TX['f' + fam];
   const r = rnd(fam.length * 911), S = 512, win = [];
   const map = cv(S, S, (c) => {
-    const base = { industrial: '#3a3d44', organic: '#d9cdb4', crystal: '#141a24', dense: '#5a5650', ceramic: '#e8e6e0' }[fam]; c.fillStyle = base; c.fillRect(0, 0, S, S);
+    const base = { industrial: '#4e525c', organic: '#d9cdb4', crystal: '#1e2836', dense: '#5a5650', ceramic: '#e8e6e0' }[fam]; c.fillStyle = base; c.fillRect(0, 0, S, S);
     for (let i = 0; i < 6000; i++) { c.fillStyle = 'rgba(' + (r() < .5 ? '0,0,0' : '255,255,255') + ',' + (r() * .05).toFixed(3) + ')'; c.fillRect(r() * S, r() * S, 1 + r() * 3, 1 + r() * 3) }
     if (fam === 'industrial') { c.strokeStyle = 'rgba(0,0,0,.55)'; c.lineWidth = 3; for (let y = 0; y <= S; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(S, y); c.stroke() } for (let x = 0; x <= S; x += 128) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, S); c.stroke() }
       c.fillStyle = 'rgba(200,200,210,.5)'; for (let y = 8; y < S; y += 64) for (let x = 8; x < S; x += 32) c.fillRect(x, y, 3, 3);
@@ -135,6 +135,9 @@ NB.build = function (ctx) {
   for (let x = X0 + 2; x < X1; x += 4) glow.push([BG.box, (x / 4 | 0) % 2 ? 0xffd84a : 0xffd84a, M(x, .03, 95, 1.6, .02, .14)]);   /* median studs */
   for (const xc of [125, 175, 235]) for (let k = 0; k < 8; k++) glow.push([BG.box, 0xffffff, M(xc, .028, 90.9 + k * 1.18, 3.2, .01, .55)]);   /* light-strip crossings */
   for (let x = X0 + 14; x < X1 - 8; x += 38) { trim.push([BG.cyl, 0x2a2a34, M(x, .3, 95, 1.3, .6, 1.3)]); plants.push([x, 95, 1]); ctx.circles.push([x, 95, 1.4]) }   /* median planter islands */
+  for (let x = X0 + 24; x < X1 - 10; x += 20) for (const [z, dir] of [[92.4, 1], [97.6, -1]]) for (const s2 of [-1, 1]) glow.push([BG.box, 0x4ad8ff, M(x + dir * .5, .035, z + s2 * .55, 1.3, .015, .16, 0, s2 * dir * .6, 0), 1]);   /* lane chevrons (direction of travel) */
+  for (const z of [89.55, 100.45]) for (let x = X0 + 1; x < X1 - 1; x += .6) trim.push([BG.box, 0xc8a83a, M(x, .03, z, .4, .02, .4)]);   /* tactile paving along the kerbs */
+  for (const x of [133, 221]) for (const z of [89.0, 101.0]) { trim.push([BG.box, 0x1a1820, M(x, .02, z, 1.4, .04, 1.0)]); trim.push([BG.cyl, 0x3a2a3a, M(x, 1.2, z, .14, 2.4, .14)]); plants.push([x, z, 1.6, 2.2]); ctx.circles.push([x, z, .45]) }   /* alien trees in kerbside pits */
   /* ---------- buildings ---------- */
   const lots = []; { const W = [14, 18, 12, 16, 20, 13, 15, 17, 12, 16, 14, 19];
     const NOBUILD = { n: [[ALLEY[0], ALLEY[1]]], s: [[130, 150], [172, 188]] };   /* alley, Club Subterra facade, Biotech path */
@@ -165,6 +168,29 @@ NB.build = function (ctx) {
     { const [ax, az] = W(Lw / 2, -.6); trim.push([BG.box, 0x24242c, M(ax, 4.0, az, Lw - .8, .14, 2.8, side === 'n' ? -.08 : .08, 0, 0)]); const [bx, bz] = W(Lw / 2, -1.95); glow.push([BG.box, NEO[(li + 2) % 6], M(bx, 3.92, bz, Lw - .9, .05, .08), 1]) }
     { const sw = Math.min(Lw - 1.6, 7), sh = sw / 2, [ax, az] = W(Lw / 2, -.12); trim.push([BG.box, 0x16161c, M(ax, PD + .3 + sh / 2, az, sw + .3, sh + .3, .16)]); const [bx, bz] = W(Lw / 2, -.22); signs.push([cellPlane(sw, sh, si, 4, 4), 0xffffff, M(bx, PD + .3 + sh / 2, bz, 1, 1, 1, 0, side === 'n' ? 0 : Math.PI, 0)]);
       for (const u of [Lw / 2 - sw / 2 + .3, Lw / 2 + sw / 2 - .3]) box(trim, 0x3a3a44, u - .06, u + .06, PD, PD + .4, -.3, .2, 0) }
+    /* ---- storefront identity for the named shops (each its own architecture, not just a sign) ---- */
+    { const Q = (arr, g, col, u, y, v, sx, sy, sz, rx, ry, rz, gl) => { const [px, pz] = W(u, v); arr.push([g, col, M(px, y, pz, sx, sy, sz, rx || 0, ry || 0, rz || 0), gl || 0]) }, mid = Lw / 2, cornerU = li % 2 ? 1.7 : Lw - 1.7, fy = side === 'n' ? 0 : Math.PI;
+      if (lot.enter === 'ramen') {
+        for (let u = 1; u < Lw - .8; u += .5) box(trim, 0x6a3a1e, u - .2, u + .2, 4.12, 4.95, -.06, .04, 0);   /* timber slats on the fascia */
+        for (let k = -2; k <= 2; k++) { const u = mid + k * .56; Q(trim, BG.box, k % 2 ? 0x7a1010 : 0x8a1a14, u, 3.25, .55, .5, 1.25, .03); Q(glow, BG.sph, 0xffffff, u, 3.35, .53, .07, .07, .02, 0, 0, 0, 1) }   /* noren curtains over the door */
+        for (let u = .9; u < Lw - .6; u += .95) { Q(trim, BG.cyl, 0x1a1a1a, u, 3.75, -1.9, .015, .3, .015); Q(glow, BG.sph, 0xff4a2a, u, 3.45, -1.9, .2, .27, .2, 0, 0, 0, 1) }   /* lantern row under the canopy */
+        Q(trim, BG.hem || BG.sph, 0xf4ece0, mid, 4.7, -1.0, 1.15, .75, 1.15, Math.PI, 0, 0); Q(trim, BG.cyl, 0xc83a2a, mid, 4.7, -1.0, 1.17, .06, 1.17); Q(glow, BG.cyl, 0xffb84a, mid, 4.68, -1.0, 1.05, .02, 1.05, 0, 0, 0, 1);   /* 3D ramen bowl sign */
+        for (const s2 of [-1, 1]) Q(trim, BG.box, 0x3a2410, mid + s2 * .25, 5.4, -1.0, .06, 1.7, .06, 0, 0, s2 * .3);
+        for (let k = 0; k < 6; k++) Q(glow, BG.box, 0xffe8b0, mid - .55 + k * .22, 4.95, -1.0 + (k % 2) * .2, .05, .5, .05, 0, 0, (k - 2.5) * .12, 1);
+        (lot.steam = lot.steam || []).push(W(mid, -1.0).concat(5.1)) }
+      if (lot.enter === 'tech') {   /* holographic portal frame around the door + a floating gadget */
+        const d2 = 1.6; for (const u of [mid - d2, mid + d2]) box(glow, 0x4ad8ff, u - .09, u + .09, 0, 4.0, -.15, .05, 0, 1); box(glow, 0x4ad8ff, mid - d2, mid + d2, 3.92, 4.08, -.15, .05, 0, 1);
+        for (let k = 0; k < 4; k++) box(glow, 0x9ae8ff, mid - d2 + .3, mid + d2 - .3, .6 + k * .85, .63 + k * .85, -.12, -.08, 0, 1);
+        Q(glow, BG.oct || BG.sph, 0x4ad8ff, cornerU, 6.6, -.6, .5, .8, .5, 0, .6, 0, 1); Q(trim, BG.cyl, 0x2a2a34, cornerU, 5.6, -.6, .05, 1.6, .05) }
+      if (lot.enter === 'synth') {   /* giant neon guitar outline up the facade + speaker-grill panels beside the door */
+        const gu = cornerU, gy = 7.6; for (const [r0, dy] of [[.95, 0], [.72, 1.35]]) Q(glow, new THREE.TorusGeometry(1, .06, 6, 28), 0xffd84a, gu, gy + dy, -.25, r0, r0 * 1.15, 1, 0, fy, 0, 1);
+        Q(glow, BG.box, 0xffd84a, gu, gy + 3.0, -.25, .14, 2.6, .05, 0, 0, 0, 1); Q(glow, BG.box, 0xff4ad2, gu, gy + 4.4, -.25, .34, .5, .05, 0, 0, 0, 1); Q(glow, BG.cyl, 0xff4ad2, gu, gy + .1, -.25, .28, .05, .28, Math.PI / 2, 0, 0, 1);
+        for (const s2 of [-1, 1]) { const u = mid + s2 * 2.6; box(trim, 0x141418, u - .5, u + .5, .4, 3.4, -.1, .1, 0); for (let k = 0; k < 6; k++) box(trim, 0x2a2a30, u - .42, u + .42, .55 + k * .48, .65 + k * .48, -.14, -.1, 0) } }
+      if (lot.enter === 'robot') {   /* half-raised garage shutter with hazard stripes + a 3D gear */
+        box(trim, 0x8a8a90, .7, Lw - .7, 3.05, 3.95, .6, .75, 0); for (let u = .8; u < Lw - .7; u += .7) box(trim, (u / .7 | 0) % 2 ? 0x1a1a1a : 0xe8c81a, u, u + .35, 2.9, 3.05, .55, .7, 0);
+        const gu = cornerU; Q(glow, new THREE.TorusGeometry(1, .22, 6, 24), 0xe8c81a, gu, 7.2, -.3, .9, .9, 1, 0, fy, 0, 1); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; Q(glow, BG.box, 0xe8c81a, gu + Math.cos(a) * 1.15, 7.2 + Math.sin(a) * 1.15, -.3, .3, .3, .15, 0, 0, a, 1) } } }
+    /* ---- every building: an uplight strip above the shopfront ---- */
+    box(glow, NEO[(li + 4) % 6], .5, Lw - .5, PD + .02, PD + .08, -.08, .02, 0, 1);
     /* tower masses: family-specific silhouettes, world-scaled facade texture, corner neon */
     const tD = D - 1, setb = 2.2;
     if (fam === 1) {   /* organic: round bio-concrete tower + mosaic cap + an arch */
@@ -172,6 +198,8 @@ NB.build = function (ctx) {
       if (H2) { F.push([ucyl(rad * .6, H2 - H1, 8), 0xffffff, M(ax, (H1 + H2) / 2, az, 1, 1, 1)]); trim.push([BG.hem || BG.sph, 0xe8a8c8, M(ax, H2, az, rad * .62, rad * .5, rad * .62)]) } }
     else {
       box(F, 0xffffff, .3, Lw - .3, PD, H1, .2, tD, 8); if (H2) box(F, 0xffffff, .3 + setb * .5, Lw - .3 - setb * .5, H1, H2, setb, tD - 1, 8);
+      for (let y = PD + 4.5; y < H1 - 1; y += 4.5) box(trim, 0x2a2a34, .15, Lw - .15, y, y + .2, -.32, .3, 0);   /* floor ledges give the facade rhythm */
+      box(glow, NEO[(li + 1) % 6], .25, Lw - .25, H1 - .06, H1 + .06, -.05, .25, 0, 1); if (H2) box(glow, NEO[(li + 3) % 6], .3 + setb * .5, Lw - .3 - setb * .5, H2 - .06, H2 + .06, setb - .05, setb + .2, 0, 1);   /* neon rooflines */
       for (const u of [.25, Lw - .25]) box(glow, NEO[(li + (u > 1 ? 1 : 0)) % 6], u - .06, u + .06, PD, H1, .1, .3, 0, 1);
       if (fam === 0) { for (let k = 0; k < 3; k++) box(trim, 0x5a5e66, 1 + k * .7, 1.4 + k * .7, PD, H1, -.25, .15, 0); for (let y = PD + 3; y < H1 - 1; y += 6) box(trim, 0x4a4e56, Lw * .6, Lw * .6 + 1.4, y, y + .8, -.35, .2, 0) }   /* pipes + vent boxes */
       if (fam === 2) for (let u = 1.5; u < Lw - 1; u += 2.2) box(trim, 0x8ae8ff, u - .05, u + .05, PD, H1, -.5, .2, 0);   /* crystal fins */
@@ -191,7 +219,7 @@ NB.build = function (ctx) {
       const cv2 = 4.6; box(trim, 0x1a1824, 2.2, Lw - 2.2, 0, 1.05, cv2, cv2 + .8, 0); box(glow, NEO[li % 6], 2.2, Lw - 2.2, 1.04, 1.1, cv2, cv2 + .06, 0, 1);   /* counter */
       { const [ax, az] = W(Lw / 2, cv2 + .4); ctx.cols.push([ax - (Lw - 4.4) / 2, ax + (Lw - 4.4) / 2, az - .45, az + .45]) }
       const kind = lot.enter, P3 = (arr, g, col, u, y, v, sx, sy, sz, rx, ry, rz, gl) => { const [px, pz] = W(u, v); arr.push([g, col, M(px, y, pz, sx, sy, sz, rx || 0, ry || 0, rz || 0), gl || 0]) }, mid = Lw / 2;
-      lot.customers = []; lot.steam = []; lot.sparks = [];
+      lot.customers = lot.customers || []; lot.steam = lot.steam || []; lot.sparks = lot.sparks || [];
       if (kind !== 'synth' && kind !== 'robot') for (let k = 0; k < 3; k++) { box(trim, 0x34303e, 1, Lw - 1, .8 + k * 1, .86 + k * 1, D - 2.2, D - 1.1, 0); for (let j = 0; j < Math.floor(Lw - 2); j++) box(glow, NEO[(j + k + li) % 6], 1.3 + j, 1.7 + j, .9 + k, 1.25 + k, D - 1.9, D - 1.5, 0, 1) }   /* glowing shelves */
       if (kind === 'ramen') {   /* noodle bar: stools along the counter, bowls, pots, paper lanterns, menu board, two seated diners */
         for (let u = 2.8; u < Lw - 2.6; u += 1.25) { if (Math.abs(u - mid) < 1.1) continue; P3(trim, BG.cyl, 0x8a2a1a, u, .72, cv2 - .55, .26, .08, .26); P3(trim, BG.cyl, 0x2a2a2a, u, .36, cv2 - .55, .05, .72, .05); const [sx, sz] = W(u, cv2 - .55); ctx.circles.push([sx, sz, .3]); if (lot.customers.length < 2 && (u < mid - 2 || u > mid + 2)) lot.customers.push([sx, sz, side === 'n' ? Math.PI : 0, .72]) }

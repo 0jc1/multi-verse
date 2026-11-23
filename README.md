@@ -60,6 +60,17 @@ Press **P** (or the Pipe button). A holographic list of all 25 registry worlds a
 ## NPC conversations (offline) + optional AI backend
 NPCs use an offline dialogue engine (`data/npcs.js`, `js/chat.js`) labelled "Offline dialogue — scripted, not a real AI". To use a model later, host your own endpoint (contract in `docs/NPC_AI.md`) and run `AV.setLLMUrl('https://your-endpoint')` in the browser console. **No API key ever goes in the client.** Only whitelisted, game-validated actions are accepted (`offer_job`, `start_quest`, `suggest_world`); model text can never change credits. (The `apeverse-llm-proxy.js` mentioned in V0.9 was not included in the supplied files.)
 
+## NPC state machines: The Wandering Market
+Every world (unless it sets `noWorkers: true`) gets a travelling market crew. Each worker runs on a state machine (`js/npc_fsm.js`), and their jobs depend on each other (`js/npc_jobs.js`):
+* **Mae** sells fruit and orders a crate when stock runs low.
+* **Dash** fetches the crate from the depot and delivers it. Punch him and he drops it, then goes back for it.
+* **Fern** waters whichever potted plant is wilting most and refills her can.
+* **Tam** sweeps up the wrappers people drop and empties the bin.
+* **Bix** patrols, warns you for sprinting, and chases you down if you punch anyone.
+* **Melo** busks for tips (press E on his hat) and spends them at Mae's.
+
+They also get tired, hungry and lonely (bench, fruit, a chat with a crewmate) and sleep around the campfire at night. The status line under each name tag shows what they're doing. Ask them "what are you doing?" or "how's it going?" and they answer from their live state and real counts. Run `AV.npc.debug()` in the console for a table of states and transitions. Engine API and how to add a job: `docs/NPC_STATE_MACHINES.md`. Test: `node tools/tests/run_cdp.mjs tools/tests/suite_workers.js`.
+
 ## Save data
 Stored in `localStorage` key `apeverse_v09` (schema v2). A V0.8 save (`apeverse_v08`) is imported automatically on first Continue and **never deleted or modified**. Settings → Inventory has *Export save*.
 

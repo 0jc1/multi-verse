@@ -67,7 +67,7 @@ function headSDF(x, y, z, S) {
   let d = sdE(x, y - .035, z + .03, .245 * S.cw, .29, .305);                                           // cranium
   d = smin(d, sdE(x, y - .07, z - .07, .2 * S.cw, .2, .2), .05);                                        // forehead
   d = smin(d, sdE(x, y + .15, z - .1, .195 * S.fw, .16, .21), .06);                                     // mid-face
-  d = smin(d, sdE(ax - .158 * S.fw, y + .085, z - .16, .07, .042 * S.cheek, .075 * S.cheek), .04);     // cheekbones
+  d = smin(d, sdE(ax - .158 * S.fw, y + .085, z - .16, .07, .042 * S.cheek, .075 * S.cheek), .06);     // cheekbones
   d = smin(d, sdE(x, y + .31 * S.jl, z - .08, .158 * S.jaw, .13 * S.jl, .19), .07);                    // jaw
   d = smin(d, sdE(ax - .128 * S.jaw, y + .33 * S.jl, z, .048, .07, .085), .05 / S.gon);                 // jaw angles
   d = smin(d, sdE(x, y + .3, z - .2, .09 * S.mw, .08, .1), .05);                                        // round the mouth
@@ -80,7 +80,7 @@ function headSDF(x, y, z, S) {
   d = smin(d, sdCap(x, y, z, 0, -.05, .27, 0, -.195 * S.nl, .345 * S.np, .015 * S.nw, .026 * S.nw), .02);   // nose bridge
   d = smin(d, Math.hypot(x, y + .2 * S.nl, z - .345 * S.np) - .031 * S.nt, .025);                      // nose tip
   d = smin(d, sdE(ax - .033 * S.nw, y + .222 * S.nl, z - .315 * S.np, .024 * S.nw, .022, .026), .015);   // nostril wings
-  d = smin(d, sdE(x, y + .292, z - .285, .068 * S.mw, .03, .046 * S.lu), .025);                       // upper lip
+  d = smin(d, sdE(x, y + .292, z - .285, .066 * S.mw, .028, .038 * S.lu), .028);                       // upper lip
   d = smin(d, sdE(x, y + .336, z - .275, .06 * S.mw, .028, .043 * S.ll), .02);                        // lower lip
   return smax(d, -sdE(x, y + .313, z - .335, .062 * S.mw, .0045, .03), .008);                         // mouth line
 }
@@ -229,7 +229,7 @@ function basePass(P, F, CX, CY, CS, n) {
   const d = [0, 0, 0], L = F.L, chk = [nrm(L.cheek), nrm([-L.cheek[0], L.cheek[1], L.cheek[2]])], tip = nrm(L.tip), base = P.sk([255, 255, 255]), hb = P.hr([232, 232, 232]), bb = P.hr([150, 145, 140]), bden = F.beard ? F.beardBase : 0;
   for (let py = 0; py < n; py++) for (let px = 0; px < n; px++) {
     const u = (CX + (px + .5) / n * CS - P.X) / P.S, v = 1 - (CY + (py + .5) / n * CS - P.Y) / P.S; dirOfUV(u, v, d);
-    const n1 = wob3(d[0], d[1], d[2], 6.3, F.ph) * .6 + wob3(d[0], d[1], d[2], 14, F.ph * 1.7) * .4, mo = 1 + .03 * n1 + (hash2(px, py, F.seed) - .5) * .04;
+    const n1 = wob3(d[0], d[1], d[2], 6.3, F.ph) * .6 + wob3(d[0], d[1], d[2], 14, F.ph * 1.7) * .4, mo = 1 + .02 * n1 + (hash2(px, py, F.seed) - .5) * .03;
     const wc = F.blush * Math.exp(-Math.min(ang2(d, chk[0]), ang2(d, chk[1])) / .028), wn = .7 * Math.exp(-ang2(d, tip) / .006), ao = sstep(.45, .8, -d[1]) * (1 - sstep(.3, .65, d[2]));
     let r = base[0] * mo * (1 - .1 * ao), g = base[1] * mo * (1 - .12 * wc - .07 * wn - .12 * ao), b = base[2] * mo * (1 - .16 * wc - .09 * wn - .1 * ao), k = 1;
     if (bden) { const w = beardMask(F.beard, d[0], d[1], d[2]) * bden; if (w > 0) { r = lerp(r, bb[0], w); g = lerp(g, bb[1], w); b = lerp(b, bb[2], w); k = lerp(k, .5, w) } }
@@ -253,22 +253,20 @@ function paintFace(P, F) {
     frame(P, sx * L.cheek[0], L.cheek[1], L.cheek[2], sx); blob(g, .06, -.04, .05, .07, P.sk([210, 182, 175]), .08);
   }
   frame(P, 0, -.13 * S.nl, .33 * S.np, 1);
-  for (const sx of SIDES) blob(g, sx * .027 * S.nw, .012, .015, .05, P.sk([182, 146, 138]), .22);
+  for (const sx of SIDES) blob(g, sx * .027 * S.nw, .012, .015, .05, P.sk([190, 156, 148]), .12);
   for (const sx of SIDES) { frame(P, sx * L.ala[0], L.ala[1], L.ala[2], sx); lineOp(P, q => q.arc(-.004, .003, .015, -.2, Math.PI * .95), P.sk([158, 112, 104]), .32, .003, null) }
   frame(P, 0, -.232 * S.nl, .33 * S.np, 1);
-  for (const sx of SIDES) fillOp(P, q => q.ellipse(sx * .016 * S.nw, .001, .0095 * S.nw, .0046, -sx * .35, 0, TAU), P.sk([84, 46, 42]), .85, null);
-  blob(g, 0, -.008, .03, .009, P.sk([150, 110, 102]), .28);
-  frame(P, 0, -.262, .318, 1);
-  for (const sx of SIDES) lineOp(P, q => { q.moveTo(sx * .007, .012); q.lineTo(sx * .0095, -.01) }, P.sk([205, 165, 155]), .3, .003, null);
+  blob(g, 0, -.007, .034, .011, P.sk([150, 108, 100]), .36);
+  for (const sx of SIDES) fillOp(P, q => q.ellipse(sx * .015 * S.nw, .001, .0082 * S.nw, .0042, -sx * .4, 0, TAU), P.sk([78, 42, 38]), .75, null);
   /* forehead + frown lines with age */
-  if (age > .25) { frame(P, L.forehead[0], L.forehead[1], L.forehead[2], 1); const nL = 1 + Math.round(age * 3); for (let i = 0; i < nL; i++) { const y = -.03 + i * .024, w = .095 - i * .008; lineOp(P, q => { q.moveTo(-w, y + .004); q.quadraticCurveTo(0, y - .006, w, y + .004) }, P.sk([172, 136, 128]), .06 + .2 * (age - .2), .0028, null) } }
+  if (age > .25) { frame(P, L.forehead[0], L.forehead[1], L.forehead[2], 1); const nL = 1 + Math.round(age * 3); for (let i = 0; i < nL; i++) { const y = -.03 + i * .024, w = .095 - i * .008; lineOp(P, q => { q.moveTo(-w, y + .004); q.quadraticCurveTo(0, y - .006, w, y + .004) }, P.sk([172, 136, 128]), .04 + .12 * (age - .2), .0024, null) } }
   if (age > .55) { frame(P, 0, -.012, .296, 1); for (const sx of SIDES) lineOp(P, q => { q.moveTo(sx * .011, .022); q.lineTo(sx * .008, -.004) }, P.sk([165, 128, 120]), .3 * (age - .45), .0025, null) }
   /* nasolabial folds, marionette lines, mouth */
   frame(P, L.mouth[0], L.mouth[1], L.mouth[2], 1);
   const W = .064 * S.mw, Uh = .019 * S.lu, Lh = .025 * S.ll;
   for (const sx of SIDES) {
     const nl = q => { q.moveTo(sx * .05, .078); q.quadraticCurveTo(sx * .09, .045, sx * .084, -.008) };
-    lineOp(P, nl, P.sk([170, 128, 120]), .05 + .13 * age, .014, null); lineOp(P, nl, P.sk([158, 116, 108]), .07 + .22 * age, .005, null);
+    lineOp(P, nl, P.sk([170, 128, 120]), .03 + .08 * age, .014, null); lineOp(P, nl, P.sk([158, 116, 108]), .05 + .14 * age, .005, null);
     if (age > .5) lineOp(P, q => { q.moveTo(sx * (W + .004), -.006); q.quadraticCurveTo(sx * (W + .01), -.03, sx * (W + .008), -.055) }, P.sk([165, 125, 118]), .3 * (age - .4), .004, null);
   }
   const up = q => { q.moveTo(-W, 0); q.bezierCurveTo(-W * .7, Uh * .55, -W * .35, Uh * 1.05, -.012, Uh); q.quadraticCurveTo(0, Uh * .7, .012, Uh); q.bezierCurveTo(W * .35, Uh * 1.05, W * .7, Uh * .55, W, 0); q.quadraticCurveTo(0, -.003, -W, 0); q.closePath() };
@@ -276,7 +274,7 @@ function paintFace(P, F) {
   blob(g, 0, -Lh - .008, .034, .009, P.sk([168, 126, 116]), .26);
   if (F.lipstick) { fillOp(P, up, F.lipstick, .96, 'abs'); fillOp(P, lo, lin3(F.lipstick, [255, 255, 255], .08), .96, 'abs') }
   else { fillOp(P, up, P.sk(F.fem ? [212, 136, 140] : [198, 132, 124]), .9, null); fillOp(P, lo, P.sk(F.fem ? [226, 152, 154] : [212, 148, 138]), .82, null) }
-  lineOp(P, q => { q.moveTo(-W, 0); q.quadraticCurveTo(0, -.0035, W, 0) }, P.sk([88, 50, 46]), .85, .003, null);
+  lineOp(P, q => { q.moveTo(-W, 0); q.quadraticCurveTo(0, -.0035, W, 0) }, P.sk([88, 50, 46]), .7, .0022, null);
   for (const sx of SIDES) blob(g, sx * W, -.0005, .006, .004, P.sk([110, 66, 60]), .5);
   /* freckles, moles */
   if (F.freck) { frame(P, 0, -.12, .33, 1); const FR = []; for (let i = 0, n = 90 * F.freck; i < n; i++) { const x = (r() * 2 - 1) * .13; FR.push([x, (r() - .5) * .08 - Math.abs(x) * .15, .0018 + r() * .0022]) } fillOp(P, q => { for (const e of FR) { q.moveTo(e[0] + e[2], e[1]); q.arc(e[0], e[1], e[2], 0, TAU) } }, P.sk([170, 112, 86]), .38, null) }
@@ -345,7 +343,7 @@ function faceLook(seed, S, o) {
   const r = AV.rng(seed * 977 + 13), fem = S.fem, pk = a => a[Math.floor(r() * a.length) % a.length], bt = o.beard || null;
   return { seed: seed | 0, ph: r() * 6, S, L: landmarks(S), fem, hl: o.hl, redEye: !!o.redEye,
     age: o.age != null ? o.age : Math.pow(r(), 1.4) * .8, blush: fem ? .45 + r() * .45 : .2 + r() * .35,
-    iris: o.redEye ? [235, 45, 20] : o.iris || pk(IRIS), eyeOpen: .88 + r() * .24, eyeTilt: (r() - .35) * .008, crease: r() < .78, pupil: .85 + r() * .3,
+    iris: o.redEye ? [235, 45, 20] : o.iris || (o.dark ? pk([IRIS[0], IRIS[1], IRIS[2], IRIS[7]]) : pk(IRIS)), eyeOpen: .88 + r() * .24, eyeTilt: (r() - .35) * .008, crease: r() < .78, pupil: .85 + r() * .3,
     browThick: fem ? .62 + r() * .25 : .9 + r() * .35, browArch: fem ? .9 + r() * .7 : .2 + r() * .5,
     lipstick: o.lipstick !== undefined ? o.lipstick : fem && r() < .38 ? pk([[168, 34, 52], [196, 82, 100], [140, 40, 72], [184, 72, 66]]) : null,
     liner: o.liner != null ? o.liner : fem && r() < .45, shadow: o.shadow !== undefined ? o.shadow : fem && r() < .3 ? pk([[200, 170, 205], [190, 160, 140], [170, 150, 190]]) : null,
@@ -375,7 +373,7 @@ function detailTex() {
   for (let py = 0; py < n; py++) for (let px = 0; px < n; px++) {
     dirOfUV((px + .5) / n, 1 - (py + .5) / n, d); const [az, el] = azEl(d[0], d[1], d[2]), a = Math.abs(az);
     const we = sstep(1.15, .75, ((a - eye[0]) / 6.5) ** 2 + ((el - eye[1]) / 2.4) ** 2), wl = sstep(1.2, .8, (a / 12) ** 2 + ((el - mouth[1] + .8) / 4.2) ** 2);
-    const rough = lerp(lerp(.62 - .08 * Math.exp(-ang2(d, tz) / .02), .42, wl), .14, we), i = (py * n + px) * 4;
+    const rough = lerp(lerp(.74 - .06 * Math.exp(-ang2(d, tz) / .02), .5, wl), .16, we), i = (py * n + px) * 4;
     D[i] = 128 + (hash2(px, py, 77) - .5) * 40 * (1 - we); D[i + 1] = rough * 255; D[i + 2] = 0; D[i + 3] = 255;
   }
   g.putImageData(im, 0, 0); DETAIL = new THREE.CanvasTexture(cv); DETAIL.userData = { keep: true }; return DETAIL;
@@ -501,9 +499,9 @@ function makeHead(head, o, A) {
   const hairL = hl ? { mask: st === 'cap' ? (x, y, z) => hairMask(hl, x, y, z) * (1 - capMask(x, y, z)) : (x, y, z) => hairMask(hl, x, y, z), thick: HAIRT[st] || HAIRT.short } : null;
   const beardL = bd && bType !== 'stubble' ? { mask: (x, y, z) => beardMask(bd, x, y, z), thick: (x, y, z, m) => .003 + m * (bType === 'full' ? .018 : .011) } : null;
   let F = null, mat;
-  if (walker) mat = std(0xffffff, .62);
+  if (walker) mat = std(0xffffff, .72);
   else {
-    F = faceLook(seed, S, { hl, beard: bType, redEye: o.redEye, iris: o.eye != null ? rgbOf(o.eye) : null });
+    const sc = rgbOf(A.skinHex); F = faceLook(seed, S, { hl, beard: bType, redEye: o.redEye, iris: o.eye != null ? rgbOf(o.eye) : null, dark: sc[0] * .3 + sc[1] * .59 + sc[2] * .11 < 150 });
     const t = heroFace(F, lvl === 2 ? 512 : 256, A.skinHex, A.hairHex), D = detailTex();
     mat = new THREE.MeshStandardMaterial({ map: t.map, roughness: 1, roughnessMap: D });
     if (t.glow) { mat.emissive = new THREE.Color(0xffffff); mat.emissiveMap = t.glow; mat.emissiveIntensity = .55 }
@@ -700,7 +698,7 @@ C.walkerMat = function () {
         vec3 tint = ft.a > .5 ? mix(hairT, vSkinT, ft.a * 2.0 - 1.0) : mix(vec3(1.0), hairT, ft.a * 2.0);
         diffuseColor.rgb *= pow(ft.rgb, vec3(2.2)) * tint; }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-      if (vFace > .5) roughnessFactor = .62;`);
+      if (vFace > .5) roughnessFactor = .72;`);
   };
   m.customProgramCacheKey = () => 'walker3'; m.userData.lin = 1; return m;
 };

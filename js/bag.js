@@ -73,6 +73,7 @@ const VERB = { eat: ['Eat', 'Comer'], drink: ['Drink', 'Beber'], smoke: ['Smoke'
 BAG.use = function (id) {
   const S = st(), d = D(id); if (!BAG.count(id)) return AV.toast(tr('You don’t have that.', 'No tienes eso.')); if (anim) return;
   if (d.use === 'smoke' && AV.W && AV.W.id === 'chiang_mai' && AV.P.x > 8 && AV.P.x < 32 && AV.P.z > 52 && AV.P.z < 88) return AV.toast(tr('Mutt: “Terrace only! Not inside, not in the rooms.”', 'Mutt: “¡Solo en la terraza! Ni dentro ni en las habitaciones.”'));
+  if (d.use === 'smoke' && AV.W && AV.W.noSmoke && AV.W.noSmoke(AV.P.x, AV.P.z)) return AV.toast(tr('Not here — this is a holy place. Please respect it.', 'Aquí no: es un lugar sagrado. Respétalo, por favor.'));
   if (d.needs && !BAG.count(d.needs)) return AV.toast(tr('Empty. You need a ' + nm(d.needs) + '.', 'Vacía. Necesitas: ' + nm(d.needs) + '.'));
   if (S.bag.eq !== id) BAG.equip(id); closeIfOpen();
   const dur = d.use === 'play' ? 2.6 : d.use === 'look' ? 2.2 : d.use === 'wear' ? 1.2 : 2.4; anim = { id, d, t: 0, t0: AV.now(), dur, done: false, notes: 0 };

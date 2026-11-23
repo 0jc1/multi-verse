@@ -104,7 +104,8 @@ if (!tgt) { console.error('debug endpoint unreachable'); process.exit(1) }
 const cdp = new CDP(); await cdp.connect(tgt.webSocketDebuggerUrl);
 await cdp.send('Page.enable'); await cdp.send('Runtime.enable');
 await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/index.html` });
-await sleep(2500);
+/* wait for every script to load and the boot hook to exist (a fixed delay is not enough under software rendering) */
+for (let i = 0; i < 240; i++) { await sleep(500); try { const r = await cdp.send('Runtime.evaluate', { expression: "document.readyState === 'complete' && !!(window.AV && AV.boot && AV.worldDefs)", returnByValue: true }); if (r.result && r.result.value) break } catch (e) { } }
 const evalJs = async (expr, timeoutSec = 120) => {
   const r = await cdp.send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }, timeoutSec);
   if (r.exceptionDetails) throw new Error('JS exception: ' + r.exceptionDetails.text + ' ' + (r.exceptionDetails.exception && r.exceptionDetails.exception.description || ''));

@@ -121,8 +121,19 @@ Filled in at the end of each milestone. See `## Milestone log`.
 | Looking west, with the whole skyline | 2.3 M | 788 |
 
 **Known gaps:**
-- Interiors share one generic layout. Comet Ramen has no ramen-specific props yet (stools, steam, noodle bowls).
-- The Synth & Strings and Robot Repair rooms are built but have no walk-in test yet.
+- (Fixed in the follow-up polish: each shop now has its own interior.)
+- (Fixed: all four shops now have walk-in tests.)
 - Clerks are simple static species meshes, not the rigged characters.
 - No daytime look: Astro-9 is permanently night.
 - Real-GPU FPS has not been measured.
+
+### Milestone 3b: Astro-9 polish
+
+- **Shop-specific interiors:**
+  - Comet Ramen: stools along the counter, bowls with glowing broth, steaming pots, red paper lanterns, a menu board and two seated diners.
+  - Synth & Strings: a lit guitar wall, two keyboards on X-stands, a drum kit and a speaker stack.
+  - Robot Repair: a workbench with a robot arm, parts bins, a half-repaired robot on a lit lift and welding sparks.
+  - Tech Market: display tables with floating holo-gadgets and a browsing customer.
+- **Vertical blade signs:** 15 of them, double-sided and jutting over the sidewalk, from an 8-design atlas (stacked alien glyphs + English word).
+- **Steam:** rising from the ramen pots and four street grates.
+- **Tests:** `suite_astro9_neon` 37/37, with walk-in checks for all four shops and interior screenshots.

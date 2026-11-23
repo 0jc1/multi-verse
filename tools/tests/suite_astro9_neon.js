@@ -21,7 +21,10 @@ window.APE_T = (() => {
     const b = bad([lot.door, lot.inside]); c(k + ': walk in through the door', !b.length, b.join(' '));
     const t = tgt(re); c(k + ': counter interaction inside', !!t && Math.hypot(t.x - lot.inside[0], t.z - lot.inside[1]) < .5, t && t.x.toFixed(1) + ',' + t.z.toFixed(1));
     at(lot.door[0], lot.door[1], lot.side === 'n' ? 0 : Math.PI, .02); await sleep(4000) }, { shot: 'neon_shop_' + k });
-  shopStep('tech', /Tech Market/); shopStep('ramen', /ramen bar/);
+  shopStep('tech', /Tech Market/); shopStep('ramen', /ramen bar/); shopStep('synth', /Instrument Market/); shopStep('robot', /Robot repair/);
+  step('street life: blade signs, steam, sparks, customers', async c => { const f = AV.astro9neon.fx || {}; c('vertical blade signs', f.blades >= 10, JSON.stringify(f)); c('steam + sparks', f.steam >= 12 && f.sparks >= 2); c('customers in the shops', f.customers >= 3) });
+  const inStep = (k) => step('inside ' + k, async c => { const lot = AV.astro9neon.lots.find(l => l.enter === k); at(lot.inside[0], lot.inside[1], lot.side === 'n' ? 0 : Math.PI, .02); await sleep(5000); c('render', true, JSON.stringify(AV.R.info.render)) }, { shot: 'neon_inside_' + k });
+  inStep('ramen'); inStep('synth'); inStep('robot');
   step('buy noodles inside Comet Ramen', async c => { const t = tgt(/ramen bar/); at(t.x, t.z); t.fn(); await sleep(400); const btn = document.querySelector('[data-buy="a9_noodles"]'); btn && btn.click(); await sleep(400); AV.closeTop(); c('bought comet ramen', AV.bag.count('a9_noodles') >= 1) });
   step('street view west → east', async c => { at(100, 87, -Math.PI / 2, .03); await sleep(6000); c('render', true, JSON.stringify(AV.R.info.render)); c('no JS errors', !$('err').textContent, $('err').textContent) }, { shot: 'neon_street_east' });
   step('street view east → west', async c => { at(250, 103, Math.PI / 2, .03); await sleep(6000); c('render', true, JSON.stringify(AV.R.info.render)) }, { shot: 'neon_street_west' });

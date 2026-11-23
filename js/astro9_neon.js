@@ -97,6 +97,15 @@ function shopAtlas() { return TX.shops || (TX.shops = cv(2048, 1024, (c) => { co
     c.fillStyle = 'rgba(20,10,30,.9)'; c.beginPath(); c.ellipse(W * .5, H - 96, 14, 18, 0, 0, TAU); c.fill(); c.fillRect(W * .5 - 16, H - 82, 32, 14);   /* a clerk silhouette */
     const gl = c.createLinearGradient(0, 0, W, H); gl.addColorStop(0, 'rgba(255,255,255,.12)'); gl.addColorStop(.4, 'rgba(255,255,255,0)'); c.fillStyle = gl; c.fillRect(0, 0, W, H);
     c.restore() } }, false)) }
+/* vertical blade signs (8 cells of 256 x 1024): stacked alien glyphs + an English word running down the side */
+const BLADES = [['NOODLES', '#ff8a3a', '#1a0a04'], ['REPAIR', '#e8c81a', '#141414'], ['HOTEL', '#4ad8ff', '#04101c'], ['ARCADE', '#ff4ad2', '#12041a'], ['CLINIC', '#1ac8a8', '#04140f'], ['KARAOKE', '#c88aff', '#0e0618'], ['PAWN', '#ffd84a', '#1a1204'], ['TAXI', '#ffffff', '#0a2a6a']];
+function bladeAtlas() { return TX.blades || (TX.blades = cv(2048, 1024, (c) => {
+  BLADES.forEach(([word, fg, bg], i) => { const X = i * 256, W = 256, H = 1024; c.save(); c.translate(X, 0); c.beginPath(); c.rect(0, 0, W, H); c.clip();
+    c.fillStyle = bg; c.fillRect(0, 0, W, H); c.strokeStyle = fg; c.lineWidth = 8; c.shadowColor = fg; c.shadowBlur = 18; c.strokeRect(14, 14, W - 28, H - 28); c.shadowBlur = 0;
+    for (let k = 0; k < 6; k++) glyphs(c, word.charAt(k % word.length) + 'x', W * .38, 110 + k * 140, 64, fg, i * 13 + k);
+    c.save(); c.translate(W * .8, H / 2); c.rotate(Math.PI / 2); c.font = 'bold 44px "Segoe UI",Arial,sans-serif'; c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = fg; c.shadowBlur = 10; c.fillText(word.split('').join(' '), 0, 0, H - 80); c.restore();
+    for (let k = 0; k < 300; k++) { c.fillStyle = 'rgba(0,0,0,' + (Math.random() * .1).toFixed(3) + ')'; c.fillRect(Math.random() * W, Math.random() * H, 2, 2) }
+    c.restore() }) }, false)) }
 const paveTex = () => TX.pave || (TX.pave = cv(512, 512, (c) => { const r = rnd(4); c.fillStyle = '#2a2836'; c.fillRect(0, 0, 512, 512); const S = 64, h = S * Math.sqrt(3) / 2;
   for (let y = -1; y < 9; y++) for (let x = -1; x < 9; x++) { const cx = x * S * .75 * 1.333 + (y % 2) * S * .5, cy = y * h * 1.15; c.beginPath(); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; c.lineTo(cx + Math.cos(a) * S * .48, cy + Math.sin(a) * S * .48) } c.closePath(); c.fillStyle = 'rgb(' + (52 + r() * 14 | 0) + ',' + (50 + r() * 12 | 0) + ',' + (64 + r() * 14 | 0) + ')'; c.fill(); c.strokeStyle = '#16141c'; c.lineWidth = 3; c.stroke() }
   for (let i = 0; i < 4000; i++) { c.fillStyle = 'rgba(0,0,0,' + (r() * .12).toFixed(3) + ')'; c.fillRect(r() * 512, r() * 512, 2, 2) } }, true));
@@ -181,10 +190,41 @@ NB.build = function (ctx) {
       plane(street, x0 + .6, x1 - .6, r[2], r[3], .025, 3);
       const cv2 = 4.6; box(trim, 0x1a1824, 2.2, Lw - 2.2, 0, 1.05, cv2, cv2 + .8, 0); box(glow, NEO[li % 6], 2.2, Lw - 2.2, 1.04, 1.1, cv2, cv2 + .06, 0, 1);   /* counter */
       { const [ax, az] = W(Lw / 2, cv2 + .4); ctx.cols.push([ax - (Lw - 4.4) / 2, ax + (Lw - 4.4) / 2, az - .45, az + .45]) }
-      for (let k = 0; k < 3; k++) { box(trim, 0x34303e, 1, Lw - 1, .8 + k * 1, .86 + k * 1, D - 2.2, D - 1.1, 0); for (let j = 0; j < Math.floor(Lw - 2); j++) box(glow, NEO[(j + k + li) % 6], 1.3 + j, 1.7 + j, .9 + k, 1.25 + k, D - 1.9, D - 1.5, 0, 1) }   /* glowing shelves */
+      const kind = lot.enter, P3 = (arr, g, col, u, y, v, sx, sy, sz, rx, ry, rz, gl) => { const [px, pz] = W(u, v); arr.push([g, col, M(px, y, pz, sx, sy, sz, rx || 0, ry || 0, rz || 0), gl || 0]) }, mid = Lw / 2;
+      lot.customers = []; lot.steam = []; lot.sparks = [];
+      if (kind !== 'synth' && kind !== 'robot') for (let k = 0; k < 3; k++) { box(trim, 0x34303e, 1, Lw - 1, .8 + k * 1, .86 + k * 1, D - 2.2, D - 1.1, 0); for (let j = 0; j < Math.floor(Lw - 2); j++) box(glow, NEO[(j + k + li) % 6], 1.3 + j, 1.7 + j, .9 + k, 1.25 + k, D - 1.9, D - 1.5, 0, 1) }   /* glowing shelves */
+      if (kind === 'ramen') {   /* noodle bar: stools along the counter, bowls, pots, paper lanterns, menu board, two seated diners */
+        for (let u = 2.8; u < Lw - 2.6; u += 1.25) { if (Math.abs(u - mid) < 1.1) continue; P3(trim, BG.cyl, 0x8a2a1a, u, .72, cv2 - .55, .26, .08, .26); P3(trim, BG.cyl, 0x2a2a2a, u, .36, cv2 - .55, .05, .72, .05); const [sx, sz] = W(u, cv2 - .55); ctx.circles.push([sx, sz, .3]); if (lot.customers.length < 2 && (u < mid - 2 || u > mid + 2)) lot.customers.push([sx, sz, side === 'n' ? Math.PI : 0, .72]) }
+        for (let u = 3; u < Lw - 2.5; u += 1.6) { P3(trim, BG.hem || BG.sph, 0xe8e0d0, u, 1.12, cv2 + .35, .22, .14, .22, Math.PI, 0, 0); P3(glow, BG.cyl, 0xffb84a, u, 1.13, cv2 + .35, .19, .01, .19, 0, 0, 0, 1); P3(trim, BG.box, 0x3a2a1a, u + .12, 1.2, cv2 + .3, .02, .02, .34, .4, 0, 0) }
+        for (const u of [mid - 2, mid, mid + 2]) { P3(trim, BG.cyl, 0x8a8a94, u, 1.35, cv2 + 1.4, .4, .6, .4); lot.steam.push(W(u, cv2 + 1.4).concat(1.7)) }
+        for (let v = 2; v < D - 3; v += 2.4) for (const u of [Lw * .3, Lw * .7]) P3(glow, BG.sph, 0xff4a3a, u, 3.2, v, .32, .42, .32, 0, 0, 0, 1);
+        box(trim, 0x141018, mid - 2.4, mid + 2.4, 1.6, 3.4, D - 1.15, D - 1.05, 0); for (let k = 0; k < 5; k++) box(glow, [0xffd84a, 0xff8a3a, 0xffffff, 0xff8a3a, 0xffd84a][k], mid - 2, mid - .2 + (k % 2) * 1.6, 3.05 - k * .32, 3.12 - k * .32, D - 1.17, D - 1.15, 0, 1) }
+      if (kind === 'synth') {   /* instrument shop: guitar wall, keyboards on stands, a drum kit, speaker stack */
+        box(trim, 0x2a1a14, .8, Lw - .8, .2, 3.6, D - 1.2, D - 1.05, 0);
+        for (let i = 0, u = 1.6; u < Lw - 1.4; u += 1.1, i++) { const col = [0xc83a2a, 0x2a5aa8, 0xe8c84a, 0x1a1a1a, 0xe8e0d0, 0x3a8a4a][i % 6]; P3(trim, BG.sph, col, u, 1.75, D - 1.32, .34, .44, .08); P3(trim, BG.sph, col, u, 2.2, D - 1.32, .26, .32, .08); P3(trim, BG.box, 0x5a3a22, u, 2.85, D - 1.3, .07, .9, .05); P3(trim, BG.box, 0x2a1a10, u, 3.32, D - 1.3, .12, .2, .06); P3(glow, BG.box, 0xffd84a, u, 3.55, D - 1.28, .5, .03, .03, 0, 0, 0, 1) }
+        for (const u of [1.7, Lw - 1.7]) { P3(trim, BG.box, 0x16141c, u, .95, 2.4, .5, .1, 1.3); P3(glow, BG.box, 0xf4f2ee, u, 1.01, 2.4, .32, .02, 1.2, 0, 0, 0, 1); P3(trim, BG.box, 0x3a3a44, u, .45, 2.4, .05, .9, .9, .6, 0, 0); P3(trim, BG.box, 0x3a3a44, u, .45, 2.4, .05, .9, .9, -.6, 0, 0); const [kx, kz] = W(u, 2.4); ctx.circles.push([kx, kz, .55]) }
+        { const u = Lw - 2.4, v = cv2 + 2.6; for (const [du, dv, r0, h] of [[0, 0, .45, .5], [.7, .3, .3, .35], [-.7, .3, .3, .35], [.4, -.5, .25, .3]]) P3(trim, BG.cyl, du ? 0xc8c8d0 : 0x8a1a2a, u + du, .3 + h / 2, v + dv, r0, h, r0); P3(glow, BG.cyl, 0xffd84a, u + .6, 1.1, v - .4, .3, .02, .3, 0, 0, 0, 1) }
+        for (const u of [1.2, 2.1]) { P3(trim, BG.box, 0x141418, u, 1.2, cv2 + 2.2, .8, 2.4, .7); P3(trim, BG.cyl, 0x2a2a30, u, 1.6, cv2 + 1.84, .26, .04, .26, Math.PI / 2, 0, 0); P3(trim, BG.cyl, 0x2a2a30, u, .7, cv2 + 1.84, .18, .04, .18, Math.PI / 2, 0, 0) } }
+      if (kind === 'robot') {   /* workshop: bench + vice + robot arm, parts bins, a robot half-repaired on a lift, welding sparks */
+        box(trim, 0x3a3a44, .8, 2.0, 0, .95, 6.5, 11.5, 0); box(trim, 0x8a8a94, .8, 2.0, .95, 1.0, 6.5, 11.5, 0); { const [bx0, bz0] = W(.8, 6.5), [bx1, bz1] = W(2, 11.5); ctx.cols.push([Math.min(bx0, bx1), Math.max(bx0, bx1), Math.min(bz0, bz1), Math.max(bz0, bz1)]) }
+        P3(trim, BG.cyl, 0xe8c81a, 1.4, 1.4, 8, .12, .8, .12); P3(trim, BG.cyl, 0xe8c81a, 1.4, 1.95, 8.35, .1, .8, .1, .7, 0, 0); P3(trim, BG.box, 0x2a2a2a, 1.4, 2.2, 8.85, .14, .14, .3); lot.sparks.push(W(1.4, 9.05).concat(2.05));
+        for (let r2 = 0; r2 < 3; r2++) for (let j = 0; j < Math.floor(Lw - 2.2); j++) { box(trim, [0x2a5aa8, 0xc83a2a, 0xe8c81a, 0x3a8a4a][(j + r2) % 4], 1.2 + j, 1.9 + j, .5 + r2 * .9, 1.0 + r2 * .9, D - 1.9, D - 1.2, 0); box(trim, 0x8a8a94, 1.25 + j, 1.85 + j, 1.0 + r2 * .9, 1.05 + r2 * .9, D - 1.95, D - 1.15, 0) }
+        { const u = Lw - 2.4, v = 8.6; P3(trim, BG.cyl, 0x4a4a54, u, .15, v, 1.1, .3, 1.1); P3(glow, BG.cyl, 0x7aff8a, u, .31, v, 1.12, .02, 1.12, 0, 0, 0, 1); P3(trim, BG.box, 0xb8c0d0, u, 1.0, v, .7, .9, .5); P3(trim, BG.box, 0x8a90a0, u + .2, 1.75, v, .45, .42, .4, 0, 0, .4); P3(trim, BG.cyl, 0x5a5a6a, u - .45, 1.0, v, .08, .7, .08, 0, 0, 1.2); const [rx, rz] = W(u, v); ctx.circles.push([rx, rz, 1.15]); lot.sparks.push([rx - .3, rz, 1.3]) }
+        box(trim, 0xe8c81a, .8, Lw - .8, .01, .02, cv2 - .9, cv2 - .7, 0) }
+      if (kind === 'tech') {   /* display tables with floating holo-gadgets + a browsing customer */
+        for (const u of [2.6, Lw - 2.6]) { P3(trim, BG.box, 0x1a1824, u, .45, 2.6, 1.6, .9, 1.0); P3(glow, BG.box, 0x4ad8ff, u, .91, 2.6, 1.6, .02, 1.0, 0, 0, 0, 1); for (const du of [-.45, 0, .45]) P3(glow, BG.oct || BG.sph, NEO[(li + (du * 10 | 0) + 9) % 6], u + du, 1.25, 2.6, .12, .18, .12, 0, du, 0, 1); const [tx, tz] = W(u, 2.6); ctx.circles.push([tx, tz, .95]) }
+        const [cx2, cz2] = W(2.6, 3.7); lot.customers.push([cx2, cz2, side === 'n' ? 0 : Math.PI, 0]) }
       { const [ax, az] = W(Lw / 2, cv2 + 1.6); lot.clerk = [ax, az]; const [lx, lz] = W(Lw / 2, D / 2); interiorLights.push([lx, lz, NEO[li % 6]]); lot.inside = W(Lw / 2, cv2 - 1.2); lot.door = W(Lw / 2, -1) }
     }
   });
+  /* ---------- vertical blade signs jutting from the facades (double-sided, read down the street) ---------- */
+  const blades = []; const BLADE_OF = { ramen: 0, robot: 1, tech: 3 };
+  lots.forEach((lot, li) => { if (li % 3 === 1 && !lot.enter) return;
+    const { side, x0, x1 } = lot, Lw = x1 - x0, zf = side === 'n' ? Z0 : Z1, s = side === 'n' ? -1 : 1, low = x1 > 205 && x0 < 255 && side === 'n';
+    const u = li % 2 ? Lw - 1.1 : 1.1, x = x0 + u, h = low ? 3.6 : 5.6, w = h / 4, y0 = low ? 5.6 : 6.4, y1 = y0 + h, v0 = .35, v1 = v0 + w, zc = zf + s * -((v0 + v1) / 2), cell = lot.enter && BLADE_OF[lot.enter] != null ? BLADE_OF[lot.enter] : (li * 5 + 2) % 8, col = NEO[li % 6];
+    for (const ry of [Math.PI / 2, -Math.PI / 2]) blades.push([cellPlane(w, h, cell, 8, 1), 0xffffff, M(x + (ry > 0 ? .03 : -.03), (y0 + y1) / 2, zc, 1, 1, 1, 0, ry, 0)]);
+    for (const yb of [y0 + .1, y1 - .1]) trim.push([BG.box, 0x2a2a34, M(x, yb, zf + s * -((v1 + .2) / 2), .07, .07, v1 + .2)]);
+    glow.push([BG.box, col, M(x, (y0 + y1) / 2, zf + s * -(v1 + .04), .1, h, .05), 1]) });
   /* ---------- Black Market alley: wet lane, cables, a stall under a tarp, glyph signs ---------- */
   { const [a0, a1, b0, b1] = ALLEY, mx = (a0 + a1) / 2; trim.push([BG.box, 0x1a1420, M(mx, 1.2, b0 + 2, 3.4, 1.1, 1.4)]); glow.push([BG.box, 0xc88aff, M(mx, 1.78, b0 + 2, 3.4, .05, 1.4), 1]); trim.push([BG.box, 0x3a2a4a, M(mx, 3.1, b0 + 2.2, 4.6, .08, 3, .15, 0, 0)]); ctx.circles.push([mx, b0 + 2, 1.5]);
     for (let k = 0; k < 6; k++) glow.push([BG.sph, NEO[k], M(a0 + .5 + k * 1, 3.4 - (k % 2) * .3, b0 + 4 + k * 1.2, .14, .18, .14), 1]);
@@ -205,6 +245,7 @@ NB.build = function (ctx) {
   if (trim.length) grp.add(new THREE.Mesh(K.merge(trim), mat({ roughness: .45, metalness: .55 })));
   if (glow.length) { const gm = new THREE.MeshBasicMaterial({ vertexColors: true }); gm.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(glow), gm)) }
   if (signs.length) { const sm = new THREE.MeshBasicMaterial({ map: signAtlas(), toneMapped: false }); sm.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(signs), sm)) }
+  if (blades.length) { const bm = new THREE.MeshBasicMaterial({ map: bladeAtlas(), toneMapped: false }); bm.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(blades), bm)) }
   if (shops.length) { const sm = new THREE.MeshBasicMaterial({ map: shopAtlas() }); sm.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(shops), sm)) }
   { const pm = mat({ map: paveTex(), roughness: .55, metalness: .15 }); grp.add(new THREE.Mesh(K.merge(street), pm)); const rm = mat({ map: roadTex(), roughness: .22, metalness: .35 }); grp.add(new THREE.Mesh(K.merge(roadP), rm)) }
   /* alien plants (instanced glow bulbs + fronds) */
@@ -226,6 +267,13 @@ NB.build = function (ctx) {
   const robotG = K.merge([[BG.box, 0xb8c0d0, M(0, 1.0, 0, .7, .9, .5)], [BG.box, 0x8a90a0, M(0, 1.75, 0, .45, .42, .4)], [BG.box, 0x4ad8ff, M(0, 1.78, .21, .34, .1, .02), 1], [BG.cyl, 0x5a5a6a, M(-.45, 1.1, .1, .08, .7, .08, .4, 0, 0)], [BG.cyl, 0x5a5a6a, M(.45, 1.1, .1, .08, .7, .08, .4, 0, 0)], [BG.cyl, 0x3a3a48, M(0, .3, 0, .35, .6, .35)]]);
   const clerkM = mat({ roughness: .5, metalness: .3 }), clerks = [];
   for (const k in named) { const lot = named[k]; if (!lot.clerk) continue; const g = k === 'robot' || k === 'tech' ? robotG : alienG, m = new THREE.Mesh(g, clerkM); m.position.set(lot.clerk[0], 0, lot.clerk[1]); m.rotation.y = lot.side === 'n' ? 0 : Math.PI; grp.add(m); clerks.push(m) }
+  /* customers: seated diners at the ramen counter, a browser at the tech tables */
+  for (const lot of lots) for (const [x, z, yaw, seat] of (lot.customers || [])) { const m = new THREE.Mesh(alienG, clerkM); m.position.set(x, seat ? seat - .38 : 0, z); m.rotation.y = yaw; m.scale.setScalar(seat ? .85 : .95); m.userData.y0 = m.position.y; grp.add(m); clerks.push(m) }
+  /* steam (ramen pots + street grates) and welding sparks: a few additive sprites */
+  const puffTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c) })();
+  const emit = [].concat(...lots.map(l => l.steam || [])), grates = []; for (const [gx, gz] of [[140, 87.6], [190, 102.4], [214, 87.6], [246, 102.4]]) { grates.push([BG.box, 0x101014, M(gx, .025, gz, 1.2, .03, .7)]); for (let k = 0; k < 5; k++) grates.push([BG.box, 0x6a4a8a, M(gx - .45 + k * .22, .045, gz, .08, .01, .6), 1]); emit.push([gx, gz, .1]) } grp.add(new THREE.Mesh(K.merge(grates), mat({ roughness: .4, metalness: .6 })));
+  const puffs = []; emit.forEach(([x, z, y0], i) => { for (let k = 0; k < 3; k++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0xd8d0e8, transparent: true, depthWrite: false, opacity: .3 })); sp.position.set(x, y0, z); grp.add(sp); puffs.push({ sp, x, z, y0, ph: k / 3 + i * .17 }) } });
+  const sparks = []; for (const lot of lots) for (const [x, z, y] of (lot.sparks || [])) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, color: 0xffb84a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.position.set(x, y, z); sp.scale.setScalar(.25); grp.add(sp); sparks.push({ sp, x, z, y }) }
   /* ---------- move the existing shop interactions inside the rooms + the black market into its alley ---------- */
   const moveT = (re, x, z) => { const t = ctx.T.find(t => { try { return re.test(typeof t.label === 'function' ? t.label() : t.label) } catch (e) { return false } }); if (t) { t.x = x; t.z = z } return t };
   const inside = k => named[k] && named[k].inside;
@@ -236,9 +284,11 @@ NB.build = function (ctx) {
     if (AV.P.y < -10) return;   /* inside Club Subterra */
     for (let i = 0; i < NC; i++) { const c = CAR[i]; c.t = (c.t + c.sp * dt * .25 * (1 + (i % 2) * .2)) % 1; const x = c.dir > 0 ? X0 + c.t * (X1 - X0) : X1 - c.t * (X1 - X0), z = c.dir > 0 ? 92.6 : 97.4;
       e3.set(Math.sin(t + c.bob) * .02, c.dir > 0 ? Math.PI / 2 : -Math.PI / 2, 0); qq.setFromEuler(e3); m4.compose(v3.set(x, 3.4 + Math.sin(t * 1.3 + c.bob) * .12, z), qq, s3); cars.setMatrixAt(i, m4) } cars.instanceMatrix.needsUpdate = true;
-    clerks.forEach((m, i) => { m.rotation.z = Math.sin(t * 1.4 + i) * .03; m.position.y = Math.abs(Math.sin(t * 1.1 + i)) * .03 });
+    clerks.forEach((m, i) => { m.rotation.z = Math.sin(t * 1.4 + i) * .03; m.position.y = (m.userData.y0 || 0) + Math.abs(Math.sin(t * 1.1 + i)) * .03 });
+    for (const p of puffs) { const f = (t * .35 + p.ph) % 1; p.sp.position.set(p.x + Math.sin(t + p.ph * 9) * .15 * f, p.y0 + f * 2.4, p.z); p.sp.scale.setScalar(.5 + f * 1.6); p.sp.material.opacity = .32 * (1 - f) * Math.min(1, f * 6) }
+    for (const s of sparks) { const on = Math.random() < .35; s.sp.visible = on; if (on) { s.sp.position.set(s.x + (Math.random() - .5) * .2, s.y + (Math.random() - .5) * .2, s.z + (Math.random() - .5) * .2); s.sp.scale.setScalar(.12 + Math.random() * .3) } }
     if ((at += dt) > .2) { at = 0; ads.forEach(a => a.draw(t)) } });
-  NB.lots = lots; NB.named = Object.keys(named);
+  NB.lots = lots; NB.named = Object.keys(named); NB.fx = { blades: blades.length / 2, steam: puffs.length, sparks: sparks.length, customers: lots.reduce((n, l) => n + (l.customers || []).length, 0) };
   NB.districts = [{ id: 'neon', name: 'Neon Boulevard', x: 175, z: 95 }];
   return { places: Object.keys(named).map(k => ({ id: 'nb_' + k, name: { tech: L('Tech Market', 'Mercado Tech'), synth: L('Synth & Strings', 'Synth & Strings'), ramen: L('Comet Ramen', 'Ramen Cometa'), robot: L('Robot Repair', 'Taller de robots') }[k], x: named[k].door[0], z: named[k].door[1], yaw: 0 })).concat([{ id: 'nb_black', name: L('Black Market alley', 'Callejón del mercado negro'), x: (ALLEY[0] + ALLEY[1]) / 2, z: Z0 + 1, yaw: 0 }]) };
 };

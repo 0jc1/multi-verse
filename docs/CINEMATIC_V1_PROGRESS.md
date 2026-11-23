@@ -167,3 +167,27 @@ Filled in at the end of each milestone. See `## Milestone log`.
 - **After (same view):** 389 draw calls, 0.96 M triangles (−65%), 6 lights on.
 - **Real-GPU FPS:** not measured. The built-in browser pane was hidden, and a hidden pane throttles frames; F3 readings from the owner's laptop are still needed.
 - **Tests:** `suite_astro9_neon` 37/37, `astro9_mega` 25/25, `astro9_d2` 23/23.
+
+### Milestone 4b: Astro-9 district 1, the arrival district (`js/astro9_market.js`)
+
+- **Intergalactic Bazaar is now a souk.**
+  - Fabric canopies across the street every 5 m, sagging in the middle, in six cloth colours.
+  - Brass lamps hang down the centre.
+  - Rugs (4 woven patterns) lie in front of the south stalls.
+  - Spice sacks, crates and pots sit between the shop doors. No pole or prop is in a doorway.
+  - Carved horseshoe gateways stand at both ends, with a gold-on-teal INTERGALACTIC BAZAAR sign.
+  - **Textured façades:** each of the 4 shops has its own lime-plaster skin with a zellige tile base, a carved frieze, a tiled horseshoe arch around the door (door cut out), lit arched windows, lattice screens and a striped awning.
+- **Food Ring is now a night market.**
+  - Zig-zag string lights hang overhead.
+  - Umbrellas, grills with animated smoke, and 6 hand-lettered menu boards (STAR DUMPLINGS, GLOWFRUIT, NEBULA TEA, COMET SKEWERS, VOID NOODLES, MOON TACOS).
+  - 2 new stalls.
+  - 3 table clusters with stools and seated diners; you can sit at a table.
+- **Spiral Plaza:** a mosaic colonnade of 30 columns, with arches and open mouths at the 4 streets, plus curved mosaic benches.
+- **Performance:** about 10 extra draw calls. Static geometry is merged per material; there are no new lights.
+- **Tests:**
+  - New `suite_astro9_market` 25/25. It checks:
+    - the souk centre and the shop-front lane
+    - all 4 bazaar doors and the Astro Café door
+    - both Food Ring lanes
+    - all 4 plaza mouths and a full loop around the plaza
+  - Regressions: `suite_astro9_neon` 37/37, `astro9_mega` 25/25, `astro9_metro` 30/30.

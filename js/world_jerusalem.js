@@ -33,10 +33,10 @@ const HS = { x0: -54, x1: -30, z0: -62, z1: -42 };                // Church of t
 const HSF = { x0: -50, x1: -34, z0: -42, z1: -32 };
 const TD = { x0: -64, x1: -50, z0: 18, z1: 34 };                  // Tower of David citadel
 const CARDO = { x0: -58, x1: -30, z0: -7, z1: 3 };
-const SOUK = [[-14, -89], [-14, -30], [8, -26], [8, -44]];        // covered souk alleys (Damascus Gate -> Western Wall)
+const SOUK = [[-14, -89], [-14, -62], [-14, -30], [8, -26], [8, -44]];        // covered souk alleys (Damascus Gate -> Western Wall)
 const DPLAZA = { x0: -24, x1: -4, z0: -92.4, z1: -82 };           // inside Damascus Gate
 const JPLAZA = { x0: -67.4, x1: -56, z0: 0, z1: 16 };             // inside Jaffa Gate
-const BUSSTOP = { x: -32, z: -106 };                              // bus to the Dead Sea (outside Damascus Gate)
+const BUSSTOP = { x: -34, z: -112 };                              // bus to the Dead Sea (outside Damascus Gate)
 const JR = { z: -1, x0: -236, x1: -116 };                         // Jaffa Road (+ light rail)
 const MAM = { x0: -116, x1: -78, z0: 8, z1: 22 };                 // Mamilla avenue
 const SHUK = { x0: -230, x1: -178, z0: -30, z1: -12 };            // Mahane Yehuda market
@@ -59,7 +59,7 @@ const ROADS = [
   [-16, OC.z1, -16, 50, 5], [-52, OC.z1, -52, 50, 5],                                                             // Dung + Zion gates
   [JR.x1, JR.z + 2, JR.x1, 44, 7],                                                                               // King David St
   [-14, OC.z0, -14, -110, 7], [-14, -110, 60, -110, 7],                                                           // outside Damascus Gate
-  [OC.x1, -14, 110, -30, 6], [110, -30, 120, -40, 6]];                                                            // down to the Kidron + Mount of Olives
+  [OC.x1, -14, 106, -30, 6]];                                                            // down to the Kidron + Mount of Olives
 function segD(x, z, r) { const dx = r[2] - r[0], dz = r[3] - r[1], L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((x - r[0]) * dx + (z - r[1]) * dz) / L)) : 0; return Math.hypot(x - r[0] - dx * t, z - r[1] - dz * t) - r[4] / 2 }
 const roadDist = (x, z) => { let d = 1e9; for (const r of ROADS) d = Math.min(d, segD(x, z, r)); return d };
 /* pedestrian graph polylines (also kept free of buildings) */
@@ -69,13 +69,14 @@ const NAVL = [
   [[-116, 5.6], [-116, 15], [-97, 15], [-78, 15], [-74, 8]],                                 // Mamilla -> Jaffa Gate
   [[-116, -7], [-116, 5.6]],
   [[-74, 8], [-62, 8], [-40, 8], [-30, 8], [-30, -4], [-14, -4]],                            // Jaffa Gate -> centre
-  [[-14, -89], [-14, -30], [8, -26], [8, -44], [20, -40], [30, -34]],                        // souk -> Western Wall plaza
+  [[-14, -89], [-14, -62], [-14, -30], [8, -26], [8, -44], [20, -40], [30, -34]],             // souk -> Western Wall plaza
+  [[-14, -62], [-2, -62]],                                                                   // souk -> west ramp up to the esplanade
   [[30, -34], [36, -30], [52, -30], [64, -22], [64, -14]],                                   // plaza -> Lions' Gate
   [[64, -14], [60, 10], [50, 40], [20, 56], [-16, 58], [-52, 58], [-44, 40], [-40, 14], [-40, 8]],   // east + south lanes
   [[-30, -4], [-42, -20], [-42, -34], [-60, -36], [-62, -30]],                               // Sepulchre + New Gate
-  [[-176, -7], [-180, -21], [-204, -21], [-226, -21]],                                       // Mahane Yehuda
-  [[-14, -89], [-14, -100], [-32, -104]],                                                    // out of Damascus Gate to the bus
-  [[64, -14], [76, -14], [100, -24], [116, -38]]];                                           // Lions' Gate -> Gethsemane
+  [[-170, -7], [-180, -21], [-204, -21], [-226, -21]],                                       // Mahane Yehuda
+  [[-14, -89], [-14, -104], [-26, -108], [-32, -108]],                                       // out of Damascus Gate to the bus
+  [[64, -14], [76, -14], [100, -24], [107, -33]]];                                           // Lions' Gate -> Gethsemane
 const navDist = (x, z) => { let d = 1e9; for (const pl of NAVL) for (let i = 1; i < pl.length; i++) d = Math.min(d, segD(x, z, [pl[i - 1][0], pl[i - 1][1], pl[i][0], pl[i][1], 0])); return d };
 
 /* ======================= painted ground ======================= */
@@ -191,7 +192,7 @@ AV.registerWorld({
       B.dome.add(MT.v, new THREE.CylinderGeometry(R * 1.01, R * 1.01, 3.6, 8, 1, true).rotateY(Math.PI / 8), 0x2a7a9a, M(DOME.x, dy + 5.6, DOME.z), .08);
       for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, wx = DOME.x + Math.cos(a) * R * .93, wz = DOME.z + Math.sin(a) * R * .93; B.dome.add(MT.v, BG.box, 0x1a3a5a, M(wx, dy + 5.4, wz, 1.2, 2.2, .3, 0, -a + Math.PI / 2, 0)) }
       B.dome.add(MT.v, new THREE.CylinderGeometry(R * .66, R * .7, 3, 16), 0x2a6a8a, M(DOME.x, dy + 9.5, DOME.z), .08);
-      { const g = new THREE.Mesh(new THREE.SphereGeometry(R * .7, 28, 14, 0, TAU, 0, Math.PI / 2), goldMat); g.position.set(DOME.x, dy + 11, DOME.z); g.scale.y = 1.1; g.castShadow = q === 2; grp.add(g) }
+      { const gm = new THREE.MeshStandardMaterial({ color: 0xe8c040, roughness: .25, metalness: .8 }); if (AV.pbr && AV.pbr.env) { gm.envMap = AV.pbr.env(); gm.envMapIntensity = 1.2 } const g = new THREE.Mesh(new THREE.SphereGeometry(R * .7, 28, 14, 0, TAU, 0, Math.PI / 2), gm); g.position.set(DOME.x, dy + 11, DOME.z); g.scale.y = 1.1; g.castShadow = q === 2; grp.add(g) }
       B.dome.add(goldMat, new THREE.CylinderGeometry(.18, .18, 3, 8), 0xe8c040, M(DOME.x, dy + 19.2, DOME.z), .4); B.dome.add(goldMat, new THREE.TorusGeometry(.7, .12, 6, 16, Math.PI * 1.4), 0xe8c040, M(DOME.x, dy + 21.1, DOME.z, 1, 1, 1, 0, 0, Math.PI * .8), .5);
       /* arcades (qanatir) at the top of the dome's steps */
       for (const [ax, az, ry] of [[DOME.x, DOME.z - R - 5, 0], [DOME.x, DOME.z + R + 5, 0], [DOME.x - R - 5, DOME.z, Math.PI / 2], [DOME.x + R + 5, DOME.z, Math.PI / 2]]) {
@@ -209,7 +210,7 @@ AV.registerWorld({
       ctx.sign('THE WESTERN WALL', (WW.x0 + WW.x1) / 2, TMY + 2.2, -45, 0, 5, '#ffd84a');
       /* Western Wall plaza furnishings: partition, prayer benches, menorah */
       box(B.decor, MT.wood, 0xc8b088, 26.8, 27.2, wy0, wy0 + 1.6, WW.z0, WW.z0 + 7); ctx.cols.push([26.8, 27.2, WW.z0, WW.z0 + 7]);
-      for (let z = -34; z <= -27; z += 3.5) box(B.decor, MT.wood, 0x8a6a4a, 30, 38, wy0 + .35, wy0 + .5, z, z + .4);
+      for (let z = -35; z <= -29; z += 3) box(B.decor, MT.wood, 0x8a6a4a, 15, 23, wy0 + .35, wy0 + .5, z, z + .4);
       { const mx = WW.x0 + 2.5, mz = WW.z1 - 2, my = H(mx, mz); B.decor.add(goldMat, new THREE.CylinderGeometry(.45, .6, 1.6, 8), 0xe8c040, M(mx, my + .8, mz), .3);
         for (let k = -3; k <= 3; k++) { const r0 = Math.abs(k) * .32; B.decor.add(goldMat, new THREE.CylinderGeometry(.05, .05, 1.2 + r0, 6), 0xe8c040, M(mx + k * .32, my + 2.1 + r0 * .3, mz), .4) } ctx.circles.push([mx, mz, .7]) }
     }
@@ -275,9 +276,9 @@ AV.registerWorld({
     signAt('OLD CITY SOUK', -14, 4.6, DPLAZA.z1 + 1, Math.PI, 4.4, '#ffb04a');
     /* ---------- outside Damascus Gate: ka'ak carts + the bus stop ---------- */
     const carts = [];
-    { for (const cx of [-28, -23, -4]) { const cz = OC.z0 - 8, gy = H(cx, cz); B.decor.add(MT.wood, BG.box, 0xffffff, M(cx, gy + .7, cz, 2.2, 1.4, 1.4)); B.decor.add(MT.roof, A.geo('hip'), SOUKC[(cx + 30) % 6 | 0], M(cx, gy + 2.4, cz, 1.9, .7, 1.5));
+    { for (const cx of [-30, -25, -3]) { const cz = OC.z0 - 6, gy = H(cx, cz); B.decor.add(MT.wood, BG.box, 0xffffff, M(cx, gy + .7, cz, 2.2, 1.4, 1.4)); B.decor.add(MT.roof, A.geo('hip'), SOUKC[(cx + 30) % 6 | 0], M(cx, gy + 2.4, cz, 1.9, .7, 1.5));
         for (let j = 0; j < 5; j++) B.decor.add(MT.v, A.geo('ring'), 0xd8a050, M(cx - .8 + j * .4, gy + 1.5, cz + .1, .16, .16, .05, Math.PI / 2, 0, 0)); solid(cx - 1.2, cx + 1.2, cz - .8, cz + .8); carts.push([cx, cz + 1.8]) }
-      signAt('KA’AK · sesame bread', -25.5, 3.8, OC.z0 - 9.4, Math.PI, 3.4, '#ffd84a');
+      signAt('KA’AK · sesame bread', -27.5, 3.8, OC.z0 - 7.4, Math.PI, 3.4, '#ffd84a');
       const by = H(BUSSTOP.x, BUSSTOP.z); box(B.decor, MT.shiny, 0x2a8a4a, BUSSTOP.x - .15, BUSSTOP.x + .15, by, by + 3.4, BUSSTOP.z - .8, BUSSTOP.z + .8); B.decor.add(MT.v, BG.box, 0x2a8a4a, M(BUSSTOP.x, by + 3.6, BUSSTOP.z, .2, .9, 1.6), .6); ctx.circles.push([BUSSTOP.x, BUSSTOP.z, .4]);
       box(B.decor, MT.shiny, 0x8a9aa8, BUSSTOP.x - 3, BUSSTOP.x + 3, by + 2.6, by + 2.75, BUSSTOP.z - 2.4, BUSSTOP.z - .9); signAt('BUS 486 · DEAD SEA · ים המלח', BUSSTOP.x + 5, 2.6, BUSSTOP.z - 2, 0, 4.2, '#9ad8ff') }
 
@@ -340,6 +341,10 @@ AV.registerWorld({
     for (const s of SPOTS) KEEP.push([s[5], s[6], 3.5]); for (const s of SHOPS) KEEP.push([s[0], s[1], 3]); for (const c of carts) KEEP.push([c[0], c[1], 2.5]);
     KEEP.push([PORTAL.x, PORTAL.z, 6], [BUSSTOP.x, BUSSTOP.z, 5]);
     for (const g of GATES) KEEP.push([g[1], g[2], 10]);
+    /* soft-body residents at the hotspots (priority order: Low gets the first few); their spots stay clear of houses */
+    const HOT = [['business', -150, 6.4, 'idle', 0], ['soldier', -168, -8.4, 'idle', Math.PI], ['orthodox', 24, -40, 'idle', Math.PI], ['vendor', -8, -40, 'idle', -Math.PI / 2], ['student', -165, 5.6, 'wander', 0], ['pilgrim', -42, -35, 'wander', 0], ['hijabi', -14, -82, 'wander', 0],
+      ['businesswoman', -128, 22, 'wander', 0], ['soldier', -171, -8.4, 'idle', Math.PI], ['monk', -40, -20, 'wander', 0], ['embroidered', -8, -84, 'idle', Math.PI], ['nun', -46, 50, 'wander', 0], ['elder', -60, 8, 'idle', Math.PI / 2], ['pilgrim', 34, -30, 'wander', 0]];
+    for (const h of HOT) KEEP.push([h[1], h[2], 4]);
     const CLEAR = [WW, HSF, JPLAZA, DPLAZA, CARDO, MAM, SHUK, CITYHALL, { x0: MUGH.x0 - 2, x1: MUGH.x1 + 3, z0: MUGH.z0, z1: MUGH.z1 + 3 }, { x0: WRAMP.x0 - 4, x1: WRAMP.x1, z0: WRAMP.z0 - 1, z1: WRAMP.z1 + 1 }, { x0: TD.x0 - 2, x1: TD.x1 + 2, z0: TD.z0 - 6, z1: TD.z0 }];
     const rectFree = (x0, x1, z0, z1) => {
       if (occ.some(o => x0 < o.x1 + .4 && x1 > o.x0 - .4 && z0 < o.z1 + .4 && z1 > o.z0 - .4)) return false;
@@ -368,12 +373,10 @@ AV.registerWorld({
       if (x - w / 2 < OC.x0 + WALL + .6 || x + w / 2 > OC.x1 - WALL - .6 || z - d / 2 < OC.z0 + WALL + .6 || z + d / 2 > OC.z1 - WALL - .6) continue;
       house(B.city, x, z, w, d, 4 + rng() * 4, COLS[rng() * COLS.length | 0], rng() < .2) }
     /* new city: Jaffa Road frontages, Mamilla shops, the blocks between */
-    for (let x = JR.x0 + 6; x < JR.x1 - 4; x += 12.5) { house(B.city, x, JR.z - 13, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]); house(B.city, x, JR.z + 13, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]) }
-    for (let x = MAM.x0 + 6; x < MAM.x1 - 2; x += 11) { house(B.city, x, MAM.z0 - 2.4, 10, 4.4, 5, COLS[rng() * 5 | 0]); house(B.city, x, MAM.z1 + 4.6, 10, 8, 6 + rng() * 3, COLS[rng() * 5 | 0]) }
+    for (let x = JR.x0 + 6; x < JR.x1 - 4; x += 12.5) { house(B.city, x, JR.z - 14, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]); house(B.city, x, JR.z + 14.5, 10.5, 9, 8 + rng() * 9, COLS[rng() * 5 | 0]) }
+    for (let x = MAM.x0 + 6; x < MAM.x1 - 2; x += 11) { house(B.city, x, MAM.z0 - 2.2, 10, 4, 5, COLS[rng() * 5 | 0]); house(B.city, x, MAM.z1 + 4.6, 10, 8, 6 + rng() * 3, COLS[rng() * 5 | 0]) }
     house(B.city, (CITYHALL.x0 + CITYHALL.x1) / 2, CITYHALL.z1 + 8, 26, 12, 18, 0xcbbf9e);
     for (let gx = XMIN + 26; gx < OC.x0 - 16; gx += 14) for (let gz = ZMIN + 24; gz < ZMAX - 24; gz += 14) { if (Math.abs(gz - JR.z) < 22) continue; house(B.city, gx + (rng() - .5) * 2, gz + (rng() - .5) * 2, 8 + rng() * 3, 8 + rng() * 3, 7 + rng() * 9, COLS[rng() * 5 | 0], rng() < .08) }
-    /* East Jerusalem neighbourhood north of the walls */
-    for (let gx = -60; gx < 70; gx += 11) for (let gz = ZMIN + 18; gz < OC.z0 - 20; gz += 11) house(B.city, gx + (rng() - .5) * 2, gz + (rng() - .5) * 2, 7 + rng() * 2, 7 + rng() * 2, 5 + rng() * 4, COLS[rng() * 5 | 0], rng() < .15);
 
     /* ---------- vegetation: cypress + olive groves (never on roads, lanes, plazas or landmarks) ---------- */
     const freeV = (x, z, pad) => x > XMIN + 6 && x < XMAX - 6 && z > ZMIN + 6 && z < ZMAX - 6 && roadDist(x, z) > pad && navDist(x, z) > pad + 1 && !occ.some(o => inRect(o, x, z, pad)) && !CLEAR.some(o => inRect(o, x, z, pad)) && !KEEP.some(k => Math.hypot(x - k[0], z - k[1]) < k[2]) && !inKidron(x, z) && !inRect(OC, x, z, 2);
@@ -397,10 +400,7 @@ AV.registerWorld({
     spawn('dalia', 'guide', 11); spawn('yossi', 'business', 22, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -1.9 + Math.sin(t * 3) * .06 });
     spawn('karim', 'vendor', 33, (n, dt, t, d, talking) => { if (!n.path && !talking) n.g.userData.aR.rotation.x = -.8 + Math.sin(t * 1.4) * .12 });
     spawn('miriam', 'businesswoman', 44); spawn('elias', 'elder', 55);
-    /* soft-body residents at the hotspots (priority order: Low gets the first few) */
-    const HOT = [['business', -150, 6.4, 'idle', 0], ['soldier', -168, -8.4, 'idle', Math.PI], ['orthodox', 24, -40, 'idle', Math.PI], ['vendor', -8, -40, 'idle', -Math.PI / 2], ['student', -165, 5.6, 'wander', 0], ['pilgrim', -42, -35, 'wander', 0], ['hijabi', -14, -82, 'wander', 0],
-      ['businesswoman', -128, 22, 'wander', 0], ['soldier', -171, -8.4, 'idle', Math.PI], ['monk', -40, -20, 'wander', 0], ['embroidered', -8, -84, 'idle', Math.PI], ['nun', -46, 50, 'wander', 0], ['elder', -60, 8, 'idle', Math.PI / 2], ['pilgrim', 34, -30, 'wander', 0]];
-    AV.beings.spawn(ctx, HOT.slice(0, AV.beings.n(ctx, 4, 8, 14)).map(([role, x, z, mode, yaw], i) => C.regional.being(role, x, z, 500 + i * 17, { mode, yaw, y0: SURF(x, z), area: { x, z, r: 6 } })));
+    AV.beings.spawn(ctx, HOT.slice(0, AV.beings.n(ctx, 3, 6, 9)).map(([role, x, z, mode, yaw], i) => C.regional.being(role, x, z, 500 + i * 17, { mode, yaw, y0: SURF(x, z), area: { x, z, r: 6 } })));
     /* instanced street crowd: walk the pedestrian graph, follow the terrain */
     const nodes = [], edges = [];
     for (const pl of NAVL) { let prev = null; for (const [x, z] of pl) { let id = nodes.findIndex(n => Math.hypot(n[0] - x, n[1] - z) < .8); if (id < 0) { nodes.push([x, z]); id = nodes.length - 1 } if (prev != null && prev !== id) edges.push([prev, id]); prev = id } }
@@ -421,7 +421,7 @@ AV.registerWorld({
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
     const give = item => { if (AV.bag) AV.bag.add(item, 1, true); else S.items[item] = (S.items[item] || 0) + 1; AV.quests && AV.quests.check() };
     const buy = (cost, what, msg, item) => { if (!AV.txn(-cost, what)) return false; give(item); AV.toast(msg + tr(' → backpack (I)', ' → mochila (I)')); AV.audio && AV.audio.blip(660, .15, 'triangle', .12); return true };
-    for (const [x, z, en, es, cost, item, men, mes] of SHOPS) T(x, z, 2.2, () => tr(en, es), () => { if (buy(cost, en.split(':')[0], tr(men, mes), item) && x < -176 && x > -232 && !S.jlm.tour.includes('shuk') && false) S.jlm.tour.push('shuk') });
+    for (const [x, z, en, es, cost, item, men, mes] of SHOPS) T(x, z, 2.2, () => tr(en, es), () => buy(cost, en.split(':')[0], tr(men, mes), item));
     for (const [cx, cz] of carts) T(cx, cz, 2, () => tr('Ka’ak cart: sesame bread (6)', 'Carrito de ka’ak: pan de sésamo (6)'), () => buy(6, 'Ka’ak cart', tr('A long ring of sesame bread, warm in your hand.', 'Un aro largo de pan de sésamo, caliente en la mano.'), 'kaak'));
     /* tour checkpoints (glowing rings) */
     for (const [id, en, es, men, mes, x, z] of SPOTS) {

@@ -1,68 +1,65 @@
-/* APEVERSE - world_judean_desert.js : THE JUDEAN DESERT — Gold Coast of the Lowest Sea (game-sized slice of the real region).
-   North = -z, ~520 × 420 m. The Dead Sea shore (white salt shoreline, turquoise water you can wade into — it floats you
-   faster upward: buoyancy zone), Ein Gedi oasis (waterfall, pools, palm grove, ibex), Masada mesa to the south (Herod's
-   palace terraces, the Roman ramp on the west slope, cable-car station, viewpoint), Qumran caves in the north-west cliffs
-   (open cave mouth with the rock shelves), Route 90 with the bus stop, a Bedouin camp (goat-hair tents, campfire, sage
-   tea, the saddled camel Zahra + a stray), the desert patrol outpost with a jeep and sandbags, beach kiosk (salt crystals,
-   mud tubs, chairs, umbrellas), salt pillars (Lot's wife), a viewpoint on the cliff rim, jackal howls at night, heat
-   shimmer. People: Sgt. Noa + patrol soldiers at the outpost, Salem the Bedouin host, Amir the Masada ranger, Tomer the
-   lost hiker at Qumran, tourists floating in the sea. Missions: bring 3 water bottles to the outpost, find Tomer at the
-   Qumran caves, lead Zahra the camel home. Interactions: float in the sea, mud bath, sage tea at the camp, camel ride,
-   cable car up Masada, salt crystals, the bus back to Jerusalem, the portal. Press F for modes: Day / Sunset / Night. */
+/* APEVERSE - world_judean_desert.js : THE JUDEAN DESERT & THE DEAD SEA (game-sized slice of the real region).
+   North = -z, east = +x. The desert climbs west to the limestone cliffs; the Dead Sea fills the east (white salt shore,
+   turquoise water you can float in, salt pillars). Route 90 runs north-south along the shore with the bus stop back to
+   Jerusalem. Ein Gedi oasis (waterfall, pools, palms) at the cliff foot; Masada mesa to the south (walkable Roman ramp
+   on the west, cable car from the east station, Herod's terraces and cisterns on top); the Qumran cave in the
+   north-west cliffs; a Bedouin camp (goat-hair tents, fire, sage tea, camels); the desert patrol outpost (hut,
+   sandbags, jeep); the beach kiosk with umbrellas and mud tubs; the portal home.
+   People: Sgt. Noa + off-duty patrol soldiers, Salem the Bedouin host, Amir the Masada ranger, Tomer the lost hiker,
+   tourists, hikers, vendors. Missions: Water Run, The Lost Hiker, Zahra's Walkabout. F: Day / Sunset / Night. */
 'use strict';
 (function (AV) {
 const tr = AV.tr, TAU = AV.TAU, K = AV.kit, A = AV.arch, CY = AV.city, MD = AV.media, C = AV.chars;
-const M = K.M, BG = K.BG, deg = d => d * Math.PI / 180, npcYaw = (fx, fz, tx, tz) => Math.atan2(tx - fx, tz - fz);
+const M = K.M, BG = K.BG, deg = d => d * Math.PI / 180;
 const hourNow = () => (AV.S.time / 60) % 24, night = () => { const h = hourNow(); return h < 6 || h >= 19 };
 const mode = () => AV.S.jdMode || 'day';
 
 /* ======================= layout ======================= */
 const XMIN = -140, XMAX = 220, ZMIN = -170, ZMAX = 130, GW = XMAX - XMIN, GD = ZMAX - ZMIN;
-const SHORE = 60;                                   // water starts east of x = SHORE (sea occupies x > SHORE, beyond a wade strip)
-const CLIFF = { x0: -130, x1: 40 };                 // limestone cliff band west / north-west
-const OASIS = { x: -34, z: -52, r: 20 };            // Ein Gedi (spring, pools, waterfall)
-const MASADA = { x: 66, z: 104, r: 34, h: 26 };     // the mesa (south-east, plateau top walkable)
-const CAVES = { x: -96, z: -128 };                  // Qumran caves (cliff foot)
-const CAMP = { x: -14, z: 26, r: 16 };              // Bedouin camp
-const POST = { x: -64, z: -6, r: 12 };              // patrol outpost
-const KIOSK = { x: 92, z: 18 };                     // beach kiosk
-const BUS = { x: -2, z: -2 };                       // bus stop on the road
-const PORTAL = { x: 100, z: 26 };                   // portal by the beach
-const ROAD = [{ x: XMIN + 10, z: -2 }, { x: 40, z: -6 }, { x: 120, z: 2 }, { x: XMAX - 20, z: 10 }];   // Route 90
-function roadD(x, z) { let d = 1e9; for (let i = 1; i < ROAD.length; i++) { const a = ROAD[i - 1], b = ROAD[i], dx = b.x - a.x, dz = b.z - a.z, L = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / L)); d = Math.min(d, Math.hypot(x - a.x - dx * t, z - a.z - dz * t) - 5) } return d }
+const SHORE = 120, WADE = 6, WY = -.62;                 // land west of SHORE, shallows to SHORE + WADE, then the sea
+const OASIS = { x: -34, z: -52, r: 20 };                // Ein Gedi
+const MASADA = { x: 34, z: 82, r: 26, h: 26 };          // the mesa (flat top at h + 2)
+const CAVES = { x: -96, z: -128 };                      // Qumran cave
+const CAMP = { x: -14, z: 26 };                         // Bedouin camp
+const POST = { x: -64, z: -6 };                         // patrol outpost
+const KIOSK = { x: 108, z: 18 };                        // beach kiosk
+const PORTAL = { x: 112, z: 36 };
+const BUS = { x: 86, z: -2 };                           // bus stop (west side of Route 90)
+const ROAD = [[95, ZMIN + 8], [92, -40], [97, 40], [94, ZMAX - 8]];   // Route 90
+const ZAHRA = { x: MASADA.x - MASADA.r - 18, z: MASADA.z - 8 };
 const inRect = (r, x, z, m) => x > r.x0 - (m || 0) && x < r.x1 + (m || 0) && z > r.z0 - (m || 0) && z < r.z1 + (m || 0);
-const inSea = (x, z) => x > SHORE + 6;
-const inWade = (x, z) => x > SHORE && x <= SHORE + 6;
+const inSea = x => x > SHORE + WADE, inWade = x => x > SHORE && x <= SHORE + WADE;
+function segD(x, z, a, b, w) { const dx = b[0] - a[0], dz = b[1] - a[1], L = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / L)); return Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) - w / 2 }
+const roadD = (x, z) => { let d = 1e9; for (let i = 1; i < ROAD.length; i++) d = Math.min(d, segD(x, z, ROAD[i - 1], ROAD[i], 10)); return d };
+const roadX = z => { for (let i = 1; i < ROAD.length; i++) { const a = ROAD[i - 1], b = ROAD[i]; if (z >= a[1] && z <= b[1]) return a[0] + (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) } return ROAD[0][0] };
+/* pedestrian graph */
+const NAVL = [
+  [[86, ZMIN + 16], [86, -40], [88, 0], [90, 40], [88, ZMAX - 16]],                           // west verge of Route 90
+  [[88, 6], [100, 12], [KIOSK.x - 6, KIOSK.z + 5], [PORTAL.x - 4, PORTAL.z + 2]],            // to the beach + portal
+  [[90, 60], [MASADA.x + MASADA.r + 14, MASADA.z + 2]],                                       // to the cable car
+  [[88, -2], [40, 10], [CAMP.x + 10, CAMP.z + 4], [CAMP.x - 2, CAMP.z + 8]],                  // to the Bedouin camp
+  [[40, 10], [POST.x + 8, POST.z + 6], [POST.x - 4, POST.z + 7]],                              // to the outpost
+  [[40, 10], [-10, -30], [OASIS.x + 12, OASIS.z + 14], [OASIS.x + 2, OASIS.z + 12]],          // to Ein Gedi
+  [[-10, -30], [-50, -90], [CAVES.x + 6, CAVES.z + 12]]];                                     // to Qumran
+const navDist = (x, z) => { let d = 1e9; for (const pl of NAVL) for (let i = 1; i < pl.length; i++) d = Math.min(d, segD(x, z, pl[i - 1], pl[i], 0)); return d };
 
 /* ======================= painted ground ======================= */
 const TX = {};
-function canvasTex(w, h, draw, rep) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.wrapS = t.wrapT = rep ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; t.userData = { keep: true }; return t }
+function canvasTex(w, h, draw) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.userData = { keep: true }; return t }
 function groundTex(N) {
   return TX.ground || (TX.ground = canvasTex(N, Math.round(N * GD / GW), (c, w, h) => {
     const m = w / GW, P = (x, z) => [(x - XMIN) * m, (z - ZMIN) * m], r = AV.rng(53);
     c.fillStyle = '#c8a878'; c.fillRect(0, 0, w, h);
-    for (let i = 0; i < 1500; i++) { const x = r() * w, y = r() * h, s = 2 + r() * 10; c.fillStyle = ['#bd9c6e', '#d2b284', '#c2a072', '#d8bc90'][i % 4]; c.globalAlpha = .3; c.beginPath(); c.arc(x, y, s, 0, TAU); c.fill() } c.globalAlpha = 1;
-    const rect = (r0, col) => { const a = P(r0.x0 != null ? r0.x0 : r0[0], r0.z0 != null ? r0.z0 : r0[1]); c.fillStyle = col; c.fillRect(a[0], a[1], ((r0.x1 != null ? r0.x1 : r0[2]) - (r0.x0 != null ? r0.x0 : r0[0])) * m, ((r0.z1 != null ? r0.z1 : r0[3]) - (r0.z0 != null ? r0.z0 : r0[1])) * m) };
-    /* salt-white shore band + sea */
-    rect({ x0: SHORE - 4, x1: XMAX, z0: ZMIN, z1: ZMAX }, '#e8e2d2'); rect({ x0: SHORE + 4, x1: XMAX, z0: ZMIN, z1: ZMAX }, '#3aa8a8');
-    /* darker blue deep sea */
-    rect({ x0: SHORE + 26, x1: XMAX, z0: ZMIN, z1: ZMAX }, '#1a7a88');
-    /* wavy shoreline */
-    c.strokeStyle = '#f4efe0'; c.lineWidth = 2.4 * m; c.beginPath(); for (let z = ZMIN; z <= ZMAX; z += 2) { const x = SHORE + 3 + Math.sin(z * .08) * 2.2; const p = P(x, z); if (z === ZMIN) c.moveTo(p[0], p[1]); else c.lineTo(p[0], p[1]) } c.stroke();
-    /* oasis green + palm grove */
-    for (let i = 0; i < 160; i++) { const a = r() * TAU, d = Math.sqrt(r()) * OASIS.r, x = OASIS.x + Math.cos(a) * d, z = OASIS.z + Math.sin(a) * d; const p = P(x, z); c.fillStyle = ['#4a7a3a', '#5a8a44', '#3f6a30', '#6a9a4c'][i % 4]; c.beginPath(); c.arc(p[0], p[1], 1.5 + r() * 3, 0, TAU); c.fill() }
-    /* canyon streaks from the cliff to the shore (wadis) */
-    c.strokeStyle = 'rgba(140,110,74,.4)'; c.lineWidth = 2.6 * m; for (let k = 0; k < 7; k++) { const z0 = ZMIN + 20 + k * 38 + r() * 14; c.beginPath(); let x = CLIFF.x1 - 30 + r() * 30; const p0 = P(x, z0); c.moveTo(p0[0], p0[1]); for (let s = 1; s < 6; s++) { x += 8 + r() * 10; const p = P(Math.min(x, SHORE - 2), z0 + (r() - .5) * 12); c.lineTo(p[0], p[1]) } c.stroke() }
-    /* cliff band tint */
-    rect({ x0: CLIFF.x0, x1: CLIFF.x0 + 40, z0: ZMIN, z1: 40 }, '#b4906a');
-    /* road */
-    const seg = (a, b, w2, col) => { const p0 = P(a.x, a.z), p1 = P(b.x, b.z); c.strokeStyle = col; c.lineWidth = w2 * m; c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke() };
-    for (let i = 1; i < ROAD.length; i++) { seg(ROAD[i - 1], ROAD[i], 12, '#c8b894'); seg(ROAD[i - 1], ROAD[i], 9.6, '#6a6a62') }
-    c.setLineDash([3 * m, 3 * m]); for (let i = 1; i < ROAD.length; i++) seg(ROAD[i - 1], ROAD[i], .2, '#e8d890'); c.setLineDash([]);
-    for (let i = 0; i < 8000; i++) { const x = XMIN + r() * GW, z = ZMIN + r() * GD; if (roadD(x, z) < 0 && x < SHORE) { c.fillStyle = r() < .5 ? 'rgba(0,0,0,.1)' : 'rgba(255,255,255,.07)'; const q = P(x, z); c.fillRect(q[0], q[1], 1.5, 1.5) } }
-    /* Masada ramp (west slope) + dirt path */
-    c.strokeStyle = '#a08860'; c.lineWidth = 3.4 * m; { const p0 = P(MASADA.x - MASADA.r - 10, MASADA.z - 4), p1 = P(MASADA.x - 6, MASADA.z + 2); c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke() }
-    c.strokeStyle = '#b0906a'; c.lineWidth = 2 * m; { const p0 = P(KIOSK.x - 6, KIOSK.z - 4), p1 = P(PORTAL.x, PORTAL.z); c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke() }
+    for (let i = 0; i < 1500; i++) { c.fillStyle = ['#bd9c6e', '#d2b284', '#c2a072', '#d8bc90'][i % 4]; c.globalAlpha = .3; c.beginPath(); c.arc(r() * w, r() * h, 2 + r() * 10, 0, TAU); c.fill() } c.globalAlpha = 1;
+    const rect = (x0, x1, z0, z1, col) => { const a = P(x0, z0); c.fillStyle = col; c.fillRect(a[0], a[1], (x1 - x0) * m, (z1 - z0) * m) };
+    rect(XMIN, XMIN + 50, ZMIN, ZMAX, '#b4906a');                                                         // cliff band
+    rect(SHORE - 8, SHORE + WADE, ZMIN, ZMAX, '#ece6d6'); rect(SHORE + WADE, XMAX, ZMIN, ZMAX, '#3aa8a8'); rect(SHORE + 30, XMAX, ZMIN, ZMAX, '#1a7a88');
+    for (let i = 0; i < 180; i++) { const a = r() * TAU, d = Math.sqrt(r()) * OASIS.r, q = P(OASIS.x + Math.cos(a) * d, OASIS.z + Math.sin(a) * d); c.fillStyle = ['#4a7a3a', '#5a8a44', '#3f6a30', '#6a9a4c'][i % 4]; c.beginPath(); c.arc(q[0], q[1], 1.5 + r() * 3, 0, TAU); c.fill() }
+    c.strokeStyle = 'rgba(140,110,74,.4)'; c.lineWidth = 2.6 * m; for (let k = 0; k < 6; k++) { const z0 = ZMIN + 30 + k * 44 + r() * 14; let x = XMIN + 40; c.beginPath(); const p0 = P(x, z0); c.moveTo(p0[0], p0[1]); for (let s = 1; s < 9; s++) { x += 18 + r() * 8; const p = P(Math.min(x, SHORE - 6), z0 + (r() - .5) * 14); c.lineTo(p[0], p[1]) } c.stroke() }
+    const seg = (a, b, w2, col) => { const p0 = P(a[0], a[1]), p1 = P(b[0], b[1]); c.strokeStyle = col; c.lineWidth = w2 * m; c.beginPath(); c.moveTo(p0[0], p0[1]); c.lineTo(p1[0], p1[1]); c.stroke() };
+    for (let i = 1; i < ROAD.length; i++) { seg(ROAD[i - 1], ROAD[i], 13, '#c8b894'); seg(ROAD[i - 1], ROAD[i], 9.6, '#6a6a62') } c.setLineDash([3 * m, 3 * m]); for (let i = 1; i < ROAD.length; i++) seg(ROAD[i - 1], ROAD[i], .2, '#e8d890'); c.setLineDash([]);
+    for (const pl of NAVL) for (let i = 1; i < pl.length; i++) seg(pl[i - 1], pl[i], 2.2, 'rgba(168,140,100,.55)');   // dirt tracks
+    seg([MASADA.x - MASADA.r - 16, MASADA.z - 4], [MASADA.x - 6, MASADA.z], 5, '#a08860');                              // Roman ramp
   }));
 }
 
@@ -70,323 +67,242 @@ function groundTex(N) {
 AV.registerWorld({
   id: 'judean_desert',
   build(ctx) {
-    const S = AV.S, q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk();
-    if (!S.jd) S.jd = { met: {}, camelHome: false, hikerFound: false, floated: 0, mud: false }; S.items = S.items || {};
-    const md = mode();
+    const S = AV.S, q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk(), md = mode();
+    if (!S.jd) S.jd = {}; for (const k of ['camelHome', 'hikerFound', 'mud']) if (S.jd[k] == null) S.jd[k] = false; if (!S.jd.met) S.jd.met = {}; S.items = S.items || {};
     const SKY = md === 'sunset' ? { tint: [0xffb070, 0xffd8a8, .3, .3], dome: { s1: 0xff8a3a, s2: 0xff5a6a, swirl: .18, cloud: .4, glow: .8 } }
-      : md === 'night' ? { tint: [0x6a7ab0, 0x8a94c8, .5, .5], dome: { swirl: .3, cloud: .3, glow: 1.2 } }
-      : { tint: [0xffe0b0, 0xfff0d0, .14, .18], dome: { s1: 0xffd890, s2: 0xffb868, swirl: .06, cloud: .3, glow: .55 } };
-    const B = { rock: K.batch(), build: K.batch(), decor: K.batch(), night: K.batch(), camp: K.batch() };
-    const rockM = K.floraMat(0, { rough: .95, flat: true }), sandM = MT.v;
+      : md === 'night' ? { tint: [0x6a7ab0, 0x8a94c8, .5, .5], fixed: { bg: 0x0a1228, fog: 0x1a2240, night: 1, sun: .2, hs: .6 }, dome: { swirl: .3, cloud: .2, glow: 1.2 } }
+      : { tint: [0xffe0b0, 0xfff0d0, .14, .18], dome: { s1: 0xffd890, s2: 0xffb868, swirl: .04, cloud: .25, glow: .55 } };
+    const B = { rock: K.batch(), build: K.batch(), decor: K.batch(), camp: K.batch() }, NIGHT = K.batch();
+    const rockM = K.floraMat(0, { rough: .95, flat: true });
     const occ = [];
     const box = (b, mat, col, x0, x1, y0, y1, z0, z1, glow) => b.add(mat, BG.box, col, M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0), glow);
     const solid = (x0, x1, z0, z1) => { ctx.cols.push([x0, x1, z0, z1]); occ.push({ x0, x1, z0, z1 }) };
-    const sign = (txt, x, y, z, ry, w, col, posts) => ctx.sign(txt, x, y, z, ry, w, col, posts ? { posts: true } : undefined);
     MD.resetFrames();
 
     /* ---------- terrain ---------- */
     const H = (x, z) => {
-      const d = Math.max(0, XMIN + 30 - x, x - (XMAX - 25), ZMIN + 25 - z, z - (ZMAX - 22));
-      let h = Math.min(20, d * .7);
-      /* desert bowl: high in the west, slopes down to the sea */
-      h += Math.max(0, (SHORE - x) * .12) + Math.max(0, (40 - x) * .05);
-      /* wadi dips */
-      h -= 2 * Math.max(0, 1 - Math.abs(((z + 40) % 70) - 35) / 8) * Math.max(0, Math.min(1, (SHORE - x) / 40));
-      /* Ein Gedi canyon */
-      h -= 6 * Math.max(0, 1 - Math.hypot(x - OASIS.x, z - OASIS.z) / (OASIS.r + 8));
-      /* Kidron-ish cliff band rise in the NW */
-      h += 14 * Math.max(0, 1 - Math.hypot(x - (CLIFF.x0 + 34), z - (-80)) / 70) * (z < 40 ? 1 : .4);
-      /* Masada mesa */
-      const dm = Math.hypot(x - MASADA.x, z - MASADA.z);
-      if (dm < MASADA.r + 16) { const t = Math.max(0, Math.min(1, (dm - MASADA.r) / 16)); h = h * t + (MASADA.h + 2) * (1 - t) }   // steep sides, flat top
-      if (inSea(x, z)) h = -1.4; else if (inWade(x, z)) h = Math.min(h, -.5 + (x - SHORE) * .12);
+      if (inSea(x)) return -1.6;
+      let h = Math.max(0, (SHORE - x) * .06) + 16 * Math.max(0, Math.min(1, (XMIN + 70 - x) / 50));            // rises west to the cliffs
+      h += Math.sin(x * .05 + z * .03) * .8 + Math.sin(z * .07 - x * .02) * .6;                                // dunes
+      h -= 5 * Math.max(0, 1 - Math.hypot(x - OASIS.x, z - OASIS.z) / (OASIS.r + 10));                          // Ein Gedi hollow
+      const dm = Math.hypot(x - MASADA.x, z - MASADA.z); if (dm < MASADA.r + 14) { const t = Math.max(0, Math.min(1, (dm - MASADA.r) / 14)); h = h * t + (MASADA.h + 2) * (1 - t) }   // the mesa
+      const e = Math.max(0, XMIN + 22 - x, ZMIN + 20 - z, z - (ZMAX - 18)); h += Math.min(14, e * .6);
+      if (inWade(x)) h = Math.min(h, -(x - SHORE) * .16);
       return h;
     };
+    const SURF = (x, z) => { if (inSea(x)) return WY - .5; const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) };   // in the sea you float: head + shoulders above the water
     const sx = [150, 230, 300][q], sz = Math.round(sx * GD / GW), tg = new THREE.PlaneGeometry(GW, GD, sx, sz); tg.rotateX(-Math.PI / 2); tg.translate((XMIN + XMAX) / 2, 0, (ZMIN + ZMAX) / 2);
     const tp = tg.attributes.position; for (let i = 0; i < tp.count; i++) tp.setY(i, H(tp.getX(i), tp.getZ(i))); tg.computeVertexNormals();
     const gmat = new THREE.MeshStandardMaterial({ map: groundTex([1024, 2048, 2048][q]), roughness: .96 }), grain = A.tex('grain');
     gmat.onBeforeCompile = sh => { sh.uniforms.detailMap = { value: grain }; sh.fragmentShader = 'uniform sampler2D detailMap;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb *= mix(1.0, texture2D(detailMap, vUv * 160.0).r * 1.4, .3);') };
     gmat.customProgramCacheKey = () => 'jdGround'; gmat.userData.lin = 1; const ground = new THREE.Mesh(tg, gmat); ground.receiveShadow = true; grp.add(ground);
-    { const sk = new THREE.RingGeometry(Math.max(GW, GD) / 2, 900, 64, 2); sk.rotateX(-Math.PI / 2); sk.translate((XMIN + XMAX) / 2, -2.4, (ZMIN + ZMAX) / 2); grp.add(new THREE.Mesh(sk, AV.std(0xc8a878, 1))) }
-    /* Jordan hills haze on the far east horizon */
-    { const parts = [], r = AV.rng(43); for (let i = 0; i < 22; i++) { const a = deg(-50 + i * 8 + r() * 4), d = 760 + r() * 200, h = 90 + r() * 150; parts.push([BG.ico, [0x9ab4c4, 0xa8bcd0, 0x8aa8bc][i % 3], M((XMIN + XMAX) / 2 + Math.cos(a) * d, h * .32 - 24, (ZMIN + ZMAX) / 2 + Math.sin(a) * d, 160 + r() * 90, h, 130 + r() * 70), 0]) }
+    { const sk = new THREE.RingGeometry(Math.max(GW, GD) / 2, 900, 64, 2); sk.rotateX(-Math.PI / 2); sk.translate((XMIN + XMAX) / 2, -2.4, (ZMIN + ZMAX) / 2); grp.add(new THREE.Mesh(sk, AV.std(0x2a8a98, 1))) }
+    /* the mountains of Moab across the sea (east), hazy */
+    { const parts = [], r = AV.rng(43); for (let i = 0; i < 22; i++) { const a = deg(-60 + i * 6 + r() * 4), d = 520 + r() * 160, h = 90 + r() * 140; parts.push([BG.ico, [0xc8a8a0, 0xb89a9a, 0xd0b4a8][i % 3], M((XMIN + XMAX) / 2 + Math.cos(a) * d, h * .3 - 20, (ZMIN + ZMAX) / 2 + Math.sin(a) * d, 150 + r() * 90, h, 120 + r() * 70), 0]) }
       const mm = new THREE.Mesh(K.merge(parts), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false })); mm.material.userData.lin = 1; grp.add(mm); ctx.upd.push(() => mm.material.color.setScalar(1 - (AV.nightK || 0) * .72)) }
+    /* the cliffs (escarpment) along the west edge */
+    for (let z = ZMIN + 10; z < ZMAX - 10; z += 16) { const x = XMIN + 18 + rng() * 10; B.rock.add(rockM, BG.ico, [0xb4906a, 0xa58460, 0xc0a078][(z / 16 | 0) % 3], M(x, H(x, z) + 6, z, 14 + rng() * 6, 14 + rng() * 8, 12 + rng() * 6, rng(), rng() * 3, rng())) }
 
     /* ---------- the Dead Sea ---------- */
-    const wopt = { deep: 0x1a7a88, shallow: 0x3ab8b8, sky: 0xc8e8f0, iri: .22, opacity: .93, scale: .5 };
-    { const w = K.waterPlane(ctx, new THREE.PlaneGeometry(XMAX - SHORE - 4, GD), -.62, wopt); w.position.x = (SHORE + 4 + XMAX) / 2; w.position.z = (ZMIN + ZMAX) / 2 }
-    /* salt crust chunks + foam line at the shore */
-    { for (let i = 0; i < 40; i++) { const z = ZMIN + 10 + rng() * (GD - 20), x = SHORE + 4 + rng() * 3, y = H(x, z); if (y > 0) continue;
-        B.decor.add(MT.v, BG.ico, 0xf2efe4, M(x, y + .1, z, .5 + rng() * .9, .25 + rng() * .3, .5 + rng() * .9, 0, rng() * TAU, 0)) }
-      for (let z = ZMIN + 8; z < ZMAX - 8; z += 2.4) { const x = SHORE + 3.2 + Math.sin(z * .08) * 2.2, y = H(x, z); box(B.decor, MT.v, 0xf4efe2, x - 1, x + 1, y - .05, y + .12, z - 1, z + 1) } }
-    /* salt pillars (Lot's wife) out in the shallows */
-    for (const [px, pz, h] of [[SHORE + 16, 52, 4.6], [SHORE + 20, -34, 3.6]]) { B.rock.add(MT.v, new THREE.CylinderGeometry(.9, 1.4, h, 7), 0xe8e4d4, M(px, -.6 + h / 2, pz, 1, 1, 1, .12, 0, .1)); B.rock.add(MT.v, BG.ico, 0xf2efe4, M(px, -.6 + h, pz, 1.2, .7, 1.2)); sign('SALT PILLAR', px - 4, -.4 + h + 1.6, pz, -Math.PI / 2, 2.6, '#7ff0ff', true) }
+    { const w = K.waterPlane(ctx, new THREE.PlaneGeometry(XMAX - SHORE + 2, GD), WY, { deep: 0x1a7a88, shallow: 0x3ab8b8, sky: 0xc8e8f0, iri: .2, opacity: .93, scale: .5 }); w.position.x = (SHORE + XMAX) / 2 + 1; w.position.z = (ZMIN + ZMAX) / 2 }
+    for (let z = ZMIN + 6; z < ZMAX - 6; z += 2.6) { const x = SHORE + 1 + Math.sin(z * .08) * 1.2; B.decor.add(MT.v, BG.box, 0xf4efe2, M(x, H(x, z) + .02, z, 2, .14, 2.4)) }                // salt crust line
+    for (let i = 0; i < 40; i++) { const z = ZMIN + 10 + rng() * (GD - 20), x = SHORE + 1 + rng() * (WADE - 1.5); B.decor.add(MT.v, BG.ico, 0xf2efe4, M(x, H(x, z) + .1, z, .5 + rng() * .8, .25 + rng() * .25, .5 + rng() * .8, 0, rng() * TAU, 0)) }
+    for (const [px, pz, h] of [[SHORE + 22, 52, 4.6], [SHORE + 26, -34, 3.6]]) { B.rock.add(MT.v, new THREE.CylinderGeometry(.9, 1.4, h, 7), 0xe8e4d4, M(px, -1.6 + h / 2, pz, 1, 1, 1, .1, 0, .08)); B.rock.add(MT.v, BG.ico, 0xf2efe4, M(px, -1.6 + h, pz, 1.2, .7, 1.2)); ctx.circles.push([px, pz, 1.4]) }
+    ctx.sign('THE DEAD SEA · −430 m', SHORE - 4, H(SHORE - 4, 44) + 3, 44, Math.PI / 2, 4.2, '#7ff0ff', { posts: true });
 
-    /* ---------- Ein Gedi oasis: pools, waterfall, palms ---------- */
-    { const ox = OASIS.x, oz = OASIS.z, oy = H(ox, oz);
-      /* canyon walls */
-      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { const px = ox + s * (8 + k * 6), pz = oz + (rng() - .5) * 26; B.rock.add(rockM, BG.ico, [0xb4906a, 0xa58460, 0xc0a078][k], M(px, H(px, pz) + 2 + k * 2.4, pz, 7 + rng() * 4, 5 + rng() * 4, 6 + rng() * 3, rng(), rng() * 3, rng())) }
-      /* spring pools */
-      for (const [px, pz, r0] of [[ox - 4, oz + 6, 3.4], [ox + 2, oz, 2.6], [ox + 7, oz - 7, 2]]) { const py = H(px, pz) + .1; const w = K.waterPlane(ctx, new THREE.CircleGeometry(r0, 30), py, { deep: 0x1a6a5a, shallow: 0x4ac8b0, sky: 0xb8e8f0, iri: .3, opacity: .92 }); w.position.x = px; w.position.z = pz; walk.pad(px, pz, r0 - 1, py) }
-      /* waterfall from the cliff niche */
-      const fx = ox - 9, fz = oz - 2, fy = H(fx, fz); K.waterfall(ctx, fx + 1.2, fy + 1, fz, 2.6, 7, 0, { c1: 0x9ae8ff });
-      B.rock.add(rockM, BG.ico, 0xa58460, M(fx, fy + 8, fz, 4, 4, 3, 0, 0, .3));
-      /* walkable stepping stones through the pools */
-      for (let i = 0; i < 5; i++) { const px = ox - 6 + i * 3.2, pz = oz + 6 - i * 1.4, py = H(px, pz); B.decor.add(MT.stone, BG.ico, 0xb0a080, M(px, py + .15, pz, 1.1, .3, .9, 0, i, 0)); walk.pad(px, pz, .8, py + .28) }
-      sign('EIN GEDI · oasis', ox + 10, H(ox + 10, oz + 14) + 3, oz + 14, -Math.PI / 2, 4, '#7aff9a', true) }
+    /* ---------- Ein Gedi oasis ---------- */
+    { const ox = OASIS.x, oz = OASIS.z;
+      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { const px = ox - 16 + k * 2, pz = oz + s * (16 + k * 3); B.rock.add(rockM, BG.ico, [0xb4906a, 0xa58460, 0xc0a078][k], M(px, H(px, pz) + 3, pz, 8, 7, 7, rng(), rng() * 3, rng())) }
+      for (const [px, pz, r0] of [[ox - 2, oz + 4, 3.4], [ox + 4, oz - 2, 2.6], [ox + 8, oz - 9, 2]]) { const w = K.waterPlane(ctx, new THREE.CircleGeometry(r0, 30), H(px, pz) + .15, { deep: 0x1a6a5a, shallow: 0x4ac8b0, sky: 0xb8e8f0, iri: .3, opacity: .92 }); w.position.x = px; w.position.z = pz }
+      const fx = ox - 12, fz = oz, fy = H(fx, fz); B.rock.add(rockM, BG.ico, 0xa58460, M(fx - 3, fy + 6, fz, 6, 9, 7)); K.waterfall(ctx, fx + 1, fy + .2, fz, 2.6, 8, Math.PI / 2, { c1: 0x9ae8ff }); occ.push({ x0: fx - 8, x1: fx + 1, z0: fz - 5, z1: fz + 5 }); solid(fx - 8, fx, fz - 4, fz + 4);
+      ctx.sign('EIN GEDI · oasis', ox + 14, H(ox + 14, oz + 16) + 3.2, oz + 16, -Math.PI / 2, 4, '#7aff9a', { posts: true }) }
 
     /* ---------- Masada ---------- */
-    { const mx = MASADA.x, mz = MASADA.z, top = MASADA.h + 2;
-      /* plateau pad */
-      walk.pad(mx, mz, MASADA.r - 2, top);
-      /* cliff rim boulders */
-      for (let k = 0; k < 26; k++) { const a = k / 26 * TAU, px = mx + Math.cos(a) * (MASADA.r + 3), pz = mz + Math.sin(a) * (MASADA.r + 3); B.rock.add(rockM, BG.ico, 0xb4906a, M(px, top - 6 - rng() * 4, pz, 5 + rng() * 4, 7 + rng() * 5, 5 + rng() * 4, rng(), rng() * 3, rng())) }
-      /* Herod's northern palace terraces + storerooms + bath */
-      box(B.build, MT.stucco, 0xd8ccb2, mx - 8, mx + 8, top, top + 3, mz - MASADA.r + 10, mz - MASADA.r + 18); solid(mx - 8, mx + 8, mz - MASADA.r + 10, mz - MASADA.r + 18);
-      for (let t = 0; t < 3; t++) { const ty = top - t * 3.4, dd = 12 - t * 2.4; box(B.build, MT.stucco, 0xd8ccb2, mx - dd, mx + dd, ty, ty + 2.6, mz + MASADA.r - 14 - t * 4, mz + MASADA.r - 10 - t * 4); walk.pad(mx, mz + MASADA.r - 12 - t * 4, dd - 1, ty + 2.6) }
-      /* columns on the lower terrace */
-      for (let k = 0; k < 6; k++) { const px = mx - 8 + k * 3.2, pz = mz + MASADA.r - 16; B.build.add(MT.v, A.geo('cyl'), 0xe8dfc8, M(px, top - 10.2 + .9, pz, .4, 2.6, .4)) }
-      /* cisterns (dark rooms) */
-      box(B.build, MT.stone, 0x8a7a5e, mx + 10, mx + 22, top - 2.4, top + 2, mz - 6, mz + 6); solid(mx + 10, mx + 22, mz - 6, mz + 6);
-      /* Roman ramp (west, dirt + stone, walkable!) */
-      { const a0 = { x: mx - MASADA.r - 12, z: mz - 4 }, a1 = { x: mx - 4, z: mz + 2 }, L = Math.hypot(a1.x - a0.x, a1.z - a0.z), n = 14;
-        for (let i = 0; i <= n; i++) { const f = i / n, px = a0.x + (a1.x - a0.x) * f, pz = a0.z + (a1.z - a0.z) * f, py = H(a0.x, a0.z) * (1 - f) + top * f;
-          box(B.rock, MT.stone, 0xa8926e, px - 2.4, px + 2.4, py - 1.4, py + .25, pz - 2.4, pz + 2.4); walk.pad(px, pz, 2.6, py + .25) }
-        sign('ROMAN RAMP', a0.x + 2, H(a0.x, a0.z) + 3.4, a0.z - 3, 0, 3.4, '#ffd84a', true) }
-      /* cable car station (east foot) + cable */
-      { const cx0 = mx + MASADA.r + 10, cz0 = mz + 4, cy0 = H(cx0, cz0);
-        box(B.build, MT.shiny, 0x8a8a92, cx0 - 3, cx0 + 3, cy0, cy0 + 4, cz0 - 3, cz0 + 3); solid(cx0 - 3, cx0 + 3, cz0 - 3, cz0 + 3);
-        box(B.build, MT.v, 0xb04a3a, cx0 - 3.4, cx0 + 3.4, cy0 + 4, cy0 + 4.6, cz0 - 3.4, cz0 + 3.4);
-        const cable = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(cx0, cy0 + 4.4, cz0), new THREE.Vector3(mx, top + 4, mz)]), new THREE.LineBasicMaterial({ color: 0x3a3a3a })); grp.add(cable);
-        sign('CABLE CAR', cx0, cy0 + 6, cz0, Math.PI / 2, 3.6, '#9ad8ff', true);
-        ctx.T.push({ x: cx0, z: cz0 + 4, r: 3, label: () => tr('Cable car up Masada (10)', 'Teleférico a Masada (10)'), fn: () => { if (!AV.txn(-10, 'Cable car')) return; AV.audio && AV.audio.blip(392, .4, 'sine', .1); AV.fadeTo(1, 400); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, mx, mz - 6); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || top; P.vx = P.vz = 0; S.time += 8; AV.fadeTo(0, 600); AV.toast(tr('The cabin sways up the cliff. Herod’s terraces unfold below.', 'La cabina se balancea subiendo el acantilado. Las terrazas de Herodes se abren abajo.')) }, 900) } }) }
-      /* summit view sign + viewpoint bonus */
-      sign('MASADA · גן לאומי', mx, top + 6, mz, 0, 5.4, '#ffd84a', true);
-      ctx.T.push({ x: mx + 4, z: mz - 4, r: 6, label: () => tr('Look out over the Dead Sea', 'Mirar el Mar Muerto'), fn: () => { AV.P.yaw = Math.atan2(-(SHORE + 30 - AV.P.x), -(20 - AV.P.z)); AV.P.pitch = -.18; AV.vitals && AV.vitals.add(0, 10); AV.toast(tr('The sea gleams 430 metres below. Blue salt, white shore, haze over Jordan.', 'El mar brilla 430 metros más abajo. Sal azul, orilla blanca y bruma sobre Jordania.')) } }) }
-    /* the dirt track up the east side (walkable ramp) */
-    { const y0 = H(MASADA.x + MASADA.r + 8, MASADA.z + 8), y1 = MASADA.h + 2; for (let i = 0; i <= 34; i++) { const f = i / 34, px = MASADA.x + MASADA.r + 8 - f * (MASADA.r + 4), pz = MASADA.z + 8 - f * 10, py = y0 * (1 - f) + y1 * f; walk.pad(px, pz, 3, py + .2) } }
+    const TOP = MASADA.h + 2;
+    { const mx = MASADA.x, mz = MASADA.z;
+      for (let k = 0; k < 22; k++) { const a = k / 22 * TAU, px = mx + Math.cos(a) * (MASADA.r + 6), pz = mz + Math.sin(a) * (MASADA.r + 6); if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .35 || Math.abs(a) < .3 || Math.abs(a - TAU) < .3) continue; B.rock.add(rockM, BG.ico, 0xb4906a, M(px, H(px, pz) - 2, pz, 6, 9 + rng() * 4, 6, rng(), rng() * 3, rng())) }
+      /* casemate wall around the rim (low), Herod's northern terraces, storerooms, cistern */
+      for (let k = 0; k < 40; k++) { const a = k / 40 * TAU; if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .25 || Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < .25) continue; const px = mx + Math.cos(a) * (MASADA.r - 1.5), pz = mz + Math.sin(a) * (MASADA.r - 1.5); B.build.add(MT.stone, BG.box, 0xc8b490, M(px, TOP + .5, pz, 3.6, 1, .8, 0, -a + Math.PI / 2, 0)) }
+      for (let t = 0; t < 3; t++) box(B.build, MT.stucco, 0xd8ccb2, mx - 9 + t * 1.5, mx + 9 - t * 1.5, TOP, TOP + 1.2 + t * .8, mz - MASADA.r + 5 + t * 3, mz - MASADA.r + 7 + t * 3);
+      for (let k = 0; k < 6; k++) B.build.add(MT.v, A.geo('cyl'), 0xe8dfc8, M(mx - 7.5 + k * 3, TOP + 1.3, mz - MASADA.r + 9.5, .35, 2.6, .35));
+      for (let k = 0; k < 4; k++) { box(B.build, MT.stone, 0xb8a480, mx + 4 + k * 3.4, mx + 6.4 + k * 3.4, TOP, TOP + 2.2, mz - 4, mz + 8); solid(mx + 4 + k * 3.4, mx + 6.4 + k * 3.4, mz - 4, mz + 8) }   // storerooms
+      box(B.build, MT.stone, 0x6a5a44, mx - 12, mx - 5, TOP - .02, TOP + .1, mz + 6, mz + 12);   // cistern mouth (dark)
+      /* Roman ramp on the west (walkable: many shallow steps) */
+      { const a0 = [mx - MASADA.r - 16, mz - 4], a1 = [mx - MASADA.r + 2, mz], y0 = H(a0[0], a0[1]), n = 40;
+        for (let i = 0; i <= n; i++) { const f = i / n, px = a0[0] + (a1[0] - a0[0]) * f, pz = a0[1] + (a1[1] - a0[1]) * f, py = y0 + (TOP - y0) * f; walk.pad(px, pz, 2.8, py + .05); if (i % 3 === 0) box(B.rock, MT.stone, 0xa8926e, px - 2.4, px + 2.4, py - 2, py + .05, pz - 2.4, pz + 2.4) }
+        ctx.sign('ROMAN RAMP', a0[0] + 2, y0 + 3.2, a0[1] - 3.4, -Math.PI / 2, 3.2, '#ffd84a', { posts: true }) }
+      /* cable car: lower station, cable, upper station */
+      { const cx0 = mx + MASADA.r + 12, cz0 = mz + 2, cy0 = H(cx0, cz0);
+        box(B.build, MT.shiny, 0x8a8a92, cx0 - 3, cx0 + 3, cy0 - .5, cy0 + 4, cz0 - 3, cz0 + 3); solid(cx0 - 3, cx0 + 3, cz0 - 3, cz0 + 3); box(B.build, MT.v, 0xb04a3a, cx0 - 3.4, cx0 + 3.4, cy0 + 4, cy0 + 4.6, cz0 - 3.4, cz0 + 3.4);
+        box(B.build, MT.shiny, 0x8a8a92, mx + MASADA.r - 6, mx + MASADA.r - 2, TOP, TOP + 3, mz - 2, mz + 6);
+        const cable = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(cx0, cy0 + 4.4, cz0), new THREE.Vector3(mx + MASADA.r - 4, TOP + 3, mz + 2)]), new THREE.LineBasicMaterial({ color: 0x3a3a3a })); grp.add(cable);
+        const cab = new THREE.Mesh(BG.box, AV.std(0xd8402a, .5)); cab.scale.set(2, 1.8, 2.4); grp.add(cab);
+        ctx.upd.push((dt, t) => { const f = .5 + .5 * Math.sin(t * .12); cab.position.set(cx0 + (mx + MASADA.r - 4 - cx0) * f, cy0 + 3.4 + (TOP + 2 - cy0 - 3.4) * f, cz0 + (mz + 2 - cz0) * f) });
+        ctx.sign('CABLE CAR · רכבל', cx0, cy0 + 6.2, cz0 + 3.4, 0, 3.6, '#9ad8ff') }
+      ctx.sign('MASADA', mx, TOP + 4.4, mz + 4, Math.PI, 4.2, '#ffd84a', { posts: true }) }
+    walk.pad(MASADA.x, MASADA.z, MASADA.r - .5, TOP);
+    /* the cliffs: a ring of colliders at the foot, open only where the Roman ramp climbs (west) */
+    for (let k = 0; k < 72; k++) { const a = k / 72 * TAU; if (Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < .2) continue; ctx.circles.push([MASADA.x + Math.cos(a) * (MASADA.r + 5), MASADA.z + Math.sin(a) * (MASADA.r + 5), 1.9]) }
+    const UPPER = [MASADA.x + 12, MASADA.z - 8];   // where the cable car lets you off on the summit
 
-    /* ---------- Qumran caves ---------- */
+    /* ---------- Qumran cave ---------- */
     { const cx0 = CAVES.x, cz0 = CAVES.z, cy0 = H(cx0, cz0);
-      /* cliff face behind */
-      for (let k = 0; k < 5; k++) B.rock.add(rockM, BG.ico, 0xb4906a, M(cx0 - 6 - k * 5, cy0 + 6 + k * 3, cz0 + (rng() - .5) * 30, 8 + rng() * 5, 8 + rng() * 6, 8 + rng() * 4, rng(), rng() * 3, rng()));
-      /* the open cave: mouth + shelves */
-      box(B.rock, rockM, 0xa58460, cx0 - 5, cx0 + 5, cy0, cy0 + 5, cz0 - 5, cz0 - 2); solid(cx0 - 5, cx0 + 5, cz0 - 5, cz0 - 2);
-      box(B.rock, MT.stone, 0x4a3826, cx0 - 3.4, cx0 + 3.4, cy0 + .2, cy0 + 3.6, cz0 - 2.2, cz0 + 2.6, 0);
-      for (let k = 0; k < 3; k++) { box(B.decor, MT.wood, 0x6a4a2a, cx0 - 2.6 + k * 2.6, cx0 - 1.4 + k * 2.6, cy0 + .6 + k * .5, cy0 + .8 + k * .5, cz0 + .4, cz0 + 1.4); /* clay jars */ B.decor.add(MT.v, A.geo('cyl'), 0xa87a4a, M(cx0 - 2 + k * 2.6, cy0 + 1.1 + k * .5, cz0 + .9, .18, .5, .18, 0, 0, 0)); B.decor.add(MT.v, BG.sph, 0x8a6030, M(cx0 - 2 + k * 2.6, cy0 + 1.44 + k * .5, cz0 + .9, .2, .14, .2)) }
-      walk.pad(cx0, cz0 + 1, 3, cy0 + .2);
-      sign('QUMRAN CAVES · Dead Sea Scrolls', cx0, cy0 + 6.4, cz0 + 6, 0, 5.4, '#e8d890', true);
-      /* the path marker to the caves */
-      sign('CAVES →', cx0 + 12, cy0 + 2.6, cz0 + 14, 0, 2.6, '#ffd84a', true) }
+      for (let k = 0; k < 5; k++) B.rock.add(rockM, BG.ico, 0xb4906a, M(cx0 - 4 + k * 4 - 8, cy0 + 6 + k, cz0 - 9 - k * 2, 9, 9 + k, 8, rng(), rng() * 3, rng()));
+      box(B.rock, rockM, 0xa58460, cx0 - 6, cx0 + 6, cy0 - 1, cy0 + 6, cz0 - 7, cz0 - 2); solid(cx0 - 6, cx0 + 6, cz0 - 7, cz0 - 2);
+      box(B.rock, MT.v, 0x2a2016, cx0 - 2.6, cx0 + 2.6, cy0, cy0 + 3.4, cz0 - 1.98, cz0 - 1.94);   // the dark cave mouth
+      for (let k = 0; k < 3; k++) { B.decor.add(MT.v, A.geo('cyl'), 0xa87a4a, M(cx0 + 3.5 + k * .8, cy0 + .45, cz0 - .8, .22, .9, .22)); B.decor.add(MT.v, BG.sph, 0x8a6030, M(cx0 + 3.5 + k * .8, cy0 + .95, cz0 - .8, .24, .14, .24)) }   // clay jars
+      ctx.sign('QUMRAN · Dead Sea Scrolls cave', cx0, cy0 + 5, cz0 + 4, 0, 4.6, '#e8d890', { posts: true }) }
 
     /* ---------- Bedouin camp ---------- */
-    { const cx0 = CAMP.x, cz0 = CAMP.z, cy0 = H(cx0, cz0);
-      /* goat-hair tents: low dark ridged tents */
-      for (const [tx0, tz0, ry] of [[cx0 - 5, cz0 - 3, .3], [cx0 + 6, cz0 + 2, -.5], [cx0 - 1, cz0 + 8, 1.2]]) {
-        const ty0 = H(tx0, tz0), L = 8, W2 = 5, Hh = 2.6;
-        const tent = new THREE.Mesh(new THREE.CylinderGeometry(0, W2 * .72, Hh, 4, 1), K.floraMat(0, { rough: .95, flat: true }));
-        tent.material.color.setHex(0x3a3228); tent.position.set(tx0, ty0 + Hh / 2, tz0); tent.rotation.y = ry; tent.scale.set(1, 1, 1.35); tent.castShadow = q === 2; grp.add(tent);
-        box(B.camp, MT.wood, 0x5a4a34, tx0 - 2, tx0 + 2, ty0, ty0 + 2.2, tz0 + 1, tz0 + 1.4);   // entrance flap gap marker
-        walk.pad(tx0, tz0 + 1.6, 2.6, ty0 + .25); solid(tx0 - W2 * .6, tx0 + W2 * .6, tz0 - 2.4, tz0 + .6);
-      }
-      /* campfire + kettle */
-      const fx = cx0 + 1, fz = cz0 - 6, fy = H(fx, fz);
-      for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; B.camp.add(MT.stone, BG.ico, 0x8a7a62, M(fx + Math.cos(a) * 1, fy + .15, fz + Math.sin(a) * 1, .3, .25, .3)) }
-      { const fire = new THREE.Group(); fire.position.set(fx, fy + .3, fz); grp.add(fire);
-        for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(BG.sph, new THREE.MeshBasicMaterial({ color: [0xff8a2a, 0xffd23a, 0xff5a1a][k] })); m.scale.set(.18 - k * .04, .3 - k * .07, .18 - k * .04); fire.add(m) }
-        ctx.upd.push((dt, t) => { fire.visible = true; fire.children.forEach((m, k) => { const a = t * 3 + k * 2.1; m.position.set(Math.sin(a) * .1, .3 + Math.abs(Math.sin(a * 1.3)) * .5, Math.cos(a * .8) * .1); m.scale.y = (.3 - k * .07) * (1 + Math.sin(t * 7 + k) * .2) }) }) }
-      B.camp.add(MT.v, A.geo('cyl'), 0x2a2a26, M(fx + .3, fy + .8, fz, .18, .4, .18)); B.camp.add(MT.v, A.geo('cyl'), 0x6a5a3a, M(fx + .3, fy + 1.06, fz, .1, .1, .1));
-      K.motes(ctx, { n: 26, x: fx, z: fz, r: 2.4, y0: fy + .3, y1: fy + 2.6, cols: [0xffb060, 0xffd890], size: 2.2 });
-      /* rugs + cushions + low tables */
-      for (const [rx, rz, col] of [[cx0 - 2, cz0 + 1, 0x8a2a3a], [cx0 + 3, cz0 + 3, 0x2a5a6a]]) { const ry0 = H(rx, rz); box(B.camp, MT.v, col, rx - 1.4, rx + 1.4, ry0 + .04, ry0 + .1, rz - 1, rz + 1) }
-      for (const [rx, rz] of [[cx0 - 3, cz0 + 2], [cx0 + 2, cz0 + 4], [cx0, cz0 + 6]]) B.camp.add(MT.v, BG.sph, [0xd84a8a, 0x4ac8c8, 0xffd84a][Math.abs(rx) % 3], M(rx, H(rx, rz) + .28, rz, .5, .32, .5));
-      /* the saddled camel (Zahra) + a stray */
-      const mkCamel = (x, z, saddled) => { const y = H(x, z), g = new THREE.Group(); g.position.set(x, y, z); grp.add(g);
-        const body = [[BG.sph, 0xb08a5a, M(0, 1.5, 0, .9, .7, 1.7)], [BG.sph, 0xb08a5a, M(0, 2.15, .3, .55, .45, .7)], [BG.sph, 0xb08a5a, M(0, 2.15, -.35, .5, .4, .65)], [BG.cyl, 0xa87f50, M(0, 1.9, 1.6, .3, 1, .3, 1, 0, 0)], [BG.sph, 0xa87f50, M(0, 2.5, 2.05, .35, .38, .5)], [BG.sph, 0x2a1a10, M(0, 2.62, 2.32, .09, .07, .09)]];
-        for (const [lx, lz] of [[-.55, 1.05], [.55, 1.05], [-.55, -.95], [.55, -.95]]) body.push([BG.cyl, 0xa87f50, M(lx, .75, lz, .14, 1.5, .14)]);
-        body.push([BG.cyl, 0xa87f50, M(0, 2.5, 1.75, .12, .12, .12, 0, 0, 0)]);
-        const bm = new THREE.Mesh(K.merge(body), K.floraMat(0, { rough: .9 })); bm.castShadow = q === 2; g.add(bm);
-        const tail = new THREE.Mesh(K.merge([[BG.cyl, 0xa87f50, M(0, -.2, -.1, .06, .5, .06, -.4)]]), bm.material); tail.position.set(0, 1.9, -1.6); g.add(tail);
-        if (saddled) { const red = K.floraMat(0, { rough: .7 }); const s1 = new THREE.Mesh(K.merge([[BG.box, 0xc83a2a, M(0, 0, 0, .9, .18, 1.3)], [BG.box, 0xc83a2a, M(.62, .28, 0, .08, .3, 1)], [BG.box, 0xc83a2a, M(-.62, .28, 0, .08, .3, 1)], [BG.sph, 0xffd23a, M(0, .45, -.55, .1, .18, .1), .6]]), red); s1.position.set(0, 2.15, 0); g.add(s1); g.userData.tassel = s1 }
-        g.userData.home = [x, z]; return g };
-      const zahra = mkCamel(cx0 + 9, cz0 - 9, true); ctx.circles.push([cx0 + 9, cz0 - 9, 1.2]);
-      const camelHome = mkCamel(cx0 - 8, cz0 - 10, false); ctx.circles.push([cx0 - 8, cz0 - 10, 1.2]);
-      /* camels wander a little */
-      ctx.upd.push((dt, t) => { for (const c of [zahra, camelHome]) { const hm = c.userData.home; c.position.x = hm[0] + Math.sin(t * .07 + hm[0]) * 2.2; c.position.z = hm[1] + Math.cos(t * .05 + hm[1]) * 1.6 } });
-      sign('BEDOUIN CAMP · مرحبا', cx0, H(cx0, cz0) + 4.4, cz0 - 12, 0, 4.6, '#ffd08a', true);
-      /* camel ride + tea interactions */
-      ctx.T.push({ x: cx0 + 9, z: cz0 - 9, r: 2.6, label: () => tr('Ride the camel (15)', 'Montar en la camella (15)'), fn: () => { if (!AV.txn(-15, 'Camel ride')) return; AV.toast(tr('Zahra stands up rear legs first. You lean back and hold on. The desert rolls by at camel speed — which is its own kind of perfect.', 'Zahra se levanta primero con las traseras. Te echas hacia atrás y te agarras. El desierto pasa a velocidad de camella: una clase de perfección.')); S.time += 15; AV.dlg && AV.dlg.event('camel_ride'); AV.vitals && AV.vitals.add(0, 8) } });
-      ctx.T.push({ x: fx, z: fz + 1.4, r: 2.6, label: () => tr('Salem’s fire: drink sage tea (free)', 'Fuego de Salem: té de salvia (gratis)'), fn: () => { if (AV.bag) AV.bag.add('sage_tea', 1, true); else S.items.sage_tea = (S.items.sage_tea || 0) + 1; AV.toast(tr('Salem pours tea from a height, the way it must be poured. Sweet, hot, with desert sage.', 'Salem sirve el té desde lo alto, como hay que servirlo. Dulce, caliente y con salvia del desierto.')); AV.audio && AV.audio.blip(523, .3, 'sine', .1) } }) }
+    const tentM = K.floraMat(0, { rough: .95, flat: true });
+    { const cx0 = CAMP.x, cz0 = CAMP.z;
+      for (const [tx, tz, ry] of [[cx0 - 6, cz0 - 2, .25], [cx0 + 7, cz0 + 1, -.4], [cx0, cz0 + 11, 0]]) { const ty = H(tx, tz);
+        B.camp.add(tentM, new THREE.CylinderGeometry(0, 3.6, 2.6, 4, 1).rotateY(Math.PI / 4), 0x3a3228, M(tx, ty + 1.3, tz, 1.5, 1, 1, 0, ry, 0)); for (const s of [-1, 1]) B.camp.add(MT.wood, A.geo('cyl'), 0x5a4a34, M(tx + s * 2.5, ty + 1.4, tz, .06, 2.8, .06)); solid(tx - 3.4, tx + 3.4, tz - 2.4, tz + 2.4) }
+      const fx = cx0 + 1, fz = cz0 - 7, fy = H(fx, fz);
+      for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; B.camp.add(MT.stone, BG.ico, 0x8a7a62, M(fx + Math.cos(a), fy + .15, fz + Math.sin(a), .3, .25, .3)) } ctx.circles.push([fx, fz, 1.2]);
+      const fire = new THREE.Group(); fire.position.set(fx, fy + .3, fz); grp.add(fire);
+      for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(BG.sph, new THREE.MeshBasicMaterial({ color: [0xff8a2a, 0xffd23a, 0xff5a1a][k] })); m.material.userData.lin = 1; m.scale.set(.18 - k * .04, .3 - k * .07, .18 - k * .04); fire.add(m) }
+      ctx.upd.push((dt, t) => fire.children.forEach((m, k) => { const a = t * 3 + k * 2.1; m.position.set(Math.sin(a) * .1, .3 + Math.abs(Math.sin(a * 1.3)) * .5, Math.cos(a * .8) * .1) }));
+      K.motes(ctx, { n: 24, x: fx, z: fz, r: 2.2, y0: fy + .3, y1: fy + 2.6, cols: [0xffb060, 0xffd890], size: 2.2 });
+      B.camp.add(MT.v, A.geo('cyl'), 0x2a2a26, M(fx + .3, fy + .8, fz, .18, .4, .18));
+      for (const [rx, rz, col] of [[cx0 - 2, cz0 + 4, 0x8a2a3a], [cx0 + 4, cz0 + 5, 0x2a5a6a]]) { const ry0 = H(rx, rz); box(B.camp, MT.v, col, rx - 1.4, rx + 1.4, ry0 + .03, ry0 + .09, rz - 1, rz + 1) }
+      ctx.sign('BEDOUIN CAMP · أهلا وسهلا', cx0 - 10, H(cx0 - 10, cz0 - 10) + 3.6, cz0 - 10, Math.PI, 4.4, '#ffd08a', { posts: true }) }
+    /* camels (merged mesh; Zahra wears the red saddle) */
+    const camelGeo = saddled => { const p = [[BG.sph, 0xb08a5a, M(0, 1.5, 0, .9, .7, 1.7)], [BG.sph, 0xb08a5a, M(0, 2.15, .3, .55, .45, .7)], [BG.sph, 0xb08a5a, M(0, 2.15, -.35, .5, .4, .65)], [BG.cyl, 0xa87f50, M(0, 1.9, 1.6, .3, 1, .3, 1, 0, 0)], [BG.sph, 0xa87f50, M(0, 2.5, 2.05, .35, .38, .5)], [BG.sph, 0x2a1a10, M(0, 2.62, 2.32, .09, .07, .09)]];
+      for (const [lx, lz] of [[-.55, 1.05], [.55, 1.05], [-.55, -.95], [.55, -.95]]) p.push([BG.cyl, 0xa87f50, M(lx, .75, lz, .14, 1.5, .14)]);
+      if (saddled) p.push([BG.box, 0xc83a2a, M(0, 2.3, 0, .9, .18, 1.3)], [BG.sph, 0xffd23a, M(0, 2.6, -.55, .1, .18, .1), .6]);
+      return K.merge(p) };
+    const camelM = K.floraMat(0, { rough: .9 }), camels = [];
+    const mkCamel = (x, z, saddled, ry) => { const m = new THREE.Mesh(camelGeo(saddled), camelM); m.position.set(x, H(x, z), z); m.rotation.y = ry || 0; m.castShadow = q === 2; grp.add(m); camels.push({ m, home: [x, z] }); return m };
+    const rideCamel = mkCamel(CAMP.x + 10, CAMP.z - 8, true, -.6); ctx.circles.push([CAMP.x + 10, CAMP.z - 8, 1.3]);
+    mkCamel(CAMP.x - 9, CAMP.z - 9, false, .8); ctx.circles.push([CAMP.x - 9, CAMP.z - 9, 1.3]);
+    const zahra = mkCamel(ZAHRA.x, ZAHRA.z, true, Math.PI);
+    ctx.upd.push((dt, t) => { for (const c of camels) { if (c.m === zahra) continue; c.m.rotation.y += Math.sin(t * .3 + c.home[0]) * .002 } const lost = (S.quests || {}).jd_camel === 'active' && !S.jd.camelHome; zahra.visible = lost; if (lost) zahra.position.y = H(ZAHRA.x, ZAHRA.z) + Math.sin(t * 1.4) * .03 });
 
     /* ---------- desert patrol outpost ---------- */
     { const px0 = POST.x, pz0 = POST.z, py0 = H(px0, pz0);
-      /* concrete hut + shade netting */
-      box(B.build, MT.stucco, 0xcabf9e, px0 - 4, px0 + 4, py0, py0 + 3.4, pz0 - 3, pz0 + 3); solid(px0 - 4, px0 + 4, pz0 - 3, pz0 + 3);
-      box(B.build, MT.v, 0x8a9aa8, px0 - 4.4, px0 + 4.4, py0 + 3.4, py0 + 4, pz0 - 3.4, pz0 + 3.4);
-      for (const [cx2, cz2] of [[px0 - 5, pz0 + 5], [px0 + 5, pz0 + 5]]) { B.build.add(MT.v, A.geo('cyl'), 0x6a6a62, M(cx2, py0 + 1.5, cz2, .1, 3, .1)); ctx.circles.push([cx2, cz2, .2]) }
-      box(B.build, MT.dbl, 0x8a9aa8, px0 - 6, px0 + 6, py0 + 2.9, py0 + 3.1, pz0 + 4, pz0 + 6.4);
-      /* sandbags + antenna + water jerrycans (empty, hence the mission!) */
-      for (let k = 0; k < 8; k++) box(B.decor, MT.v, 0xa89a72, px0 - 4.8 + k * 1.2, px0 - 3.9 + k * 1.2, py0, py0 + .5, pz0 + 4, pz0 + 4.8);
-      B.build.add(MT.v, A.geo('cyl'), 0x8a8a84, M(px0 + 3.4, py0 + 5, pz0 - 2, .04, 6, .04)); ctx.circles.push([px0 + 3.4, pz0 - 2, .2]);
-      for (let k = 0; k < 3; k++) B.decor.add(MT.v, A.geo('cyl'), 0x5a6a3a, M(px0 - 3 + k * .8, py0 + .3, pz0 - 4.4, .3, .6, .3));
-      /* the patrol jeep */
-      { const j = new THREE.Mesh(CY && CY.VB && CY.VB.jeep ? CY.VB.jeep(0xb8a27a) : BG.box, K.floraMat(0, { rough: .5 })); j.position.set(px0 + 8, H(px0 + 8, pz0 + 4), pz0 + 4); j.rotation.y = -.6; j.castShadow = q === 2; grp.add(j); ctx.cols.push([px0 + 6.6, px0 + 9.8, pz0 + 2.4, pz0 + 5.6]) }
-      sign('DESERT PATROL OUTPOST', px0, py0 + 5.6, pz0 - 3.6, 0, 4.8, '#e8d08a', true) }
+      box(B.build, MT.stucco, 0xcabf9e, px0 - 4, px0 + 4, py0 - .5, py0 + 3.4, pz0 - 3, pz0 + 3); solid(px0 - 4, px0 + 4, pz0 - 3, pz0 + 3); box(B.build, MT.v, 0x8a9aa8, px0 - 4.4, px0 + 4.4, py0 + 3.4, py0 + 3.8, pz0 - 3.4, pz0 + 3.4);
+      box(B.build, MT.dbl, 0x7a8a6a, px0 - 6, px0 + 6, py0 + 2.9, py0 + 3.05, pz0 + 3.2, pz0 + 6.4); for (const s of [-1, 1]) { B.build.add(MT.v, A.geo('cyl'), 0x6a6a62, M(px0 + s * 5.6, py0 + 1.5, pz0 + 6, .1, 3, .1)); ctx.circles.push([px0 + s * 5.6, pz0 + 6, .2]) }
+      for (let k = 0; k < 7; k++) box(B.decor, MT.v, 0xa89a72, px0 - 4.2 + k * 1.2, px0 - 3.3 + k * 1.2, py0 - .1, py0 + .5, pz0 - 4.6, pz0 - 3.8); ctx.cols.push([px0 - 4.2, px0 + 4.2, pz0 - 4.6, pz0 - 3.8]);
+      B.build.add(MT.v, A.geo('cyl'), 0x8a8a84, M(px0 + 3.4, py0 + 6, pz0 - 2, .05, 6, .05));
+      for (let k = 0; k < 3; k++) B.decor.add(MT.v, A.geo('cyl'), 0x5a6a3a, M(px0 - 6 + k * .7, H(px0 - 6, pz0) + .3, pz0 + 1, .26, .6, .26));
+      const jx = px0 + 9, jz = pz0 + 2, j = new THREE.Mesh(CY.VB.jeep(0xb8a27a), K.floraMat(0, { rough: .5 })); j.position.set(jx, H(jx, jz), jz); j.rotation.y = -.5; j.castShadow = q === 2; grp.add(j); solid(jx - 1.8, jx + 1.8, jz - 2.6, jz + 2.6);
+      ctx.sign('DESERT PATROL · OUTPOST 12', px0, py0 + 5.2, pz0 - 3.6, Math.PI, 4.6, '#e8d08a', { posts: true }) }
 
-    /* ---------- beach kiosk + umbrellas + mud tubs ---------- */
+    /* ---------- beach: kiosk, umbrellas, mud tubs ---------- */
     { const kx = KIOSK.x, kz = KIOSK.z, ky = H(kx, kz);
-      box(B.build, MT.shiny, 0x2a8a8a, kx - 2.6, kx + 2.6, ky, ky + 2.6, kz - 2, kz + 2); solid(kx - 2.6, kx + 2.6, kz - 2, kz + 2);
-      box(B.build, MT.roof, 0xe8e4d4, kx - 3.2, kx + 3.2, ky + 2.6, ky + 3.2, kz - 2.6, kz + 2.6);
-      B.night.add(MT.v, BG.box, 0xfff0c0, M(kx, ky + 1.6, kz + 2.05, 2.2, .8, .1), .8);
-      sign('DEAD SEA KIOSK', kx, ky + 4.6, kz, Math.PI, 4.2, '#7ff0ff', true);
-      /* umbrellas + chairs along the shore */
-      for (let k = 0; k < 6; k++) { const ux = SHORE + 3 + (k % 2) * 5, uz = -30 + k * 14, uy = H(ux, uz);
-        B.decor.add(MT.v, A.geo('cyl'), 0xc0c0c0, M(ux, uy + 1.1, uz, .04, 2.2, .04)); B.decor.add(MT.dbl, A.geo('halfDome'), [0xff4ad2, 0xffd84a, 0x3ad8ff, 0x7aff8a, 0xff8a3a, 0x4ac8ff][k % 6], M(ux, uy + 2.2, uz, 1.5, .5, 1.5), .12); ctx.circles.push([ux, uz, .25]);
-        B.decor.add(MT.v, BG.box, 0xf4f0e8, M(ux + 1.6, uy + .25, uz, .6, .5, .6)) }
-      /* mud tubs */
-      for (let k = 0; k < 2; k++) { const tx0 = SHORE + 12, tz0 = 8 + k * 6, ty0 = H(tx0, tz0); B.decor.add(MT.v, new THREE.CylinderGeometry(1.4, 1.1, 1, 12), 0x8a6a4a, M(tx0, ty0 + .5, tz0)); B.decor.add(MT.v, new THREE.CylinderGeometry(1.2, 1.2, .15, 12), 0x3a2e24, M(tx0, ty0 + .95, tz0)); ctx.circles.push([tx0, tz0, 1.5]);
-        ctx.T.push({ x: tx0, z: tz0, r: 2, label: () => tr('Dead Sea mud bath', 'Baño de barro del Mar Muerto'), fn: () => { if (!S.jd.mud) { S.jd.mud = true; AV.vitals && AV.vitals.add(0, 8) } AV.toast(tr('You smear the famous black mineral mud over your arms. Your skin feels ten years younger and you look like a very relaxed statue.', 'Te untas el famoso barro negro mineral por los brazos. La piel se siente diez años más joven y pareces una estatua muy relajada.')) } }) } }
-
+      box(B.build, MT.shiny, 0x2a8a8a, kx - 2.6, kx + 2.6, ky - .3, ky + 2.6, kz - 2, kz + 2); solid(kx - 2.6, kx + 2.6, kz - 2, kz + 2); box(B.build, MT.roof, 0xe8e4d4, kx - 3.2, kx + 3.2, ky + 2.6, ky + 3.1, kz - 2.6, kz + 2.6);
+      NIGHT.add(MT.v, BG.box, 0xfff0c0, M(kx - 2.65, ky + 1.5, kz, .1, .8, 2.4), 1); ctx.sign('DEAD SEA KIOSK', kx, ky + 4.4, kz, -Math.PI / 2, 3.8, '#7ff0ff');
+      for (let k = 0; k < 7; k++) { const ux = SHORE - 6 + (k % 2) * 4, uz = -36 + k * 12, uy = H(ux, uz); B.decor.add(MT.v, A.geo('cyl'), 0xc0c0c0, M(ux, uy + 1.1, uz, .04, 2.2, .04)); B.decor.add(MT.dbl, A.geo('halfDome'), [0xff4ad2, 0xffd84a, 0x3ad8ff, 0x7aff8a, 0xff8a3a][k % 5], M(ux, uy + 2.2, uz, 1.5, .5, 1.5), .1); ctx.circles.push([ux, uz, .25]); B.decor.add(MT.v, BG.box, 0xf4f0e8, M(ux + 1.4, uy + .25, uz, .6, .5, 1.4)) }
+      for (const tz of [2, 8]) { const tx = SHORE - 10, ty = H(tx, tz); B.decor.add(MT.v, new THREE.CylinderGeometry(1.4, 1.1, 1, 12), 0x8a6a4a, M(tx, ty + .5, tz)); B.decor.add(MT.v, new THREE.CylinderGeometry(1.25, 1.25, .1, 12), 0x3a2e24, M(tx, ty + .98, tz)); ctx.circles.push([tx, tz, 1.5]) } }
     /* ---------- Route 90 bus stop + portal ---------- */
-    { const by0 = H(BUS.x, BUS.z); box(B.decor, MT.shiny, 0x2a4ab8, BUS.x - .2, BUS.x + .2, by0, by0 + 3.2, BUS.z - 1.6, BUS.z + 1.6); B.night.add(MT.v, BG.box, 0x3a6aff, M(BUS.x, by0 + 3.6, BUS.z, .3, 1.2, 1.2), 1);
-      sign('BUS 486 · 444 · JERUSALEM', BUS.x - 6, by0 + 4.4, BUS.z - 2, Math.PI / 2, 4.2, '#9ad8ff', true);
-      ctx.T.push({ x: BUS.x, z: BUS.z + 2.6, r: 2.6, label: () => tr('Bus to Jerusalem (8)', 'Autobús a Jerusalén (8)'), fn: () => { if (!AV.txn(-8, 'Bus to Jerusalem')) return; AV.audio && AV.audio.blip(523, .3, 'sine', .1); AV.fadeTo(1, 400); setTimeout(() => { AV.travel('jerusalem', 'pipe') }, 500) } });
-      const portal = new THREE.Group(); portal.position.set(PORTAL.x, H(PORTAL.x, PORTAL.z) + 1.7, PORTAL.z); grp.add(portal);
-      { const ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, .14, 10, 40), new THREE.MeshBasicMaterial({ color: 0xb07aff })); portal.add(ring);
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(1.25, 40), new THREE.MeshBasicMaterial({ color: 0x7a3aff, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false })); portal.add(disc);
-        ctx.upd.push((dt, t) => { ring.rotation.z = t * .8; disc.material.opacity = .35 + Math.sin(t * 2) * .12; disc.material.color.setHSL((t * .05) % 1, .8, .5) }); ctx.circles.push([PORTAL.x, PORTAL.z, 1]) }
-      sign('PORTAL TO APE TOWN', PORTAL.x, H(PORTAL.x, PORTAL.z) + 6.4, PORTAL.z, Math.PI / 2, 4, '#d8a0ff', true) }
+    { const by0 = H(BUS.x, BUS.z); box(B.decor, MT.shiny, 0x2a8a4a, BUS.x - .15, BUS.x + .15, by0, by0 + 3.4, BUS.z - .8, BUS.z + .8); B.decor.add(MT.v, BG.box, 0x2a8a4a, M(BUS.x, by0 + 3.6, BUS.z, .2, .9, 1.6), .6); ctx.circles.push([BUS.x, BUS.z, .4]);
+      box(B.decor, MT.shiny, 0x8a9aa8, BUS.x - 3, BUS.x, by0 + 2.6, by0 + 2.75, BUS.z - 3, BUS.z + 3); ctx.sign('BUS 486 · JERUSALEM · ירושלים', BUS.x - 1, by0 + 4.4, BUS.z - 4, 0, 4.2, '#9ad8ff');
+      const py = H(PORTAL.x, PORTAL.z), portal = new THREE.Group(); portal.position.set(PORTAL.x, py + 1.7, PORTAL.z); portal.rotation.y = Math.PI / 2; grp.add(portal);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, .14, 10, 40), new THREE.MeshBasicMaterial({ color: 0xb07aff })); portal.add(ring);
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(1.25, 40), new THREE.MeshBasicMaterial({ color: 0x7a3aff, transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false })); portal.add(disc);
+      ctx.upd.push((dt, t) => { ring.rotation.z = t * .8; disc.material.opacity = .35 + Math.sin(t * 2) * .12; disc.material.color.setHSL((t * .05) % 1, .8, .5) }); ctx.circles.push([PORTAL.x, PORTAL.z, 1]);
+      ctx.sign('PORTAL TO APE TOWN', PORTAL.x, py + 5.4, PORTAL.z, -Math.PI / 2, 3.6, '#d8a0ff') }
 
-    /* ---------- vegetation: palms, acacia, dry bushes ---------- */
-    const freeV = (x, z, pad) => x > XMIN + 6 && x < XMAX - 6 && z > ZMIN + 6 && z < ZMAX - 6 && roadD(x, z) > (pad || 3) && !occ.some(o => inRect(o, x, z, (pad || 1.5))) && x < SHORE - 2 && Math.hypot(x - CAMP.x, z - CAMP.z) > CAMP.r && Math.hypot(x - POST.x, z - POST.z) > POST.r + 4;
-    const pickV = (n, area, ok, s0, s1) => { const out = []; for (let i = 0, t = 0; i < n && t < n * 30; t++) { const x = area.x0 + rng() * (area.x1 - area.x0), z = area.z0 + rng() * (area.z1 - area.z0); if (!ok(x, z)) continue; out.push({ x, y: H(x, z), z, s: s0 + rng() * (s1 - s0), ry: rng() * TAU }); i++ } return out };
-    /* palm grove at the oasis + a few near the camp */
-    const palms = pickV(K.n(30), { x0: OASIS.x - 16, x1: OASIS.x + 18, z0: OASIS.z - 18, z1: OASIS.z + 18 }, (x, z) => Math.hypot(x - OASIS.x, z - OASIS.z) < OASIS.r && freeV(x, z, 3), 1.6, 2.4)
-      .concat(pickV(6, { x0: CAMP.x - 20, x1: CAMP.x + 20, z0: CAMP.z - 16, z1: CAMP.z + 16 }, (x, z) => freeV(x, z, 3), 1.4, 2));
+    /* ---------- vegetation ---------- */
+    const KEEP = [[BUS.x, BUS.z, 5], [PORTAL.x, PORTAL.z, 5], [KIOSK.x, KIOSK.z, 6], [ZAHRA.x, ZAHRA.z, 5], [CAMP.x, CAMP.z, 18], [POST.x, POST.z, 14], [CAVES.x, CAVES.z + 4, 8]];
+    const freeV = (x, z, pad) => x > XMIN + 8 && x < SHORE - 8 && z > ZMIN + 8 && z < ZMAX - 8 && roadD(x, z) > pad && navDist(x, z) > pad + .5 && !occ.some(o => inRect(o, x, z, pad)) && !KEEP.some(k => Math.hypot(x - k[0], z - k[1]) < k[2]) && Math.hypot(x - MASADA.x, z - MASADA.z) > MASADA.r + 16;
+    const pickV = (n, area, ok, s0, s1) => { const out = []; for (let i = 0, t = 0; i < n && t < n * 40; t++) { const x = area.x0 + rng() * (area.x1 - area.x0), z = area.z0 + rng() * (area.z1 - area.z0); if (!ok(x, z)) continue; out.push({ x, y: H(x, z), z, s: s0 + rng() * (s1 - s0), ry: rng() * TAU }); i++ } return out };
+    const palms = pickV(K.n(26), { x0: OASIS.x - 18, x1: OASIS.x + 18, z0: OASIS.z - 18, z1: OASIS.z + 18 }, (x, z) => Math.hypot(x - OASIS.x, z - OASIS.z) < OASIS.r && freeV(x, z, 2.6) && Math.hypot(x - OASIS.x, z - OASIS.z) > 6, 1.5, 2.3)
+      .concat(pickV(6, { x0: SHORE - 20, x1: SHORE - 8, z0: -40, z1: 60 }, (x, z) => freeV(x, z, 3), 1.4, 2));
     palms.forEach(p => ctx.circles.push([p.x, p.z, .4]));
     ['palm_a', 'palm_b', 'palm_c'].forEach((k, j) => K.instModel(ctx, 'quaternius/' + k, palms.filter((_, i) => i % 3 === j), it => K.scatter(ctx, K.species.palm(0x8a5a2a, 0x4a9a3a), K.floraMat(.008), it.map(o => Object.assign({}, o, { s: o.s * .55 })), { far: K.far(false), cell: 70 }), { sway: .004, far: K.far(false), cell: 70 }));
-    /* acacia: flat-topped desert trees */
-    const acacia = pickV(K.n(14), { x0: XMIN + 20, x1: SHORE - 10, z0: ZMIN + 20, z1: ZMAX - 20 }, (x, z) => freeV(x, z, 4) && Math.hypot(x - OASIS.x, z - OASIS.z) > OASIS.r + 6, 1.4, 2);
+    const acacia = pickV(K.n(16), { x0: XMIN + 30, x1: SHORE - 12, z0: ZMIN + 20, z1: ZMAX - 20 }, (x, z) => freeV(x, z, 4) && Math.hypot(x - OASIS.x, z - OASIS.z) > OASIS.r + 6, 1.4, 2);
     acacia.forEach(p => ctx.circles.push([p.x, p.z, .5]));
     K.scatter(ctx, K.merge([[BG.cyl, 0x6a5a42, M(0, 1, 0, .18, 2, .18, .1, 0, .08)], [BG.ico, 0x6a7a3a, M(0, 2.6, 0, 1.7, .5, 1.6)], [BG.ico0, 0x5a6a30, M(.8, 2.2, .3, .9, .35, .85)]]), K.floraMat(.005), acacia, { far: K.far(false), cell: 80 });
-    /* dry bushes + desert flowers */
-    K.field(ctx, K.species.bush(0x8a7a4a, 0xd8b860), K.floraMat(.02), K.n(60), { x0: XMIN + 10, x1: SHORE - 6, z0: ZMIN + 10, z1: ZMAX - 10 }, { H, s0: .7, s1: 1.2, shadow: false, cell: 64, ok: (x, z) => freeV(x, z, 2) });
-    K.field(ctx, K.species.flower(0xe86a8a, 0xffd23a), K.floraMat(.08), K.n(30), { x0: OASIS.x - 30, x1: OASIS.x + 30, z0: OASIS.z - 30, z1: OASIS.z + 30 }, { H, s0: .8, s1: 1.3, shadow: false, cell: 48, far: K.far(true), ok: (x, z) => freeV(x, z, 1.6) });
-    /* salt crystals at the shore (pickups handled by AV.PICKUPS) */
-    for (let i = 0; i < 14; i++) { const x = SHORE + 4 + rng() * 5, z = ZMIN + 10 + rng() * (GD - 20), y = H(x, z); if (y > 0) continue; B.decor.add(MT.v, BG.oct, 0xf4f2ea, M(x, y + .3, z, .3 + rng() * .3, .5 + rng() * .5, .3 + rng() * .3, 0, rng() * TAU, 0), .25) }
+    K.field(ctx, K.species.bush(0x8a7a4a, 0xd8b860), K.floraMat(.02), K.n(50), { x0: XMIN + 20, x1: SHORE - 8, z0: ZMIN + 10, z1: ZMAX - 10 }, { H, s0: .6, s1: 1.1, shadow: false, cell: 64, ok: (x, z) => freeV(x, z, 1.6) });
 
-    /* ======================= PEOPLE ======================= */
+    /* ======================= people ======================= */
     const crew = {};
-    const groundAt = (px, pz) => { const p2 = walk.at(px, pz); return p2 === undefined ? H(px, pz) : Math.max(p2, H(px, pz)) };   /* the world's own surface: AV.W is still the previous world during a build */
-    const spawn = (id, body, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body, H: groundAt, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
-    spawn('noa', C.regional.body('soldier', 71), POST.x - 1, POST.z + 5, Math.PI, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking) { u.aR.rotation.x = -.6; u.aL.rotation.x = -.6 + Math.sin(t * .8) * .06 } });
-    spawn('salem', C.regional.body('bedouin', 82), CAMP.x + 1, CAMP.z + 5, Math.PI, (n, dt, t, d, talking) => { const u = n.g.userData; if (!n.path && !talking && d > 6) u.aR.rotation.x = -.5 + Math.sin(t * .7) * .1 });
-    spawn('amir', C.regional.body('guide', 93), MASADA.x + MASADA.r + 10, MASADA.z + 4 + 3, -Math.PI / 2 + .4);
-    spawn('tomer', C.regional.body('student', 104), CAVES.x + 1, CAVES.z + 3, Math.PI);
-    /* the lost hiker sits in the shade of the cave until found */
-    const sitPose = (n, t, d) => { const u = n.g.userData; if (n.seat && !n.path && Math.hypot(n.g.position.x - n.seat.x, n.g.position.z - n.seat.z) < .4) { u.lL.rotation.x = u.lR.rotation.x = -1.45; n.g.position.y = groundAt(n.g.position.x, n.g.position.z) - .33 } };
-    crew.tomer.seat = { x: CAVES.x + 1, z: CAVES.z + 3, yaw: Math.PI };
-    /* interactions */
+    const spawn = (id, role, seed, x, z, yaw, anim) => { const n = AV.npc.spawn(ctx, id, { x, z, yaw, body: C.regional.body(role, seed), H: SURF, r: 2.6, anim, speed: 1.2 }); n.tag.position.y = 2.25; n.bub.position.y = 2.95; crew[id] = n; return n };
+    spawn('noa', 'soldier', 71, POST.x - 1, POST.z + 5, 0);
+    spawn('salem', 'bedouin', 82, CAMP.x + 1, CAMP.z - 4.5, Math.PI);
+    spawn('amir', 'guide', 93, MASADA.x + MASADA.r + 14, MASADA.z + 6, -Math.PI / 2);
+    const tomer = spawn('tomer', 'student', 104, CAVES.x - 2, CAVES.z + 2.4, 0, n => { if (S.jd.hikerFound) { if (!n.stood) { n.stood = true; n.g.position.y = SURF(n.g.position.x, n.g.position.z) } return } const u = n.g.userData; u.lL.rotation.x = u.lR.rotation.x = -1.45; n.g.position.y = SURF(n.g.position.x, n.g.position.z) - .33 });
+    /* soft-body residents (priority order: Low gets the first few) */
+    const HOT = [['soldier', POST.x + 5, POST.z + 7, 'idle', Math.PI], ['pilgrim', KIOSK.x - 7, KIOSK.z + 6, 'wander', 0], ['bedouin', CAMP.x - 4, CAMP.z + 5, 'idle', 0], ['business', SHORE - 9, -18, 'idle', Math.PI / 2],
+      ['soldier', POST.x - 3, POST.z + 8, 'idle', Math.PI], ['student', OASIS.x + 12, OASIS.z + 14, 'wander', 0], ['pilgrim', MASADA.x, MASADA.z - 6, 'wander', 0], ['hijabi', SHORE - 8, 30, 'wander', 0], ['embroidered', CAMP.x + 5, CAMP.z + 6, 'idle', 0]];
+    AV.beings.spawn(ctx, HOT.slice(0, AV.beings.n(ctx, 3, 5, 7)).map(([role, x, z, md2, yaw], i) => C.regional.being(role, x, z, 700 + i * 13, { mode: md2, yaw, y0: SURF(x, z), area: { x, z, r: 6 } })));
+    /* instanced crowd on the tracks */
+    const nodes = [], edges = [];
+    for (const pl of NAVL) { let prev = null; for (const [x, z] of pl) { let id = nodes.findIndex(n => Math.hypot(n[0] - x, n[1] - z) < .8); if (id < 0) { nodes.push([x, z]); id = nodes.length - 1 } if (prev != null && prev !== id) edges.push([prev, id]); prev = id } }
+    const NAV = CY.nav(nodes, edges), crowd = CY.crowd(ctx, { H: SURF });
+    const VLIST = ['tourist', 'soldier', 'keff', 'robe', 'tourist', 'hijab', 'man', 'woman', 'suit'];
+    for (let i = 0; i < [10, 18, 28][q]; i++) { const v = VLIST[i % VLIST.length], n0 = nodes[rng() * nodes.length | 0]; crowd.add({ v, x: n0[0], z: n0[1], nav: NAV, idleProb: .3, cols: C.regional.walkCols(v, rng) || undefined }) }
+    for (let i = 0; i < [3, 5, 8][q]; i++) crowd.add({ v: ['tourist', 'woman', 'man'][i % 3], x: SHORE + 9 + rng() * 14, z: -30 + rng() * 80, yaw: rng() * TAU, mode: 'idle', dy: -.7 });   // floating in the sea
+    crowd.build();
+    /* Route 90 traffic (cars, patrol jeeps, the green bus) */
+    const CARC = [0xf2f2f0, 0xb8bcc0, 0x5a5e62, 0x15171a, 0x1f3e72, 0x9a1a1a];
+    CY.traffic(ctx, [{ pts: ROAD.slice(), off: 2.2, w: 10 }], [{ type: 'car', cols: CARC, n: [2, 3, 5][q], speed: 9 }, { type: 'jeep', col: 0xb8a27a, n: [1, 1, 2][q], speed: 7.5 }, { type: 'bus', col: 0x2a8a4a, n: 1, speed: 6 }], { H, density: () => 1 });
+    CY.birds(ctx, [{ x: OASIS.x, z: OASIS.z, r: 18, y: 20, n: 8 }, { x: MASADA.x, z: MASADA.z, r: 34, y: 46, n: 6 }, { x: SHORE + 30, z: 0, r: 40, y: 16, n: 8 }]);
+
+    /* ---------- interactions ---------- */
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };
-    const buy = (cost, what, msg, item) => { if (!AV.txn(-cost, what)) return false; if (item) { if (AV.bag) AV.bag.add(item, 1, true); else S.items[item] = (S.items[item] || 0) + 1; AV.quests && AV.quests.check(); msg += tr(' → backpack (I)', ' → mochila (I)') } AV.toast(msg); AV.audio && AV.audio.blip(660, .15, 'triangle', .12); return true };
-    /* float in the Dead Sea (buoyancy: the surface check makes you bob up) */
-    const seaT = T(SHORE + 8, 40, 30, () => tr('Float in the Dead Sea', 'Flotar en el Mar Muerto'), () => { const P = AV.P; P.x = SHORE + 12; P.z = P.z; P.y = 0; P.vx = P.vz = 0; S.jd.floated++; AV.quests && AV.quests.check(); AV.toast(tr('You lie back and the water holds you like a hammock. A salty leaf of mineral soup. Don’t splash your eyes!', 'Te tumbas y el agua te sostiene como una hamaca. Una hoja salada de sopa mineral. ¡No salpiques tus ojos!')); AV.vitals && AV.vitals.add(0, 6); AV.dlg && AV.dlg.event('dead_sea_float') });
-    /* kiosk */
-    T(KIOSK.x, KIOSK.z + 2.6, 2.2, () => tr('Kiosk: cold water (5)', 'Quiosco: agua fría (5)'), () => buy(5, 'Kiosk', tr('Ice cold. The best money can buy out here.', 'Hielo. Lo mejor que el dinero puede comprar aquí fuera.'), 'water'));
-    T(KIOSK.x - 3, KIOSK.z + 2.6, 2.2, () => tr('Kiosk: Dead Sea mud (25)', 'Quiosco: barro del Mar Muerto (25)'), () => buy(25, 'Kiosk', tr('The famous black mud, in a pot.', 'El famoso barro negro, en un bote.'), 'dead_sea_mud'));
-    T(KIOSK.x + 3, KIOSK.z + 2.6, 2.2, () => tr('Kiosk: salt crystal (free with a smile)', 'Quiosco: cristal de sal (gratis con una sonrisa)'), () => { if (AV.bag) AV.bag.add('salt_crystal', 1, true); else S.items.salt_crystal = (S.items.salt_crystal || 0) + 1; AV.quests && AV.quests.check(); AV.toast(tr('“Take one, take a photo too.” The kiosk owner grins.', '“Llévate uno y hazte una foto también.” El dueño del quiosco sonríe.')) });
-    /* hiker found (quest) */
-    T(CAVES.x + 1, CAVES.z + 4, 3, () => (S.quests || {}).jd_hiker === 'active' && !S.jd.hikerFound ? tr('Check on the hiker', 'Ver al excursionista') : tr('The Qumran cave', 'La cueva de Qumrán'), () => { if ((S.quests || {}).jd_hiker === 'active' && !S.jd.hikerFound) { S.jd.hikerFound = true; AV.quests && AV.quests.check(); AV.toast(tr('Tomer: “I’m FINE. Mostly. My phone is dead and my dignity is slightly injured. Tell the sergeant?”', 'Tomer: “Estoy BIEN. Casi. El móvil murió y la dignidad está algo herida. ¿Se lo dices a la sargento?”')) } else AV.toast(tr('Clay jars, rock shelves, two thousand years of silence.', 'Vasijas de arcilla, estantes de roca y dos mil años de silencio.')) });
-    /* Zahra found (quest) */
-    let zahraSpot = { x: MASADA.x - MASADA.r - 20, z: MASADA.z - 6 };
-    { const y = 0; const zahra = new THREE.Group(); zahra.position.set(zahraSpot.x, H(zahraSpot.x, zahraSpot.z), zahraSpot.z); grp.add(zahra);
-      const body = [[BG.sph, 0xb08a5a, M(0, 1.5, 0, .9, .7, 1.7)], [BG.sph, 0xb08a5a, M(0, 2.15, .3, .55, .45, .7)], [BG.sph, 0xb08a5a, M(0, 2.15, -.35, .5, .4, .65)], [BG.cyl, 0xa87f50, M(0, 1.9, 1.6, .3, 1, .3, 1, 0, 0)], [BG.sph, 0xa87f50, M(0, 2.5, 2.05, .35, .38, .5)], [BG.sph, 0x2a1a10, M(0, 2.62, 2.32, .09, .07, .09)]];
-      for (const [lx, lz] of [[-.55, 1.05], [.55, 1.05], [-.55, -.95], [.55, -.95]]) body.push([BG.cyl, 0xa87f50, M(lx, .75, lz, .14, 1.5, .14)]);
-      const bm = new THREE.Mesh(K.merge(body), K.floraMat(0, { rough: .9 })); bm.castShadow = q === 2; zahra.add(bm);
-      const s1 = new THREE.Mesh(K.merge([[BG.box, 0xc83a2a, M(0, 0, 0, .9, .18, 1.3)], [BG.sph, 0xffd23a, M(0, .45, -.55, .1, .18, .1), .6]]), K.floraMat(0, { rough: .7 })); s1.position.set(0, 2.15, 0); zahra.add(s1);
-      ctx.upd.push((dt, t) => { zahra.visible = (S.quests || {}).jd_camel === 'active' && !S.jd.camelHome; if (zahra.visible) { zahra.position.y = H(zahra.position.x, zahra.position.z) + Math.sin(t * 1.4) * .04; zahra.rotation.y = Math.PI + Math.sin(t * .2) * .3 } else if (!zahra._gone) { zahra._gone = true } });
-      T(zahraSpot.x, zahraSpot.z, 4, () => tr('Lead Zahra home (speak softly)', 'Llevar a Zahra a casa (hablar bajito)'), () => { if ((S.quests || {}).jd_camel !== 'active' || S.jd.camelHome) return AV.toast(tr('No camel here. Salem said look near the foot of Masada…', 'Aquí no hay camella. Salem dijo que buscara al pie de Masada…')); S.jd.camelHome = true; AV.quests && AV.quests.check(); AV.toast(tr('You speak softly. Zahra considers. Zahra follows. Camels respect manners.', 'Hablas bajito. Zahra lo piensa. Zahra te sigue. Los camellos respetan las buenas maneras.')) }) }
-    /* portal */
-    T(PORTAL.x, PORTAL.z - 1.6, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'judean_desert');
+    const give = item => { if (AV.bag) AV.bag.add(item, 1, true); else S.items[item] = (S.items[item] || 0) + 1; AV.quests && AV.quests.check() };
+    const buy = (cost, what, msg, item) => { if (!AV.txn(-cost, what)) return false; give(item); AV.toast(msg + tr(' → backpack (I)', ' → mochila (I)')); AV.audio && AV.audio.blip(660, .15, 'triangle', .12); return true };
+    T(KIOSK.x - 3.6, KIOSK.z - 1, 2.2, () => tr('Kiosk: cold water (5)', 'Quiosco: agua fría (5)'), () => buy(5, 'Kiosk water', tr('Ice cold. The best thing money can buy out here.', 'Helada. Lo mejor que se puede comprar aquí.'), 'water'));
+    T(KIOSK.x - 3.6, KIOSK.z + 2, 2.2, () => tr('Kiosk: Dead Sea mud (25)', 'Quiosco: barro del Mar Muerto (25)'), () => buy(25, 'Kiosk mud', tr('The famous black mud, in a pot.', 'El famoso barro negro, en un bote.'), 'dead_sea_mud'));
+    T(KIOSK.x + .5, KIOSK.z + 3, 2.2, () => tr('Kiosk: dates (8)', 'Quiosco: dátiles (8)'), () => buy(8, 'Kiosk dates', tr('Soft Medjool dates from the oasis.', 'Dátiles Medjool del oasis.'), 'dates'));
+    T(OASIS.x + 10, OASIS.z + 10, 2.4, () => tr('Ein Gedi spring: fill a water bottle (free)', 'Manantial de Ein Gedi: llenar una botella (gratis)'), () => { if (S.jd.springDay === S.day) return AV.toast(tr('The ranger smiles: one bottle a day from the spring, please.', 'El guarda sonríe: una botella al día del manantial, por favor.')); S.jd.springDay = S.day; give('water'); AV.toast(tr('Cold spring water from the cliff. → backpack (I)', 'Agua fría del manantial. → mochila (I)')) });
+    for (const tz of [2, 8]) T(SHORE - 10, tz, 2, () => tr('Dead Sea mud bath', 'Baño de barro del Mar Muerto'), () => { if (!S.jd.mud) { S.jd.mud = true; AV.vitals && AV.vitals.add(0, 8) } AV.toast(tr('You smear the black mineral mud over your arms. Your skin feels ten years younger and you look like a very relaxed statue.', 'Te untas el barro negro por los brazos. La piel se siente diez años más joven y pareces una estatua muy relajada.')) });
+    T(SHORE + 2, 20, 4, () => tr('Wade in and float in the Dead Sea', 'Entrar y flotar en el Mar Muerto'), () => { const P = AV.P; P.x = SHORE + WADE + 6; P.y = SURF(P.x, P.z); P.vx = P.vz = P.vy = 0; AV.toast(tr('You lie back and the water holds you like a hammock. Don’t splash your eyes!', 'Te tumbas y el agua te sostiene como una hamaca. ¡Que no te salpique a los ojos!')); AV.vitals && AV.vitals.add(0, 6); AV.dlg && AV.dlg.event('dead_sea_float') });
+    T(MASADA.x + MASADA.r + 12, MASADA.z + 6, 3, () => tr('Cable car up Masada (10)', 'Teleférico a Masada (10)'), () => { if (!AV.txn(-10, 'Cable car')) return; AV.audio && AV.audio.blip(392, .4, 'sine', .1); AV.fadeTo(1, 400);
+      setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, UPPER[0], UPPER[1]); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || TOP; P.vx = P.vz = 0; P.yaw = Math.PI / 2; S.time += 8; AV.fadeTo(0, 600); AV.toast(tr('The cabin sways up the cliff. Herod’s terraces open up below you.', 'La cabina se balancea por el acantilado. Las terrazas de Herodes se abren a tus pies.')) }, 900) });
+    T(UPPER[0], UPPER[1], 2.6, () => tr('Cable car down (free)', 'Teleférico de bajada (gratis)'), () => { AV.fadeTo(1, 400); setTimeout(() => { const P = AV.P, sp = AV.safeSpot(AV.W, MASADA.x + MASADA.r + 15, MASADA.z + 2); P.x = sp[0]; P.z = sp[1]; P.y = AV.W.surface(P.x, P.z) || 0; P.vx = P.vz = 0; AV.fadeTo(0, 600) }, 500) });
+    T(MASADA.x, MASADA.z - 4, 6, () => tr('Look out over the Dead Sea', 'Mirar el Mar Muerto'), () => { AV.P.yaw = -Math.PI / 2; AV.P.pitch = -.18; AV.vitals && AV.vitals.add(0, 10); AV.toast(tr('The sea gleams far below: blue salt, white shore, the hills of Moab in the haze.', 'El mar brilla muy abajo: sal azul, orilla blanca y los montes de Moab en la bruma.')) });
+    T(CAMP.x + 10, CAMP.z - 8, 2.6, () => tr('Ride the camel (15)', 'Montar en camello (15)'), () => { if (!AV.txn(-15, 'Camel ride')) return; AV.fadeTo(1, 500); setTimeout(() => { S.time += 15; AV.fadeTo(0, 700); AV.vitals && AV.vitals.add(0, 8); AV.toast(tr('She stands up rear legs first — you lean back and hold on. The desert rolls by at camel speed, its own kind of perfect.', 'Se levanta primero con las patas traseras: te echas hacia atrás y te agarras. El desierto pasa a velocidad de camello, su propia clase de perfección.')) }, 600) });
+    T(CAMP.x + 1, CAMP.z - 5.6, 2.4, () => tr('Salem’s fire: a glass of sage tea (free)', 'El fuego de Salem: un vaso de té de salvia (gratis)'), () => { give('sage_tea'); AV.toast(tr('Salem pours it from high up, the proper way. Sweet, hot, smelling of desert sage. → backpack (I)', 'Salem lo sirve desde lo alto, como debe ser. Dulce, caliente y con olor a salvia. → mochila (I)')) });
+    T(CAVES.x - 2, CAVES.z + 3, 2.8, () => (S.quests || {}).jd_hiker === 'active' && !S.jd.hikerFound ? tr('Check on the hiker', 'Ver cómo está el excursionista') : tr('The Qumran cave', 'La cueva de Qumrán'), () => {
+      if ((S.quests || {}).jd_hiker === 'active' && !S.jd.hikerFound) { S.jd.hikerFound = true; give('water'); AV.quests && AV.quests.check(); AV.npc.bark(tomer, tr('Thank you! I’m fine — just embarrassed.', '¡Gracias! Estoy bien, solo avergonzado.')); AV.toast(tr('You share some water. Tomer: “I’m FINE. My phone died and my dignity is slightly injured. Tell the sergeant?”', 'Compartes agua. Tomer: “Estoy BIEN. Se me murió el móvil y la dignidad está algo herida. ¿Se lo dices a la sargento?”')) }
+      else AV.toast(tr('Clay jars, rock shelves and two thousand years of silence.', 'Vasijas de barro, estantes de roca y dos mil años de silencio.')) });
+    T(ZAHRA.x, ZAHRA.z, 3.4, () => tr('Lead Zahra home (speak softly)', 'Llevar a Zahra a casa (habla bajito)'), () => { S.jd.camelHome = true; AV.quests && AV.quests.check(); AV.toast(tr('You speak softly. Zahra thinks about it… and follows you all the way back to the camp.', 'Hablas bajito. Zahra se lo piensa… y te sigue hasta el campamento.')) }, () => (S.quests || {}).jd_camel === 'active' && !S.jd.camelHome);
+    T(BUS.x, BUS.z + 2.4, 2.6, () => tr('Bus 486 to Jerusalem (8 credits)', 'Autobús 486 a Jerusalén (8 créditos)'), () => { if (!AV.txn(-8, 'Bus to Jerusalem')) return; AV.audio && AV.audio.blip(523, .3, 'sine', .1); AV.travel('jerusalem', 'bus') });
+    T(PORTAL.x - 1.6, PORTAL.z, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'judean_desert');
       const p = AV.panel('cmp', '<b>' + tr('Apeverse Portal', 'Portal Apeverse') + '</b><div class="grid">' + ws.map(id => '<button data-w="' + id + '">' + ((AV.worldMeta(id) || {}).name || id) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
       p.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { AV.closePanel('cmp'); AV.audio && AV.audio.whoosh(); AV.travel(b.dataset.w, 'judean_desert') }) });
+    ctx.upd.push(() => { if (AV.chat.open && crew[AV.chat.who] && !S.jd.met[AV.chat.who]) { S.jd.met[AV.chat.who] = 1; AV.quests && AV.quests.check() } });
+    /* barks + jackals at night */
+    { const BARKS = { noa: [['Water check!', '¡Control de agua!'], ['Hat on. Always.', 'Gorra puesta. Siempre.']], salem: [['Tea is ready!', '¡El té está listo!']], amir: [['Sunrise tour at five!', '¡Tour del amanecer a las cinco!']], tomer: [['Hello? Anybody?', '¿Hola? ¿Alguien?']] };
+      let acc = 0, howl = 0; ctx.upd.push(dt => { acc += dt; if (acc > 20 && !AV.blocking()) { acc = 0; const ids = Object.keys(BARKS), id = ids[Math.random() * ids.length | 0], n = crew[id]; if (n && Math.hypot(AV.P.x - n.g.position.x, AV.P.z - n.g.position.z) < 14) { const a = BARKS[id], l = a[Math.random() * a.length | 0]; AV.npc.bark(n, tr(l[0], l[1])) } }
+        if (night() && (howl += dt) > 40) { howl = 0; if (AV.audio) { AV.audio.blip(420, .9, 'sawtooth', .03); setTimeout(() => AV.audio.blip(380, 1.2, 'sawtooth', .025), 800) } } }) }
 
-    /* --- crowd + hotspots --- */
-    const nodes = [], edges = [];
-    const chain = pts => { let prev = null; const ids = pts.map(([x, z]) => { nodes.push([x, z]); const id = nodes.length - 1; if (prev != null) edges.push([prev, id]); prev = id; return id }); return { first: ids[0], last: ids[ids.length - 1], ids } };
-    { const R90 = chain([[XMIN + 16, 2], [30, -2], [80, 4], [140, 8], [XMAX - 24, 10]]);                                          // Route 90 roadside
-      const BCH = chain([[30, 6], [60, 12], [KIOSK.x - 8, KIOSK.z + 6], [PORTAL.x - 4, PORTAL.z + 4]]);                              // to the beach + portal
-      const MAS = chain([[80, 4], [MASADA.x + MASADA.r + 12, MASADA.z + 2]]);                                                       // to the cable car
-      const CMP = chain([[30, -2], [-6, 14], [CAMP.x + 8, CAMP.z + 6], [CAMP.x - 2, CAMP.z + 4]]);                                   // to the Bedouin camp
-      const PST = chain([[-6, 14], [POST.x + 6, POST.z + 2], [POST.x - 4, POST.z]]);                                                // to the outpost
-      const OAS = chain([[XMIN + 16, 2], [-30, -8], [OASIS.x + 12, OASIS.z + 14], [OASIS.x, OASIS.z + 12]]);                        // to Ein Gedi
-      const CAV = chain([[60, 12], [40, -30], [10, -70], [-20, -100], [CAVES.x + 6, CAVES.z + 12]]);                               // to Qumran
-      edges.push([R90.ids[1], BCH.first], [R90.ids[2], MAS.first], [R90.ids[1], CMP.first], [CMP.ids[1], PST.first], [R90.first, OAS.first], [BCH.ids[1], CAV.first]);
-    }
-    const NAV = CY.nav(nodes, edges);
-    const crowd = CY.crowd(ctx), nPed = [14, 26, 40][q];
-    const VLIST = ['tourist', 'suit', 'soldier', 'keff', 'robe', 'hijab', 'monk', 'woman', 'man', 'nun'];
-    for (let i = 0; i < nPed; i++) { const v = VLIST[i % VLIST.length], n0 = nodes[rng() * nodes.length | 0];
-      const cols = (C.regional && C.regional.walkCols) ? C.regional.walkCols(v, rng) : null;
-      crowd.add({ v, x: n0[0], z: n0[1], nav: NAV, idleProb: .3, cols: cols || undefined }) }
-    /* soldiers at the outpost */
-    for (const [x, z] of [[POST.x + 4, POST.z + 6], [POST.x - 2, POST.z + 7]]) crowd.add({ v: 'soldier', x, z, cols: { skin: 0xd8a47a, hair: 0x14100c, shirt: 0xb8a27a, pants: 0xa8946c }, yaw: Math.PI, mode: 'idle' });
-    crowd.build();
-    /* rigged characters */
-    const roles = ['pilgrim', 'business', 'soldier', 'bedouin', 'hijabi', 'student', 'vendor', 'elder', 'embroidered'];
-    const spots = [[KIOSK.x - 6, KIOSK.z + 6, 10], [PORTAL.x - 6, PORTAL.z + 6, 8], [SHORE + 14, 30, 12], [SHORE + 10, -10, 10], [CAMP.x + 10, CAMP.z + 4, 8], [MASADA.x + MASADA.r + 14, MASADA.z - 6, 10], [MASADA.x + 6, MASADA.z + MASADA.r - 16, 8], [POST.x + 8, POST.z + 8, 8], [OASIS.x + 14, OASIS.z + 16, 10]];
-    AV.beings.spawn(ctx, spots.slice(0, AV.beings.n(ctx, 2, 3, 5)).map(([x, z, r], i) => { const role = roles[i % roles.length], a = C.regional.actor(role, 700 + i * 13);
-      return { kind: 'human', x, z, area: { x, z, r }, seed: 700 + i, look: a.look, dress: a.dress, role,
-        lines: [tr('They say you can read a newspaper while floating. It’s true. My hands got all wrinkly.', 'Dicen que puedes leer un periódico flotando. Es verdad. Se me arrugaron las manos.'), tr('Masada sunrise is worth the 4 a.m. alarm. Once. Maybe twice.', 'El amanecer en Masada merece el despertador de las 4. Una vez. Quizá dos.'), tr('The Ibex own Ein Gedi. We just visit.', 'Los íbices son los dueños de Ein Gedi. Nosotros solo visitamos.'), tr('Drink more water than you think you need. Then one more.', 'Bebes más agua de la que crees necesitar. Y una más.')][i % 4],
-        greet: [tr('Hey! Lovely day to float.', '¡Hola! Qué día tan bueno para flotar.'), tr('Shalom! Watch the sun out here.', '¡Shalom! Cuidado con el sol aquí fuera.'), tr('Mind the salt — it crunches everywhere.', 'Ojo con la sal: cruje por todas partes.')][i % 3] } }));
-    /* traffic on Route 90 */
-    const CARC = [0xf2f2f0, 0xb8bcc0, 0x5a5e62, 0x15171a, 0x1f3e72, 0x9a1a1a];
-    CY.traffic(ctx, [{ pts: ROAD.map(p => [p.x, p.z]), off: -2.2, w: 10 }], [{ type: 'car', cols: CARC, n: [2, 3, 5][q], speed: 9 }, { type: 'jeep', cols: [0xb8a27a, 0x8a8a5a, 0xa8946c], n: [1, 2, 3][q], speed: 7.5 }, { type: 'bus', cols: [0x2a8a4a], n: [1, 1, 2][q], speed: 6 }], { density: () => 1 });
-    /* parked cars by the kiosk */
-    { const list = []; for (let k = 0; k < 4; k++) { if (rng() < .3) continue; const x = KIOSK.x - 8 - k * 7; list.push({ type: rng() < .6 ? 'car' : 'jeep', x, z: KIOSK.z + 10, yaw: Math.PI / 2, col: CARC[rng() * CARC.length | 0] }); ctx.cols.push([x - 1.2, x + 1.2, KIOSK.z + 8.6, KIOSK.z + 11.4]) } CY.parked(ctx, list) }
-    CY.birds(ctx, [{ x: OASIS.x, z: OASIS.z, r: 18, y: 20, n: 8 }, { x: SHORE + 30, z: 0, r: 40, y: 16, n: 10 }, { x: MASADA.x, z: MASADA.z, r: 40, y: 44, n: 6 }]);
-
-    /* ---------- quests ---------- */
-    const Q = AV.quests;
-    const def = (id, giver, turnIn, title, hint, ready, reward) => Q.define(id, { giver, turnIn, title, hint, ready, reward });
-    def('jd_water', 'noa', 'noa', ['Water Run', 'Operación agua'], ['Buy 3 bottles of water and bring them to Sgt. Noa at the desert patrol outpost.', 'Compra 3 botellas de agua y llévaselas a la sargento Noa en el puesto de la patrulla del desierto.'],
-      S2 => ((S2.items.water || 0) >= 3), S2 => { S2.items.water -= 3; AV.txn(45, 'Mission: water run'); return tr('Noa: “Hydration is discipline. The squad salutes you.” +45 credits.', 'Noa: “La hidratación es disciplina. La escuadra te saluda.” +45 créditos.') });
-    def('jd_hiker', 'noa', 'noa', ['The Lost Hiker', 'El excursionista perdido'], ['Hiker Tomer went to the Qumran caves and stopped answering. Go check the cave in the north-west cliffs, then report back to Noa.', 'El excursionista Tomer fue a las cuevas de Qumrán y dejó de contestar. Ve a la cueva de los acantilados del noroeste y vuelve a informar a Noa.'],
-      S2 => !!S2.jd.hikerFound, () => { AV.txn(40, 'Mission: lost hiker'); return tr('Noa: “Good work. He owes you a very long email.” +40 credits.', 'Noa: “Buen trabajo. Te debe un correo muy largo.” +40 créditos.') });
-    def('jd_camel', 'salem', 'salem', ['Zahra’s Walkabout', 'El paseo de Zahra'], ['Find Salem’s camel Zahra near the foot of Masada (south) and bring her home to the camp.', 'Encuentra a Zahra, la camella de Salem, al pie de Masada (al sur) y tráela al campamento.'],
-      S2 => !!S2.jd.camelHome, () => { AV.txn(30, 'Mission: Zahra'); return tr('Salem: “She likes you. That is rare and slightly alarming.” +30 credits.', 'Salem: “Le gustas. Eso es raro y ligeramente alarmante.” +30 créditos.') });
-    ctx.upd.push(() => { if (AV.chat.open && !S.jd.met[AV.chat.who]) { S.jd.met[AV.chat.who] = 1; AV.quests && AV.quests.check() } });
-    /* crew barks */
-    { const BARKS = [['noa', [tr('Water check!', '¡Comprobación de agua!'), tr('Hat on. Always.', 'La gorra puesta. Siempre.')]], ['salem', [tr('Tea is ready!', '¡El té está listo!'), tr('Welcome, traveller!', '¡Bienvenido, viajero!')]], ['amir', [tr('Sunrise tour at 5!', '¡Tour del amanecer a las 5!')]], ['tomer', [tr('Hello? Anybody?', '¿Hola? ¿Alguien?')]]];
-      ctx.upd.push((() => { let acc = 0; return (dt, t) => { acc += dt; if (acc < 20) return; acc = 0; if (AV.blocking()) return; const [id, arr] = BARKS[Math.random() * BARKS.length | 0], n = crew[id]; if (!n) return; const d = Math.hypot(AV.P.x - n.g.position.x, AV.P.z - n.g.position.z); if (d < 14) AV.npc.bark(n, arr[Math.random() * arr.length | 0]) } })()) }
-    /* jackals at night */
-    ctx.upd.push((() => { let last = 0; return (dt, t) => { if (!night() || AV.now() - last < 26 + Math.random() * 30) return; last = AV.now(); if (Math.hypot(AV.P.x - 0, AV.P.z - 0) > 0) { AV.audio && AV.audio.blip(420, .9, 'sawtooth', .035); setTimeout(() => AV.audio && AV.audio.blip(380, 1.2, 'sawtooth', .03), 800); AV.toast(tr('A jackal sings somewhere in the dark.', 'Un chacal canta en algún lugar de la oscuridad.')) } } })());
-
-    /* ---------- time of day HUD ---------- */
+    /* ---------- HUD + flush ---------- */
     const hudEl = AV.$('cmhud'); let hudT = 0;
-    ctx.upd.push(() => { if (!hudEl || AV.now() < hudT) return; hudT = AV.now() + .5; const m2 = mode();
-      hudEl.style.display = 'block'; hudEl.textContent = tr('Judean Desert · ', 'Desierto de Judea · ') + (m2 === 'sunset' ? tr('sunset', 'atardecer') : m2 === 'night' ? tr('night', 'noche') : tr('day', 'día')) + tr(' · F: time of day', ' · F: hora del día') });
+    ctx.upd.push(() => { if (!hudEl || AV.now() < hudT) return; hudT = AV.now() + .5; hudEl.style.display = 'block'; hudEl.textContent = tr('Judean Desert · ', 'Desierto de Judea · ') + (md === 'sunset' ? tr('sunset', 'atardecer') : md === 'night' ? tr('night', 'noche') : tr('day', 'día')) + tr(' · F: time of day', ' · F: hora del día') });
     ctx.leave.push(() => { if (hudEl) hudEl.style.display = 'none' });
-    AV.keymap.KeyF = () => { if (AV.W && AV.W.id === 'judean_desert') { const order = ['day', 'sunset', 'night'], S2 = AV.S; S2.jdMode = order[(order.indexOf(S2.jdMode || 'day') + 1) % 3]; AV.jd.lastPos = { x: AV.P.x, z: AV.P.z, yaw: AV.P.yaw }; AV.enterWorld('judean_desert', 'here');
-      setTimeout(() => AV.toast(AV.tr('Time of day: ', 'Hora del día: ') + (S2.jdMode === 'day' ? AV.tr('day', 'día') : S2.jdMode === 'sunset' ? AV.tr('sunset — the cliffs glow red', 'atardecer: los acantilados se encienden') : AV.tr('night — stars and jackals', 'noche: estrellas y chacales')) + AV.tr(' (F: next)', ' (F: siguiente)')), 600) } };
     { const fb = AV.$('tF'); if (fb) { fb.style.display = AV.device === 'phone' ? 'block' : 'none'; ctx.leave.push(() => fb.style.display = 'none') } }
-    const nightMeshes = B.night.flush(ctx, { noShadow: true }); delete B.night;
-
-    /* ---------- flush ---------- */
+    const nightMeshes = NIGHT.flush(ctx, { noShadow: true });
+    ctx.upd.push(() => { const on = (AV.nightK || 0) > .35; for (const m of nightMeshes) m.visible = on });
     for (const k in B) B[k].flush(ctx);
-    const here = AV.jd && AV.jd.lastPos || null; if (AV.jd) AV.jd.lastPos = null;
+    const here = AV.jd.lastPos || null; AV.jd.lastPos = null;
     return {
       name: 'Judean Desert · Dead Sea', fog: [90, 440], sky: SKY, glowScale: md === 'night' ? 1.4 : 1,
-      surface: (x, z) => { if (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) return null; if (inSea(x, z)) return -.62; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
-      arrivals: { default: { x: BUS.x + 4, z: BUS.z + 4, yaw: 0 }, pipe: { x: BUS.x + 4, z: BUS.z + 8, yaw: 0 }, judean_desert: { x: PORTAL.x - 1, z: PORTAL.z + 3, yaw: Math.PI }, ape_gate: { x: BUS.x + 4, z: BUS.z + 4, yaw: 0 }, here: here || { x: BUS.x + 4, z: BUS.z + 4, yaw: 0 } }, defaultArrival: 'default',
-      places: [{ id: 'oasis', name: ['Ein Gedi oasis', 'Oasis de Ein Gedi'], x: OASIS.x + 6, z: OASIS.z + 12, yaw: Math.PI }, { id: 'masada', name: ['Masada', 'Masada'], x: MASADA.x + MASADA.r + 10, z: MASADA.z + 4, yaw: -Math.PI / 2 },
-        { id: 'caves', name: ['Qumran caves', 'Cuevas de Qumrán'], x: CAVES.x + 4, z: CAVES.z + 10, yaw: Math.PI }, { id: 'camp', name: ['Bedouin camp', 'Campamento beduino'], x: CAMP.x + 2, z: CAMP.z + 8, yaw: Math.PI },
-        { id: 'post', name: ['Patrol outpost', 'Puesto de patrulla'], x: POST.x + 2, z: POST.z + 6, yaw: Math.PI }, { id: 'beach', name: ['Dead Sea beach', 'Playa del Mar Muerto'], x: KIOSK.x - 4, z: KIOSK.z + 4, yaw: Math.PI }],
-      chatLines: [tr('The sea is so salty that drowning is basically impossible. Flailing, however, is very possible.', 'El mar es tan salado que ahogarse es básicamente imposible. Agorazarse, en cambio, es muy posible.'), tr('Masada at sunrise. Bring a torch and a thermos.', 'Masada al amanecer. Linterna y termo.'), tr('Drink before you’re thirsty. Sergeant’s orders.', 'Bebe antes de tener sed. Órdenes de la sargento.'), tr('The ibex at Ein Gedi will steal your lunch. They have practice.', 'Los íbices de Ein Gedi te robarán el almuerzo. Tienen práctica.')],
-      musicProfile: { bpm: 76, root: 41, scale: [0, 1, 4, 5, 7, 8, 11], style: 'maqam', sparse: true },
-      music: { playlist: 'chiang_mai', pos: { x: CAMP.x, y: 2.5, z: CAMP.z }, bed: .35 }
+      surface: (x, z) => (x < XMIN + 3 || x > XMAX - 3 || z < ZMIN + 3 || z > ZMAX - 3) ? null : SURF(x, z),
+      arrivals: { default: { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 }, bus: { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 }, pipe: { x: BUS.x - 4, z: BUS.z + 7, yaw: Math.PI / 2 }, ape_gate: { x: PORTAL.x - 3, z: PORTAL.z, yaw: Math.PI / 2 }, judean_desert: { x: PORTAL.x - 3, z: PORTAL.z, yaw: Math.PI / 2 }, here: here || { x: BUS.x - 4, z: BUS.z + 3, yaw: Math.PI / 2 } }, defaultArrival: 'default',
+      places: [{ id: 'beach', name: ['Dead Sea beach', 'Playa del Mar Muerto'], x: KIOSK.x - 7, z: KIOSK.z + 6, yaw: -Math.PI / 2 }, { id: 'oasis', name: ['Ein Gedi oasis', 'Oasis de Ein Gedi'], x: OASIS.x + 12, z: OASIS.z + 12, yaw: Math.PI / 2 },
+        { id: 'masada', name: ['Masada (cable car)', 'Masada (teleférico)'], x: MASADA.x + MASADA.r + 16, z: MASADA.z + 6, yaw: Math.PI / 2 }, { id: 'caves', name: ['Qumran cave', 'Cueva de Qumrán'], x: CAVES.x + 2, z: CAVES.z + 8, yaw: 0 },
+        { id: 'camp', name: ['Bedouin camp', 'Campamento beduino'], x: CAMP.x + 4, z: CAMP.z - 12, yaw: Math.PI }, { id: 'post', name: ['Patrol outpost', 'Puesto de patrulla'], x: POST.x + 2, z: POST.z + 9, yaw: Math.PI }],
+      chatLines: [['The sea is so salty that sinking is basically impossible. Flailing, however, is very possible.', 'El mar es tan salado que hundirse es casi imposible. Patalear, en cambio, es muy posible.'], ['Masada at sunrise. Bring a torch and a thermos.', 'Masada al amanecer. Linterna y termo.'], ['Drink before you are thirsty. Sergeant’s orders.', 'Bebe antes de tener sed. Órdenes de la sargento.'], ['The ibex at Ein Gedi will steal your lunch. They have practice.', 'Los íbices de Ein Gedi te robarán el almuerzo. Tienen práctica.']],
+      musicProfile: { bpm: 76, root: 41, scale: [0, 1, 4, 5, 7, 8, 11], style: 'maqam', sparse: true }
     };
   }
 });
+
+/* ---------- quests (load time, so saved active tasks always list correctly) ---------- */
+{ const Q = AV.quests, tr = AV.tr;
+  Q.define('jd_water', { giver: 'noa', turnIn: 'noa', title: ['Water Run', 'Operación agua'], hint: ['Bring 3 bottles of water to Sgt. Noa at the desert patrol outpost (the beach kiosk sells them; Ein Gedi spring gives one a day).', 'Lleva 3 botellas de agua a la sargento Noa en el puesto de la patrulla (las vende el quiosco de la playa; el manantial de Ein Gedi da una al día).'],
+    ready: S => ((S.items || {}).water || 0) >= 3, reward: S => { S.items.water -= 3; AV.txn(45, 'Mission: water run'); return tr('Noa: “Hydration is discipline. The squad salutes you.” +45 credits.', 'Noa: “La hidratación es disciplina. La escuadra te saluda.” +45 créditos.') } });
+  Q.define('jd_hiker', { giver: 'noa', turnIn: 'noa', title: ['The Lost Hiker', 'El excursionista perdido'], hint: ['Tomer went to the Qumran cave in the north-west cliffs and stopped answering. Find him, then report back to Noa.', 'Tomer fue a la cueva de Qumrán, en los acantilados del noroeste, y dejó de contestar. Encuéntralo y vuelve a informar a Noa.'],
+    ready: S => !!(S.jd && S.jd.hikerFound), reward: () => { AV.txn(40, 'Mission: lost hiker'); return tr('Noa: “Good work. He owes you a very long thank-you message.” +40 credits.', 'Noa: “Buen trabajo. Te debe un mensaje de agradecimiento muy largo.” +40 créditos.') } });
+  Q.define('jd_camel', { giver: 'salem', turnIn: 'salem', title: ['Zahra’s Walkabout', 'El paseo de Zahra'], hint: ['Find Salem’s camel Zahra (red saddle) near the foot of Masada, west of the Roman ramp, and lead her home.', 'Encuentra a Zahra (silla roja), la camella de Salem, al pie de Masada, al oeste de la rampa romana, y llévala a casa.'],
+    ready: S => !!(S.jd && S.jd.camelHome), reward: S => { AV.txn(30, 'Mission: Zahra'); if (AV.bag) AV.bag.add('sage_tea', 1, true); return tr('Salem: “She likes you. That is rare, and slightly alarming.” +30 credits and tea.', 'Salem: “Le gustas. Eso es raro y algo alarmante.” +30 créditos y té.') } }) }
+/* F: day -> sunset -> night (rebuilds around you); other worlds keep their own F */
 AV.jd = AV.jd || {};
+{ const prevF = AV.keymap.KeyF; AV.keymap.KeyF = e => { if (AV.W && AV.W.id === 'judean_desert') { const order = ['day', 'sunset', 'night'], S = AV.S; S.jdMode = order[(order.indexOf(S.jdMode || 'day') + 1) % 3]; AV.jd.lastPos = { x: AV.P.x, z: AV.P.z, yaw: AV.P.yaw }; AV.enterWorld('judean_desert', 'here');
+  setTimeout(() => AV.toast(AV.tr('Time of day: ', 'Hora del día: ') + (S.jdMode === 'day' ? AV.tr('day', 'día') : S.jdMode === 'sunset' ? AV.tr('sunset — the cliffs glow red', 'atardecer: los acantilados se encienden') : AV.tr('night — stars and jackals', 'noche: estrellas y chacales')) + AV.tr(' (F: next)', ' (F: siguiente)')), 600); return } if (prevF) prevF(e) } }
 })(window.AV);

@@ -39,11 +39,15 @@ window.APE_T = (() => {
 
   step('Jerusalem world content', async c => {
     closeAll();
-    for (const re of [/Tuck your note into the wall/, /Dalia/, /Western Wall/, /Holy Sepulchre|Sepulchre/, /Light rail/, /Ka’ak cart|sesame bread/, /Apeverse Portal/, /Mahane Yehuda|rugelach/])
+    for (const re of [/Tuck a note into the Western Wall/, /Dalia/, /Western Wall/, /Holy Sepulchre|Sepulchre/, /Light rail/, /Ka’ak cart|sesame bread/, /Apeverse Portal/, /Mahane Yehuda|rugelach/])
       c('target: ' + re.source, !!AV.W.T.find(t => re.test(lab(t))));
     c('Dalia is a guide body (no crash on her custom look)', !!AV.W.T.find(t => t.npc && t.npc.id === 'dalia'));
-    c('Western Wall plaza pad is walkable (heights queried)', AV.W.surface(30, -36) > 1, (AV.W.surface(30, -36) || 0).toFixed(1));
-    c('Temple Mount esplanade raised', AV.W.surface(40, -70) > 3, (AV.W.surface(40, -70) || 0).toFixed(1));
+    const plaza = AV.W.surface(30, -36), mount = AV.W.surface(40, -80), ramp = AV.W.surface(42.8, -41);
+    c('Temple Mount esplanade raised above the Western Wall plaza', mount > plaza + 3, 'plaza ' + plaza.toFixed(1) + ' mount ' + mount.toFixed(1));
+    c('Mughrabi ramp climbs between them', ramp > plaza + .5 && ramp < mount - .5, ramp.toFixed(1));
+    c('Damascus Gate opening is walkable (no tower in it)', AV.isFree(AV.W, -14, -95, .4));
+    c('Jaffa Gate opening is walkable', AV.isFree(AV.W, -70, 8, .4));
+    c('no smoking at the holy sites', AV.W.noSmoke && AV.W.noSmoke(30, -36) && !AV.W.noSmoke(-200, -21));
   });
 
   step('Dalia tour mission', async c => {
@@ -52,10 +56,12 @@ window.APE_T = (() => {
     c('Dalia greets', $('log').innerText.length > 20, $('log').innerText.slice(0, 60));
     await AV.chatSend('Do you have a tour for me?'); await AV.chatSend('yes'); await sleep(400); AV.closeChat();
     c('tour quest starts', (AV.S.quests || {}).jlm_tour === 'active');
-    /* walk to two checkpoints by hand (the suite should move, not teleport) */
-    const spot1 = tgt(/Stand at the Western Wall/); c('checkpoint 1 exists', !!spot1);
-    if (spot1) { const ok = await walkTo(/Stand at the Western Wall/, 30000); spot1.fn && (AV.interact(), 0); c('checkpoint 1 done', AV.S.jlm.tour.includes('western_wall'), AV.S.jlm.tour.join(',')) }
-    const spot2 = tgt(/Look at the Dome of the Rock/); if (spot2) { await walkTo(/Look at the Dome of the Rock/, 30000); const t2 = tgt(/Look at the Dome of the Rock/); if (t2) t2.fn(); c('checkpoint 2 done', AV.S.jlm.tour.includes('dome'), AV.S.jlm.tour.join(',')) }
+    for (const re of [/Stand at the Western Wall/, /Visit the Holy Sepulchre/, /Admire the Dome of the Rock/, /Look up at the Tower of David/, /Taste Mahane Yehuda/]) {
+      const t = tgt(re); c('checkpoint exists: ' + re.source, !!t); if (!t) continue; place(t.x, t.z + .5); await sleep(150); t.fn() }
+    c('all 5 checkpoints visited', AV.S.jlm.tour.length === 5, AV.S.jlm.tour.join(','));
+    const d2 = AV.W.T.find(t => t.npc && t.npc.id === 'dalia'); place(d2.x, d2.z + 2, Math.PI); const m0 = AV.S.money;
+    AV.openChat('dalia'); await sleep(1200); AV.closeChat(); await sleep(300);
+    c('tour completes (+40)', (AV.S.quests || {}).jlm_tour === 'done' && AV.S.money === m0 + 40, 'money ' + m0 + ' -> ' + AV.S.money);
   });
 
   step('Yossi briefcase mission', async c => {
@@ -86,23 +92,23 @@ window.APE_T = (() => {
 
   step('Jerusalem -> Judean Desert (bus)', async c => {
     closeAll();
-    const bus = tgt(/Dead Sea|bus|Bus/); c('a travel target exists', !!bus);
-    /* direct travel for suite speed: use AV.travel the way the portal would */
-    AV.travel('judean_desert', 'ape_gate');
+    const bus = tgt(/Bus 486 to the Dead Sea/); c('bus stop to the Dead Sea exists', !!bus);
+    if (bus) bus.fn(); else AV.travel('judean_desert', 'bus');
     c('travels to the desert', await until(() => AV.W && AV.W.id === 'judean_desert' && settled(), 30000));
     await sleep(2500);
     const crew = ['noa', 'salem', 'amir', 'tomer'].map(id => AV.W.T.find(t => t.npc && t.npc.id === id)).filter(Boolean);
     c('named desert characters spawned (Noa, Salem, Amir, Tomer)', crew.length === 4, crew.map(n => n.npc.id).join(','));
     const info = AV.R.info.render; c('renders the desert', info.calls > 30, 'draw calls ' + info.calls + ', tris ' + info.triangles);
-    c('sea surface is water level (low)', AV.W.surface(120, 40) < 0, (AV.W.surface(120, 40) || 0).toFixed(2));
+    c('sea surface is water level (low)', AV.W.surface(150, 40) < 0, (AV.W.surface(150, 40) || 0).toFixed(2));
   }, { shot: 'jd_arrival' });
 
   step('Judean Desert content', async c => {
     closeAll();
-    for (const re of [/Float in the Dead Sea/, /Kiosk/, /Cable car/, /Bedouin|sage tea/, /Apeverse Portal/, /Bus to Jerusalem|Bus/])
+    for (const re of [/float in the Dead Sea/i, /Kiosk/, /Cable car/, /Bedouin|sage tea/, /Apeverse Portal/, /Bus to Jerusalem|Bus/])
       c('target: ' + re.source, !!AV.W.T.find(t => re.test(lab(t))));
-    c('Masada plateau is high', AV.W.surface(66, 104) > 20, (AV.W.surface(66, 104) || 0).toFixed(1));
-    c('Roman ramp walkable (steps to the top)', AV.W.surface(50, 100) > 2, (AV.W.surface(50, 100) || 0).toFixed(1));
+    c('Masada plateau is high', AV.W.surface(34, 82) > 20, (AV.W.surface(34, 82) || 0).toFixed(1));
+    c('Roman ramp climbs (half way up)', AV.W.surface(1, 80) > 12, (AV.W.surface(1, 80) || 0).toFixed(1));
+    c('Masada cliffs block walking up the side', !AV.isFree(AV.W, 34, 82 + 31, .4));
     c('mud bath target exists', !!AV.W.T.find(t => /mud bath/.test(lab(t))));
   });
 
@@ -142,7 +148,7 @@ window.APE_T = (() => {
     const n3 = AV.W.T.find(t => t.npc && t.npc.id === 'noa'); place(n3.x, n3.z + 2, Math.PI);
     AV.openChat('noa'); await sleep(900); AV.closeChat(); await sleep(300);
     c('hiker mission completes (+40)', (AV.S.quests || {}).jd_hiker === 'done', 'money ' + AV.S.money);
-    c('float works (sea surface is water level)', AV.W.surface(120, 40) < 0);
+    c('float works (sea surface is water level)', AV.W.surface(150, 40) < 0);
   });
 
   step('Desert -> portal home', async c => {

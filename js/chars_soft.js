@@ -7,7 +7,7 @@
          lL / lR rotated forward (sitPose) now really sits the body down; the ukulele is fretted and strummed with IK.
      C.softActor(kind, seed, opt)        -> 'human' / 'ape' actors for beings.js crowds (same clip API as C.alienActor).
      C.softHuman(look)                   -> any custom human puppet (see look() below for the options).
-   The classic builders stay available as C.classicCrew (and C.human / C.walkerKit for the instanced street crowd). */
+   The classic builders stay available as C.classicCrew for non-character legacy props. */
 'use strict';
 (function (AV) {
 const C = AV.chars, PBR = AV.pbr, AN = AV.anatomy, SO = C.soft;

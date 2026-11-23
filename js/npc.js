@@ -36,11 +36,10 @@ NP.bark = function (n, text) { setBubble(n, text); n.bubT = AV.now() + 4.5 };
 
 /* soft-body body for every quest/story NPC (chars_soft.js / chars_real.js realistic rigs).
    Deterministic look per NPC id, seeded from data/npcs.js colours, so the cast stays recognisable
-   while every body is the new soft-body build (spring jiggle, IK feet, cloth garments).
-   Falls back to the classic C.npc() ape only if the realistic pipeline is not loaded at all. */
+   while every body is the new soft-body build (spring jiggle, IK feet, cloth garments). */
 NP.softBody = function (id, L) {
   const C = AV.chars || {}, soft = C.softHuman && C.softLook;
-  if (!soft) return C.npc(L.fur || 0x8a6a4a, L.shirt, L.hat);           // realistic pipeline missing: classic build
+  if (!soft) throw new Error('NPC soft-body pipeline is unavailable; check chars_real.js/chars_soft.js load order');
   if (L.human) { const g = C.softHuman(L.human); g.userData.npcLook = L; g.userData.human = true; return g }   // data-defined human look (data/npcs_worlds.js)
   let seed = 0; for (let i = 0; i < id.length; i++) seed = (seed * 31 + id.charCodeAt(i)) >>> 0;
   const pick = a => a[(seed = (seed * 2654435761 + 1013904223) >>> 0) % a.length];

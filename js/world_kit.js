@@ -42,7 +42,7 @@ K.floraMat = function (sway, opt) {
 };
 /* add wind sway (by local height) + night glow (aGlow attribute) to any MeshStandardMaterial, incl. GLB model materials */
 K.swayify = function (m, sway, opt) {
-  opt = opt || {}; const sw = { value: sway || 0 };
+  opt = opt || {}; const sw = { value: sway || 0 }; m.userData.sway = sway || 0;
   m.onBeforeCompile = sh => {
     sh.uniforms.uTime = U.time; sh.uniforms.uGlow = U.glow; sh.uniforms.uSway = sw;
     sh.vertexShader = 'uniform float uTime;uniform float uSway;attribute float aGlow;varying float vGlow;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>

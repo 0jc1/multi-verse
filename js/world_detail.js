@@ -42,7 +42,7 @@ D.apply = function (W) {
   const ar = W.arrivals && (W.arrivals.default || {}), Ts = W.T.slice(), priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z));
   const roadD = (x, z) => { let d = 1e9; for (const r of roads) d = Math.min(d, segD(x, z, r) - (r[4] || 6) / 2); return d };
   const nearT = (x, z, m) => Ts.some(t => Math.hypot(t.x - x, t.z - z) < (t.r || 2) + m);
-  const flora = [], clut = {}, people = [], tries = [2500, 4500, 7000][q], capF = [140, 280, 460][q], capC = [50, 110, 180][q];
+  const flora = [], clut = {}, people = [], tries = [2500, 4500, 7000][q], capF = [140, 260, 320][q], capC = [50, 110, 180][q];
   for (let i = 0; i < tries && (flora.length < capF || Object.values(clut).reduce((a, b) => a + b.length, 0) < capC); i++) {
     const x = x0 + rng() * (x1 - x0), z = z0 + rng() * (z1 - z0), y = W.surface(x, z); if (y === null || y === undefined || Math.abs(y) > 40 || priv(x, z)) continue;
     if (ar && Math.hypot(x - ar.x, z - ar.z) < 7 || nearT(x, z, 1.2) || (W.places || []).some(p => Math.hypot(p.x - x, p.z - z) < 3) || !AV.isFree(W, x, z, .5)) continue;   /* never in front of a named entrance */ const rd = roadD(x, z);

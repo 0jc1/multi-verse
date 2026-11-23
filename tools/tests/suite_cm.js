@@ -25,11 +25,33 @@ window.APE_T = (() => {
     await sleep(2500);
     const cr = crew(); c('hostel crew spawned', cr && ['mud', 'nuni', 'steve', 'dino', 'zape'].every(k => cr[k]), cr && Object.keys(cr).join(','));
     c('arrived on the hostel terrace', Math.hypot(AV.P.x - 6, AV.P.z - 46) < 6, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1));
-    c('Chiang Mai HUD shows modes', /festival/.test($('cmhud').textContent), $('cmhud').textContent);
+    c('Chiang Mai HUD shows modes', await until(() => /festival/.test($('cmhud').textContent), 20000), $('cmhud').textContent);   /* the HUD fills on the first frames; headless runs ~1.5 fps here */
     { const h = (AV.S.time / 60) % 24, eve = h >= 19 || h < 1; c('Chiang Mai playlist selected (evening: live band at Blue’s)', AV.audio.track.key === (eve ? 'stone_ape_band' : 'chiang_mai') || AV.audio.track.key === 'chiang_mai', AV.audio.track.key + ' @' + h.toFixed(1) + 'h') }
     c('in registry as playable (Portal Pipe)', AV.isPlayable('chiang_mai'));
     const info = AV.R.info.render; c('renders the city', info.calls > 40, 'draw calls ' + info.calls + ', tris ' + info.triangles);
   }, { shot: 'cm_arrival' });
+
+  /* V1.2 owner street relationships: Big Blues faces Giant Hostel across Moon Muang Rd; Chat is farther (a block east, one turn);
+     Pineapple Express farther again (on the road to Tha Phae Gate, two turns). Routes run on road centre lines (no kerbside props). */
+  step('street layout: Giant / Big Blues / Chat / Pineapple Express', async c => {
+    const W = AV.W, pl = id => W.places.find(p => p.id === id), hostel = pl('hostel'), blues = pl('blues'), chat = pl('chat'), pine = pl('pine');
+    c('map pins for Big Blues, Chat and Pineapple Express', !!(blues && chat && pine));
+    const len = pts => pts.reduce((s, p, i) => i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0);
+    const bad = pts => { const out = []; for (let k = 1; k < pts.length; k++) { const [x0, z0] = pts[k - 1], [x1, z1] = pts[k], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .35)) out.push(x.toFixed(1) + ',' + z.toFixed(1)) } } return out };
+    const rBlues = [[15.5, 49], [15.5, 44], [17, 44], [17, 42.4]], rChat = [[15.5, 49], [15.5, 44], [60, 44], [60, 56.5], [62.3, 56.5]], rPine = [[62.3, 56.5], [60, 56.5], [60, 0], [78, 0], [78, 5.8]];
+    c('Big Blues door faces the hostel door across the road', Math.abs(blues.x - hostel.x) < 4 && blues.z < 44 && hostel.z > 44 - 1, 'hostel z ' + hostel.z + ' · blues z ' + blues.z);
+    let b = bad(rBlues); c('walk: hostel door → across the road → Big Blues door', !b.length, b.slice(0, 5).join(' '));
+    b = bad(rChat); c('walk: hostel → Chat (one turn)', !b.length, b.slice(0, 5).join(' '));
+    b = bad(rPine); c('walk: Chat → Pineapple Express (two turns)', !b.length, b.slice(0, 5).join(' '));
+    const dB = len(rBlues), dC = len(rChat), dP = dC + len(rPine); c('distances: Big Blues < Chat < Pineapple Express', dB < dC && dC < dP && dC > 40 && dP > 90, dB.toFixed(0) + ' m < ' + dC.toFixed(0) + ' m < ' + dP.toFixed(0) + ' m');
+    b = bad([[62.3, 56.5], [66.6, 56.5], [70, 56.5]]); c('Chat: walk in through its door', !b.length, b.join(' '));
+    b = bad([[78, 5.8], [78, 9.6], [78, 12]]); c('Pineapple Express: walk in through its door', !b.length, b.join(' '));
+    c('painted signs mounted (no floating text)', ['pine', 'chat', 'blues'].every(s => { let f = false; W.group.traverse(o => { if (o.userData.cmSign === s) f = true }); return f }));
+    c('Chat counter + book swap', !!tgt(/Chat café: Thai iced tea/) && !!tgt(/Chat book swap/)); c('Pineapple shake counter inside the new bar', (() => { const t = tgt(/pineapple shake/); return t && t.x > 70 && t.z < 20 })());
+    place(17, 47, 0); AV.P.yaw = 0; AV.P.pitch = .05; await sleep(5000);
+  }, { shot: 'cm_hostel_blues' });
+  step('Chat + Pineapple Express street views', async c => { place(54, 56.5, -Math.PI / 2); AV.P.yaw = -Math.PI / 2; AV.P.pitch = .04; await sleep(5000); c('looking at Chat', true) }, { shot: 'cm_chat' });
+  step('Pineapple Express view', async c => { place(78, -3, Math.PI); AV.P.yaw = Math.PI; AV.P.pitch = .06; await sleep(5000); c('looking at Pineapple Express', true) }, { shot: 'cm_pineapple' });
 
   step('Giant Hostel', async c => {
     closeAll(); for (const re of [/Reception bell/, /Festival board/, /Pool table: friendly/, /Shop counter/, /Apeverse Portal/, /Sleep in your bunk/, /Pet Bobo/]) c('target: ' + re.source, !!AV.W.T.find(t => re.test(lab(t))));

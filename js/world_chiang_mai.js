@@ -1,6 +1,6 @@
 /* APEVERSE V0.9.4 - world_chiang_mai.js : Chiang Mai — the Living Festival City.
    Game-friendly Chiang Mai (north = -z): the walled Old City inside its moat (4 gates, brick wall, bastions), Giant Hostel (home base,
-   fully enterable: terrace, reception, shop counter, lounge, pool table, guest rooms), Blue's Live Music Bar, Pineapple Express,
+   fully enterable: terrace, reception, shop counter, lounge, pool table, guest rooms), Big Blues live music bar (opposite the hostel), Chat cafe + guesthouse (a block east), Pineapple Express (on the road to Tha Phae Gate),
    Khun Kae's Juice Bar, Chada's Vegetarian, a 24h mini-mart, Wat Chedi Luang, Wat Phra Singh, a teak temple, Buak Hard Park,
    the Gecko Shrine; outside: Tha Phae Gate plaza, Tha Phae Road, the Rack & Roll Pool Bar, the Night Bazaar, Warorot Market,
    the Ping River (pier, footbridge, east bank), the Lantern Field, and Doi Suthep on the western horizon.
@@ -36,8 +36,11 @@ const inWall = (x, z) => { const m = Math.max(Math.abs(x), Math.abs(z)); if (m <
    Blue's interior was designed at x 34..52 / z 52..70 facing north; bX/bZ rotate it 180° onto its new plot (front faces the hostel). */
 const bX = x => 60 - x, bZ = z => 92.5 - z;
 const HOS = { x0: 8, x1: 32, z0: 52, z1: 88 }, BLUES = { x0: 8, x1: 26, z0: 22.5, z1: 40.5 }, MART = { x0: -16, x1: -4, z0: 48, z1: 60 };
-const PINE = { x0: 35, x1: 51, z0: 53.5, z1: 68 }, KAE = { x0: 28, x1: 40, z0: 28, z1: 40.5 }, CHADA = { x0: 44, x1: 56, z0: 26, z1: 40.5 }, POOLBAR = { x0: 142, x1: 160, z0: -26, z1: -5 };
-const RESERVED = [{ x0: 6, x1: 57, z0: 47.5, z1: 91 }, BLUES, KAE, CHADA, MART, { x0: -52, x1: -6, z0: 5, z1: 40.5 }, { x0: -91, x1: -63, z0: -57, z1: -5 }, { x0: -91, x1: -63, z0: 47.5, z1: 91 }, { x0: -54, x1: -24, z0: 50, z1: 82 }, { x0: -91, x1: -62, z0: -91, z1: -66 }];
+/* V1.2 (Cinematic V1): street relationships from the owner: Giant Hostel and Big Blues face each other across Moon Muang Rd (z 44);
+   CHAT (cafe + guesthouse) is a block east with one turn (~50 m walk); PINEAPPLE EXPRESS is farther again on the main E-W road
+   towards Tha Phae Gate (~100 m, two turns). The old plot next to the hostel is ordinary shophouses again. */
+const PINE = { x0: 70, x1: 86, z0: 7.5, z1: 20 }, CHAT = { x0: 64.5, x1: 76.5, z0: 50.5, z1: 62.5 }, KAE = { x0: 28, x1: 40, z0: 28, z1: 40.5 }, CHADA = { x0: 44, x1: 56, z0: 26, z1: 40.5 }, POOLBAR = { x0: 142, x1: 160, z0: -26, z1: -5 };
+const RESERVED = [{ x0: 6, x1: 34, z0: 47.5, z1: 91 }, { x0: CHAT.x0 - 1.5, x1: CHAT.x1 + 1, z0: CHAT.z0 - 1, z1: CHAT.z1 + 1 }, { x0: PINE.x0 - 1, x1: PINE.x1 + 1, z0: PINE.z0 - 1.5, z1: PINE.z1 + 1 }, BLUES, KAE, CHADA, MART, { x0: -52, x1: -6, z0: 5, z1: 40.5 }, { x0: -91, x1: -63, z0: -57, z1: -5 }, { x0: -91, x1: -63, z0: 47.5, z1: 91 }, { x0: -54, x1: -24, z0: 50, z1: 82 }, { x0: -91, x1: -62, z0: -91, z1: -66 }];
 const PLAZA = { x0: 124, x1: 140, z0: -22, z1: 22 }, BAZAAR = { x0: 160, x1: 230, z0: 20, z1: 78 }, WARO = { x0: 172, x1: 226, z0: -78, z1: -34 }, FIELD = { x0: -225, x1: -140, z0: -70, z1: 70 };
 const DOOR_IN = [15.5, 54], DOOR_OUT = [15.5, 50];
 const inRect = (r, x, z, m) => x > r.x0 - (m || 0) && x < r.x1 + (m || 0) && z > r.z0 - (m || 0) && z < r.z1 + (m || 0);
@@ -410,7 +413,7 @@ AV.registerWorld({
       hb.add(MT.v, A.geo('cyl'), 0xc83a2a, M(bX(43), 1.0, bZ(66.5), .35, .5, .35)); hb.add(MT.v, A.geo('cyl'), 0xf0e8d0, M(bX(43), 1.27, bZ(66.5), .34, .03, .34)); hb.add(MT.shiny, A.geo('cyl'), 0xe0c040, M(bX(42.2), 1.6, bZ(66.2), .3, .02, .3));   // drum kit
       for (const [x, z] of [[37, 56], [41, 58], [45.5, 56], [49, 58.5], [39, 61]]) { table(bX(x), bZ(z), .5); for (const a of [0, 2.1, 4.2]) hb.add(MT.v, A.geo('cyl'), 0x3a2a5a, M(bX(x + Math.cos(a) * .85), .25, bZ(z + Math.sin(a) * .85), .22, .5, .22)) }
       bb(MT.wood, 0x5a3a2a, 49.2, 51.6, 0, 1.1, 55, 62); bc(49.2, 51.6, 55, 62); bb(MT.v, 0x4a8aff, O.x0 + .3, O.x1 - .3, 4.3, 4.4, 52.2, 52.4, 1);
-      const l = new THREE.PointLight(0x6a8aff, 1.2, 18); l.position.set(bX(43), 3.8, bZ(64)); grp.add(l); sign('BLUE’S Live Music Bar', bX(43), 5.6, bZ(O.z0 - .6), 0, 6, '#6ab8ff') }
+      const l = new THREE.PointLight(0x6a8aff, 1.2, 18); l.position.set(bX(43), 3.8, bZ(64)); grp.add(l) }   /* V1.2: its painted BIG BLUES board is mounted below, after boardSign() is defined */
     occ.push({ x0: 7, x1: 27, z0: 21.5, z1: 41.5 });
 
     /* ---------- other enterable venues (open front rooms) ---------- */
@@ -419,13 +422,66 @@ AV.registerWorld({
       const doors = [{ side: face, at: mid, w: dw }]; const old = hb; room(x0, x1, z0, z1, doors, col);
       box(hb, MT.stucco, shadeHex(col, .85), x0 - .2, x1 + .2, wH, wH + .4, z0 - .2, z1 + .2); box(hb, MT.wood, 0xffffff, x0 + t, x1 - t, 0, .05, z0 + t, z1 - t);
       const sx2 = face === 'n' || face === 's' ? mid : face === 'e' ? x1 + .35 : x0 - .35, sz2 = face === 'n' ? z0 - .35 : face === 's' ? z1 + .35 : mid, ry = face === 'n' ? Math.PI : face === 's' ? 0 : face === 'e' ? Math.PI / 2 : -Math.PI / 2;   // sign faces the street
-      sign(name, sx2, 3.6, sz2, ry, Math.min(6, (face === 'n' || face === 's' ? x1 - x0 : z1 - z0) - 1), signCol);
+      if (name) sign(name, sx2, 3.6, sz2, ry, Math.min(6, (face === 'n' || face === 's' ? x1 - x0 : z1 - z0) - 1), signCol);   /* null: the venue mounts its own painted sign */
       const l = new THREE.PointLight(0xffd8a0, .8, 12); l.position.set((x0 + x1) / 2, 3.4, (z0 + z1) / 2); grp.add(l);
       if (furnish) furnish(x0, x1, z0, z1); occ.push({ x0: x0 - 1, x1: x1 + 1, z0: z0 - 1, z1: z1 + 1 });
     };
     function shadeHex(h, k) { return new THREE.Color(h).multiplyScalar(k).getHex() }
-    /* Pineapple Express: now next door to the hostel (door on the north side, facing the street) */
-    venue(PINE, 'n', 0x3a6a3a, 'PINEAPPLE EXPRESS · chill bar', '#ffd84a', (x0, x1, z0, z1) => { for (const [x, z] of [[x0 + 4, z0 + 5], [x0 + 8, z0 + 8], [x0 + 12, z0 + 4.5]]) { table(x, z, .5); for (const a of [0, 3.1]) hb.add(MT.v, BG.sph, [0xff8a3a, 0x4ac8c8][a > 1 ? 1 : 0], M(x + Math.cos(a) * .9, .3, z + Math.sin(a) * .9, .45, .3, .45)) } box(hb, MT.wood, 0xffd84a, x0 + 1, x0 + 5, 0, 1.05, z1 - 1.4, z1 - .6); ctx.cols.push([x0 + 1, x0 + 5, z1 - 1.4, z1 - .6]); hb.add(MT.v, BG.sph, 0xffd23a, M(x1 - 2.5, 3.2, z1 - 1.2, .5, .7, .5), .6); hb.add(MT.v, BG.cone, 0x3a9a3a, M(x1 - 2.5, 3.9, z1 - 1.2, .3, .5, .3)) });
+    /* ---------- V1.2 painted, mounted shop signs (one per named business; no floating text planes) ----------
+       Each is a canvas-painted face in its own design language on a framed backing board bolted to the facade, lit a little at night. */
+    const TH2 = '"Leelawadee UI","Leelawadee","Thonburi","Tahoma","Noto Sans Thai",sans-serif';
+    const drawBoard = (style, c, W, H) => {
+      const r = AV.rng(style.length * 97 + 5), grime = a => { for (let i = 0; i < 900; i++) { c.fillStyle = 'rgba(40,30,20,' + (r() * a).toFixed(3) + ')'; c.fillRect(r() * W, r() * H, 1 + r() * 3, 1 + r() * 3) } const g = c.createLinearGradient(0, H * .6, 0, H); g.addColorStop(0, 'rgba(30,25,20,0)'); g.addColorStop(1, 'rgba(30,25,20,' + a * 2 + ')'); c.fillStyle = g; c.fillRect(0, 0, W, H) };
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      if (style === 'pine') {   /* hand-painted plank board: sun-faded teak, pineapple illustration, rounded yellow lettering */
+        for (let y = 0; y < H; y += H / 5) { const g = c.createLinearGradient(0, y, 0, y + H / 5); g.addColorStop(0, '#8a5a30'); g.addColorStop(1, '#6e4524'); c.fillStyle = g; c.fillRect(0, y, W, H / 5 - 3); c.fillStyle = '#3a2412'; c.fillRect(0, y + H / 5 - 3, W, 3); for (let k = 0; k < 14; k++) { c.strokeStyle = 'rgba(40,22,10,.25)'; c.beginPath(); const yy = y + r() * H / 5; c.moveTo(0, yy); c.bezierCurveTo(W * .3, yy + 4, W * .6, yy - 4, W, yy + 2); c.stroke() } }
+        c.strokeStyle = '#f2c230'; c.lineWidth = 10; c.strokeRect(18, 18, W - 36, H - 36);
+        const px = H * .62, py = H * .56; c.fillStyle = '#f2b81e'; c.beginPath(); c.ellipse(px, py, H * .2, H * .28, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#a8701a'; c.lineWidth = 4; for (let k = -4; k <= 4; k++) { c.beginPath(); c.moveTo(px + k * 16 - 60, py - 80); c.lineTo(px + k * 16 + 60, py + 80); c.stroke(); c.beginPath(); c.moveTo(px + k * 16 + 60, py - 80); c.lineTo(px + k * 16 - 60, py + 80); c.stroke() }
+        c.fillStyle = '#3a8a2a'; for (let k = -3; k <= 3; k++) { c.beginPath(); c.moveTo(px, py - H * .26); c.quadraticCurveTo(px + k * 24, py - H * .45, px + k * 36, py - H * .5); c.quadraticCurveTo(px + k * 12, py - H * .4, px, py - H * .26); c.fill() }
+        c.font = 'bold ' + (H * .3 | 0) + 'px "Cooper Black","Bookman Old Style",Georgia,serif'; c.lineWidth = 14; c.strokeStyle = '#1f4a1a'; c.strokeText('Pineapple Express', W * .58, H * .4); c.fillStyle = '#ffd23a'; c.fillText('Pineapple Express', W * .58, H * .4);
+        c.font = 'bold ' + (H * .11 | 0) + 'px Georgia,serif'; c.fillStyle = '#f4ead0'; c.fillText('chill bar · fruit shakes · reggae nights', W * .58, H * .7); c.font = (H * .1 | 0) + 'px ' + TH2; c.fillText('สับปะรดเอ็กซ์เพรส', W * .58, H * .85); grime(.06) }
+      else if (style === 'chat') {   /* teal enamel lightbox with Thai + English, speech-bubble mark */
+        const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#13807a'); g.addColorStop(1, '#0a514d'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+        c.strokeStyle = '#f2efe6'; c.lineWidth = 8; c.beginPath(); c.moveTo(40, 20); c.arcTo(W - 20, 20, W - 20, H - 20, 30); c.arcTo(W - 20, H - 20, 20, H - 20, 30); c.arcTo(20, H - 20, 20, 20, 30); c.arcTo(20, 20, W - 20, 20, 30); c.stroke();
+        const bx = H * .55, by = H * .48; c.fillStyle = '#f2efe6'; c.beginPath(); c.ellipse(bx, by, H * .3, H * .22, 0, 0, Math.PI * 2); c.fill(); c.beginPath(); c.moveTo(bx - 30, by + H * .16); c.lineTo(bx - 60, by + H * .34); c.lineTo(bx + 10, by + H * .19); c.fill();
+        c.fillStyle = '#0a514d'; for (const k of [-1, 0, 1]) { c.beginPath(); c.arc(bx + k * 38, by, 11, 0, Math.PI * 2); c.fill() }
+        c.font = 'bold ' + (H * .42 | 0) + 'px "Segoe UI",Arial,sans-serif'; c.fillStyle = '#ffffff'; c.fillText('CHAT', W * .6, H * .42); c.font = 'bold ' + (H * .13 | 0) + 'px ' + TH2; c.fillStyle = '#ffd84a'; c.fillText('แชท · คาเฟ่ & เกสต์เฮาส์', W * .6, H * .72);
+        c.font = (H * .1 | 0) + 'px "Segoe UI",Arial,sans-serif'; c.fillStyle = '#d8f0ec'; c.fillText('CAFÉ · GUESTHOUSE · BOOK SWAP', W * .6, H * .86); grime(.035) }
+      else {   /* blues: black board, neon-tube lettering, guitar */
+        c.fillStyle = '#0c0d14'; c.fillRect(0, 0, W, H); c.strokeStyle = '#2a3a8a'; c.lineWidth = 6; c.strokeRect(12, 12, W - 24, H - 24);
+        const neon = (txt, x, y, f, col, blur) => { c.font = f; c.shadowColor = col; c.shadowBlur = blur; c.lineWidth = 5; c.strokeStyle = col; c.strokeText(txt, x, y); c.fillStyle = '#ffffff'; c.fillText(txt, x, y); c.shadowBlur = 0 };
+        neon('BIG BLUES', W * .56, H * .4, 'bold ' + (H * .38 | 0) + 'px "Arial Black",Impact,sans-serif', '#3a8aff', 30);
+        neon('live music bar', W * .56, H * .74, 'italic bold ' + (H * .18 | 0) + 'px "Segoe Script","Brush Script MT",cursive', '#ff4ad2', 22);
+        c.save(); c.translate(H * .5, H * .5); c.rotate(-.5); c.strokeStyle = '#ffd84a'; c.shadowColor = '#ffb83a'; c.shadowBlur = 18; c.lineWidth = 6; c.beginPath(); c.ellipse(0, H * .12, H * .14, H * .17, 0, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.ellipse(0, -H * .06, H * .1, H * .12, 0, 0, Math.PI * 2); c.stroke(); c.beginPath(); c.moveTo(0, -H * .16); c.lineTo(0, -H * .42); c.stroke(); c.restore();
+        c.font = (H * .09 | 0) + 'px ' + TH2; c.fillStyle = '#8ab8ff'; c.fillText('ดนตรีสดทุกคืน · LIVE EVERY NIGHT', W * .56, H * .9) } };
+    const boards = [];
+    const boardSign = (style, x, y, z, ry, w, h) => {
+      const tex = canvasTex(1024, Math.round(1024 * h / w), (c, W, H) => drawBoard(style, c, W, H), false), g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; g.userData.cmSign = style;
+      const fm = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .12, roughness: style === 'chat' ? .35 : .75 }); fm.userData.lin = 1;
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), fm); face.position.z = .075; g.add(face);
+      const frameCol = { pine: 0x3a2412, chat: 0xc8ccd0, blues: 0x101018 }[style], frame = new THREE.Mesh(new THREE.BoxGeometry(w + .16, h + .16, .1), AV.std(frameCol, style === 'chat' ? .3 : .7, style === 'chat' ? .6 : 0)); g.add(frame);
+      for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.BoxGeometry(.06, .06, .3), AV.std(0x2a2a2a, .5, .5)); b.position.set(s * (w / 2 - .25), h / 2 + .03, -.1); g.add(b) }
+      if (style === 'pine') for (const s of [-1, 1]) { const arm = new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .5), AV.std(0x2a2a2a, .5, .5)); arm.position.set(s * w * .3, h / 2 + .18, .2); g.add(arm); const lamp = new THREE.Mesh(new THREE.ConeGeometry(.12, .14, 10, 1, true), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, emissive: 0xffd8a0, emissiveIntensity: .4, side: THREE.DoubleSide })); lamp.position.set(s * w * .3, h / 2 + .14, .44); g.add(lamp) }
+      AV.lin && AV.lin(g); grp.add(g); boards.push({ fm, base: style === 'pine' ? .1 : .3, night: style === 'pine' ? .45 : .9 }); return g };
+    ctx.upd.push(() => { const k = AV.nightK || 0; for (const b of boards) b.fm.emissiveIntensity = b.base + k * b.night });
+    /* Pineapple Express: on the main road towards Tha Phae Gate, two turns from the hostel (door on the north side, facing the road) */
+    boardSign('pine', (PINE.x0 + PINE.x1) / 2, 3.95, PINE.z0 - .32, Math.PI, 7.4, 1.9);
+    /* Chat: cafe + guesthouse one block east of the hostel, door on its west side facing the x = 60 lane */
+    boardSign('chat', CHAT.x0 - .32, 3.9, (CHAT.z0 + CHAT.z1) / 2, -Math.PI / 2, 6.2, 1.7);
+    /* Big Blues: on its facade facing the hostel across Moon Muang Rd (front wall at z = bZ(52) = 40.5) */
+    boardSign('blues', bX(43), 5.35, bZ(52) + .55, 0, 6.4, 1.7);
+    venue(CHAT, 'w', 0xeef0e6, null, null, (x0, x1, z0, z1) => {
+      box(hb, MT.wood, 0x6a4a2a, x1 - 1.5, x1 - .5, 0, 1.05, z0 + 2, z1 - 4); ctx.cols.push([x1 - 1.5, x1 - .5, z0 + 2, z1 - 4]);   /* counter */
+      box(hb, MT.wood, 0x5a3a22, x0 + .5, x0 + 4.5, 0, 2.2, z1 - .8, z1 - .3); ctx.cols.push([x0 + .5, x0 + 4.5, z1 - .8, z1 - .3]);   /* book-swap shelf */
+      for (let k = 0; k < 18; k++) hb.add(MT.v, BG.box, [0xc83a2a, 0x2a5aa8, 0xe8c84a, 0x3a8a4a, 0xe8e0d0][k % 5], M(x0 + .8 + (k % 9) * .42, .6 + (k / 9 | 0) * .75, z1 - .55, .3, .5, .18));
+      for (const [x, z] of [[x0 + 4.5, z0 + 3], [x0 + 7.5, z0 + 6.5], [x0 + 4.5, z0 + 8.5]]) { table(x, z, .45); for (const a of [0, 3.14]) hb.add(MT.v, A.geo('cyl'), 0x2a6a6a, M(x + Math.cos(a) * .8, .25, z + Math.sin(a) * .8, .22, .5, .22)) }
+      box(hb, MT.v, 0x2a6a6a, x0 + 8.8, x0 + 10.6, 0, .5, z0 + 1, z0 + 3.4); ctx.cols.push([x0 + 8.8, x0 + 10.6, z0 + 1, z0 + 3.4]);   /* sofa */
+      for (const dz of [-2.6, 2.6]) { const pz = (z0 + z1) / 2 + dz; hb.add(MT.v, A.geo('cyl'), 0x9a5a3a, M(x0 - .6, .25, pz, .28, .5, .28)); hb.add(MT.v, BG.sph, 0x3a7a3a, M(x0 - .6, .75, pz, .45, .5, .45)); ctx.circles.push([x0 - .6, pz, .35]) } });   /* potted plants either side of the door, off the threshold */
+    venue(PINE, 'n', 0x3a6a3a, null, null, (x0, x1, z0, z1) => { for (const [x, z] of [[x0 + 4, z0 + 5], [x0 + 8, z0 + 8], [x0 + 12, z0 + 4.5]]) { table(x, z, .5); for (const a of [0, 3.1]) hb.add(MT.v, BG.sph, [0xff8a3a, 0x4ac8c8][a > 1 ? 1 : 0], M(x + Math.cos(a) * .9, .3, z + Math.sin(a) * .9, .45, .3, .45)) } box(hb, MT.wood, 0xffd84a, x0 + 1, x0 + 5, 0, 1.05, z1 - 1.4, z1 - .6); ctx.cols.push([x0 + 1, x0 + 5, z1 - 1.4, z1 - .6]); hb.add(MT.v, BG.sph, 0xffd23a, M(x1 - 2.5, 3.2, z1 - 1.2, .5, .7, .5), .6); hb.add(MT.v, BG.cone, 0x3a9a3a, M(x1 - 2.5, 3.9, z1 - 1.2, .3, .5, .3));
+      /* V1.2 street front: corrugated awning over the entrance, potted palms + chalkboard menu kept off the threshold */
+      const mx = (x0 + x1) / 2; hb.add(MT.roof, BG.box, 0xc8a050, M(mx, 3.05, z0 - 1.05, 9, .05, 2.1, -.16, 0, 0)); for (const s of [-1, 1]) hb.add(MT.v, BG.box, 0x3a3a3a, M(mx + s * 4.3, 1.5, z0 - 2, .07, 3, .07));
+      for (const s of [-1, 1]) { const px = mx + s * 5.2, pz = z0 - .7; hb.add(MT.v, A.geo('cyl'), 0x9a5a3a, M(px, .3, pz, .32, .6, .32)); hb.add(MT.wood, A.geo('cyl'), 0x8a6a44, M(px, 1.5, pz, .08, 2.2, .08)); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; hb.add(MT.v, BG.sph, 0x3a8a3a, M(px + Math.cos(a) * .55, 2.6, pz + Math.sin(a) * .55, .6, .08, .2, 0, -a, .4)) } ctx.circles.push([px, pz, .38]) }
+      hb.add(MT.wood, BG.box, 0x2a2a26, M(mx + 3, .55, z0 - .9, .7, 1.1, .05, .25, 0, 0)); ctx.circles.push([mx + 3, z0 - .9, .3]) });
     venue(KAE, 's', 0xf2d8a8, 'KHUN KAE’S Juice Bar', '#ff7ab8', (x0, x1, z0, z1) => { box(hb, MT.wood, 0xffffff, 29, 39, 0, 1.05, 29.2, 30); ctx.cols.push([29, 39, 29.2, 30]); for (let k = 0; k < 8; k++) hb.add(MT.v, BG.sph, [0xff8a3a, 0xffd23a, 0xe83a5a, 0x7ad84a][k % 4], M(29.6 + k * 1.2, 1.18, 29.6, .14, .14, .14), .2); table(33, 36, .5); table(37, 37, .45) });
     venue(CHADA, 's', 0xd8e8c8, 'CHADA’S Vegetarian', '#7aff9a', (x0, x1, z0, z1) => { for (const [x, z] of [[47, 31], [52, 31], [47, 36], [52, 36]]) { table(x, z, .55); for (const a of [0, 1.57, 3.14, 4.71]) hb.add(MT.v, A.geo('cyl'), 0x8a5a3a, M(x + Math.cos(a) * .8, .25, z + Math.sin(a) * .8, .18, .5, .18)) } box(hb, MT.wood, 0xffffff, 44.5, 55.5, 0, 1.05, 26.6, 27.4); ctx.cols.push([44.5, 55.5, 26.6, 27.4]) });
     venue(MART, 'n', 0xf4f4f4, '24H MINI MART', '#ff8a3a', (x0, x1, z0, z1) => { for (const z of [51.5, 54.5, 57.5]) { box(hb, MT.v, 0xd8d8d8, -14.5, -5.5, 0, 1.8, z - .3, z + .3); ctx.cols.push([-14.5, -5.5, z - .3, z + .3]); for (let k = 0; k < 12; k++) hb.add(MT.v, BG.box, [0xe83a3a, 0x3a8ad8, 0xffd84a, 0x3ac85a, 0xff8ad8][k % 5], M(-14 + k * .75, 1.0 + (k % 3) * .35, z, .3, .3, .5), .1) } box(hb, MT.v, 0x9ad8ff, -15.6, -14.9, 0, 2, 49, 59, .3) });
@@ -599,7 +655,7 @@ AV.registerWorld({
     /* routes that respect walls: through the hostel door when crossing the front wall */
     const insideH = (x, z) => x > H.x0 && x < H.x1 && z > H.z0 && z < 70;
     /* leaving an enclosed venue goes out through its door first */
-    const EXITS = [[BLUES, [[bX(43), bZ(61.5)], [bX(43), 42.4]]], [MART, [[-10, 46.5]]], [PINE, [[43, 52.4], [43, 48.6]]]];
+    const EXITS = [[BLUES, [[bX(43), bZ(61.5)], [bX(43), 42.4]]], [MART, [[-10, 46.5]]], [PINE, [[78, 9.6], [78, 5.8]]], [CHAT, [[66.6, 56.5], [62.3, 56.5]]]];
     const routeTo = (n, tx, tz, yaw, opt) => { const p = n.g.position, path = []; const a = insideH(p.x, p.z), b = insideH(tx, tz);
       for (const [r0, wp] of EXITS) if (inRect(r0, p.x, p.z) && !inRect(r0, tx, tz)) wp.forEach(w => path.push(w));
       if (a && !b) path.push([DOOR_IN[0], DOOR_IN[1]], [DOOR_OUT[0], DOOR_OUT[1]]); else if (!a && b) path.push([DOOR_OUT[0], DOOR_OUT[1]], [DOOR_IN[0], DOOR_IN[1]]);
@@ -641,7 +697,10 @@ AV.registerWorld({
     T(25.5, 61.6, 2.2, () => tr('Pool table: friendly game vs Nuni', 'Mesa de billar: partida amistosa contra Nuni'), () => { if (crew.nuni.g.position.distanceTo(new THREE.Vector3(25.5, 0, 64)) > 8) return AV.toast(tr('Nuni isn’t here. She’s usually at this table from 17:00.', 'Nuni no está. Suele estar en esta mesa desde las 17:00.')); AV.cm.act('nuni', 'pool_here') });
     T(PX, PZ - .6, 2.2, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => AV.cm.portalPanel());
     /* food & shops */
-    T(38.4, 64.4, 2, () => tr('Pineapple Express: pineapple shake (15)', 'Pineapple Express: batido de piña (15)'), () => buy(15, 'Pineapple shake', tr('Cold, sweet, served in a pineapple. Life is good.', 'Frío, dulce, servido en una piña. La vida es buena.'), 'pineapple_shake'));
+    T(PINE.x0 + 3, PINE.z1 - 2.6, 2, () => tr('Pineapple Express: pineapple shake (15)', 'Pineapple Express: batido de piña (15)'), () => buy(15, 'Pineapple shake', tr('Cold, sweet, served in a pineapple. Life is good.', 'Frío, dulce, servido en una piña. La vida es buena.'), 'pineapple_shake'));
+    /* V1.2 Chat cafe + guesthouse */
+    T(CHAT.x1 - 2.4, CHAT.z0 + 5, 2, () => tr('Chat café: Thai iced tea (15)', 'Café Chat: té tailandés helado (15)'), () => buy(15, 'Thai iced tea', tr('Orange, sweet, condensed milk on ice. The owner asks where you are headed next.', 'Naranja, dulce, leche condensada con hielo. La dueña te pregunta adónde vas después.'), 'thai_tea'));
+    T(CHAT.x0 + 2.5, CHAT.z1 - 1.6, 1.8, () => tr('Chat book swap + guestbook', 'Intercambio de libros + libro de visitas de Chat'), () => AV.toast(AV.pick([tr('“Stayed 3 nights, stayed 3 weeks. Pai next!” · a well-thumbed Lonely Planet from 2009.', '“Vine 3 noches, me quedé 3 semanas. ¡Ahora Pai!” · una Lonely Planet de 2009 muy usada.'), tr('“Best khao soi is two streets from here. Ask for extra crispy noodles.”', '“El mejor khao soi está a dos calles. Pide fideos extra crujientes.”'), tr('A swapped paperback: half a novel, all of its bookmarks still inside.', 'Un libro de bolsillo intercambiado: media novela, todos sus marcapáginas dentro.')])));
     T(34, 31, 2.2, () => tr('Khun Kae’s: smoothie bowl (35)', 'Khun Kae: bol de smoothie (35)'), () => buy(35, 'Smoothie bowl', tr('Açaí, mango, dragon fruit. You feel 4% healthier.', 'Açaí, mango, pitahaya. Te sientes un 4% más sano.'), 'smoothie'));
     T(50, 28.6, 2, () => tr('Chada’s: vegan khao soi (40)', 'Chada: khao soi vegano (40)'), () => buy(40, 'Vegan khao soi', tr('Curry noodles, crispy on top, perfect. Chada waves from the kitchen.', 'Fideos al curry, crujientes arriba, perfectos. Chada saluda desde la cocina.'), 'khao_soi'));
     T(-10, 50, 2, () => tr('Mini mart: cold drink (12)', 'Minimercado: bebida fría (12)'), () => buy(12, 'Cold drink', tr('The air-con alone was worth it.', 'Solo el aire acondicionado ya valía la pena.'), 'water'));
@@ -881,7 +940,7 @@ AV.registerWorld({
       defaultArrival: 'default',
       mapRoads: ROADS,   /* V1.1: streets on the minimap (js/minimap.js) */
       places: [{ id: 'hostel', name: ['Giant Hostel', 'Giant Hostel'], x: 18, z: 46, yaw: Math.PI }, { id: 'gate', name: ['Tha Phae Gate', 'Puerta Tha Phae'], x: 132, z: 0, yaw: -Math.PI / 2 }, { id: 'bazaar', name: ['Night Bazaar', 'Night Bazaar'], x: 183, z: 11, yaw: Math.PI },
-        { id: 'luang', name: ['Wat Chedi Luang', 'Wat Chedi Luang'], x: -28, z: 4, yaw: Math.PI }, { id: 'river', name: ['Ping River pier', 'Muelle del río Ping'], x: 252, z: 30, yaw: -Math.PI / 2 }, { id: 'field', name: ['Lantern Field', 'Campo de Farolillos'], x: -150, z: 0, yaw: Math.PI / 2 }, { id: 'pool', name: ['Rack & Roll Pool Bar', 'Bar de billar Rack & Roll'], x: 151, z: -3, yaw: 0 }],
+        { id: 'luang', name: ['Wat Chedi Luang', 'Wat Chedi Luang'], x: -28, z: 4, yaw: Math.PI }, { id: 'river', name: ['Ping River pier', 'Muelle del río Ping'], x: 252, z: 30, yaw: -Math.PI / 2 }, { id: 'field', name: ['Lantern Field', 'Campo de Farolillos'], x: -150, z: 0, yaw: Math.PI / 2 }, { id: 'pool', name: ['Rack & Roll Pool Bar', 'Bar de billar Rack & Roll'], x: 151, z: -3, yaw: 0 }, { id: 'blues', name: ['Big Blues live music bar', 'Big Blues, bar de musica en directo'], x: 17, z: 43, yaw: 0 }, { id: 'chat', name: ['Chat cafe + guesthouse', 'Chat cafe + guesthouse'], x: 62, z: 56.5, yaw: -Math.PI / 2 }, { id: 'pine', name: ['Pineapple Express bar', 'Bar Pineapple Express'], x: 78, z: 5.4, yaw: Math.PI }],
       musicProfile: { bpm: 90, root: 45, scale: [0, 2, 4, 7, 9], style: 'boom' },
       music: { playlist: 'chiang_mai', pos: { x: 18, y: 2.5, z: 62 }, bed: .45 }
     };

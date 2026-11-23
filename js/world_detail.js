@@ -45,7 +45,7 @@ D.apply = function (W) {
   const flora = [], clut = {}, people = [], tries = [2500, 4500, 7000][q], capF = [140, 280, 460][q], capC = [50, 110, 180][q];
   for (let i = 0; i < tries && (flora.length < capF || Object.values(clut).reduce((a, b) => a + b.length, 0) < capC); i++) {
     const x = x0 + rng() * (x1 - x0), z = z0 + rng() * (z1 - z0), y = W.surface(x, z); if (y === null || y === undefined || Math.abs(y) > 40 || priv(x, z)) continue;
-    if (ar && Math.hypot(x - ar.x, z - ar.z) < 7 || nearT(x, z, 1.2) || !AV.isFree(W, x, z, .5)) continue; const rd = roadD(x, z);
+    if (ar && Math.hypot(x - ar.x, z - ar.z) < 7 || nearT(x, z, 1.2) || (W.places || []).some(p => Math.hypot(p.x - x, p.z - z) < 3) || !AV.isFree(W, x, z, .5)) continue;   /* never in front of a named entrance */ const rd = roadD(x, z);
     if (!AV.isFree(W, x, z, 1.7) && rd > .8) { const k = c.clutter[(rng() * c.clutter.length) | 0], n = Object.values(clut).reduce((a, b) => a + b.length, 0); if (n < capC) { (clut[k] = clut[k] || []).push({ x, y, z, s: .9 + rng() * .25, ry: rng() * Math.PI * 2, tint: k === 'moto' ? .5 + rng() * .5 : null }); ctx.circles.push([x, z, k === 'moto' ? .5 : .4]); W.circles = ctx.circles } }
     else if (rd > 2.5 && AV.isFree(W, x, z, 3) && flora.length < capF) flora.push({ x, y, z, s: .7 + rng() * .7, k: c.flora[(rng() * c.flora.length) | 0], col: c.cols[(rng() * c.cols.length) | 0] }) }
   /* flora: one instanced set per species + colour */
@@ -67,7 +67,7 @@ D.apply = function (W) {
       sp.forEach(s => W.T.push({ x: s.x, z: s.z, r: 1.8, label: () => AV.tr('🙏 Spirit house: leave a small offering', '🙏 Casa de los espíritus: dejar una ofrenda'), fn: () => { AV.toast(AV.tr('You leave a flower and a little red drink. The spirits of this place are content.', 'Dejas una flor y una bebida roja. Los espíritus del lugar están contentos.')); AV.vitals && AV.vitals.add(0, 2) } })) } }
   /* lantern strings / prayer flags across the lanes near busy places */
   let strings = 0; if (c.strings && K.lanterns) { const lines = []; (W.places || []).slice(0, 14).forEach(p => { let best = null; for (const r of roads) { const d = segD(p.x, p.z, r); if (d < 30 && (!best || d < best.d)) best = { r, d } } if (!best) return; const r = best.r, l = Math.hypot(r[2] - r[0], r[3] - r[1]) || 1, ux = (r[2] - r[0]) / l, uz = (r[3] - r[1]) / l, w = (r[4] || 6) / 2 + .6;
-      const t = Math.max(0, Math.min(l, (p.x - r[0]) * ux + (p.z - r[1]) * uz)), cx = r[0] + ux * t, cz = r[1] + uz * t, a = [cx - uz * w, cz + ux * w], b = [cx + uz * w, cz - ux * w], ya = W.surface(a[0], a[1]), yb = W.surface(b[0], b[1]); if (ya === null && yb === null) return;
+      const t = Math.max(0, Math.min(l, (p.x - r[0]) * ux + (p.z - r[1]) * uz + (t0 => t0 + 9 <= l ? 9 : -9)((p.x - r[0]) * ux + (p.z - r[1]) * uz))), cx = r[0] + ux * t, cz = r[1] + uz * t, a = [cx - uz * w, cz + ux * w], b = [cx + uz * w, cz - ux * w], ya = W.surface(a[0], a[1]), yb = W.surface(b[0], b[1]); if (ya === null && yb === null) return;
       lines.push([[a[0], (ya || 0) + 5, a[1]], [b[0], (yb || 0) + 5, b[1]]]) });
     lines.forEach(pts => { try { K.lanterns(ctx, pts, c.strings === 'flags' ? { cols: [0x2a6ad8, 0xffffff, 0xd83a3a, 0x3aa04a, 0xffd84a], per: 10, sag: .6 } : { per: 8, sag: .7 }) } catch (e) { } }); strings = lines.length }
   /* people: small groups near the places, in local outfits */

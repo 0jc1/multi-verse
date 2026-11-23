@@ -78,7 +78,7 @@ CY.crowd = function (ctx, opt) {
         const d = Math.hypot(w.x - cam.x, w.z - cam.z), show = w.vis && d < far;
         if (!show) { if (w.shown !== false) { for (const p in ms) ms[p].im.setMatrixAt(w.si, ZERO); w.shown = false } if (w.vis) step(w, dt * (frameI % 4 === 0 ? 4 : 0)); continue }
         if (d > far * .6 && (frameI + w.si) % 3 !== 0 && w.shown) { step(w, dt); continue }   // distant: animate every 3rd frame
-        w.shown = true; step(w, d > far * .6 ? dt * 3 : dt); const lift = pose(w, t, beat);
+        w.shown = true; step(w, d > far * .6 ? dt * 3 : dt); if (opt.H) w.y = opt.H(w.x, w.z) + (w.dy || 0); const lift = pose(w, t, beat);
         _q.setFromAxisAngle(_v.set(0, 1, 0), w.yaw); _m.compose(_v.set(w.x, w.y + lift, w.z), _q, _s);
         for (const p in ms) { if (p === 'root') { ms[p].im.setMatrixAt(w.si, _m); continue } const e = P[p]; _e.set(e[0], e[1], e[2]); _q.setFromEuler(_e); _l.compose(ms[p].pos, _q, _s); _l.premultiply(_m); ms[p].im.setMatrixAt(w.si, _l) }
       }
@@ -187,7 +187,7 @@ CY.parked = function (ctx, list) {
   const by = {}, mat = CY.vehMat(ctx), out = []; list.forEach(v => { const k = v.type + '|' + (v.chunk || 0); (by[k] = by[k] || []).push(v) });
   for (const k in by) { const a = by[k], g = VB[a[0].type](0xffffff, { rider: false }), im = new THREE.InstancedMesh(g, mat, a.length), box = new THREE.Box3();
     g.attributes.aGlow.array.fill(0);   // parked: headlights / tail lights off
-    a.forEach((v, i) => { _q.setFromAxisAngle(_v.set(0, 1, 0), v.yaw); _m.compose(_v.set(v.x, 0, v.z), _q, _s); im.setMatrixAt(i, _m); im.setColorAt(i, _c.setHex(v.col).convertSRGBToLinear()); box.expandByPoint(_v.set(v.x, 1, v.z)) });
+    a.forEach((v, i) => { _q.setFromAxisAngle(_v.set(0, 1, 0), v.yaw); _m.compose(_v.set(v.x, v.y || 0, v.z), _q, _s); im.setMatrixAt(i, _m); im.setColorAt(i, _c.setHex(v.col).convertSRGBToLinear()); box.expandByPoint(_v.set(v.x, (v.y || 0) + 1, v.z)) });
     g.boundingSphere = box.getBoundingSphere(new THREE.Sphere()); g.boundingSphere.radius += 3.5;
     im.instanceColor.needsUpdate = true; im.castShadow = K.q() === 2; im.receiveShadow = true; im.name = 'parked_' + a[0].type; ctx.group.add(im); out.push(im) }
   return out;
@@ -212,7 +212,7 @@ CY.traffic = function (ctx, loops, spec, opt) {
       const want = stop ? 0 : Math.min(c.vmax, gap < 1.8 ? 0 : gap < 9 ? c.vmax * (gap - 1.8) / 7.2 : c.vmax);
       c.v += (want - c.v) * Math.min(1, dt * (want < c.v ? 4 : 1.2)); c.s += c.v * dt;
       if (dP < 2.4 && t > c.honkT && AV.audio) { c.honkT = t + 3; AV.audio.blip(c.type === 'scooter' ? 660 : 420, .18, 'square', .06); setTimeout(() => AV.audio.blip(c.type === 'scooter' ? 660 : 420, .14, 'square', .05), 200) }
-      _q.setFromAxisAngle(_v.set(0, 1, 0), p[2]); _m.compose(_v.set(p[0], (c.type === 'scooter' || c.type === 'bicycle') ? Math.sin(t * 9 + c.i) * .01 : 0, p[1]), _q, _s); c.im.setMatrixAt(c.i, _m); c.x = p[0]; c.z = p[1]; c.yaw = p[2];
+      const gy = opt.H ? opt.H(p[0], p[1]) : 0; _q.setFromAxisAngle(_v.set(0, 1, 0), p[2]); _m.compose(_v.set(p[0], gy + ((c.type === 'scooter' || c.type === 'bicycle') ? Math.sin(t * 9 + c.i) * .01 : 0), p[1]), _q, _s); c.im.setMatrixAt(c.i, _m); c.x = p[0]; c.z = p[1]; c.yaw = p[2];
     }
     meshes.forEach(m => m.instanceMatrix.needsUpdate = true);
   });

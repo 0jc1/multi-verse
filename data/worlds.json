@@ -258,6 +258,26 @@
   "art_refs": []
  },
  {
+  "id": "koh_samui_jurassic",
+  "name": "Jurassic Koh Samui",
+  "roadmap_no": null,
+  "core_identity": "Fantastical ancient Koh Samui-shaped island: primordial jungle, enormous ferns, volcano ridges, lagoons, dinosaurs and a tiny futuristic time gate",
+  "music_identity": "Primordial ambient, tribal percussion, distant sauropod calls",
+  "status": "playable",
+  "landmarks": [
+   "Dino Valley",
+   "Fern Cathedral",
+   "Great Lagoon",
+   "Nesting Cliffs",
+   "River Canyon",
+   "Crystal Cave",
+   "High Canopy Trail",
+   "Time Gate"
+  ],
+  "kind": "additional_concept",
+  "art_refs": []
+ },
+ {
   "id": "prehistoric",
   "name": "Prehistoric Dinosaur World",
   "roadmap_no": 19,
@@ -297,6 +317,47 @@
    "Marble Mountains"
   ],
   "art_refs": []
+ },
+ {
+  "id": "jerusalem",
+  "name": "Jerusalem · City of Gold",
+  "roadmap_no": 22,
+  "core_identity": "The real Old City: four quarters, 7 gates, holy sites, Mamilla, Mahane Yehuda, Mount of Olives",
+  "music_identity": "Maqam Hijaz, oud plucks, darbuka",
+  "status": "planned",
+  "landmarks": [
+   "Jaffa Gate",
+   "Old City walls & 4 quarters",
+   "Temple Mount · Dome of the Rock",
+   "Western Wall plaza",
+   "Church of the Holy Sepulchre",
+   "Tower of David",
+   "Covered souk alleys",
+   "Mamilla Avenue",
+   "Mahane Yehuda Market",
+   "Mount Zion",
+   "Mount of Olives & Kidron"
+  ]
+ },
+ {
+  "id": "judean_desert",
+  "name": "Judean Desert · Dead Sea",
+  "roadmap_no": 23,
+  "core_identity": "Salt shore, Ein Gedi oasis, Masada, Qumran caves, Bedouin camp, desert patrol",
+  "music_identity": "Desert maqam, sparse darbuka",
+  "status": "planned",
+  "landmarks": [
+   "Dead Sea shore (float!)",
+   "Ein Gedi oasis & waterfall",
+   "Masada mesa & Roman ramp",
+   "Cable car",
+   "Qumran caves",
+   "Bedouin camp (sage tea, camel)",
+   "Desert patrol outpost",
+   "Beach kiosk & mud baths",
+   "Salt pillars",
+   "Route 90 bus stop"
+  ]
  },
  {
   "id": "somatra",

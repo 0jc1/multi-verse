@@ -170,13 +170,27 @@ Built from `Downloads\ape multiverse 1\worlds\Apeverse Vienna 2000s Memory Map (
 | Music | IT | "Vienna Memories" playlist (all ZtonedApe + Stone Ape Band tracks), positional at Karlsplatz; films take over near the summer cinema |
 | Access | IT | 5th Portal Grove gate in Ape Town; Portal Pipe + travel map (Vienna was already on the roadmap list) |
 | Tests | IT | `tools/tests/suite_v099.js` 43/43 desktop; render 0.37–0.44M tris / 110–300 calls on High (headless count) |
-## Next
+## Next (as of V0.9.8)
 | Phase | Scope |
 |---|---|
 | 2 — Ape Town | Rebuild to the masterplan: La Finca gateway, lotus canal + bridges + boats, Circular Plaza ring of cafés, cinema facing the plaza, Gallery Gardens (45-frame layout), La Muria, waterfalls + stone ape head, Portal Grove, Crystal Garden, Asia/Temple/Desert gardens; more NPCs and crowds |
 | 3 — Jungle Dub Village | Rave stage, Roots Village, Dub Lab, Bamboo Bazaar, River Bar, floating bungalows, Lotus Lagoon, treehouses, Jungle Cinema, crystal waterfalls |
 | 4 — Astro-9 Market | Central Plaza, bazaar, Astro Café, Orbit Lounge, Docking Bay, Cinema 9, Glassopy observatory (Club Graviton kept) |
 | 5 — Polish | real-device performance, docs |
+
+## V1.0 — Jerusalem & the Judean Desert (regional worlds + characters, 2026-11-23)
+| Area | State | Notes |
+|---|---|---|
+| Regional wardrobe (`js/anatomy_regional.js`) | IT | sculpt-worker garments: long sleeves, tailored jacket, long robe (thobe/coat/habit), plate vest + pouches; new head sculpts: helmet, fedora, kippah, keffiyeh + agal, hijab wrap, hood (all cached in IndexedDB like the rest) |
+| Regional people (`js/chars_regional.js`) | IT | soft-body roles: business, businesswoman, soldier, orthodox, vendor, bedouin, hijabi, embroidered, pilgrim, monk, nun, student, elder, guide; props (briefcase, coffee, bag, beads, staff, radio, camera, backpack, apron, canteen); fabrics (keffiyeh, red keffiyeh, camo, pinstripe, embroidery); instanced crowd variants `suit/orthodox/keff/hijab/soldier/robe/monk/nun` with per-instance colours; vehicles `bus` + `jeep` |
+| Jerusalem (`js/world_jerusalem.js`) | IT | ~500×360 m: Old City walls with 7 named gates + walkable ramparts, 4 quarters, Temple Mount esplanade with golden Dome of the Rock + Al-Aqsa under restoration, 4 minarets, Western Wall plaza (courses of ashlar, notes in the cracks, menorah), Holy Sepulchre (two domes + the immovable ladder), Tower of David citadel, the Cardo columns, covered souk alleys with striped canopies and stalls, ka'ak carts at Damascus Gate, Mamilla avenue, Jaffa Road + light rail (grass track, 3 stations, rideable), City Hall, Mahane Yehuda roofed market, Mount Zion dome, Mount of Olives domes + Kidron valley tombs, patrol post, portal, cypress + olive groves |
+| Judean Desert (`js/world_judean_desert.js`) | IT | ~520×420 m: Dead Sea with salt shoreline + wade/float zone + salt pillars, Ein Gedi canyon (waterfall, 3 pools, stepping stones), Masada mesa (walkable Roman ramp, plateau with Herod's terraces + cisterns, cable car station with cable), Qumran cave with jars, Bedouin camp (goat-hair tents, fire with kettle, rugs, saddled camels), patrol outpost (hut, sandbags, jeep), beach kiosk + umbrellas + mud tubs, Route 90 with bus stop, portal, palms + acacias; modes Day / Sunset / Night (F) |
+| Named cast (`data/npcs_worlds.js`) | IT | Dalia, Yossi, Karim, Miriam, Elias (Jerusalem); Sgt. Noa, Salem, Amir, Tomer (desert) — full EN/ES dialogue |
+| Missions | IT | Dalia's Grand Tour (5 glowing checkpoints), The Lost Briefcase (Miriam → Yossi), Ka'ak for Karim, Water Run (3 bottles → Noa), The Lost Hiker (Qumran cave), Zahra's Walkabout (camel near Masada) |
+| Items (`data/items_jerusalem.js`) | IT | falafel, hummus, shakshuka, ka'ak, rugelach, halva, dates, pomegranate juice, mint tea, cardamom coffee, sage tea, Armenian tile, olive-wood camel, postcard, Dead Sea mud, salt crystal + world pickups on both maps |
+| Music | IT | procedural `maqam` style (maqam Hijaz, maqsum darbuka, oud plucks, drone; `sparse` variant for the desert) |
+| Ape Town Portal Grove | IT | 8th + 9th gates → Jerusalem (gold) and Judean Desert (salt-blue), each with an arrival point |
+| Tests | IT | `tools/tests/suite_jlm.js` via `tools/tests/run_cdp.mjs` (macOS/Linux headless-Chrome runner, no dependencies) |
 
 ## V0.9 (original, unchanged features)
 Engine/world manager, save v2 + V0.8 migration, EN/ES, settings, Stone Ape Band, Zil job/shift economy, rent, kiosk, Verdalux Drum Log,

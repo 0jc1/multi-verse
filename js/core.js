@@ -166,7 +166,7 @@ function buildWorld(id) {
     ctx.mk(G.box, AV.std(0xffe0a0, .4, 0, 0xffb060, 1.2), doorX, y + 2.9, z1 + .2, 2.2, .35, .1, false);
     return { x0, x1, z0, z1, h, l, doorX, y };
   };
-  const inst = def.build(ctx) || {}; AV.lin(group);
+  const inst = (() => { try { return def.build(ctx) || {} } catch (e) { scene.remove(group); AV.dispose(group); throw e } })(); AV.lin(group);
   Object.assign(inst, { id, name: inst.name || meta.name || id, group, cols: ctx.cols, circles: ctx.circles, T: ctx.T, upd: ctx.upd, leave: ctx.leave, ctx });
   if (!inst.surface) { const b = inst.bound || 60; inst.surface = (x, z) => Math.hypot(x - (inst.cx || 0), z - (inst.cz || 0)) < b ? 0 : null }
   if (!inst.arrivals) inst.arrivals = { default: { x: 0, z: 10, yaw: 0 } };

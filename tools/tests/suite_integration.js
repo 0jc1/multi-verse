@@ -5,7 +5,8 @@ window.APE_T = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms)), $ = id => document.getElementById(id);
   const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(150) } return false };
   const settled = () => AV.W && $('fade').style.opacity === '0';
-  const bad = window.__badAssets = window.__badAssets || [];
+  const bad0 = window.__badAssets = window.__badAssets || [], MP = /api\/mp\//;   /* the multiplayer endpoint only exists under tools/mp_server.py: offline 404s are expected */
+  const bad = { push: s => { if (!MP.test(s)) bad0.push(s) }, get length() { return bad0.length }, set length(v) { bad0.length = v }, slice: (a, b) => bad0.slice(a, b) };
   if (!window.__assetHook) { window.__assetHook = 1; const of = window.fetch; window.fetch = async (...a) => { try { const r = await of(...a); if (!r.ok) bad.push(r.status + ' ' + String(a[0]).slice(-80)); return r } catch (e) { bad.push('ERR ' + String(a[0]).slice(-80)); throw e } };
     const oo = XMLHttpRequest.prototype.open; XMLHttpRequest.prototype.open = function (m, u) { this.addEventListener('loadend', () => { if (this.status >= 400 || this.status === 0) bad.push(this.status + ' ' + String(u).slice(-80)) }); return oo.apply(this, arguments) };
     window.addEventListener('error', e => { const t = e.target; if (t && t !== window && (t.src || t.href)) bad.push('load ' + String(t.src || t.href).slice(-80)) }, true) }

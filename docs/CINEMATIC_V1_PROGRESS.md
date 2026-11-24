@@ -419,3 +419,19 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - `suite_pai` 48/48
   - `suite_astro9_streets` 86/86
   - `suite_madrid` 77/78. The Pinar avenue "both sidewalks" miss is a known intermittent: its blocked point moves between runs ((-7,-10) in one, (-10,10) in the next), so it is something moving. It is the same intermittent first recorded on the perf branch.
+
+### Milestone 6c: Pai Walking Street, local signs, food carts, overhead cables
+
+- **21 unique Walking Street signs with Thai lettering.** They replace the identical purple neon boards. There are four local styles:
+  - carved teak board, with grain and a cream carved border
+  - painted tin, with rust streaks and rivets
+  - hand-painted cloth banner
+  - LED box
+  - Each sign has its English name plus Thai: for example ร้านกาแฟ เรนนี่ (Rainny Café), นวดแผนไทย (Thai massage), กางเกงช้าง (elephant pants), ก๋วยเตี๋ยว (noodles).
+  - Projecting boards hang on an iron bracket and read from both directions; façade boards have a dark frame.
+  - All signs share one texture and one draw call.
+- **Night-market food carts:** same spots and still walk-through. Each is a stainless cart on wheels with a glass case, a wok and burner, a gas bottle, an umbrella and produce. There are 8 different Thai menu boards with prices (ผัดไทย PAD THAI 50฿, ข้าวซอย KHAO SOI 60฿, ส้มตำ, หมูปิ้ง, ข้าวเหนียวมะม่วง, ...).
+- **Thai utility poles:** concrete poles at the shop seams, between shop walls, so they block nothing. Each has a crossarm and a transformer box, and they carry sagging 6-cable bundles along both sides of the street, plus a few cables across it.
+- **Tests:**
+  - `suite_pai` 46/48 on the first run. The two route misses at the north end (0,-62) and (11,-69.2) did not reproduce: both points were free when probed, and the route step passed 15/15 twice on re-runs. Recorded as a transient, cause unproven.
+  - No other world's code changed.

@@ -262,14 +262,14 @@ AV.registerWorld({
     const at = (x, z) => nodes.findIndex(p => p[0] === x && p[1] === z);
     link(at(-1.4, 12), [[-12, 13], [PL.tea[0] + 4, PL.tea[1] - 2]]); link(at(1.4, 0), [[20, 1], [44, 2], [bank - 8, BR.z - 3]]);   /* (walkers stay on the flat valley floor; the hills have their own seated / dancing crowds) */
     const NAV = CY.nav(nodes, edges), crowd = CY.crowd(ctx), V = ['man', 'woman', 'tourist', 'tourist', 'woman'];
-    for (let i = 0; i < [18, 28, 38][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; crowd.add({ v: V[i % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .08 }) }
-    const nightWalk = []; for (let i = 0; i < [8, 12, 18][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; nightWalk.push(crowd.add({ v: V[(i + 2) % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .5 })) }
+    for (let i = 0; i < [12, 18, 26][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; crowd.add({ v: V[i % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .2 }) }   /* Cinematic V1: fewer random wanderers, more who stop and browse */
+    const nightWalk = []; for (let i = 0; i < [6, 8, 12][q]; i++) { const n0 = nodes[(rng() * 46) | 0]; nightWalk.push(crowd.add({ v: V[(i + 2) % 5], x: n0[0], z: n0[1], nav: NAV, idleProb: .5 })) }
     const put = (x, z, yaw, m, v) => crowd.add({ v: v || V[Math.abs(Math.round(x * 7 + z)) % 5], x, z, y: H(x, z), yaw, mode: m || 'sit' });
     for (const b of [rC, gC, blues]) for (let i = 0; i < 3; i++) put(b.cx + b.s * (i % 2 ? 1.1 : -1.1), b.zc - b.w / 4 + (i >> 1) * (b.w / 2.4) + .75, b.s > 0 ? Math.PI / 2 : -Math.PI / 2);
     [[-2, -2.6], [2.4, -1.4], [2.6, 1.8], [-1.6, 2.6], [-3, 0]].forEach(([dx, dz], i) => put(PL.tea[0] + dx, PL.tea[1] + dz, Math.atan2(-dx, -dz), i < 2 ? 'drum' : 'sit', i < 2 ? 'drummer' : null));
     [[64, 4, 'sit'], [65, 12, 'talk'], [bank - 3, 15, 'sit'], [bank - 5, 18, 'sit'], [bank - 1, 18, 'talk']].forEach(([x, z, m]) => put(x, z, rng() * TAU, m));
-    const party = []; for (let k = 0; k < [10, 16, 22][q]; k++) { const [x, z] = PL.sunset, a = rng() * TAU, r = 1.5 + rng() * 5; party.push(put(x - 2 + Math.cos(a) * r, z - 1 + Math.sin(a) * r * .7, rng() * TAU, 'dance', ['dancer', 'tourist', 'woman', 'man'][k % 4])) }
-    const nW = [10, 16, 24][q], watchers = []; for (let k = 0; k < nW; k++) { const [x, z] = PL.paradise, a = k / nW * TAU, r = 6.8 + (k % 2) * 1.2; watchers.push(put(x + Math.cos(a) * r, z + Math.sin(a) * r, Math.atan2(-Math.cos(a), -Math.sin(a)), k % 5 === 0 ? 'dance' : 'idle')) }
+    const party = []; for (let k = 0; k < [8, 12, 16][q]; k++) { const [x, z] = PL.sunset, a = rng() * TAU, r = 1.5 + rng() * 5; party.push(put(x - 2 + Math.cos(a) * r, z - 1 + Math.sin(a) * r * .7, rng() * TAU, 'dance', ['dancer', 'tourist', 'woman', 'man'][k % 4])) }
+    const nW = [8, 12, 18][q], watchers = []; for (let k = 0; k < nW; k++) { const [x, z] = PL.paradise, a = k / nW * TAU, r = 6.8 + (k % 2) * 1.2; watchers.push(put(x + Math.cos(a) * r, z + Math.sin(a) * r, Math.atan2(-Math.cos(a), -Math.sin(a)), k % 5 === 0 ? 'dance' : 'idle')) }
     const spinner = put(PL.paradise[0], PL.paradise[1] + .6, 0, 'dance', 'dancer');
     crowd.build();
     /* warm street lamps for the evening (a few real lights; the lanterns do the rest) */

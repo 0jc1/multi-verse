@@ -137,7 +137,7 @@ K.species = {
    (sharing the GPU buffers) carries a bounding sphere around that cell's instances. Off-screen cells are frustum-culled,
    and the shadow pass only draws cells near the player. (r128 would otherwise cull by the base geometry at the origin.) */
 K.instChunks = function (parent, geo, mat, items, opt, matFn, colFn) {
-  opt = opt || {}; const cell = opt.cell || 110, cells = new Map();
+  opt = opt || {}; const cell = (opt.cell || 110) * ([2.2, 1.8, 1][K.q()] || 1), cells = new Map();   /* Cinematic V1: bigger chunks on Low / Medium = far fewer draw calls (laptop GPUs are draw-call bound) */
   items.forEach(it => { const k = Math.floor(it.x / cell) + ',' + Math.floor(it.z / cell); if (!cells.has(k)) cells.set(k, []); cells.get(k).push(it) });
   if (!geo.boundingSphere) geo.computeBoundingSphere(); const gr = geo.boundingSphere.radius + geo.boundingSphere.center.length(), out = [];
   for (const list of cells.values()) {

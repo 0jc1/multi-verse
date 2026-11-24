@@ -365,3 +365,57 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - Sunset Bar and Paradise Circus: 28–30 FPS
 - **Pai's real bottleneck:** each crowd person is about 76,000 triangles (an SDF-sculpted body). That is addressed in milestone 6b.
 - **Tests:** `suite_pai` 48/48, `suite_madrid` 77/78, `suite_astro9_streets` 86/86 (walking, loops, shops). The Madrid miss is the known intermittent Pinar avenue spot (-7,-10), first recorded on the perf branch and unrelated to these changes.
+
+### Milestone 6b: Pai character and vegetation performance (measured, honest)
+
+- **What was investigated.** `suite_pai_fps.js`, with `-Gpu` on the Intel Iris Xe, gained two tools:
+  - a frame-budget split: game logic was about 3 ms of a 35–44 ms frame, so the game is not CPU-bound
+  - a GPU cost-attribution step that hides one category at a time at the Walking Street north view
+- **Attribution results** (on battery, throttled, one session):
+
+| What was hidden | FPS |
+|---|---|
+| nothing (normal) | 21.7 |
+| shadows off | 21.9 |
+| 75% resolution | 22.7 |
+| all 105 characters | 22.2 |
+| 268 instanced vegetation meshes | **35.9** |
+| 48 loose meshes | 30.0 |
+| 1,227 grouped props | 28.9 |
+| everything | 56.9 |
+
+  The biggest single cost was the instanced vegetation: about 800k triangles, but in 268 separate draws.
+- **Changes:**
+  - **Crowd sculpt level (`chars_soft.js`, `city_life.js`):** a new `lod: 'crowd'` level sculpts background street people at a 17 mm cell (humans were 11 mm; apes 22 mm). Heads keep their own sculptor. Named NPCs and shop workers keep full detail.
+  - **Vegetation batching (`world_kit.js`, `K.instChunks`):** chunks are 2.2× bigger on Low and 1.8× on Medium (High unchanged). The plants and their positions are identical; only the batching changed, so there are fewer draw calls in every world.
+  - **Pai densities (`world_pai.js`):** fewer random wanderers, and the ones that remain stop and browse more often. Venue crowds are kept, a bit smaller:
+
+| Group | Before (Low / Medium / High) | After |
+|---|---|---|
+| Day walkers | 18 / 28 / 38 | 12 / 18 / 26 |
+| Night walkers | 8 / 12 / 18 | 6 / 8 / 12 |
+| Sunset Bar party | 10 / 16 / 22 | 8 / 12 / 16 |
+| Paradise Circus watchers | 10 / 16 / 24 | 8 / 12 / 18 |
+
+- **Measured effect** (Medium, same views, back to back, battery discharging 59 → 56%):
+  - Triangles, after the crowd sculpt level and densities:
+
+| View | Before | After |
+|---|---|---|
+| Walking Street north | 2.98 M | 1.89 M (−37%) |
+| Walking Street south | 2.93 M | 1.66 M (−43%) |
+| River hostel | 1.61 M | 1.29 M |
+
+  - Draw calls, after the vegetation chunking:
+
+| View | Before | After |
+|---|---|---|
+| Walking Street north | 650 | 566 |
+| Walking Street middle | 428 | 264 |
+| Walking Street south | 699 | 555 |
+
+  - **FPS: inconclusive.** The laptop was on battery and throttled. The identical Astro-9 scenes measured 58–60 FPS on mains power and 29–37 FPS on battery, and Pai FPS moved within that noise in both directions. To confirm, re-measure plugged in with `run_tests.ps1 -Suite tools/tests/suite_pai_fps.js -Gpu`.
+- **Tests:**
+  - `suite_pai` 48/48
+  - `suite_astro9_streets` 86/86
+  - `suite_madrid` 77/78. The Pinar avenue "both sidewalks" miss is a known intermittent: its blocked point moves between runs ((-7,-10) in one, (-10,10) in the next), so it is something moving. It is the same intermittent first recorded on the perf branch.

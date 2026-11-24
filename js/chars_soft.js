@@ -94,7 +94,7 @@ function look(o) {
     shoes: { o: flip ? { flip: true } : o.boots ? { high: true } : {}, cols: flip ? [shoe, 0x2a2622, shoe, new THREE.Color(shoe).multiplyScalar(.7).getHex()] : o.boots ? [shoe, new THREE.Color(shoe).multiplyScalar(.55).getHex(), new THREE.Color(shoe).multiplyScalar(.8).getHex(), shoe] : [shoe, 0xf0ece4, 0xe8e4da, new THREE.Color(shoe).multiplyScalar(.75).getHex()] },
     hat: hs ? { style: hs, cols: hs === 'cap' ? [hexN(o.capCol || 0x2a6a3a), hexN(o.capCol || 0x2a6a3a)] : [hair, hair] } : null,
     hairCol: hair, beard: !!o.beard, glasses: o.glasses, flower: o.flower, redEye: !!o.redEye, height: o.height };
-  if (o.lod) L.ov = { h: .011 };
+  if (o.lod) L.ov = { h: o.lod === 'crowd' ? .017 : .011 };   /* Cinematic V1: 'crowd' = background street people (about a third of the triangles) */
   L.matHook = matHook(L);
   if (o.tweak) o.tweak(L);   // chars_regional.js: fabric scale, vest colours...
   return L;
@@ -264,7 +264,7 @@ const APE = { furs: [0x3a2a20, 0x5a3a22, 0x2a2a2a, 0x7a4a2a, 0xc8682a, 0x4a3a30]
 /* chimp townsfolk: exactly the villagers' sculpts (already cached), new colours */
 function randomApe(seed, o) {
   const r = rng((seed | 0) * 2246822519 + 3266489917), pick = a => a[Math.floor(r() * a.length) % a.length], skin = pick(APE.skins), hat = r() < .4 ? pick(APE.shirt) : null;
-  return { kind: 'npc', sp: 'chimp', ov: o.lod ? { s: 1.0, h: .016 } : { s: 1.0 }, fur: pick(APE.furs), skin, dark: new THREE.Color(skin).multiplyScalar(.45).getHex(), nail: 0xd8b090, tip: 0xffffff, eye: 0x6a3a14, strandF: 250, shells: o.shells == null ? 12 : o.shells, shadow: o.shadow,
+  return { kind: 'npc', sp: 'chimp', ov: o.lod ? { s: 1.0, h: o.lod === 'crowd' ? .022 : .016 } : { s: 1.0 }, fur: pick(APE.furs), skin, dark: new THREE.Color(skin).multiplyScalar(.45).getHex(), nail: 0xd8b090, tip: 0xffffff, eye: 0x6a3a14, strandF: 250, shells: o.shells == null ? 12 : o.shells, shadow: o.shadow,
     shirt: { o: { loose: 1.04, sleeve: .55 }, col: pick(APE.shirt) }, pants: { o: { loose: 1.1 }, col: pick([0x3a3a52, 0x2a2a2a, 0x5a3a2a, 0x3a5a3a]), kind: 'twill' }, shoes: { o: {}, cols: [pick([0x2a2a2c, 0xe8e4da, 0xd84a3a]), 0xe8e4da, 0x2a2a2c, 0x5a5a62] },
     hat: hat != null ? { style: 'kufi', cols: [hat, hat] } : null, size: .88 + r() * .16 };
 }

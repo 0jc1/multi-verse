@@ -108,7 +108,7 @@ BK.build = function (ctx) {
   const NB = AV.astro9neon, MO = AV.astro9more;
   /* ---------- neighbourhood groups (detail streamed by distance) ---------- */
   const HOOD = { kepler: [90, 140], undergrid: [70, 184], terraces: [135, 145], biotech: [200, 150], souk: [-55, 58], west: [-90, 168], industrial: [-124, 150], sky: [186, 55] };
-  const H = {}; for (const k in HOOD) { const shell = new THREE.Group(), det = new THREE.Group(); ctx.group.add(shell); ctx.group.add(det); H[k] = { shell, det, fam: {}, solid: [], glow: [], flora: [], signs: [], wins: [], posters: [], metal: [] } }
+  const H = {}; for (const k in HOOD) { const shell = new THREE.Group(), det = new THREE.Group(); shell.name = 'bk_shell_' + k; det.name = 'bk_det_' + k; ctx.group.add(shell); ctx.group.add(det); H[k] = { shell, det, fam: {}, solid: [], glow: [], flora: [], signs: [], wins: [], posters: [], metal: [] } }
   const hoodAt = (x, z) => { let best = 'kepler', d = 1e9; for (const k in HOOD) { const e = Math.hypot(x - HOOD[k][0], z - HOOD[k][1]); if (e < d) { d = e; best = k } } return best };
   const placed = [], used = new Set();
   const inPlaced = (x, z, pad) => placed.some(b => { const dx = x - b.cx, dz = z - b.cz; if (dx * dx + dz * dz > (b.rad + pad) * (b.rad + pad)) return false; const lx = dx * Math.cos(b.ang) - dz * Math.sin(b.ang), lz = dx * Math.sin(b.ang) + dz * Math.cos(b.ang); return Math.abs(lx) < b.w / 2 + pad && Math.abs(lz) < b.d / 2 + pad });
@@ -123,11 +123,26 @@ BK.build = function (ctx) {
   const fits = (cx, cz, ang, w, d) => { const nx = Math.max(2, Math.ceil(w / 1.4)), nz = Math.max(2, Math.ceil(d / 1.4)); for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) { const [x, z] = toW(cx, cz, ang, -w / 2 + w * i / nx, -d / 2 + d * j / nz); if (blocked(x, z)) return false } return true };
   const ubox = (w, h, d, tw, th) => { const g = new THREE.BoxGeometry(w, h, d), p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
     for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i) + h / 2, z = p.getZ(i); if (Math.abs(n.getY(i)) > .5) uv.setXY(i, .01, .99); else if (Math.abs(n.getX(i)) > .5) uv.setXY(i, (z + d / 2) / tw, y / th); else uv.setXY(i, (x + w / 2) / tw, y / th) } return g };
-  const lm = (cx, cz, ang, y, lx, lz, sx, sy, sz, rx, ry, rz) => { const [x, z] = toW(cx, cz, ang, lx, lz); return M(x, y, z, sx, sy, sz, rx || 0, ang + (ry || 0), rz || 0) };
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
+  const lm = (cx, cz, ang, y, lx, lz, sx, sy, sz, rx, ry, rz) => { const [x, z] = toW(cx, cz, ang, lx, lz); _e.set(rx || 0, ang + (ry || 0), rz || 0, 'YXZ'); return new THREE.Matrix4().compose(_p.set(x, y, z), _q.setFromEuler(_e), _s.set(sx, sy, sz)) };   /* yaw first, then tilt in the building's own frame */
   const TINT = { glass: [0xffffff, 0xd8e8ff, 0xe8d8ff, 0xc8f0e8], work: [0xffffff, 0xe8d8c8, 0xc8c8d8, 0xd8c8b8, 0xb8b0b8], apt: [0xffffff, 0xffd8d0, 0xd0e8ff, 0xfff0c0, 0xd8ffd8, 0xffd0f0], bio: [0xffffff, 0xd8ffd8, 0xc8f0ff], mod: [0xff8a5a, 0x4ad8ff, 0xffd84a, 0x7aff8a, 0xff4ad2, 0xe8e8e8, 0x8a8aff], ind: [0xffffff, 0xd8d0c8, 0xc8d0d8], souk: [0xffffff, 0xffe8d0, 0xf0d8c0] };
   const FAMS = { kepler: ['glass', 'glass', 'apt', 'glass'], undergrid: ['work', 'work', 'work', 'mod'], terraces: ['apt', 'apt', 'apt', 'bio'], biotech: ['bio', 'bio', 'apt'], souk: ['souk'], west: ['mod', 'apt', 'mod', 'work'], industrial: ['ind', 'ind', 'work'], sky: ['glass'] };
   const HGT = { glass: [18, 64], work: [6, 11], apt: [12, 26], bio: [7, 16], mod: [5, 15], ind: [8, 13], souk: [6, 9] };
   let nB = 0, nSign = 0, signNext = 0;
+  /* ---------- awnings: one design per architecture family ---------- */
+  const PAL = [[0xc81a5a, 0xf4ead0], [0x1a8a8a, 0xe8c86a], [0x6a2a8a, 0xff8ad8], [0xe85a1a, 0x2a2a3a], [0x2a6ab8, 0xf4ead0], [0xe8a82a, 0x7a1a3a]];
+  const awning = (hd, fam, cx, cz, ang, y0, fz, w) => { const aw = Math.min(w - .6, 8), y = y0 + 3.15;
+    if (fam === 'souk') { const [a, b] = PAL[(r() * PAL.length) | 0], n = Math.max(4, Math.round(aw / .55)), sw = aw / n;   /* striped fabric, scalloped edge, holo trim, lanterns */
+      for (let i = 0; i < n; i++) hd.solid.push([BG.box, i % 2 ? b : a, lm(cx, cz, ang, y, -aw / 2 + sw * (i + .5), fz + .7, sw, .04, 1.45, .38)]);
+      for (let i = 0; i < n; i++) hd.solid.push([BG.sph, i % 2 ? a : b, lm(cx, cz, ang, y - .3, -aw / 2 + sw * (i + .5), fz + 1.38, sw * .5, .16, .06)]);
+      hd.glow.push([BG.box, [0x4ad8ff, 0xff4ad2, 0x7aff8a][(r() * 3) | 0], lm(cx, cz, ang, y - .2, 0, fz + 1.36, aw, .03, .03)]);
+      for (const sd of [-1, 1]) { hd.metal.push([BG.cyl, 0x2a2a2a, lm(cx, cz, ang, y - .55, sd * (aw / 2 - .3), fz + 1.2, .01, .6, .01)]); hd.glow.push([BG.sph, 0xffb84a, lm(cx, cz, ang, y - .95, sd * (aw / 2 - .3), fz + 1.2, .14, .2, .14)]) } }
+    else if (fam === 'glass') { hd.metal.push([BG.box, 0x8a90a0, lm(cx, cz, ang, y + .2, 0, fz + .8, aw, .06, 1.6)], [BG.box, 0x2a3a5a, lm(cx, cz, ang, y + .24, 0, fz + .8, aw - .2, .02, 1.5)]);   /* glass canopy, tension rods, light edge */
+      for (const sd of [-1, 1]) hd.metal.push([BG.cyl, 0xb8bcc8, lm(cx, cz, ang, y + .9, sd * (aw / 2 - .4), fz + .8, .025, 1.75, .025, -.95)]); hd.glow.push([BG.box, 0x7ff0ff, lm(cx, cz, ang, y + .16, 0, fz + 1.6, aw, .04, .04)]) }
+    else if (fam === 'apt') { const c = PAL[(r() * PAL.length) | 0][0]; for (let k = 0; k < 3; k++) hd.solid.push([BG.box, c, lm(cx, cz, ang, y + .25 - k * .22, 0, fz + .3 + k * .42, aw, .04, .5, .25 + k * .5)]); hd.solid.push([BG.box, 0xf4ead0, lm(cx, cz, ang, y - .45, 0, fz + 1.28, aw, .14, .03)]) }   /* curved fabric (dutch canopy) */
+    else if (fam === 'bio') { hd.flora.push([BG.hem, 0x2a9a5a, lm(cx, cz, ang, y - .1, 0, fz + .6, aw / 2, .25, .9), .3]); for (let k = -2; k <= 2; k++) hd.glow.push([BG.box, 0xc8ff7a, lm(cx, cz, ang, y + .02, k * aw / 6, fz + .7, .03, .03, 1.2, 0, k * .2)]) }   /* leaf canopy, glowing veins */
+    else { hd.metal.push([BG.box, fam === 'mod' ? TINT.mod[(r() * 7) | 0] : 0x6a6e74, lm(cx, cz, ang, y + .1, 0, fz + .6, aw, .05, 1.2, .2)]); for (let k = 0; k < aw / .3; k++) hd.metal.push([BG.cyl, 0x4a4e54, lm(cx, cz, ang, y + .14, -aw / 2 + .15 + k * .3, fz + .6, .025, 1.2, .025, Math.PI / 2 + .2)]);   /* corrugated metal + caged bulb */
+      hd.metal.push([BG.cyl, 0x2a2a2a, lm(cx, cz, ang, y - .35, 0, fz + 1, .01, .7, .01)]); hd.glow.push([BG.sph, 0xffd88a, lm(cx, cz, ang, y - .75, 0, fz + 1, .11, .14, .11)]) } };
   /* ---------- one building ---------- */
   const building = (hk, fam, cx, cz, ang, w, d, h, o) => { o = o || {}; const hd = H[hk], F = FAM[fam], tint = TINT[fam][(r() * TINT[fam].length) | 0], y0 = o.y0 || 0;
     hd.fam[fam] = hd.fam[fam] || []; if (fam === 'mod') { for (let y = 0; y < h - .5; y += 2.5) hd.fam.mod.push([ubox(w + (r() - .5) * .9, 2.45, d + (r() - .5) * .7, F.tw, F.th), TINT.mod[(r() * TINT.mod.length) | 0], lm(cx, cz, ang, y0 + y, (r() - .5) * .8, (r() - .5) * .5, 1, 1, 1)]) }   /* stacked containers, each its own colour */
@@ -147,7 +162,7 @@ BK.build = function (ctx) {
       else if (k < .82) { hd.metal.push([BG.cyl, 0x6a6a74, lm(cx, cz, ang, roofY + 2.5, lx, lz, .06, 5, .06)]); hd.glow.push([BG.sph, 0xff4a4a, lm(cx, cz, ang, roofY + 5.1, lx, lz, .12, .12, .12)]) }
       else if (fam === 'apt') { for (let k2 = 0; k2 < 4; k2++) hd.flora.push([BG.sph, [0x3a8a4a, 0x5ac85a, 0x2a6a3a][k2 % 3], lm(cx, cz, ang, roofY + .5, lx + (k2 - 1.5) * .9, lz, .6, .55, .6), 0]); hd.solid.push([BG.box, 0x8a5a3a, lm(cx, cz, ang, roofY + .2, lx, lz, 4, .4, .9)]) }
       else hd.metal.push([BG.box, 0x2a3a5a, lm(cx, cz, ang, roofY + .5, lx, lz, 2.2, .06, 1.4, -.35, 0, 0)]) } }
-    hd.solid.push([BG.box, 0x3a3640, lm(cx, cz, ang, roofY + .2, 0, 0, w + .3, .4, d + .3)]);   /* parapet cap */
+    hd.solid.push([BG.box, { souk: 0xd8c0a0, apt: 0xb8a8b0, bio: 0x2a5a3a }[fam] || 0x3a3640, lm(cx, cz, ang, roofY + .2, 0, 0, w + .3, .4, d + .3)]);   /* parapet cap (plaster on souk houses, tiles on apartments, moss on biotech) */
     /* front-face details by family */
     const fz = d / 2 + .02;
     if (fam === 'apt') { for (let y = 3; y < h - 1; y += 3) for (let lx = -w / 2 + 1.5; lx < w / 2 - 1.4; lx += 3) { if (r() < .45) continue; hd.solid.push([BG.box, 0xe8e0d8, lm(cx, cz, ang, y0 + y, lx, fz + .5, 2.2, .12, 1)], [BG.box, 0x5a5a64, lm(cx, cz, ang, y0 + y + .5, lx, fz + .98, 2.2, .9, .04)]); if (r() < .3) hd.flora.push([BG.sph, 0x4aa85a, lm(cx, cz, ang, y0 + y + .4, lx + .7, fz + .6, .35, .35, .35), 0]); if (r() < .15) hd.glow.push([BG.box, 0xffd88a, lm(cx, cz, ang, y0 + y + 1.9, lx, fz + .1, 2, .05, .05)]) } }
@@ -157,7 +172,7 @@ BK.build = function (ctx) {
     /* ground floor: shop windows + a unique sign, or a shutter / door */
     if (o.shop !== false && w >= 6.5 && fam !== 'ind') { const shopy = o.shop || ((fam === 'glass' || fam === 'apt' || fam === 'souk' || fam === 'bio') ? r() < .8 : r() < .45);
       if (shopy) { hd.wins.push([cellGeo(w / 2 - 1.4, 2.4, (r() * 8) | 0, 4, 2), 0xffffff, lm(cx, cz, ang, y0 + 1.5, -w / 4 - .3, fz + .03, 1, 1, 1)], [cellGeo(w / 2 - 1.4, 2.4, (r() * 8) | 0, 4, 2), 0xffffff, lm(cx, cz, ang, y0 + 1.5, w / 4 + .3, fz + .03, 1, 1, 1)]);
-        hd.solid.push([BG.box, 0x1a1418, lm(cx, cz, ang, y0 + 1.3, 0, fz + .02, 1.6, 2.6, .05)], [BG.box, 0x2a2830, lm(cx, cz, ang, y0 + 3.05, 0, fz + .4, w - .4, .12, .8)]);
+        hd.solid.push([BG.box, 0x1a1418, lm(cx, cz, ang, y0 + 1.3, 0, fz + .02, 1.6, 2.6, .05)]); awning(hd, fam, cx, cz, ang, y0, fz, w);
         const si = o.sign != null ? o.sign : (signNext < SIGNS.length && !o.noSign && r() < .65 ? (() => { while (used.has(signNext)) signNext++; return signNext < SIGNS.length ? signNext++ : null })() : null);
         if (si != null && !used.has(si)) { used.add(si); hd.signs.push([cellGeo(Math.min(w - 1, 7), Math.min(w - 1, 7) / 4, si, 4, 8), 0xffffff, lm(cx, cz, ang, y0 + 3.9, 0, fz + .06, 1, 1, 1)]); nSign++ } }
       else { hd.metal.push([BG.box, 0x6a6a72, lm(cx, cz, ang, y0 + 1.5, 0, fz + .05, Math.min(4, w - 1), 3, .06)]); for (let k = 0; k < 10; k++) hd.metal.push([BG.box, 0x4a4a52, lm(cx, cz, ang, y0 + .2 + k * .3, 0, fz + .09, Math.min(4, w - 1), .03, .02)]) } }
@@ -185,7 +200,10 @@ BK.build = function (ctx) {
     /* the building above + its storefront: fascia sign over the door, window displays beside it */
     if (o.above !== false) { const fam = o.fam || 'work', hh = o.aboveH || 6; building(hk, fam, (x0 + x1) / 2, (z0 + z1) / 2, 0, x1 - x0 + .2, z1 - z0 + .2, hh, { y0: y + hgt + .2, noCol: true, shop: false }) }
     const d0 = doors[0], dir = { n: [0, -1], s: [0, 1], w: [-1, 0], e: [1, 0] }[d0.side], fx = d0.side === 'w' ? x0 - .05 : d0.side === 'e' ? x1 + .05 : d0.at, fzz = d0.side === 'n' ? z0 - .05 : d0.side === 's' ? z1 + .05 : d0.at, ry = Math.atan2(dir[0], dir[1]);
-    if (o.sign != null) { used.add(o.sign); hd.signs.push([cellGeo(5.2, 1.3, o.sign, 4, 8), 0xffffff, M(fx + dir[0] * .02, y + 3.25, fzz + dir[1] * .02, 1, 1, 1, 0, ry, 0)]) }
+    if (o.sign != null) { used.add(o.sign); let best = null; for (const g of SN.segs) { const t = Math.max(0, Math.min(g.len, (fx - g.ax) * g.ux + (fzz - g.az) * g.uz)), px = g.ax + g.ux * t, pz = g.az + g.uz * t, d = Math.hypot(fx - px, fzz - pz); if (!best || d < best.d) best = { d, px, pz, g } }
+      const sy = y + Math.min(3.25, hgt - .35); if (best && best.d < 7 && best.d > .2) { const vx = (best.px - fx) / best.d, vz = (best.pz - fzz) / best.d, ry2 = Math.atan2(vx, vz), sx = fx + vx * .75, sz = fzz + vz * .75;   /* hangs out over the porch, facing the street square-on */
+        hd.signs.push([cellGeo(4.4, 1.1, o.sign, 4, 8), 0xffffff, M(sx, sy, sz, 1, 1, 1, 0, ry2, 0)], [cellGeo(4.4, 1.1, o.sign, 4, 8), 0xffffff, M(sx - vx * .03, sy, sz - vz * .03, 1, 1, 1, 0, ry2 + Math.PI, 0)]); hd.metal.push([BG.box, 0x2a2a30, M(fx + vx * .38, sy + .62, fzz + vz * .38, Math.abs(vz) * 4.4 + Math.abs(vx) * .8 + .06, .06, Math.abs(vx) * 4.4 + Math.abs(vz) * .8 + .06)]) }
+      else hd.signs.push([cellGeo(5.2, 1.3, o.sign, 4, 8), 0xffffff, M(fx + dir[0] * .02, sy, fzz + dir[1] * .02, 1, 1, 1, 0, ry, 0)]) }
     if (o.win != null && y >= 0) for (const sd of [-1, 1]) { const ox = dir[1] !== 0 ? sd * 2.9 : 0, oz = dir[0] !== 0 ? sd * 2.9 : 0; hd.wins.push([cellGeo(2.4, 2, o.win, 4, 2), 0xffffff, M(fx + ox + dir[0] * .03, y + 1.4, fzz + oz + dir[1] * .03, 1, 1, 1, 0, ry, 0)]) }
     shops.push({ name: o.name, tx, tz, walk: o.walk }); return hd };
   const shopFn = (id, name, greet, items) => () => AV.shop && AV.shop.open({ id, name, greet, items });
@@ -297,7 +315,7 @@ BK.build = function (ctx) {
   /* ======================= streaming + animation ======================= */
   const R = [90, 130, 170][q]; let st = 0; const botPath = [[60, 170], [60, 176], [60, 193], [62, 195], [76, 191], [90, 188], [99, 186], [90, 188], [76, 191], [62, 195], [60, 193], [60, 176]]; let bl = 0; const segL = []; for (let i = 0; i < botPath.length - 1; i++) { const l = Math.hypot(botPath[i + 1][0] - botPath[i][0], botPath[i + 1][1] - botPath[i][1]); segL.push(l); bl += l }
   ctx.upd.push((dt, t) => { const P = AV.P;
-    if ((st -= dt) <= 0) { st = .5; for (const k in H) { const [x, z] = HOOD[k], d = Math.hypot(P.x - x, P.z - z); H[k].det.visible = d < R + 40; H[k].shell.visible = d < R * 3.2 } }
+    if ((st -= dt) <= 0) { st = .5; for (const k in H) { const [x, z] = HOOD[k], d = Math.hypot(P.x - x, P.z - z); H[k].det.visible = d < [70, 100, 140][q]; H[k].shell.visible = d < R * 3.2 } }
     if (H.undergrid.det.visible) { let s = (t * 1.1) % bl, i = 0; while (s > segL[i]) { s -= segL[i]; i++ } const a = botPath[i], b = botPath[i + 1], f = s / segL[i], x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f; BK.bot.position.set(x, (SN.surface(x, z) || 0), z); BK.bot.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]);
       const da = t * .4; BK.dog.position.set(83 + Math.cos(da) * 3.5, 0, 182 + Math.sin(da) * 2.5); BK.dog.rotation.y = -da; BK.cat.rotation.y = -1.2 + Math.sin(t * .7) * .3 } });
   BK.shops = shops; BK.fx = { buildings: nB, signs: nSign + shops.length, shops: shops.length, hoods: Object.keys(H).length };

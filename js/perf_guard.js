@@ -4,7 +4,7 @@
         near  < 40 m : full detail (shadows only < 12 m, High)
         mid  40-80 m : opaque body only (transparent fur shells / hair cards / glass hidden), no shadow
         far  80-150 m: a ~150-triangle proxy figure in the character's own colours (detail hidden)
-        gone > 150 m : hidden (fog covers this range)
+        gone > 150 m : hidden (fog covers this range)   [distances for High; Medium x0.6, Low x0.5 (Cinematic V1 laptop tuning)]
       Distances shrink on Medium (x0.8) and Low (x0.65). Animation keeps running; only drawing changes.
    2) SHADOW BUDGET (High; shadows are off on Low / Medium): small instanced plants and props (flowers, ferns, grass, bushes, pots,
       stools...) stop casting shadows; trees, buildings, big props and nearby characters keep theirs.
@@ -52,7 +52,7 @@ function setTier(g, tier) { const was = g.tier; if (was === tier) return; g.tier
   else if (tier === 'near' || tier === 'mid') g.gr.visible = g.vis !== false;   /* restore what the game had, not "true" */
   for (const e of g.all) { if (e.sec) { if (tier === 'mid' && was === 'near') { e.v = e.o.visible; e.o.visible = false } else if (tier === 'near' && e.v != null) { e.o.visible = e.v; e.v = null } } if (tier !== 'near' && e.o.castShadow) e.o.castShadow = false }
   if (g.proxy) g.proxy.visible = tier === 'far' }
-function lod() { const P = AV.P, k = q() === 'High' ? 1 : q() === 'Medium' ? .8 : .65, sh = q() === 'High' && AV.R && AV.R.shadowMap.enabled, T = { near: 0, mid: 0, far: 0, gone: 0 };
+function lod() { const P = AV.P, k = q() === 'High' ? 1 : q() === 'Medium' ? .6 : .5, sh = q() === 'High' && AV.R && AV.R.shadowMap.enabled, T = { near: 0, mid: 0, far: 0, gone: 0 };
   for (const g of groups) { g.gr.getWorldPosition(v); const d = Math.hypot(v.x - P.x, v.z - P.z), cur = g.tier, h = 4;
     const lim = n => n * k + (cur === 'near' && n === 40 || cur === 'mid' && n === 80 || cur === 'far' && n === 150 ? h : -h * 0);   /* stay in the current tier until 4 m past its edge */
     const tier = d < lim(40) ? 'near' : d < lim(80) ? 'mid' : d < lim(150) ? 'far' : 'gone'; setTier(g, tier); T[tier]++; if (tier === 'far' && g.proxy) { g.gr.updateMatrixWorld(); g.proxy.matrix.copy(g.gr.matrixWorld); if (g.proxy.parent && g.proxy.parent.matrixWorld) g.proxy.matrix.premultiply(new THREE.Matrix4().copy(g.proxy.parent.matrixWorld).invert()) }

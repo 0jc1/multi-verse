@@ -307,3 +307,34 @@ Filled in at the end of each milestone. See `## Milestone log`.
 | West Homes | 97 / 239k / 240 | 121 / 265k / 235 |
 
   Lights: 32 exist, but only the 4 nearest are on (light budget). Real-GPU FPS on the owner's laptop is still not measured.
+
+### Milestone 5b: Astro-9 optimisation, signs and awnings
+
+- **Real-GPU frame rate, measured on the owner's laptop.** `run_tests.ps1 -Gpu` makes Chrome render on the Intel Iris Xe through Direct3D 11 instead of the SwiftShader software rasteriser. `suite_astro9_fps.js` records the GPU string, average FPS, the 1% worst frame, draw calls and what is in view, at 1510×764 while slowly turning the camera.
+
+| View | Medium, before | Medium, after | High, after |
+|---|---|---|---|
+| Undergrid / Fuse Court view | 40.3 FPS (resolution auto-dropped to 0.85) | 59.6 FPS (full resolution) | 52.6 FPS |
+| Spiral Plaza | 32.8 | 58.0 | 50.8 |
+| Art Avenue | 41.6 | 60.1 | 50.5 |
+| Bazaar souk | 51.8 | 60.1 | 50.3 |
+| Kepler × Ring / Neon / Terraces / sunken passage | 56–59 | 59.6–60.1 | 58.6–60.1 |
+
+  60 FPS is the display cap.
+
+- **What fixed it:**
+  - **Character detail tiers (`perf_guard.js`):** characters were 2.0 M triangles. Medium now uses ×0.6 distances (full detail < 24 m, body only < 48 m, proxy < 90 m) and Low ×0.5. High is unchanged.
+  - **`js/static_merge.js`:** a new pass merges identical static top-level meshes once the world has been stable for 2.5 s, per material and per 120 m cell. It skips anything transparent, custom-shaded, single-use-textured or moving. In Astro-9 it merged 98 meshes, taking top-level meshes from 292 to 214.
+  - **Undergrid detail radius:** neighbourhood detail now streams at 70 / 100 / 140 m. The Undergrid's interiors no longer draw from the plaza.
+- **Signs:** shop signs now hang from a bracket in front of the door, square to the nearest street. Previously they sat flush on the square room wall, which looked crooked on curved streets.
+- **Awnings:** the plain dark awnings are replaced by one design per family:
+  - souk: striped fabric with a scalloped edge, holo trim and hanging lanterns
+  - glass: canopy with tension rods and a light edge
+  - apartments: curved fabric
+  - biotech: leaf canopy with glowing veins
+  - workshops and containers: corrugated metal with a caged bulb
+- **Building details:** roof caps now match each family. A rotation fix means tilted parts (stairs, solar panels, awnings) now tilt in the building's own frame.
+- **Fix:** the Biotech garden's 70 random plants could block the Greenway mouth, which made loop D fail about 1 run in 3. Plants now keep 2.5 m clear of the street network, and the loops passed 3 runs in a row.
+- **Tests:**
+  - `suite_astro9_streets` 97/97 (loops ×3, shops, old features).
+  - Regressions: `astro9_neon` 37/37, `mega` 25/25, `metro` 30/30, `d2` 23/23, `art` 27/27, `market` 25/25.

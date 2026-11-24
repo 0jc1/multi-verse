@@ -35,7 +35,7 @@ const HOODS = (CX, CZ, RING) => [
 const PAL = [0xf2e6c8, 0xe8d4a0, 0xf0c8b8, 0xe0e8d0, 0xf4f0e8, 0xe8c87a, 0xd8c0a0, 0xc8d8e8, 0xe8d8c8, 0xd8e0c8];
 
 VC.build = function (E) {
-  const { ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ } = E, K = AV.kit, M = K.M, BG = K.BG; let rs = 20251;
+  const { ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ } = E, TAU = Math.PI * 2, K = AV.kit, M = K.M, BG = K.BG; let rs = 20251;
   const r = () => (rs = (rs * 16807) % 2147483647) / 2147483647;
   AV.viennaArch._shop = null; AV.viennaArch.fx = null; VC.env = E;
   const placed = [], blocks = [], districts = [];
@@ -47,7 +47,8 @@ VC.build = function (E) {
   for (const hd of ALL) { const grp = new THREE.Group(), det = new THREE.Group(); grp.name = 'vc_' + hd.id; det.name = 'vc_det_' + hd.id; ctx.group.add(grp); ctx.group.add(det); hd.VA = AV.viennaArch.make(ctx, q, { winter: win, group: grp, detail: det }); hd.grp = grp; hd.det = det; hd.side = []; hd.extra = []; hd.blocks = [] }
   const nearest = (x, z) => { let bh = null, bd = 1e9; for (const hd of ALL) { const p = ANCH[hd.id]; if (!p) continue; const d = Math.hypot(x - p[0], z - p[1]); if (d < bd) { bd = d; bh = hd } } return bh };
   const tryRect = (hd, R0, mg) => { const [x0, x1, z0, z1] = R0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2; if (hd.id === 'inner' ? !hd.reg(cx, cz) : Math.hypot(cx - CX, cz - CZ) < RING + 4) return false; if (overlaps(R0, mg)) return false; for (let x = x0 - 1.6; x <= x1 + 1.61; x += 1.9) for (let z = z0 - 1.6; z <= z1 + 1.61; z += 1.9) if (!okPt(x, z)) return false; return true };
-  const add = (hd, R0, part) => { placed.push(R0); const b = { hood: hd, x0: R0[0], x1: R0[1], z0: R0[2], z1: R0[3], cx: (R0[0] + R0[1]) / 2, cz: (R0[2] + R0[3]) / 2, part }; b.square = !part && hd.id !== 'inner' && hd.id !== 'mahue' && ((Math.round(b.cx * 3 + b.cz * 7) % 9 + 9) % 9) === 0; blocks.push(b); hd.blocks.push(b) };
+  const lanes = []; let laneK = 0;
+  const add = (hd, R0, part) => { if (hd.id === 'neubau' && !part && (laneK++ % 3) === 0 && R0[1] - R0[0] >= 14) { const cx = (R0[0] + R0[1]) / 2; lanes.push({ hd, x: cx, z0: R0[2], z1: R0[3] }); add(hd, [R0[0], cx - 1.3, R0[2], R0[3]], true); add(hd, [cx + 1.3, R0[1], R0[2], R0[3]], true); return } placed.push(R0); const b = { hood: hd, x0: R0[0], x1: R0[1], z0: R0[2], z1: R0[3], cx: (R0[0] + R0[1]) / 2, cz: (R0[2] + R0[3]) / 2, part }; b.square = !part && hd.id !== 'inner' && hd.id !== 'mahue' && ((Math.round(b.cx * 3 + b.cz * 7) % 9 + 9) % 9) === 0; blocks.push(b); hd.blocks.push(b) };
   /* pass I: the historic centre, laid out street by street (Stephansplatz stays the square south of the cathedral):
        KÄRNTNER STRASSE - 9 m pedestrian street from Stephansplatz to the Ring (x -8.5..0.5), continuous street walls both sides
        GRABEN - wide pedestrian street west of the cathedral (z -36..-24) with the Pestsäule; a row of houses facing the spire on the north
@@ -92,21 +93,54 @@ VC.build = function (E) {
     VA.bar(hx, hz, len, dep, w.o.h || 19, ry, PAL[(i * 3) % PAL.length], out, { style: w.o.style != null ? w.o.style : [2, 0, 1, 2, 0][i % 5], shopP: w.o.shop == null ? .8 : w.o.shop, noShops: w.o.shop === 0 });
     if (w.o.blade != null) { const nx = w.face === 'e' ? 1 : w.face === 'w' ? -1 : 0, nz = w.face === 's' ? 1 : w.face === 'n' ? -1 : 0, fx = nx > 0 ? w.x1 : nx < 0 ? w.x0 : hx, fz = nz > 0 ? w.z1 : nz < 0 ? w.z0 : hz; VA.blade(fx, fz, nx, nz, 4.9, w.o.blade) } });
   sideSlab(INN, -8.5, .5, -2, 45); sideSlab(INN, -50, -36, -36, -24); sideSlab(INN, -35, -21, 14.5, 27);   /* granite paving: Kärntner Straße + Graben pedestrian zones, Heldenplatz */
-  let bi = 0;
+  const courts = []; let bi = 0;
   for (const b of blocks) { const hd = b.hood, VA = hd.VA, w = b.x1 - b.x0, d0 = b.z1 - b.z0, k = bi++;
     sideSlab(hd, b.x0 - 2.2, b.x1 + 2.2, b.z0 - 2.2, b.z1 + 2.2); for (const [x, z, sx, sz] of [[b.cx, b.z0 - 2.2, w + 4.6, .22], [b.cx, b.z1 + 2.2, w + 4.6, .22], [b.x0 - 2.2, b.cz, .22, d0 + 4.6], [b.x1 + 2.2, b.cz, .22, d0 + 4.6]]) hd.extra.push([BG.box, 0x9a948a, M(x, .07, z, sx, .14, sz)]);   /* granite kerb */
     if (b.square) {   /* a small square: paving, trees at the corners, a fountain, benches facing it */
       sideSlab(hd, b.x0, b.x1, b.z0, b.z1); for (const [x, z] of [[b.x0 + 2, b.z0 + 2], [b.x1 - 2, b.z0 + 2], [b.x0 + 2, b.z1 - 2], [b.x1 - 2, b.z1 - 2]]) { hd.extra.push([BG.cyl, 0x5a4030, M(x, 1.6, z, .2, 3.2, .2)], [BG.sph, 0x3a7a32, M(x, 4.2, z, 1.9, 1.7, 1.9)], [BG.sph, 0x4a8a3a, M(x + .6, 4.9, z - .4, 1.3, 1.2, 1.3)]); ctx.circles.push([x, z, .4]) }
       hd.extra.push([BG.cyl, 0xb8b0a0, M(b.cx, .35, b.cz, 1.8, .7, 1.8)], [BG.cyl, 0x4a8ab8, M(b.cx, .66, b.cz, 1.55, .04, 1.55)], [BG.cyl, 0xb8b0a0, M(b.cx, 1.4, b.cz, .22, 1.6, .22)], [BG.sph, 0xb8b0a0, M(b.cx, 2.3, b.cz, .4, .4, .4)]); ctx.circles.push([b.cx, b.cz, 1.9]);
       for (const s of [-1, 1]) { const bz = b.cz + s * (d0 / 2 - 1.2); hd.extra.push([BG.box, 0x5a3a24, M(b.cx, .45, bz, 2, .08, .45)], [BG.box, 0x2a2a2a, M(b.cx, .22, bz, 1.9, .44, .06)]); ctx.circles.push([b.cx, bz, .5]) } continue }
-    const d = Math.min(7.5, d0 / 2 - .5), thin = d0 - 2 * d < 3, hs = hd.h, hh = () => hs[0] + r() * (hs[1] - hs[0]), col = () => PAL[(r() * PAL.length) | 0];
+    const court = b !== cafe && !b.part && w >= 17 && d0 >= 14 && (k % 6) === 2, d = court ? 4.5 : Math.min(7.5, d0 / 2 - .5), thin = !court && d0 - 2 * d < 3, hs = hd.h, hh = () => hs[0] + r() * (hs[1] - hs[0]), col = () => PAL[(r() * PAL.length) | 0];
     const mainN = roadD(b.cx, b.z0 - 4) < 8, mainS = roadD(b.cx, b.z1 + 4) < 8, sp = m => Math.min(.95, hd.shop * (m ? 1.25 : 1));
     const tower = (k % 5) === 0, sN = styleOf(hd, k * 4 + 1), sS = styleOf(hd, k * 4 + 2), sW = styleOf(hd, k * 4 + 3), sE = styleOf(hd, k * 4 + 4);
     const dd = b === cafe ? Math.min(7.5, d0 - 5) : thin ? d0 / 2 : d, ddN = b === cafe && thin ? d0 - dd : dd;   /* the café room is always 7.5 m deep (its furniture plan) */
     VA.bar(b.cx, b.z0 + ddN / 2, w, ddN, hh(), 0, col(), -1, { style: sN, shopP: sp(mainN), corner: tower ? 1 : 0 });
     if (b === cafe) { VA.bar(b.cx, b.z1 - dd / 2, w, dd, hh(), 0, col(), 1, { style: sS, noBase: true, noShops: true }); ctx.cols.push([b.x0, b.x1, b.z0, b.z1 - dd]); E.kaffeehaus(b.x0, b.x1, b.z1 - dd, b.z1) }
+    else if (court) {   /* DURCHGANG: an arched gateway into a courtyard you can walk into */
+      const gw = 1.3, hS = hh(), cS = col(); VA.bar((b.x0 + b.cx - gw) / 2, b.z1 - dd / 2, b.cx - gw - b.x0, dd, hS, 0, cS, 1, { style: sS, shopP: sp(mainS) }); VA.bar((b.cx + gw + b.x1) / 2, b.z1 - dd / 2, b.x1 - b.cx - gw, dd, hS, 0, cS, 1, { style: sS, shopP: sp(mainS) });
+      VA.bar(b.cx, b.z1 - dd / 2, gw * 2, dd, hS + .8, 0, cS, 1, { style: sS, y0: -.8, noBase: true, noShops: true });   /* the house over the gateway starts at 3.4 m */ hd.extra.push([new THREE.TorusGeometry(gw, .18, 6, 14, Math.PI), 0xd8d0c0, M(b.cx, 2.2, b.z1 + .05, 1, 1, 1)], [BG.box, 0x2a2420, M(b.cx, 1.2, b.z1 - dd / 2, gw * 2, .04, dd)]);
+      ctx.cols.push([b.x0, b.x1, b.z0, b.z0 + d], [b.x0, b.cx - gw, b.z1 - dd, b.z1], [b.cx + gw, b.x1, b.z1 - dd, b.z1], [b.x0, b.x0 + d, b.z0 + d, b.z1 - dd], [b.x1 - d, b.x1, b.z0 + d, b.z1 - dd]);
+      const yx0 = b.x0 + d, yx1 = b.x1 - d, yz0 = b.z0 + d, yz1 = b.z1 - dd, ycx = (yx0 + yx1) / 2, ycz = (yz0 + yz1) / 2; sideSlab(hd, b.cx - gw, b.cx + gw, b.z1 - dd, b.z1 + .3); sideSlab(hd, yx0, yx1, yz0, yz1);
+      hd.extra.push([BG.cyl, 0x5a4030, M(ycx - 1.4, 1.5, ycz - .4, .2, 3, .2)], [BG.sph, 0x3a7a32, M(ycx - 1.4, 3.9, ycz - .4, 1.8, 1.5, 1.8)], [BG.box, 0x5a3a24, M(ycx + 1.4, .45, ycz, 1.6, .08, .45)], [BG.box, 0x2a2a2a, M(ycx + 1.4, .22, ycz, 1.5, .44, .06)]);
+      for (let j = 0; j < 3; j++) hd.extra.push([BG.cyl, 0x2a2a2a, M(yx0 + .6, .45, yz0 + .8 + j * .7, .32, .04, .32, Math.PI / 2, 0, 0)], [BG.box, [0xc8402a, 0x2a6ab8, 0x3a8a3a][j], M(yx0 + .6, .55, yz0 + .8 + j * .7, .05, .05, .9)]);   /* parked bicycles */
+      for (let y = .5; y < 6; y += .6) hd.extra.push([BG.sph, 0x2e6a2e, M(yx1 - .15, y, yz0 + 1 + Math.sin(y * 3) * .4, .25, .35, .7)]);   /* ivy */
+      ctx.circles.push([ycx - 1.4, ycz - .4, .4], [ycx + 1.4, ycz, .5]); ctx.cols.push([yx0, yx0 + 1.2, yz0 + .4, yz0 + 2.6]);
+      courts.push({ x: b.cx, z: b.z1, cx: ycx, cz: ycz, hd }) }
     else { VA.bar(b.cx, b.z1 - dd / 2, w, dd, hh(), 0, col(), 1, { style: sS, shopP: sp(mainS) }); ctx.cols.push([b.x0, b.x1, b.z0, b.z1]) }
     if (!thin) { VA.bar(b.x0 + d / 2, b.cz, d0 - 2 * d, d, hh(), Math.PI / 2, col(), -1, { style: sW, shopP: hd.shop * .6 }); VA.bar(b.x1 - d / 2, b.cz, d0 - 2 * d, d, hh(), Math.PI / 2, col(), 1, { style: sE, shopP: hd.shop * .6 }) } }
+  for (const L of lanes) { sideSlab(L.hd, L.x - 1.3, L.x + 1.3, L.z0 - 2.2, L.z1 + 2.2); for (let z = L.z0 + 2; z < L.z1 - 1; z += 4.5) for (const e of [-1, 1]) { L.hd.extra.push([BG.box, 0x1a1a1a, M(L.x + e * 1.15, 3.6, z, .2, .5, .2)]); L.hd.extra.push([BG.box, 0xffe0a0, M(L.x + e * 1.12, 3.45, z, .14, .3, .14)]) } }   /* Gasse: cobbles + wall lanterns */
+  const PN = { inner: ['Kärntner Straße', 'Graben', 'Naglergasse'], leopold: ['Praterstraße', 'Taborstraße', 'Große Mohrengasse'], wieden: ['Wiedner Hauptstraße', 'Schleifmühlgasse'], neubau: ['Spittelberggasse', 'Burggasse', 'Siebensterngasse'], mahue: ['Mariahilfer Straße', 'Gumpendorfer Straße'],
+    josef: ['Josefstädter Straße', 'Lange Gasse'], alser: ['Alser Straße', 'Porzellangasse'], brig: ['Wallensteinstraße', 'Klosterneuburger Str.'], land: ['Landstraßer Hauptstr.', 'Rasumofskygasse'], favor: ['Favoritenstraße', 'Quellenstraße'] };
+  const allNames = [...new Set(Object.values(PN).flat())], pc = document.createElement('canvas'); pc.width = 1024; pc.height = 64 * Math.ceil(allNames.length / 2); { const g = pc.getContext('2d'); allNames.forEach((n, i) => { const X = (i % 2) * 512, Y = (i / 2 | 0) * 64; g.fillStyle = '#1a3a7a'; g.fillRect(X + 2, Y + 2, 508, 60); g.strokeStyle = '#f4f4f4'; g.lineWidth = 3; g.strokeRect(X + 7, Y + 7, 498, 50); g.fillStyle = '#f4f4f4'; g.font = '700 30px Arial,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, X + 256, Y + 33, 480) }) }
+  const pt = new THREE.CanvasTexture(pc); pt.encoding = THREE.sRGBEncoding; pt.anisotropy = 8; const plaques = [], rowsN = Math.ceil(allNames.length / 2);
+  const plaque = (x, y, z, ry, name) => { const i = allNames.indexOf(name), g = new THREE.PlaneGeometry(1.1, .14 * 1.1 * 512 / 512 * 1.1), uv = g.attributes.uv; for (let k2 = 0; k2 < uv.count; k2++) uv.setXY(k2, ((i % 2) + uv.getX(k2)) / 2, 1 - ((i / 2 | 0) + 1 - uv.getY(k2)) / rowsN); plaques.push([g, 0xffffff, M(x, y, z, 1, 1, 1, 0, ry, 0)]) };
+  blocks.forEach((b, i) => { if (b.square) return; const names = PN[b.hood.id] || PN.josef, n = names[i % names.length]; plaque(b.x0 + .7, 3.2, b.z1 + .05, 0, n); if (i % 2) plaque(b.x1 + .05, 3.2, b.z0 + .7, Math.PI / 2, names[(i + 1) % names.length]) });   /* Vienna street-name plates on block corners */
+  rows.forEach((w, i) => { if (w.face === 'e') plaque(w.x1 + .05, 3.4, w.z0 + .8, Math.PI / 2, 'Kärntner Straße'); else if (w.face === 'w' && i < 6) plaque(w.x0 - .05, 3.4, w.z0 + .8, -Math.PI / 2, 'Kärntner Straße') });
+  if (plaques.length) { const m = new THREE.MeshStandardMaterial({ map: pt, roughness: .3, metalness: .2, emissive: 0xffffff, emissiveMap: pt, emissiveIntensity: .12, polygonOffset: true, polygonOffsetFactor: -2 }); m.userData.lin = 1; INN.det.add(new THREE.Mesh(K.merge(plaques), m)) }
+  const furn = INN.extra; let racks = 0, bins = 0; blocks.forEach((b, i) => { if (b.square || b.part) return; const hd = b.hood;   /* bike racks + bins at the kerb edge (out of the walking line) */
+    if (i % 4 === 1) { const z = b.z1 + 1.9, x = b.cx + 3; for (let j = 0; j < 3; j++) hd.extra.push([new THREE.TorusGeometry(.38, .03, 5, 12, Math.PI), 0x8a8a92, M(x - .8 + j * .8, .02, z, 1, 1, 1, 0, Math.PI / 2, 0)]); ctx.circles.push([x, z, .45]); racks++ }
+    if (i % 3 === 0) { const x = b.x1 + 1.9, z = b.z0 + 1.6; hd.extra.push([BG.cyl, 0xc83a2a, M(x, .45, z, .24, .9, .24)], [BG.cyl, 0x2a2a2a, M(x, .92, z, .26, .04, .26)]); ctx.circles.push([x, z, .28]); bins++ } });
+  const cars = [], CC = [0xd8d8dc, 0x2a2a30, 0x8a1a1a, 0x1a3a6a, 0x5a6a5a, 0xe8e0c8, 0x6a6a72]; let nCar = 0;   /* parked cars along the radial avenues */
+  if (E.RADIALS) E.RADIALS.forEach(([a, b2]) => { const dx = b2[0] - a[0], dz = b2[1] - a[1], Ln = Math.hypot(dx, dz), ux = dx / Ln, uz = dz / Ln, nx = -uz, nz = ux, ry = Math.atan2(ux, uz);
+    for (let t = 10; t < Ln - 8; t += 7.5) for (const sd of [-1, 1]) { if (((t / 7.5 | 0) + (sd > 0 ? 1 : 0)) % 3 === 0) continue; const x = a[0] + ux * t + nx * sd * 3.3, z = a[1] + uz * t + nz * sd * 3.3; if (Math.hypot(x - CX, z - CZ) < RING + 10 || waterAt(x, z) || reserved(x, z, 1) || ctx.cols.some(c => x > c[0] - 1.5 && x < c[1] + 1.5 && z > c[2] - 1.5 && z < c[3] + 1.5)) continue;
+      const c = CC[nCar++ % CC.length], mk = (lx, y, lz, sx, sy, sz, col) => cars.push([BG.box, col, M(x + ux * lz + nx * lx, y, z + uz * lz + nz * lx, sx, sy, sz, 0, ry, 0)]);
+      mk(0, .55, 0, 1.75, .6, 4.1, c); mk(0, 1.1, -.2, 1.55, .55, 2.2, c); mk(0, 1.12, .55, 1.5, .4, .05, 0x2a3446); for (const [wx, wz] of [[-.85, -1.3], [.85, -1.3], [-.85, 1.3], [.85, 1.3]]) cars.push([BG.cyl, 0x1a1a1a, M(x + ux * wz + nx * wx, .32, z + uz * wz + nz * wx, .32, .2, .32, 0, ry, Math.PI / 2)]);
+      ctx.circles.push([x + ux * 1.1, z + uz * 1.1, 1], [x - ux * 1.1, z - uz * 1.1, 1]) } });
+  if (cars.length) { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .35, metalness: .5 }); m.userData.lin = 1; ctx.group.add(new THREE.Mesh(K.merge(cars), m)) }
+  if (E.stopAngles) for (const a of E.stopAngles) { const ca = Math.cos(a - .045), sa = Math.sin(a - .045), ry = -a + Math.PI / 2; for (let r2 = RING - 4.6; r2 <= RING + 4.6; r2 += .9) INN.extra.push([BG.box, 0xf4f4f0, M(CX + ca * r2, .035, CZ + sa * r2, 2.6, .012, .45, 0, Math.atan2(-ca, -sa), 0)]) }   /* stripes along the traffic, stepping across the road */   /* zebra across the Ring at each tram stop */
+  const NOD = [[-8.5, .5, -2, 45], [-50, -36, -36, -24], [-35, -21, 14.5, 27]].concat(lanes.map(L => [L.x - 1.3, L.x + 1.3, L.z0 - 2.2, L.z1 + 2.2]), courts.map(c => [c.cx - 6, c.cx + 6, c.cz - 4, c.z + .5]));
+  VC.noDecor = (x, z) => { const r = Math.hypot(x - CX, z - CZ); if (r > RING - 11 && r < RING + 11) return true; for (const q of NOD) if (x > q[0] && x < q[1] && z > q[2] && z < q[3]) return true; return false };   /* pedestrian zones, Gassen, courtyards, the Ring belt */
+  VC.streets = { lanes: lanes.length, courts: courts.map(c => [+c.x.toFixed(1), +c.z.toFixed(1), +c.cx.toFixed(1), +c.cz.toFixed(1)]), plaques: plaques.length, cars: nCar, racks, bins };
   /* lamps across the streets (between neighbouring blocks of the same neighbourhood), Litfaßsäulen on the wider streets */
   for (const hd of HOODS(CX, CZ, RING)) { }
   const byHood = new Map(); for (const hd of ALL) byHood.set(hd, []); for (const b of blocks) byHood.get(b.hood).push(b);   /* every neighbourhood is flushed, even one made only of hand-laid rows (the Innere Stadt) */
@@ -122,6 +156,6 @@ VC.build = function (E) {
   const D = [80, 120, 170][q]; let tk = 0;
   ctx.upd.push(dt => { if ((tk -= dt) > 0) return; tk = .5; const P = AV.P; for (const hd of byHood.keys()) { const [x0, x1, z0, z1] = hd.bbox, dx = Math.max(x0 - P.x, 0, P.x - x1), dz = Math.max(z0 - P.z, 0, P.z - z1); hd.det.visible = Math.hypot(dx, dz) < D } });
   VC.fx = { ring: ringB.length, blocks: blocks.length, squares: blocks.filter(b => b.square).length, hoods: districts.map(d => d.name + ' ' + byHood.get([...byHood.keys()].find(h => 'v_' + h.id === d.id)).length) };
-  VC.landmarks = lm; return { blocks, cafe, districts: districts.concat(lm.map(l => ({ id: 'v_lm_' + l.name, name: l.name, x: l.x, z: l.z }))) };
+  VC.landmarks = lm; VC.blocks = blocks; return { blocks, cafe, districts: districts.concat(lm.map(l => ({ id: 'v_lm_' + l.name, name: l.name, x: l.x, z: l.z }))) };
 };
 })(window.AV);

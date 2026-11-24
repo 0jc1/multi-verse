@@ -82,6 +82,14 @@
   - 4 named stops with shelters, signs and waiting passengers
   - the rideable Ring tram is unchanged and verified
 
+- **Streets and side lanes (7e):**
+  - 3 Durchgang courtyards (gateway, tree, bench, bikes; reachable on foot)
+  - 3 Neubau Gassen
+  - 84 street-name plaques, 9 bike racks, 11 bins
+  - 76 parked cars on the radials outside the Ring
+  - zebra crossings at the tram stops
+  - no clutter on pedestrian streets, lanes or gateways
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.
@@ -94,6 +102,7 @@
 
 ## Measured but not proven
 
+- **Vienna 7e FPS:** measured on battery only (A/B/A). It is within noise of 7d, with about 40 more draw calls on Kärntner Straße. It still needs a plugged-in re-measure.
 - **FPS gain in Pai after the optimisation:** draw calls and triangles dropped. FPS stayed within the laptop's thermal drift, which was up to 17 FPS between identical runs.
 
 ## Open issues
@@ -113,8 +122,8 @@
   - Paradise Circus fire show polish
 - **Astro-9:** districts beyond the 12 streets, richer interiors, and more varied alien NPC behaviour.
 - **Vienna (still to do):**
-  - neighbourhood identities (Naschmarkt stalls, Spittelberg lanes, Ringstraße palaces)
-  - tram stops with shelters
+  - neighbourhood identities (Naschmarkt stalls, Ringstraße palaces; Spittelberg lanes started in 7e)
+  - architecture and lighting pass across the 9 neighbourhoods; Mariahilfer Straße and Favoriten are still sparse
   - more enterable shops and a Heuriger
   - NPC daily routines
   - fixing the white haze (fog and sky)

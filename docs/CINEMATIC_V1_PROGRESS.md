@@ -587,3 +587,35 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - a tram-stop screenshot
   
   The full run passed 54/55. The one failure was my own wire-count threshold (200; the real count is 136 because poles skip junctions), which I lowered to 100. The tram steps then re-ran 10/10.
+
+### Milestone 7e: Vienna streets and side lanes
+
+- **Durchgang courtyards:** some deep perimeter blocks now have an inner courtyard reached through an arched gateway (Durchgang) in the street front. Each courtyard has a tree, a bench, parked bikes and ivy. 3 courtyards are built, and each is reachable on foot from the street.
+- **Gassen:** every third full Neubau block is split by a 2.6 m pedestrian lane (Spittelberg-style). 3 lanes are built.
+- **Street furniture:**
+  - 84 street-name plaques (blue enamel style) on block corners
+  - 9 bike racks
+  - 11 litter bins
+- **Parked cars:** 76 along the radial roads outside the Ring, with colliders.
+- **Zebra crossings:** at the four Ring tram stops.
+- **No-clutter zones (`noDecor`):** the shared decoration pass (`world_detail.js`) no longer drops pots or planters on the Ring belt, Kärntner Straße/Graben, the Gassen or the courtyard gateways. Before this, a planter sat in the middle of Kärntner Straße at Medium.
+- **Tests:** `suite_vienna` adds the step "streets + side lanes":
+  - built counts
+  - walking through a Durchgang
+  - path finding into each courtyard
+  - 3 screenshots (v_court_gate, v_court, v_cars)
+
+  Final full run: 62/62. The cross-neighbourhood walk checks now nudge their endpoints off furniture. The full run before that fix passed 61/62; the only failure was a walk endpoint landing on a new bike rack. The focused re-run then passed 11/11.
+- **Real-GPU FPS (ON BATTERY, so not comparable with the plugged-in 7c table):** 3 runs, A/B/A, Medium.
+
+| View | 7e run 1 | 7d (previous commit) | 7e run 2 |
+|---|---|---|---|
+| Stephansplatz | 16.8 | 29.9 | 26.3 |
+| Kärntner Straße | 17.9 | 28.7 | 28.2 |
+| Ringstraße east | 25.8 | 39.0 | 44.0 |
+| Café street | 42.7 | 37.9 | 48.0 |
+| Prater | 40.1 | 39.0 | 41.5 |
+| Karlsplatz | 40.2 | 39.4 | 46.7 |
+| Naschmarkt | 45.5 | 43.2 | 40.5 |
+
+  Run 1 started on a hot laptop and fell to a 0.85 resolution scale. Run 2 is within noise of 7d everywhere. The measurable cost is draw calls on Kärntner Straße: about 413 versus 372. **No FPS change is claimed either way.** Re-measure plugged in to confirm.

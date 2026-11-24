@@ -44,7 +44,7 @@ D.apply = function (W) {
   const nearT = (x, z, m) => Ts.some(t => Math.hypot(t.x - x, t.z - z) < (t.r || 2) + m);
   const flora = [], clut = {}, people = [], tries = [2500, 4500, 7000][q], capF = [140, 260, 320][q], capC = [50, 110, 180][q];
   for (let i = 0; i < tries && (flora.length < capF || Object.values(clut).reduce((a, b) => a + b.length, 0) < capC); i++) {
-    const x = x0 + rng() * (x1 - x0), z = z0 + rng() * (z1 - z0), y = W.surface(x, z); if (y === null || y === undefined || Math.abs(y) > 40 || priv(x, z)) continue;
+    const x = x0 + rng() * (x1 - x0), z = z0 + rng() * (z1 - z0), y = W.surface(x, z); if (y === null || y === undefined || Math.abs(y) > 40 || priv(x, z) || (W.noDecor && W.noDecor(x, z))) continue;   /* a world can keep streets / lanes / courtyards free of scattered decoration */
     if (ar && Math.hypot(x - ar.x, z - ar.z) < 7 || nearT(x, z, 1.2) || (W.places || []).some(p => Math.hypot(p.x - x, p.z - z) < 3) || !AV.isFree(W, x, z, .5)) continue;   /* never in front of a named entrance */ const rd = roadD(x, z);
     if (!AV.isFree(W, x, z, 1.7) && rd > .8) { const k = c.clutter[(rng() * c.clutter.length) | 0], n = Object.values(clut).reduce((a, b) => a + b.length, 0); if (n < capC) { (clut[k] = clut[k] || []).push({ x, y, z, s: .9 + rng() * .25, ry: rng() * Math.PI * 2, tint: k === 'moto' ? .5 + rng() * .5 : null }); ctx.circles.push([x, z, k === 'moto' ? .5 : .4]); W.circles = ctx.circles } }
     else if (rd > 2.5 && AV.isFree(W, x, z, 3) && flora.length < capF) flora.push({ x, y, z, s: .7 + rng() * .7, k: c.flora[(rng() * c.flora.length) | 0], col: c.cols[(rng() * c.cols.length) | 0] }) }

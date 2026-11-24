@@ -97,7 +97,7 @@ AV.registerWorld({
        The 7a grid above still draws its random numbers (so trees / people / everything later stays where it was) but is only built
        if the city module is missing. */
     let VCITY = null;
-    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
+    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus, RADIALS, stopAngles: [30, 120, 210, 300].map(d => { const nT = [40, 56, 72][q], k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5); return (k + .5) * TAU / nT }) }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
     else {
     /* (7a fallback) one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
     let cafe = null; if (VAk) { let best = 1e9; for (const st of sites) { const dd = Math.hypot(st.x - CX, st.z - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 50 && roadD(st.x, st.z + HALF + 3) > 1 && !waterAt(st.x, st.z + HALF + 4) && sc < best) { best = sc; cafe = st } } }
@@ -365,7 +365,7 @@ AV.registerWorld({
       name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: [70, 330], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .6, .6], dome: { cloud: 1, swirl: .15 } } : { dome: { cloud: .6, swirl: .2 } },
       surface: (x, z) => { if (x < XMIN + 2 || x > XMAX - 2 || z < ZMIN + 2 || z > ZMAX - 2) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterAt(x, z)) return WY; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
       arrivals: { default: { x: 160, z: 116, yaw: Math.PI * .75 }, ape_gate: { x: 160, z: 116, yaw: Math.PI * .75 }, pipe: { x: 156, z: 112, yaw: Math.PI * .75 }, here: here || { x: 160, z: 116, yaw: Math.PI * .75 } }, defaultArrival: 'default',
-      mapDistricts: VCITY ? VCITY.districts : null,   /* 7b: neighbourhood labels on the map */
+      mapDistricts: VCITY ? VCITY.districts : null, noDecor: (x, z) => !!(AV.viennaCity && AV.viennaCity.noDecor && AV.viennaCity.noDecor(x, z)),   /* 7b: neighbourhood labels on the map */
       mapRoads: ringPts.map((p, i) => { const n = ringPts[(i + 1) % ringPts.length]; return [p[0], p[1], n[0], n[1], 9] }),   /* V1.1: the Ringstraße on the minimap */
       places: [['steph', 'Stephansplatz', 'Stephansplatz', -34, -12], ['bars', 'Waxy’s · Lukas · Dons', 'Waxy’s · Lukas · Dons', 34, -38], ['wurst', 'Würstel Stand', 'Würstelstand', 30, 9], ['flex', 'Flex (Donaukanal)', 'Flex (Donaukanal)', -40, -6], ['nasch', 'Naschmarkt', 'Naschmarkt', -50, 72], ['karl', 'Karlsplatz', 'Karlsplatz', 14, 84],
         ['stadt', 'Stadtpark', 'Stadtpark', 70, 40], ['prater', 'Prater · Riesenrad', 'Prater · Noria', 118, -6], ['xmas', 'Christmas market', 'Mercado navideño', 152, 36], ['belv', 'Belvedere', 'Belvedere', 90, 96], ['schon', 'Schönbrunn', 'Schönbrunn', -100, 90], ['memory', 'Memory Zone', 'Zona de Recuerdos', 6, 116],

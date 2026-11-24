@@ -435,3 +435,39 @@ Filled in at the end of each milestone. See `## Milestone log`.
 - **Tests:**
   - `suite_pai` 46/48 on the first run. The two route misses at the north end (0,-62) and (11,-69.2) did not reproduce: both points were free when probed, and the route step passed 15/15 twice on re-runs. Recorded as a transient, cause unproven.
   - No other world's code changed.
+
+### Milestone 6d: Pai countryside + plugged-in performance comparison
+
+- **Rice paddies east of the river:**
+  - Flooded plots, with the water raised above the plot's highest corner so it always shows, and earthen dikes.
+  - Every third plot is freshly flooded and unplanted; the rest have instanced rice rows (4 / 5 / 6 rows by quality).
+  - The bridge → Jungle Rave road stays clear (checked by the suite).
+- **Countryside props:** a farmers' sala (resting hut) you can rest in, and a scarecrow.
+- **Riverside Bungalows:**
+  - Six bamboo bungalows on stilts. Each post follows the terrain, and each has a woven wall, a thatched roof, a door, a porch, a hammock and a porch lamp.
+  - They are arranged around a fire pit, with a footpath from the jungle road.
+  - You can rent one for the night (30 credits; you sleep to morning).
+  - Sign: "RIVERSIDE BUNGALOWS · บังกะโล".
+- **Roadside vegetation:** bamboo clumps and banana groves along the road to Chiang Mai and the jungle road. They keep their distance from every route.
+- **Test diagnostics:** `suite_pai`'s route check now says *what* blocks each failing point: void ground, a climb, a specific circle or wall, or the ground's edge. It immediately caught the first version of the bungalow footpath dropping 1.1 m down the riverbank.
+- **Plugged-in FPS** (mains power, Medium, 1510×764, Intel Iris Xe via Direct3D 11, the same 6 viewpoints, run before → after → before again):
+
+| View | Before, run 1 | After | Before, run 2 | Draw calls (before → after) | Triangles (before → after) |
+|---|---|---|---|---|---|
+| Walking Street north | 45.3 FPS | 42.4 | 28.8 | 656 → 466 | 2.80 M → 1.86 M |
+| Walking Street middle | 52.6 | 51.0 | 43.5 | 536 → 311 | 2.29 M → 1.36 M |
+| Walking Street south | 51.6 | 45.5 | 36.4 | 763 → 602 | 2.86 M → 1.97 M |
+| River hostel | 60.1 | 55.7 | 43.5 | 412 → 303 | 1.50 M → 1.40 M |
+| Sunset Bar | 60.1 | 60.1 | 48.2 | 328 → 225 | |
+| Paradise Circus | 58.0 | 60.1 | 45.4 | 362 → 225 | |
+
+  - **Verified:** draw calls −21% to −42% and triangles −30% to −40%, even though the "after" build has more content (signs, carts, poles, countryside).
+  - **Not verified:** an FPS gain. The identical "before" build lost 9–17 FPS between its two runs as the laptop heated up, and the "after" figures fall inside that range.
+- **Tests:**
+  - `suite_pai` 54/54 (including the new countryside checks).
+  - `suite_cm` street layout 11/11 (Giant Hostel ↔ Big Blues face each other; distances 8 m < 64 m < 147 m), portal step re-run 10/10.
+  - The earlier "gate travels to Chiang Mai" failure was the 25 s timeout expiring under software rendering. A headless timing issue, not a game failure.
+- **Pai minivan obstruction (investigated):**
+  - Neither the minivan nor any runtime-placed object (rentals, taxi stands, activity spots, Songkran tubs) can reach (0,-62) or (11,-69.2).
+  - Both points were free when probed, and the route step passed 3 runs in a row.
+  - Cause still unproven. The route check now records the exact blocker, so the next occurrence will identify it.

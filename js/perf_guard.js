@@ -53,9 +53,12 @@ function setTier(g, tier) { const was = g.tier; if (was === tier) return; g.tier
   for (const e of g.all) { if (e.sec) { if (tier === 'mid' && was === 'near') { e.v = e.o.visible; e.o.visible = false } else if (tier === 'near' && e.v != null) { e.o.visible = e.v; e.v = null } } if (tier !== 'near' && e.o.castShadow) e.o.castShadow = false }
   if (g.proxy) g.proxy.visible = tier === 'far' }
 function lod() { const P = AV.P, k = q() === 'High' ? 1 : q() === 'Medium' ? .6 : .5, sh = q() === 'High' && AV.R && AV.R.shadowMap.enabled, T = { near: 0, mid: 0, far: 0, gone: 0 };
-  for (const g of groups) { g.gr.getWorldPosition(v); const d = Math.hypot(v.x - P.x, v.z - P.z), cur = g.tier, h = 4;
+  /* Cinematic V1: also cap how many characters get full / body detail at once (crowded streets), nearest first */
+  const capN = { High: 16, Medium: 10, Low: 6 }[q()] || 10, capM = { High: 30, Medium: 18, Low: 10 }[q()] || 18; let nN = 0, nM = 0;
+  for (const g of groups) { g.gr.getWorldPosition(v); g._d = Math.hypot(v.x - P.x, v.z - P.z) } groups.sort((a, b) => a._d - b._d);
+  for (const g of groups) { const d = g._d, cur = g.tier, h = 4;
     const lim = n => n * k + (cur === 'near' && n === 40 || cur === 'mid' && n === 80 || cur === 'far' && n === 150 ? h : -h * 0);   /* stay in the current tier until 4 m past its edge */
-    const tier = d < lim(40) ? 'near' : d < lim(80) ? 'mid' : d < lim(150) ? 'far' : 'gone'; setTier(g, tier); T[tier]++; if (tier === 'far' && g.proxy) { g.gr.updateMatrixWorld(); g.proxy.matrix.copy(g.gr.matrixWorld); if (g.proxy.parent && g.proxy.parent.matrixWorld) g.proxy.matrix.premultiply(new THREE.Matrix4().copy(g.proxy.parent.matrixWorld).invert()) }
+    let tier = d < lim(40) ? 'near' : d < lim(80) ? 'mid' : d < lim(150) ? 'far' : 'gone'; if (tier === 'near' && ++nN > capN) tier = 'mid'; if (tier === 'mid' && ++nM > capM) tier = 'far'; setTier(g, tier); T[tier]++; if (tier === 'far' && g.proxy) { g.gr.updateMatrixWorld(); g.proxy.matrix.copy(g.gr.matrixWorld); if (g.proxy.parent && g.proxy.parent.matrixWorld) g.proxy.matrix.premultiply(new THREE.Matrix4().copy(g.proxy.parent.matrixWorld).invert()) }
     if (tier === 'near') { const want = sh && d < (g.shadowOn ? 15 : 12); if (want !== !!g.shadowOn) { g.shadowOn = want; for (const e of g.all) e.o.castShadow = want && e.shadow } } else g.shadowOn = false }
   PF.tiers = T }
 /* ---------- resolution guard ---------- */

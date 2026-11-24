@@ -45,6 +45,8 @@ window.APE_T = (() => {
     c('world music ducks near the venues that play their own', (at(PL().tea[0] + 3, PL().tea[1]), await until(() => AV.media.ducks.some(f => f() > .5), 60000)));
   });
 
+  step('west façades', async c => { await shot(2.6, -42, Math.PI * .75, .18, 16); c('rendered', true) }, { shot: 'pai_facades_w' });
+  step('east façades', async c => { await shot(-2.6, 20, -Math.PI * .75, .18, 16); c('rendered', true) }, { shot: 'pai_facades_e' });
   step('day street', async c => { await shot(0, -60, Math.PI, .02, 11); c('rendered', true) }, { shot: 'pai_street_day' });
   step('night street', async c => { await shot(0, -60, Math.PI, .02, 21); c('rendered', true) }, { shot: 'pai_street_night' });
   step('sunset bar', async c => { await shot(PL().sunset[0] + 3, PL().sunset[1] + 14, 0, .02, 18); c('rendered', true) }, { shot: 'pai_sunset_bar' });

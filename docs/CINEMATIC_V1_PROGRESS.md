@@ -338,3 +338,30 @@ Filled in at the end of each milestone. See `## Milestone log`.
 - **Tests:**
   - `suite_astro9_streets` 97/97 (loops ×3, shops, old features).
   - Regressions: `astro9_neon` 37/37, `mega` 25/25, `metro` 30/30, `d2` 23/23, `art` 27/27, `market` 25/25.
+
+### Milestone 6a: Pai Walking Street, first pass + character performance work
+
+- **Shophouses dressed in six styles** (`dress()` in `world_pai.js`). Every business keeps its position, sign, counter and interaction. The styles are:
+  - Lanna teak with crossed kalae gable boards and a fretwork eave
+  - old-town false front with a cornice
+  - corrugated tin over the awning
+  - a two-tier Lanna roof
+  - a roof with an AC unit and water tank
+  - plain plaster
+- **Added to every shophouse:**
+  - framed upper windows with open coloured shutters and flower boxes
+  - potted plants at the front corners
+  - bougainvillea climbing a pillar
+  - hanging orchid baskets
+  - stocked shelves on the back wall
+  - banana plants or coconut palms behind the roofline
+- **Street:** a new surface (worn concrete slabs, asphalt patches, cracks, faint tyre lines), gutters with drain grates, and pots only in front of real shops.
+- **Fix (pre-existing failure):** the route from the street to the river lane was blocked at (4,2) by a utility pole. `world_detail.js` now never plants a pole in the mouth of a joining road, which applies to every world using it. `suite_pai` went from 45/46 to 48/48 (with 2 new façade screenshots).
+- **Characters (`perf_guard.js`):** full and body detail are now capped to the nearest 10 / 18 characters (Medium).
+- **Street crowds (`city_life.js`):** only the nearest 16 / 24 / 48 people are drawn on Low / Medium / High; the rest keep walking unseen. Beyond about 14 m they cast no shadow and drop their transparent shells.
+- **Static merge:** now enabled for Pai and Vienna too.
+- **Measurement caveat:** during this session the laptop went on battery ("Balanced" plan, battery discharging). The identical Astro-9 scenes that measured 58–60 FPS earlier measured 29–37 FPS afterwards, so the laptop was throttling. Pai figures below come from that throttled state:
+  - Walking Street: 19–26 FPS at Medium
+  - Sunset Bar and Paradise Circus: 28–30 FPS
+- **Pai's real bottleneck:** each crowd person is about 76,000 triangles (an SDF-sculpted body). That is addressed in milestone 6b.
+- **Tests:** `suite_pai` 48/48, `suite_madrid` 77/78, `suite_astro9_streets` 86/86 (walking, loops, shops). The Madrid miss is the known intermittent Pinar avenue spot (-7,-10), first recorded on the perf branch and unrelated to these changes.

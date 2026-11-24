@@ -60,8 +60,9 @@ CY.crowd = function (ctx, opt) {
   let frameI = 0;
   ctx.upd.push((dt, t) => {
     if (!cr.built) return; frameI++; const cam = AV.cam.position;
+      if (frameI % 20 === 1) { const cap = opt.cap || [16, 24, 48][K.q()]; list.forEach(w => w._d = Math.hypot(w.x - cam.x, w.z - cam.z)); list.slice().sort((a, b) => a._d - b._d).forEach((w, i) => { w.rank = i < cap ? 0 : 1; if (!w._ms) { w._ms = []; w.h.traverse(o => { if (o.isMesh) w._ms.push([o, o.castShadow, !!(o.material && o.material.transparent)]) }) } const nearD = w._d < [10, 14, 20][K.q()]; if (w._near !== nearD) { w._near = nearD; for (const [o, sh, tp] of w._ms) { o.castShadow = sh && nearD; if (tp) o.visible = nearD } } }) }   /* + beyond ~14 m: no shadow, no transparent fur/hair shells */   /* Cinematic V1: only the nearest N people are drawn (crowded streets); the rest keep walking unseen */
       for (const w of list) {
-        const d = Math.hypot(w.x - cam.x, w.z - cam.z), show = w.vis && d < far;
+        const d = Math.hypot(w.x - cam.x, w.z - cam.z), show = w.vis && d < far && !w.rank;
         w.h.visible = show;
         if (!show) { w.shown = false; if (w.vis && frameI % 4 === 0) step(w, dt * 4); continue }
         if (d > far * .6 && (frameI + w.si) % 3 !== 0 && w.shown) { step(w, dt); continue }   // distant: animate every 3rd frame

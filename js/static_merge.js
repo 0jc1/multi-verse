@@ -7,7 +7,7 @@
    AV.staticMerge.run(W) -> { before, after, merged }; worlds opt in through AV.staticMerge.WORLDS. */
 'use strict';
 (function (AV) {
-const SM = AV.staticMerge = { WORLDS: { astro9: 1 }, last: null };
+const SM = AV.staticMerge = { WORLDS: { astro9: 1, pai: 1, vienna: 1 }, last: null };
 const baseHook = THREE.Material.prototype.onBeforeCompile;
 const keyOf = (o, cell) => { const m = o.material, g = o.geometry, att = Object.keys(g.attributes).sort().join(',');
   return [m.type, m.vertexColors ? 1 : 0, m.color ? m.color.getHexString() : '', m.roughness, m.metalness, m.emissive ? m.emissive.getHexString() : '', m.emissiveIntensity, m.side, m.map ? m.map.uuid : '', m.emissiveMap ? m.emissiveMap.uuid : '', m.alphaTest, m.polygonOffset ? m.polygonOffsetFactor : 'n', m.flatShading ? 1 : 0, m.toneMapped, m.fog, att, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0, cell].join('|') };

@@ -23,12 +23,22 @@ window.APE_T = (() => {
   step('existing venues + routes still work', async c => { for (const re of [/Waxy/, /Würstel|Wurst/, /U-Bahn|Ubahn|U Bahn/i]) c('interaction ' + re, !!tgt(re));
     const pts = []; for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; let p = null; for (const rr of [62, 60, 64, 58, 66]) { const x = Math.cos(a) * rr, z = -15 + Math.sin(a) * rr; if (AV.W.surface(x, z) !== null && AV.isFree(AV.W, x, z, .5)) { p = [x, z]; break } } if (p) pts.push(p) } const miss = []; for (let k = 0; k < pts.length; k++) if (!reach(pts[k], pts[(k + 1) % pts.length])) miss.push(pts[k].map(v => v.toFixed(0)) + ' > ' + pts[(k + 1) % pts.length].map(v => v.toFixed(0))); c('walk all the way round the Ringstraße (path finding, 12 legs)', pts.length === 12 && !miss.length, pts.length + ' waypoints; ' + miss.join(' | '));
     c('no JS errors', !$('err').textContent, $('err').textContent) });
+  step('city fabric: neighbourhoods + connected walks', async c => { const F = AV.viennaCity && AV.viennaCity.fx; c('city fabric built (Ring frontage + >= 55 blocks)', !!F && F.blocks >= 55 && F.ring >= 10, JSON.stringify(F));
+    const dn = (AV.W.mapDistricts || []).map(d => d.name); for (const n of ['Innere Stadt', 'Leopoldstadt', 'Neubau · Spittelberg', 'Mariahilfer Straße', 'Wieden']) c('neighbourhood on the map: ' + n, dn.includes(n), dn.join(', '));
+    const legs = { 'Stephansplatz > Kärntner lane > Ring > Wieden > Karlsplatz': [[-4, 2], [-4, 30], [-4, 52], [10, 70], [14, 92]], 'Ring > Leopoldstadt > Prater': [[66, -15], [88, -20], [112, -6]], 'Ring > Neubau > Mariahilfer Straße > Naschmarkt': [[-66, -10], [-100, 10], [-110, 60], [-60, 58]], 'Brigittenau > Alsergrund': [[40, -100], [-30, -90], [-70, -80]] };
+    for (const k in legs) { const p = legs[k], miss = []; for (let i = 1; i < p.length; i++) { const fx = (pt) => { for (let rr = 0; rr < 14; rr += 1) for (let a = 0; a < 8; a++) { const x = pt[0] + Math.cos(a / 8 * 6.283) * rr, z = pt[1] + Math.sin(a / 8 * 6.283) * rr; if (AV.W.surface(x, z) !== null && AV.isFree(AV.W, x, z, .5)) return [x, z] } return pt }; if (!reach(fx(p[i - 1]), fx(p[i]))) miss.push(p[i - 1] + ' > ' + p[i]) } c('walk: ' + k, !miss.length, miss.join(' | ')) } });
   const shot = (name, file, fn) => step(name, async c => { fn(); await sleep(6000); c('render', true, JSON.stringify(AV.R.info.render)) }, { shot: file });
   shot('street of Viennese buildings', 'v_street', () => { const C = AV.viennaCafe; at(C.door[0] - 22, C.door[1] + 3.5, -Math.PI / 2 - .15, .12) });
   shot('Café Zuckerl front', 'v_cafe_front', () => { const C = AV.viennaCafe; at(C.door[0] + 6, C.door[1] + 7, Math.PI / 4 - .1, .12) });
   shot('Café Zuckerl inside', 'v_cafe_inside', () => { const C = AV.viennaCafe; at(C.door[0] + .5, C.door[1] - 1.2, -.1, .02) });
   shot('Ringstraße', 'v_ring', () => at(66, -15, Math.PI, .08));
   shot('Stephansplatz', 'v_steph', () => at(-4, 4, 0, .1));
+  shot('Innere Stadt lane (Kärntner)', 'v_inner', () => at(-4, 20, Math.PI, .08));
+  shot('Leopoldstadt street', 'v_leopold', () => at(77.5, -20, Math.PI, .08));
+  shot('Neubau lanes', 'v_neubau', () => at(-112.5, 20, Math.PI / 2, .08));
+  shot('Mariahilfer Straße', 'v_mahue', () => at(-80, 62, Math.PI / 2, .06));
+  shot('Brigittenau', 'v_brig', () => at(40, -100, Math.PI / 2, .08));
+  shot('overview from above', 'v_overview', () => { at(0, 40, Math.PI, -.55); AV.P.y = 70 });
   let active = [];
   return { names(mobile) { active = steps.filter(s => !!s.mobile === !!mobile || s.name === 'boot'); return active.map(s => s.name) },
     async exec(i) { const s = active[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };

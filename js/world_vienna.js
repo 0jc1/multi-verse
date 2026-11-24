@@ -93,7 +93,13 @@ AV.registerWorld({
       for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) { const px = x + dx * (HALF + 2), pz = z + dz * (HALF + 2); if (waterAt(px, pz) || canalD(px, pz) < 7 || Math.abs(danS(px, pz)) < 21 || roadD(px, pz) < 2 || reserved(px, pz, 2) || H(px, pz) > .2) ok = false } if (!ok) continue;
       const inner = Math.hypot(x - CX, z - CZ) < RING, hh = inner ? 16 + rng() * 6 : 13 + rng() * 6, col = PAL[(rng() * PAL.length) | 0], d = 7.5;   /* same random draws, same order as before: everything else in Vienna stays where it was */
       const h2 = hh + (rng() - .5) * 3, c2 = PAL[(rng() * PAL.length) | 0], c3 = PAL[(rng() * PAL.length) | 0]; sites.push({ x, z, hh, h2, col, c2, c3, d }) }
-    /* Cinematic V1 (7a): one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
+    /* Cinematic V1 (7b): the dense city fabric - neighbourhoods of perimeter blocks around every landmark (js/vienna_city.js).
+       The 7a grid above still draws its random numbers (so trees / people / everything later stays where it was) but is only built
+       if the city module is missing. */
+    let VCITY = null;
+    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
+    else {
+    /* (7a fallback) one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
     let cafe = null; if (VAk) { let best = 1e9; for (const st of sites) { const dd = Math.hypot(st.x - CX, st.z - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 50 && roadD(st.x, st.z + HALF + 3) > 1 && !waterAt(st.x, st.z + HALF + 4) && sc < best) { best = sc; cafe = st } } }
     for (const st of sites) { const { x, z, hh, h2, col, c2, c3, d } = st;
       if (!VAk) { bar(x, z - HALF + d / 2, HALF * 2, d, hh, 0, col); bar(x, z + HALF - d / 2, HALF * 2, d, h2, 0, c2); bar(x - HALF + d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, col); bar(x + HALF - d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, c3); ctx.cols.push([x - HALF, x + HALF, z - HALF, z + HALF]); cityCols.push([x, z]); continue }
@@ -109,6 +115,7 @@ AV.registerWorld({
         if (has(x, z + STEP)) for (const ox of [-6, 6]) VAk.lamp(x + ox, z + HALF, x + ox, z + STEP - HALF);
         const lx = x + HALF + 1.9, lz = z + HALF + 1.9; if ((Math.abs((x + z * 3) | 0) % 3) === 0 && roadD(lx, lz) > 1.5 && !waterAt(lx, lz) && !reserved(lx, lz, 1) && !(cafe && Math.hypot(lx - cafe.x, lz - cafe.z - HALF) < 14)) VAk.litfass(lx, lz) }   /* Litfaßsäulen */
       VAk.flush() }
+    }
     function kaffeehaus(x0, x1, z0, z1) {   /* CAFÉ ZUCKERL: marble tables, bentwood chairs, red banquette, cake vitrine, espresso machine, chandeliers, mirrors, newspapers */
       const cx = (x0 + x1) / 2, h = 4.2, t = .35, dz = 1.2;
       const wall = (ax, bx, az, bz, col) => { box(B.misc, MT.stucco, col || 0xe8dcc4, (ax + bx) / 2, h / 2, (az + bz) / 2, bx - ax, h, bz - az); ctx.cols.push([ax, bx, az, bz]) };
@@ -206,7 +213,7 @@ AV.registerWorld({
 
     /* ---------- STADTPARK: trees, pond, golden living statue ---------- */
     const trees = [];
-    const treeAt = (x, z, s) => { if (waterAt(x, z) || roadD(x, z) < 1) return; trees.push({ x, y: H(x, z), z, s: s || 1 + rng() * .5, ry: rng() * TAU }); ctx.circles.push([x, z, .45]) };
+    const treeAt = (x, z, s) => { if (waterAt(x, z) || roadD(x, z) < 1 || ctx.cols.some(c => x > c[0] - 1.2 && x < c[1] + 1.2 && z > c[2] - 1.2 && z < c[3] + 1.2)) return;   /* never inside a building */ trees.push({ x, y: H(x, z), z, s: s || 1 + rng() * .5, ry: rng() * TAU }); ctx.circles.push([x, z, .45]) };
     { const P = LAND.stadt; for (let i = 0; i < [14, 22, 30][q]; i++) { const x = P.x0 + 3 + rng() * (P.x1 - P.x0 - 6), z = P.z0 + 3 + rng() * (P.z1 - P.z0 - 6); if (Math.hypot(x - PONDS[0].x, z - PONDS[0].z) > 9 && Math.hypot(x - 98, z - 38) > 4) treeAt(x, z) }
       box(B.misc, MT.stone, 0xe8e0d0, 98, .8, 38, 2.4, 1.6, 2.4); ctx.cols.push([96.8, 99.2, 36.8, 39.2]); ctx.sign('STADTPARK · relax · music', P.x0 + 2, 3.8, P.z0 + 2, -Math.PI / 4, 4.4, '#7aff8a', { posts: true }) }
     /* along the Ring: tree alleys */
@@ -333,6 +340,7 @@ AV.registerWorld({
       name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: [70, 330], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .6, .6], dome: { cloud: 1, swirl: .15 } } : { dome: { cloud: .6, swirl: .2 } },
       surface: (x, z) => { if (x < XMIN + 2 || x > XMAX - 2 || z < ZMIN + 2 || z > ZMAX - 2) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterAt(x, z)) return WY; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
       arrivals: { default: { x: 160, z: 116, yaw: Math.PI * .75 }, ape_gate: { x: 160, z: 116, yaw: Math.PI * .75 }, pipe: { x: 156, z: 112, yaw: Math.PI * .75 }, here: here || { x: 160, z: 116, yaw: Math.PI * .75 } }, defaultArrival: 'default',
+      mapDistricts: VCITY ? VCITY.districts : null,   /* 7b: neighbourhood labels on the map */
       mapRoads: ringPts.map((p, i) => { const n = ringPts[(i + 1) % ringPts.length]; return [p[0], p[1], n[0], n[1], 9] }),   /* V1.1: the Ringstraße on the minimap */
       places: [['steph', 'Stephansplatz', 'Stephansplatz', -34, -12], ['bars', 'Waxy’s · Lukas · Dons', 'Waxy’s · Lukas · Dons', 34, -38], ['wurst', 'Würstel Stand', 'Würstelstand', 30, 9], ['flex', 'Flex (Donaukanal)', 'Flex (Donaukanal)', -40, -6], ['nasch', 'Naschmarkt', 'Naschmarkt', -50, 72], ['karl', 'Karlsplatz', 'Karlsplatz', 14, 84],
         ['stadt', 'Stadtpark', 'Stadtpark', 70, 40], ['prater', 'Prater · Riesenrad', 'Prater · Noria', 118, -6], ['xmas', 'Christmas market', 'Mercado navideño', 152, 36], ['belv', 'Belvedere', 'Belvedere', 90, 96], ['schon', 'Schönbrunn', 'Schönbrunn', -100, 90], ['memory', 'Memory Zone', 'Zona de Recuerdos', 6, 116],

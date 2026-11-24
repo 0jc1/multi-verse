@@ -57,7 +57,7 @@ const styleTex = (k, q) => { if (TX['s' + k]) return TX['s' + k]; const s = q ==
 /* rusticated stone base (7 m x 4.2 m tile) */
 const baseTex = q => TX.base || (TX.base = (() => { const s = q === 0 ? 256 : 512, c = canvas(s, s / 2), g = c.getContext('2d'), R = rnd(5); g.scale(s / 512, s / 512); g.fillStyle = '#c8c0b0'; g.fillRect(0, 0, 512, 256);
   for (let y = 0, r = 0; y < 256; y += 32, r++) for (let x = (r % 2) * 48 - 48; x < 512; x += 96) { const v = 180 + R() * 30 | 0; g.fillStyle = 'rgb(' + v + ',' + (v - 6) + ',' + (v - 18) + ')'; g.fillRect(x + 3, y + 3, 90, 26); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x + 3, y + 3, 90, 3) }
-  for (let i = 0; i < 6; i++) { const gr = g.createLinearGradient(0, 120, 0, 256); gr.addColorStop(0, 'rgba(60,50,40,0)'); gr.addColorStop(1, 'rgba(60,50,40,.35)'); g.fillStyle = gr; g.fillRect(R() * 512, 120, 30 + R() * 60, 136) }
+  { const gr = g.createLinearGradient(0, 160, 0, 256); gr.addColorStop(0, 'rgba(60,50,40,0)'); gr.addColorStop(1, 'rgba(60,50,40,.18)'); g.fillStyle = gr; g.fillRect(0, 160, 512, 96) }   /* soft grime along the bottom, no stripes */
   return tex(c, true) })());
 /* 32 shop portals (4 x 8 cells of 512 x 256 = 6 m x 3 m): 24 unique shops + 8 doors / gates / shutters */
 const SHOPS = [['Café Zuckerl', 'cafe', '#2a3a2a'], ['Konditorei Ehrlich', 'cakes', '#5a1a2a'], ['Buchhandlung Wörtersee', 'books', '#1a2a3a'], ['Apotheke zum Goldenen Hirschen', 'pharma', '#1a3a2a'], ['Tabak Trafik', 'trafik', '#5a1a1a'], ['Bäckerei Kornblume', 'bread', '#6a4a2a'],
@@ -105,11 +105,11 @@ VA.make = function (ctx, q, opt) {
   opt = opt || {}; const K = AV.kit, M = K.M, BG = K.BG, r = rnd(4711), win = !!opt.winter;
   const sty = [[], [], [], []], base = [], port = [], solid = [], metal = [], glow = [], lits = [];
   const ROOF = win ? [0xf4f6fa, 0xe8ecf2] : [0x5a8a7a, 0x4a4e58, 0x9a4a32, 0x5a6a72];
-  let shopN = 0, doorN = 0; const used = [];
+  VA._shop = VA._shop || { n: 0, used: [] }; let doorN = 0; const used = VA._shop.used; const SH = VA._shop;   /* shop names are unique across every neighbourhood instance */
   const LW = (x, z, ry, lx, lz) => [x + lx * Math.cos(ry) + lz * Math.sin(ry), z - lx * Math.sin(ry) + lz * Math.cos(ry)];
   const LM = (x, z, ry, y, lx, lz, sx, sy, sz, extra) => { const [wx, wz] = LW(x, z, ry, lx, lz); return M(wx, y, wz, sx, sy, sz, 0, ry + (extra || 0), 0) };
   /* one street side of a block: x, z = centre; len along local x; dep along local z; out = which local z side faces the street (+1 / -1) */
-  const bar = (x, z, len, dep, h, ry, col, out, o) => { o = o || {}; const k = (Math.abs((x * 13 + z * 7) | 0)) % 4, y0 = o.y0 || 0;
+  const bar = (x, z, len, dep, h, ry, col, out, o) => { o = o || {}; const k = o.style != null ? o.style : (Math.abs((x * 13 + z * 7) | 0)) % 4, y0 = o.y0 || 0;
     if (!o.noBase) base.push([ubox(len, 4.2, dep, 7, 4.2), 0xffffff, M(x, y0, z, 1, 1, 1, 0, ry, 0)]);
     sty[k].push([ubox(len, h - 4.2, dep, 7, 7.2), col, M(x, y0 + 4.2, z, 1, 1, 1, 0, ry, 0)]);
     solid.push([BG.box, 0xe8e0d0, M(x, y0 + 4.25, z, 1, 1, 1, 0, ry, 0).multiply(new THREE.Matrix4().makeScale(len + .25, .3, dep + .3))], [BG.box, 0xe0d8c8, M(x, y0 + h - .25, z, 1, 1, 1, 0, ry, 0).multiply(new THREE.Matrix4().makeScale(len + .5, .5, dep + .7))]);   /* string course + cornice */
@@ -117,7 +117,7 @@ VA.make = function (ctx, q, opt) {
     if (q > 0) for (let lx = -len / 2 + 2; lx < len / 2 - 1.5; lx += 3.5) { if (r() < .35) continue; for (const s of q === 2 ? [out, -out] : [out]) {   /* Medium: street side only (the courtyard side is never seen); Low: none */ const lz = s * (dep / 2 - .4); solid.push([BG.box, 0xe8e0d0, LM(x, z, ry, y0 + h + 1.3, lx, lz, 1.1, 1.3, .8)], [PRISM, rc, LM(x, z, ry, y0 + h + 1.95, lx, lz, 1.3, .6, 1, Math.PI / 2)]); glow.push([BG.box, r() < .3 ? 0xffd890 : 0x2a3446, LM(x, z, ry, y0 + h + 1.25, lx, lz + s * .42, .6, .7, .02)]) } }   /* dormers */
     for (let n = 0; n < 1 + ((len / 9) | 0); n++) { const lx = (r() - .5) * (len - 2), lz = (r() - .5) * dep * .3; solid.push([BG.box, 0xb87a5a, LM(x, z, ry, y0 + h + 3.3, lx, lz, .6, 1.6, .5)], [BG.box, 0x6a5a5a, LM(x, z, ry, y0 + h + 4.15, lx, lz, .75, .12, .65)]) }   /* chimneys */
     if (len > 12 && r() < .55) { const lx = (r() - .5) * (len - 8); metal.push([BG.box, 0xd8d0c0, LM(x, z, ry, y0 + 7.8, lx, out * (dep / 2 + .45), 3.2, .16, .9)]); for (let i = 0; i <= 8; i++) metal.push([BG.box, 0x1a1a1e, LM(x, z, ry, y0 + 8.35, lx - 1.5 + i * .375, out * (dep / 2 + .85), .03, 1, .03)]); metal.push([BG.box, 0x1a1a1e, LM(x, z, ry, y0 + 8.85, lx, out * (dep / 2 + .85), 3.2, .05, .05)]) }   /* wrought-iron balcony */
-    if (!o.noShops) { const n = Math.max(1, Math.floor((len - 3) / 7)); for (let i = 0; i < n; i++) { const lx = -((n - 1) * 7) / 2 + i * 7; let cell; if (r() < .62 && shopN < 24) { cell = shopN++; used.push(SHOPS[cell][0]) } else cell = 24 + (doorN++ % 8);
+    if (!o.noShops) { const n = Math.max(1, Math.floor((len - 3) / 7)); for (let i = 0; i < n; i++) { const lx = -((n - 1) * 7) / 2 + i * 7; let cell; if (r() < (o.shopP == null ? .62 : o.shopP) && SH.n < 24) { cell = SH.n++; used.push(SHOPS[cell][0]) } else cell = 24 + (doorN++ % 8);
         port.push([cellUV(new THREE.PlaneGeometry(6, 3), cell, 4, 8), 0xffffff, LM(x, z, ry, y0 + 1.75, lx, out * (dep / 2 + .04), 1, 1, 1, out < 0 ? Math.PI : 0)]);
         solid.push([BG.box, 0x5a5048, LM(x, z, ry, y0 + 3.35, lx, out * (dep / 2 + .1), 6.3, .2, .2)]) } }
     if (o.corner) { const [cx, cz] = LW(x, z, ry, o.corner * (len / 2 - 3), 0); sty[k].push([ubox(6.2, h + 1.5 - 4.2, dep + .2, 7, 7.2), col, M(cx, y0 + 4.2, cz, 1, 1, 1, 0, ry, 0)]); solid.push([BG.cyl, 0xe0d8c8, M(cx, y0 + h + 2.1, cz, 3, 1.2, 3)], [BG.hem, win ? 0xf4f6fa : 0x5ab89a, M(cx, y0 + h + 2.7, cz, 3, 3.4, 3)], [BG.cyl, 0xe0d8c8, M(cx, y0 + h + 6.4, cz, .45, 1, .45)]); glow.push([BG.sph, 0xffd84a, M(cx, y0 + h + 7.2, cz, .35, .35, .35)]) } };   /* copper-domed corner tower */
@@ -126,17 +126,17 @@ VA.make = function (ctx, q, opt) {
   /* Viennese lamp hung on a cable across a side street */
   const cables = []; const lamp = (ax, az, bx, bz) => { const mx = (ax + bx) / 2, mz = (az + bz) / 2; for (const [px, pz] of [[ax, az], [bx, bz]]) { for (let j = 0; j < 6; j++) { const t0 = j / 6, t1 = (j + 1) / 6, y = t => 8.2 - Math.sin(t * Math.PI) * .5; cables.push(px + (mx - px) * t0, y(t0), pz + (mz - pz) * t0, px + (mx - px) * t1, y(t1), pz + (mz - pz) * t1) } }
     metal.push([BG.cyl, 0x2a2a2e, M(mx, 7.55, mz, .05, .5, .05)], [BG.cone, 0x2a2a2e, M(mx, 7.2, mz, .5, .3, .5)]); glow.push([BG.sph, 0xfff0c8, M(mx, 7, mz, .3, .18, .3)]) };
-  const flush = () => { const grp = ctx.group, R0 = [];
+  const flush = () => { const grp = opt.group || ctx.group, det = opt.detail || grp, R0 = [];
     sty.forEach((parts, k) => { if (!parts.length) return; const T = styleTex(k, q), m = new THREE.MeshStandardMaterial({ map: T.map, vertexColors: true, roughness: .85, emissive: 0xffffff, emissiveMap: T.glow, emissiveIntensity: .25 }); m.userData.lin = 1; R0.push(m); grp.add(new THREE.Mesh(K.merge(parts), m)) });
     if (base.length) { const m = new THREE.MeshStandardMaterial({ map: baseTex(q), roughness: .9 }); m.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(base), m)) }
-    if (port.length) { const pt = portalTex(q), m = new THREE.MeshStandardMaterial({ map: pt, roughness: .55, emissive: 0xffffff, emissiveMap: pt, emissiveIntensity: .22, polygonOffset: true, polygonOffsetFactor: -2 }); m.userData.lin = 1; R0.push(m); grp.add(new THREE.Mesh(K.merge(port), m)) }
-    if (lits.length) { const m = new THREE.MeshStandardMaterial({ map: litTex(), roughness: .8 }); m.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(lits), m)) }
+    if (port.length) { const pt = portalTex(q), m = new THREE.MeshStandardMaterial({ map: pt, roughness: .55, emissive: 0xffffff, emissiveMap: pt, emissiveIntensity: .22, polygonOffset: true, polygonOffsetFactor: -2 }); m.userData.lin = 1; R0.push(m); det.add(new THREE.Mesh(K.merge(port), m)) }
+    if (lits.length) { const m = new THREE.MeshStandardMaterial({ map: litTex(), roughness: .8 }); m.userData.lin = 1; det.add(new THREE.Mesh(K.merge(lits), m)) }
     const vm = o => { const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true }, o)); m.userData.lin = 1; return m };
-    if (solid.length) grp.add(new THREE.Mesh(K.merge(solid), vm({ roughness: .8 }))); if (metal.length) grp.add(new THREE.Mesh(K.merge(metal), vm({ roughness: .4, metalness: .6 })));
-    if (glow.length) { const gm = new THREE.MeshBasicMaterial({ vertexColors: true }); gm.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(glow), gm)) }
-    if (cables.length) { const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(cables, 3)); grp.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x1a1a1a }))) }
+    if (solid.length) grp.add(new THREE.Mesh(K.merge(solid), vm({ roughness: .8 }))); if (metal.length) det.add(new THREE.Mesh(K.merge(metal), vm({ roughness: .4, metalness: .6 })));
+    if (glow.length) { const gm = new THREE.MeshBasicMaterial({ vertexColors: true }); gm.userData.lin = 1; det.add(new THREE.Mesh(K.merge(glow), gm)) }
+    if (cables.length) { const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(cables, 3)); det.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x1a1a1a }))) }
     ctx.upd.push(() => { const nk = AV.nightK || 0; for (const m of R0) m.emissiveIntensity = (m.map === TX.port ? .2 : .2) + nk * .8 });
-    VA.fx = { shops: shopN, doors: doorN, used } };
+    VA.fx = { shops: SH.n, doors: (VA.fx ? VA.fx.doors : 0) + doorN, used } };
   return { bar, litfass, lamp, flush, used };
 };
 })(window.AV);

@@ -1,0 +1,101 @@
+/* APEVERSE - vienna_city.js : Cinematic V1, Vienna milestone 7b - the city fabric.
+   The old Vienna had ~25 isolated 23 m blocks on a 30 m grid and large empty asphalt fields between the landmarks. This fills the map
+   with a dense, connected city of perimeter blocks, neighbourhood by neighbourhood, around everything that already exists (the Ring,
+   the radial roads, the Donaukanal, the Danube, Stephansplatz, the bar street, Karlsplatz, Naschmarkt, Stadtpark, Belvedere, Prater,
+   Schönbrunn, the Christmas market, the Memory zone, the portal, Kahlenberg):
+     INNERE STADT (inside the Ring: narrow lanes, 5-storey Baroque + Gründerzeit, shops everywhere, Kärntner Straße lane at x = -4)
+     LEOPOLDSTADT (between the Ring and the Prater: wider residential streets)     WIEDEN (between the Ring and Karlsplatz)
+     NEUBAU · SPITTELBERG (west of the Ring: small blocks, narrow lanes)           MARIAHILFER STRASSE (shopping, taller)
+     JOSEFSTADT + ALSERGRUND (north-west, by the canal)                            BRIGITTENAU (north: plain Gemeindebau-style)
+     LANDSTRASSE + FAVORITEN (south-east / south)
+   Every block: four street-facing buildings (vienna_arch.js façades, varied heights + styles), a granite sidewalk ring with a kerb, a
+   single collision box (courtyard closed); some blocks become small squares (trees at the corners, fountain, benches - paths kept free).
+   Lamps hang across the streets between blocks, Litfaßsäulen only on wider streets. Detail is streamed per neighbourhood.
+   AV.viennaCity.build(env) -> { blocks, cafe, districts } */
+'use strict';
+(function (AV) {
+const VC = AV.viennaCity = {}, TAU = Math.PI * 2;
+let SIDE = null;
+const sideTex = q => SIDE || (SIDE = (() => { const s = q === 0 ? 256 : 512, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d'); g.scale(s / 512, s / 512); let x = 7; const R = () => (x = (x * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = '#b8b2a8'; g.fillRect(0, 0, 512, 512); for (let y = 0; y < 512; y += 128) for (let xx = 0; xx < 512; xx += 128) { const v = 170 + R() * 26 | 0; g.fillStyle = 'rgb(' + v + ',' + (v - 4) + ',' + (v - 12) + ')'; g.fillRect(xx + 2, y + 2, 124, 124) }   /* granite slabs (1 m) */
+  for (let i = 0; i < 6000; i++) { g.fillStyle = 'rgba(' + (R() < .5 ? '40,40,40,' : '255,255,255,') + (R() * .12) + ')'; g.fillRect(R() * 512, R() * 512, 2, 2) } for (let k = 0; k < 5; k++) { g.fillStyle = 'rgba(30,30,30,.18)'; g.beginPath(); g.arc(R() * 512, R() * 512, 8 + R() * 20, 0, TAU); g.fill() }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t })());
+/* neighbourhoods: region test, grid origin + block / street size, heights, style weights [Gründerzeit, Jugendstil, Baroque, Biedermeier], shop density */
+const HOODS = (CX, CZ, RING) => [
+  { id: 'inner', name: 'Innere Stadt', reg: (x, z) => Math.hypot(x - CX, z - CZ) < RING - 10, bb: [-60, 60, -78, 48], bw: 15, bd: 13, st: 5.5, ox: -1.25, oz: -27.25, h: [16, 21], sw: [.35, .15, .4, .1], shop: .85 },
+  { id: 'leopold', name: 'Leopoldstadt', reg: (x, z) => x > 70 && x < 107 && z > -64 && z < 25, bb: [70, 107, -64, 25], bw: 20, bd: 15, st: 7, ox: 71, oz: -64, h: [13, 17], sw: [.45, .15, .05, .35], shop: .35 },
+  { id: 'wieden', name: 'Wieden', reg: (x, z) => x > -18 && x < 62 && z > 50 && z < 82, bb: [-18, 62, 50, 82], bw: 17, bd: 12, st: 6, ox: -17, oz: 52, h: [14, 18], sw: [.4, .3, .15, .15], shop: .5 },
+  { id: 'neubau', name: 'Neubau · Spittelberg', reg: (x, z) => x > -156 && x < -72 && z > -10 && z < 44, bb: [-156, -72, -10, 44], bw: 14, bd: 12, st: 5, ox: -155, oz: -9, h: [12, 16], sw: [.3, .35, .1, .25], shop: .6 },
+  { id: 'mahue', name: 'Mariahilfer Straße', reg: (x, z) => x > -156 && x < -40 && z > 44 && z < 92, bb: [-156, -40, 44, 92], bw: 17, bd: 13, st: 6, ox: -155, oz: 45, h: [15, 20], sw: [.45, .3, .15, .1], shop: .85 },
+  { id: 'josef', name: 'Josefstadt', reg: (x, z) => x > -170 && x < -72 && z > -64 && z < -14, bb: [-170, -72, -64, -14], bw: 17, bd: 14, st: 6, ox: -169, oz: -63, h: [14, 18], sw: [.4, .2, .2, .2], shop: .4 },
+  { id: 'alser', name: 'Alsergrund', reg: (x, z) => x > -112 && x < -10 && z > -112 && z < -60, bb: [-112, -10, -112, -60], bw: 19, bd: 15, st: 7, ox: -111, oz: -111, h: [15, 19], sw: [.45, .25, .1, .2], shop: .4 },
+  { id: 'brig', name: 'Brigittenau', reg: (x, z) => x > -12 && x < 102 && z > -146 && z < -62, bb: [-12, 102, -146, -62], bw: 21, bd: 17, st: 8, ox: -11, oz: -145, h: [14, 19], sw: [.3, .1, .05, .55], shop: .3 },
+  { id: 'land', name: 'Landstraße', reg: (x, z) => (x > 58 && x < 122 && z > 72 && z < 92) || (x > 116 && x < 186 && z > 92 && z < 148), bb: [58, 186, 72, 148], bw: 18, bd: 14, st: 6, ox: 59, oz: 73, h: [14, 18], sw: [.4, .25, .1, .25], shop: .45 },
+  { id: 'favor', name: 'Favoriten', reg: (x, z) => x > -52 && x < 118 && z > 124 && z < 150, bb: [-52, 118, 124, 150], bw: 18, bd: 11, st: 6, ox: -51, oz: 125, h: [13, 17], sw: [.5, .1, .05, .35], shop: .4 }];
+const PAL = [0xf2e6c8, 0xe8d4a0, 0xf0c8b8, 0xe0e8d0, 0xf4f0e8, 0xe8c87a, 0xd8c0a0, 0xc8d8e8, 0xe8d8c8, 0xd8e0c8];
+
+VC.build = function (E) {
+  const { ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ } = E, K = AV.kit, M = K.M, BG = K.BG; let rs = 20251;
+  const r = () => (rs = (rs * 16807) % 2147483647) / 2147483647;
+  AV.viennaArch._shop = null; AV.viennaArch.fx = null; VC.env = E;
+  const placed = [], blocks = [], districts = [];
+  const preC = ctx.cols.slice(), preS = ctx.circles.slice();   /* only what existed before the city (our own blocks are handled by overlaps) */
+  const freeOf = (x, z) => { for (const c of preC) if (x > c[0] - .5 && x < c[1] + .5 && z > c[2] - .5 && z < c[3] + .5) return false; for (const c of preS) if (Math.hypot(x - c[0], z - c[1]) < c[2] + .5) return false; return true };
+  const okPt = (x, z) => !waterAt(x, z) && canalD(x, z) > 7 && Math.abs(danS(x, z)) > 22 && roadD(x, z) > 2.6 && !reserved(x, z, 2) && H(x, z) < .25 && freeOf(x, z);
+  const overlaps = (a, m) => placed.some(b => a[0] < b[1] + m && a[1] > b[0] - m && a[2] < b[3] + m && a[3] > b[2] - m);
+  const ALL = HOODS(CX, CZ, RING), ANCH = { leopold: [88, -25], wieden: [20, 66], neubau: [-110, 14], mahue: [-100, 66], josef: [-125, -40], alser: [-60, -82], brig: [45, -108], land: [128, 100], favor: [10, 138] };
+  for (const hd of ALL) { const grp = new THREE.Group(), det = new THREE.Group(); grp.name = 'vc_' + hd.id; det.name = 'vc_det_' + hd.id; ctx.group.add(grp); ctx.group.add(det); hd.VA = AV.viennaArch.make(ctx, q, { winter: win, group: grp, detail: det }); hd.grp = grp; hd.det = det; hd.side = []; hd.extra = []; hd.blocks = [] }
+  const nearest = (x, z) => { let bh = null, bd = 1e9; for (const hd of ALL) { const p = ANCH[hd.id]; if (!p) continue; const d = Math.hypot(x - p[0], z - p[1]); if (d < bd) { bd = d; bh = hd } } return bh };
+  const tryRect = (hd, R0, mg) => { const [x0, x1, z0, z1] = R0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2; if (hd.id === 'inner' ? !hd.reg(cx, cz) : Math.hypot(cx - CX, cz - CZ) < RING + 4) return false; if (overlaps(R0, mg)) return false; for (let x = x0 - 1.6; x <= x1 + 1.61; x += 1.9) for (let z = z0 - 1.6; z <= z1 + 1.61; z += 1.9) if (!okPt(x, z)) return false; return true };
+  const add = (hd, R0, part) => { placed.push(R0); const b = { hood: hd, x0: R0[0], x1: R0[1], z0: R0[2], z1: R0[3], cx: (R0[0] + R0[1]) / 2, cz: (R0[2] + R0[3]) / 2, part }; b.square = !part && hd.id !== 'inner' && hd.id !== 'mahue' && ((Math.round(b.cx * 3 + b.cz * 7) % 9 + 9) % 9) === 0; blocks.push(b); hd.blocks.push(b) };
+  /* pass 0: the Ringstraße lined on both sides by monumental buildings that follow the curve (16 m frontages, 6 m cross streets) */
+  const ringB = []; for (const side of [1, -1]) { const dep = 11, rc = RING + side * (9.5 + dep / 2), len = 16, step = (len + 6) / rc;
+    let lastEnd = -1e9; for (let a0 = 0; a0 < TAU; a0 += step / 3) { let hit = null; for (const L of [len, 12]) { const a = a0 + (L / 2) / rc; if ((a - L / 2 / rc) < lastEnd + 6 / rc || a + L / 2 / rc > TAU + (lastEnd < 0 ? 0 : 0) && a > TAU) continue; const ca = Math.cos(a), sa = Math.sin(a), x = CX + ca * rc, z = CZ + sa * rc, ry = Math.atan2(-ca, -sa), cr = Math.cos(ry), sr = Math.sin(ry), W2 = (lx, lz) => [x + lx * cr + lz * sr, z - lx * sr + lz * cr]; let ok = true;
+      for (let lx = -L / 2 - 1.2; lx <= L / 2 + 1.21 && ok; lx += 1.9) for (let lz = -dep / 2 - 1.2; lz <= dep / 2 + 1.21; lz += 1.9) { const [px, pz] = W2(lx, lz); if (!okPt(px, pz)) { ok = false; break } } if (ok) { hit = { a, ca, sa, x, z, ry, W2, L }; break } } if (!hit) continue; const { a, x, z, ry, W2, L: len2 } = hit; lastEnd = a + len2 / 2 / rc;   /* slide along the Ring + shorter frontage before giving up */
+      const hd = side < 0 ? ALL[0] : nearest(x, z), pts = [W2(-len2 / 2, -dep / 2), W2(len2 / 2, -dep / 2), W2(-len2 / 2, dep / 2), W2(len2 / 2, dep / 2)], xs = pts.map(p => p[0]), zs = pts.map(p => p[1]);
+      placed.push([Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)]); for (const lx of len2 > 13 ? [-5.3, 0, 5.3] : [-3.5, 3.5]) { const [px, pz] = W2(lx, 0); ctx.circles.push([px, pz, 5.4]) }
+      ringB.push({ hd, x, z, len: len2, dep, ry, out: side > 0 ? 1 : -1, a }) } }
+  /* pass 1: the Innere Stadt on its own narrow-lane grid; pass 2: one city-wide grid, each block taking the character of its nearest neighbourhood */
+  const passes = [{ hd: ALL[0], bw: 15, bd: 13, st: 5.5, ox: -1.25, oz: -27.25, bb: [-62, 62, -80, 50] }, { hd: null, bw: 18, bd: 14, st: 6.5, ox: -185, oz: -147, bb: [-188, 188, -148, 148] }];
+  for (const P of passes) { const px = P.bw + P.st, pz = P.bd + P.st, gx0 = P.ox - Math.ceil((P.ox - P.bb[0]) / px) * px, gz0 = P.oz - Math.ceil((P.oz - P.bb[2]) / pz) * pz;
+    for (let bx = gx0; bx + P.bw <= P.bb[1] + .01; bx += px) for (let bz = gz0; bz + P.bd <= P.bb[3] + .01; bz += pz) { if (bx < P.bb[0] - .01 || bz < P.bb[2] - .01) continue; const R0 = [bx, bx + P.bw, bz, bz + P.bd], hd = P.hd || nearest(bx + P.bw / 2, bz + P.bd / 2);
+      let done = false; for (const [ox, oz] of [[0, 0], [2, 0], [-2, 0], [0, 2], [0, -2], [3, 3], [-3, -3], [3, -3], [-3, 3]]) { const S0 = [R0[0] + ox, R0[1] + ox, R0[2] + oz, R0[3] + oz]; if (tryRect(hd, S0, P.st - .1)) { add(hd, S0); done = true; break } } if (done) continue;   /* nudge a few metres before giving up */
+      const hw = (P.bw - 2) / 2, hdp = (P.bd - 2) / 2; for (const H2 of [[bx, bx + hw, bz, bz + P.bd], [bx + hw + 2, bx + P.bw, bz, bz + P.bd], [bx, bx + P.bw, bz, bz + hdp], [bx, bx + P.bw, bz + hdp + 2, bz + P.bd]]) if (tryRect(hd, H2, 1.5)) add(hd, H2, true) } }   /* then half blocks with a 2 m passage */
+  /* the Kaffeehaus block (same rule as 7a: just outside the Ring, south street free) */
+  let cafe = null, best = 1e9; for (const b of blocks) { if (b.square || b.part || b.x1 - b.x0 < 17 || b.z1 - b.z0 < 13) continue; const dd = Math.hypot(b.cx - CX, b.cz - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 55 && roadD(b.cx, b.z1 + 3) > 1 && !waterAt(b.cx, b.z1 + 4) && sc < best) { best = sc; cafe = b } }
+  const styleOf = (hd, k) => { const w = hd.sw; let t = ((Math.sin(k * 12.9898) * 43758.5453) % 1 + 1) % 1; for (let i = 0; i < 4; i++) { if (t < w[i]) return i; t -= w[i] } return 0 };
+  const sideSlab = (hd, x0, x1, z0, z1) => { const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 1.9, uv.getY(i) * (z1 - z0) / 1.9); hd.side.push([g, 0xffffff, M((x0 + x1) / 2, .028, (z0 + z1) / 2, 1, 1, 1, -Math.PI / 2, 0, 0)]) };
+  for (const R of ringB) { const k = Math.round(R.a * 100); R.hd.VA.bar(R.x, R.z, R.len, R.dep, 20 + (k % 6), R.ry, PAL[k % PAL.length], R.out, { style: k % 3 === 0 ? 0 : 2, shopP: .7, corner: k % 7 === 0 ? 1 : 0 }); R.hd.ring = (R.hd.ring || 0) + 1 }   /* Ringstraße palaces: Baroque + Gründerzeit, 20-25 m */
+  let bi = 0;
+  for (const b of blocks) { const hd = b.hood, VA = hd.VA, w = b.x1 - b.x0, d0 = b.z1 - b.z0, k = bi++;
+    sideSlab(hd, b.x0 - 2.2, b.x1 + 2.2, b.z0 - 2.2, b.z1 + 2.2); for (const [x, z, sx, sz] of [[b.cx, b.z0 - 2.2, w + 4.6, .22], [b.cx, b.z1 + 2.2, w + 4.6, .22], [b.x0 - 2.2, b.cz, .22, d0 + 4.6], [b.x1 + 2.2, b.cz, .22, d0 + 4.6]]) hd.extra.push([BG.box, 0x9a948a, M(x, .07, z, sx, .14, sz)]);   /* granite kerb */
+    if (b.square) {   /* a small square: paving, trees at the corners, a fountain, benches facing it */
+      sideSlab(hd, b.x0, b.x1, b.z0, b.z1); for (const [x, z] of [[b.x0 + 2, b.z0 + 2], [b.x1 - 2, b.z0 + 2], [b.x0 + 2, b.z1 - 2], [b.x1 - 2, b.z1 - 2]]) { hd.extra.push([BG.cyl, 0x5a4030, M(x, 1.6, z, .2, 3.2, .2)], [BG.sph, 0x3a7a32, M(x, 4.2, z, 1.9, 1.7, 1.9)], [BG.sph, 0x4a8a3a, M(x + .6, 4.9, z - .4, 1.3, 1.2, 1.3)]); ctx.circles.push([x, z, .4]) }
+      hd.extra.push([BG.cyl, 0xb8b0a0, M(b.cx, .35, b.cz, 1.8, .7, 1.8)], [BG.cyl, 0x4a8ab8, M(b.cx, .66, b.cz, 1.55, .04, 1.55)], [BG.cyl, 0xb8b0a0, M(b.cx, 1.4, b.cz, .22, 1.6, .22)], [BG.sph, 0xb8b0a0, M(b.cx, 2.3, b.cz, .4, .4, .4)]); ctx.circles.push([b.cx, b.cz, 1.9]);
+      for (const s of [-1, 1]) { const bz = b.cz + s * (d0 / 2 - 1.2); hd.extra.push([BG.box, 0x5a3a24, M(b.cx, .45, bz, 2, .08, .45)], [BG.box, 0x2a2a2a, M(b.cx, .22, bz, 1.9, .44, .06)]); ctx.circles.push([b.cx, bz, .5]) } continue }
+    const d = Math.min(7.5, d0 / 2 - .5), thin = d0 - 2 * d < 3, hs = hd.h, hh = () => hs[0] + r() * (hs[1] - hs[0]), col = () => PAL[(r() * PAL.length) | 0];
+    const mainN = roadD(b.cx, b.z0 - 4) < 8, mainS = roadD(b.cx, b.z1 + 4) < 8, sp = m => Math.min(.95, hd.shop * (m ? 1.25 : 1));
+    const tower = (k % 5) === 0, sN = styleOf(hd, k * 4 + 1), sS = styleOf(hd, k * 4 + 2), sW = styleOf(hd, k * 4 + 3), sE = styleOf(hd, k * 4 + 4);
+    const dd = b === cafe ? Math.min(7.5, d0 - 5) : thin ? d0 / 2 : d, ddN = b === cafe && thin ? d0 - dd : dd;   /* the café room is always 7.5 m deep (its furniture plan) */
+    VA.bar(b.cx, b.z0 + ddN / 2, w, ddN, hh(), 0, col(), -1, { style: sN, shopP: sp(mainN), corner: tower ? 1 : 0 });
+    if (b === cafe) { VA.bar(b.cx, b.z1 - dd / 2, w, dd, hh(), 0, col(), 1, { style: sS, noBase: true, noShops: true }); ctx.cols.push([b.x0, b.x1, b.z0, b.z1 - dd]); E.kaffeehaus(b.x0, b.x1, b.z1 - dd, b.z1) }
+    else { VA.bar(b.cx, b.z1 - dd / 2, w, dd, hh(), 0, col(), 1, { style: sS, shopP: sp(mainS) }); ctx.cols.push([b.x0, b.x1, b.z0, b.z1]) }
+    if (!thin) { VA.bar(b.x0 + d / 2, b.cz, d0 - 2 * d, d, hh(), Math.PI / 2, col(), -1, { style: sW, shopP: hd.shop * .6 }); VA.bar(b.x1 - d / 2, b.cz, d0 - 2 * d, d, hh(), Math.PI / 2, col(), 1, { style: sE, shopP: hd.shop * .6 }) } }
+  /* lamps across the streets (between neighbouring blocks of the same neighbourhood), Litfaßsäulen on the wider streets */
+  for (const hd of HOODS(CX, CZ, RING)) { }
+  const byHood = new Map(); for (const b of blocks) { if (!byHood.has(b.hood)) byHood.set(b.hood, []); byHood.get(b.hood).push(b) }
+  for (const [hd, list] of byHood) { const has = (x, z) => blocks.find(o => Math.abs(o.cx - x) < 1.5 && Math.abs(o.cz - z) < 1.5);
+    list.forEach((b, i) => { const gw = hd.id === 'inner' ? 20.5 : 24.5, gd = hd.id === 'inner' ? 18.5 : 20.5, e = has(b.cx + gw, b.cz), s = has(b.cx, b.cz + gd);
+      if (e && i % 2 === 0) hd.VA.lamp(b.x1 + .2, b.cz, e.x0 - .2, b.cz); if (s && i % 2 === 1) hd.VA.lamp(b.cx, b.z1 + .2, b.cx, s.z0 - .2);
+      if (hd.id !== 'inner' && i % 6 === 3 && !b.square) { const x = b.x1 + 1.1, z = b.z1 + 1.1; if (roadD(x, z) > 1.5 && !waterAt(x, z)) hd.VA.litfass(x, z) } });
+    hd.VA.flush(); const sm = new THREE.MeshStandardMaterial({ map: sideTex(q), roughness: .85 }); sm.userData.lin = 1; if (hd.side.length) { const m = new THREE.Mesh(K.merge(hd.side), sm); m.receiveShadow = true; hd.grp.add(m) }
+    if (hd.extra.length) { const vm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8 }); vm.userData.lin = 1; hd.grp.add(new THREE.Mesh(K.merge(hd.extra), vm)) }
+    const cx = list.reduce((a, b) => a + b.cx, 0) / list.length, cz = list.reduce((a, b) => a + b.cz, 0) / list.length; districts.push({ id: 'v_' + hd.id, name: hd.name, x: cx, z: cz });
+    hd.bbox = [Math.min(...list.map(b => b.x0)), Math.max(...list.map(b => b.x1)), Math.min(...list.map(b => b.z0)), Math.max(...list.map(b => b.z1))] }
+  /* streaming: a neighbourhood's detail (portals, balconies, lamps, glow) only near it */
+  const D = [80, 120, 170][q]; let tk = 0;
+  ctx.upd.push(dt => { if ((tk -= dt) > 0) return; tk = .5; const P = AV.P; for (const hd of byHood.keys()) { const [x0, x1, z0, z1] = hd.bbox, dx = Math.max(x0 - P.x, 0, P.x - x1), dz = Math.max(z0 - P.z, 0, P.z - z1); hd.det.visible = Math.hypot(dx, dz) < D } });
+  VC.fx = { ring: ringB.length, blocks: blocks.length, squares: blocks.filter(b => b.square).length, hoods: districts.map(d => d.name + ' ' + byHood.get([...byHood.keys()].find(h => 'v_' + h.id === d.id)).length) };
+  return { blocks, cafe, districts };
+};
+})(window.AV);

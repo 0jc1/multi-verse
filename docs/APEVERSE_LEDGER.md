@@ -60,6 +60,14 @@
   - a waiter and guests
 - **Verified by** `suite_vienna` (22/22) and real-GPU FPS (`suite_vienna_fps`).
 
+- **City fabric (7b):**
+  - the Ringstraße lined with monumental buildings
+  - Innere Stadt lanes
+  - a city-wide grid of perimeter blocks across 9 named neighbourhoods (about 57 blocks plus 12 Ring buildings, 2.5× before)
+  - sidewalks with kerbs and small squares
+  - neighbourhood labels on the map
+  - 4 cross-neighbourhood walks verified
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.

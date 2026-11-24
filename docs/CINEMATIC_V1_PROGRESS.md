@@ -511,3 +511,33 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - The first version of the new architecture cost about 3–6 FPS in some warm-laptop views. Courtyard-side dormers were then removed on Medium and Low.
   - In the cool state, the trimmed build is at the 60 FPS cap except Stephansplatz (52.8 vs 60.1).
   - Draw calls are lower in the trimmed build: café street 302 → 257, Naschmarkt 204 → 157.
+
+### Milestone 7b: Vienna city fabric, a dense connected city (`js/vienna_city.js`)
+
+- **Before:** about 25 isolated 23 m blocks on a 30 m grid. The rest of the 380 × 300 m map was open painted asphalt between the landmarks. A walkability/occupancy map made this measurable.
+- **Ringstraße:** lined on both sides by 12 monumental 20–25 m buildings that follow the curve (16 m or 12 m frontages, 6 m cross streets), Baroque or Gründerzeit with shops and cafés. They are placed by sliding along the Ring around the radial roads, the canal and the landmarks, and their collision is a row of circles.
+- **Innere Stadt:** its own narrow-lane grid (15 × 13 m blocks, 5.5 m lanes, anchored on a Kärntner Straße lane at x = −4).
+- **City-wide grid** (18 × 14 m blocks, 6.5 m streets) over the whole map. Each block takes the character of its nearest neighbourhood: style mix, heights and shop density. If a block does not fit, it slides up to 3 m; failing that, it is placed as half-blocks with a 2 m passage.
+- **Neighbourhoods now placed** (labelled on the map): Innere Stadt, Leopoldstadt (the café moved here, just outside the Ring), Josefstadt, Neubau · Spittelberg, Mariahilfer Straße, Alsergrund, Wieden, Brigittenau, Favoriten.
+- **The result:** about 57 blocks plus 12 Ring buildings (about 2.5× the old fabric), plus small squares with corner trees, a fountain and benches. Every block has a granite slab sidewalk with a kerb.
+- **Placement rules:** blocks are never on water, the canal, the Danube, roads, a landmark (with a 2 m margin) or the hill. Trees placed later now skip building footprints.
+- **Not yet built:** Stephansplatz keeps its large reserved plaza (64 × 60 m) because its people and tests live there, so the Innere Stadt is still thin around it. Mariahilfer Straße and Favoriten are sparse because the diagonal avenue and the landmarks leave narrow gaps.
+- **Tests:** `suite_vienna` 38/38. It checks:
+  - the city fabric, and all five main neighbourhoods on the map
+  - 4 path-finding walks between neighbourhoods: Stephansplatz → Kärntner → Ring → Wieden → Karlsplatz; Ring → Leopoldstadt → Prater; Ring → Neubau → Mariahilfer → Naschmarkt; Brigittenau → Alsergrund
+  - the café door to the counter, plus ordering
+  - the venues, the U-Bahn and the full Ring loop
+  - 11 screenshots, including an overview
+- **Real-GPU FPS** (plugged in, Medium, 1510×764, run before → after → before):
+
+| View | Before | After | Before again |
+|---|---|---|---|
+| Stephansplatz | 56.0 | 52.1 | 50.6 |
+| Ringstraße east | 60.1 | 60.1 | 60.1 |
+| Café street | 60.1 | 59.0 | 60.0 |
+| Prater | 60.1 | 55.6 | 60.1 |
+| Karlsplatz | 60.1 | 55.0 | 60.0 |
+| Naschmarkt | 60.1 | 57.5 | 58.8 |
+
+  - Draw calls are the same or lower: the city is merged per neighbourhood, with detail streamed per neighbourhood.
+  - The denser city costs up to about 5 FPS at Prater and Karlsplatz on Medium.

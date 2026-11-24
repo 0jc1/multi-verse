@@ -92,6 +92,32 @@ const portalTex = q => TX.port || (TX.port = (() => { const c = canvas(2048, 204
       else if (k === 'shutter') { g.fillStyle = '#7a7a80'; g.fillRect(40, 30, 432, 226); for (let y = 30; y < 256; y += 12) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(40, y, 432, 3) } g.fillStyle = '#ff4ad2'; g.font = '700 40px Impact'; g.textAlign = 'center'; g.fillText('TAG', 140 + R() * 200, 150) }
       else { g.fillStyle = '#2a2a30'; g.fillRect(40, 40, 432, 200); g.fillStyle = '#f4f0e8'; g.fillRect(150, 90, 212, 100); g.fillStyle = '#c83a2a'; g.font = '700 30px Arial'; g.textAlign = 'center'; g.fillText('ZU VERMIETEN', 256, 150) } }
     g.restore() } return tex(c) })());
+/* 16 Nasenschilder (hanging shop signs): painted enamel / gilded wrought iron, 4 x 4 cells of 256 */
+const BLADE = [['Café', 'cup', '#2a1a10', '#e8c860'], ['Konditorei', 'cake', '#5a1a2a', '#f4d8e8'], ['Apotheke', 'A', '#1a3a2a', '#e83a2a'], ['Tabak Trafik', 'trafik', '#c83a2a', '#f4f0e8'], ['Bäckerei', 'pretzel', '#3a2414', '#e8b860'], ['Uhren', 'clock', '#14141a', '#e8c860'], ['Juwelier', 'ring', '#1a1a2a', '#e8c860'], ['Weinstube', 'grapes', '#2a1a2a', '#8ac83a'],
+  ['Friseur', 'scissors', '#1a2a4a', '#f4f0e8'], ['Hotel zur Post', 'stars', '#1a1a1a', '#e8c860'], ['Bierhaus', 'mug', '#3a2a14', '#e8c860'], ['Bücher', 'book', '#1a2a3a', '#f4ead0'], ['Optik', 'glasses', '#141418', '#c8d8e8'], ['Schuhe', 'boot', '#3a2a1a', '#e8c860'], ['Musikhaus', 'lyre', '#2a1a3a', '#e8c860'], ['Heuriger', 'pine', '#1a3a1a', '#e8c860']];
+const bladeTex = () => TX.blade || (TX.blade = (() => { const c = canvas(1024, 1024), g = c.getContext('2d');
+  BLADE.forEach(([n, k, bg, fg], i) => { const X = (i % 4) * 256, Y = (i / 4 | 0) * 256; g.save(); g.translate(X + 128, Y + 128);
+    g.strokeStyle = '#c8a040'; g.lineWidth = 6; g.beginPath(); for (let a = 0; a < TAU; a += .02) { const r = 112 + Math.sin(a * 8) * 6; g.lineTo(Math.cos(a) * r, Math.sin(a) * r * .92) } g.closePath(); g.stroke();
+    g.fillStyle = bg; g.beginPath(); g.ellipse(0, 0, 100, 92, 0, 0, TAU); g.fill(); g.strokeStyle = fg; g.lineWidth = 3; g.beginPath(); g.ellipse(0, 0, 90, 82, 0, 0, TAU); g.stroke();
+    g.fillStyle = fg; g.strokeStyle = fg; g.lineWidth = 5;
+    if (k === 'cup') { g.beginPath(); g.moveTo(-34, -20); g.lineTo(34, -20); g.lineTo(26, 18); g.lineTo(-26, 18); g.fill(); g.beginPath(); g.arc(40, -2, 12, -1.4, 1.4); g.stroke(); for (const sx of [-12, 4, 20]) { g.beginPath(); g.moveTo(sx, -30); g.quadraticCurveTo(sx + 8, -42, sx, -54); g.stroke() } }
+    else if (k === 'cake') { g.fillRect(-36, -10, 72, 30); g.fillRect(-24, -30, 48, 22); g.beginPath(); g.arc(0, -36, 6, 0, TAU); g.fill() }
+    else if (k === 'A') { g.font = '900 120px Georgia,serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('A', 0, -6) }
+    else if (k === 'trafik') { g.fillStyle = '#f4f0e8'; g.fillRect(-90, -20, 180, 40); g.fillStyle = '#c83a2a'; g.font = '900 30px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TABAK', 0, 1) }
+    else if (k === 'pretzel') { g.lineWidth = 12; g.beginPath(); g.arc(-18, -6, 26, 0, TAU); g.stroke(); g.beginPath(); g.arc(18, -6, 26, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(-30, 18); g.lineTo(0, 30); g.lineTo(30, 18); g.stroke() }
+    else if (k === 'clock') { g.lineWidth = 6; g.beginPath(); g.arc(0, -6, 44, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(0, -6); g.lineTo(0, -38); g.moveTo(0, -6); g.lineTo(24, 4); g.stroke() }
+    else if (k === 'ring') { g.lineWidth = 9; g.beginPath(); g.arc(0, 0, 32, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(-12, -32); g.lineTo(0, -50); g.lineTo(12, -32); g.fill() }
+    else if (k === 'grapes') { for (let r2 = 0; r2 < 4; r2++) for (let j = 0; j <= 3 - r2; j++) { g.beginPath(); g.arc(-18 * (3 - r2) / 2 + j * 18, -24 + r2 * 16, 9, 0, TAU); g.fill() } }
+    else if (k === 'scissors') { g.lineWidth = 7; for (const s2 of [-1, 1]) { g.beginPath(); g.arc(s2 * 20, 26, 12, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(s2 * 14, 16); g.lineTo(-s2 * 20, -44); g.stroke() } }
+    else if (k === 'stars') { g.font = '700 36px Georgia,serif'; g.textAlign = 'center'; g.fillText('HOTEL', 0, 6); g.font = '24px Georgia'; g.fillText('★★★', 0, -30) }
+    else if (k === 'mug') { g.fillRect(-28, -30, 48, 64); g.lineWidth = 8; g.beginPath(); g.arc(26, 0, 16, -1.4, 1.4); g.stroke(); g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(-4, -34, 30, 10, 0, 0, TAU); g.fill() }
+    else if (k === 'book') { g.fillRect(-40, -30, 38, 56); g.fillRect(2, -30, 38, 56); g.fillStyle = bg; g.fillRect(-1, -30, 2, 56) }
+    else if (k === 'glasses') { g.lineWidth = 7; g.beginPath(); g.arc(-24, -4, 18, 0, TAU); g.stroke(); g.beginPath(); g.arc(24, -4, 18, 0, TAU); g.stroke(); g.beginPath(); g.moveTo(-6, -6); g.lineTo(6, -6); g.stroke() }
+    else if (k === 'boot') { g.beginPath(); g.moveTo(-20, -44); g.lineTo(6, -44); g.lineTo(6, 6); g.lineTo(36, 14); g.lineTo(36, 28); g.lineTo(-20, 28); g.fill() }
+    else if (k === 'lyre') { g.lineWidth = 7; g.beginPath(); g.moveTo(-26, 30); g.quadraticCurveTo(-46, -30, -14, -44); g.moveTo(26, 30); g.quadraticCurveTo(46, -30, 14, -44); g.moveTo(-26, 30); g.lineTo(26, 30); g.stroke(); g.lineWidth = 2; for (const sx of [-8, 0, 8]) { g.beginPath(); g.moveTo(sx, 28); g.lineTo(sx, -36); g.stroke() } }
+    else { g.beginPath(); g.moveTo(0, -46); g.lineTo(26, 0); g.lineTo(12, 0); g.lineTo(30, 30); g.lineTo(-30, 30); g.lineTo(-12, 0); g.lineTo(-26, 0); g.closePath(); g.fill() }
+    g.fillStyle = fg; g.font = '700 ' + (n.length > 10 ? 18 : 22) + 'px Georgia,"Times New Roman",serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; if (k !== 'stars') g.fillText(n, 0, 64, 170);
+    g.restore() }); return tex(c) })());
 const cellUV = (g, i, cols, rows) => { const uv = g.attributes.uv, u0 = (i % cols) / cols, v1 = 1 - (i / cols | 0) / rows; for (let k = 0; k < uv.count; k++) uv.setXY(k, u0 + uv.getX(k) / cols, v1 - (1 - uv.getY(k)) / rows); return g };
 /* Litfaßsäule posters */
 const litTex = () => TX.lit || (TX.lit = (() => { const c = canvas(512, 256), g = c.getContext('2d'), R = rnd(8); const P = [['KONZERT', 'Walzernacht · Musikverein', '#c83a2a'], ['OPER', 'Die Zauberflöte', '#1a2a5a'], ['THEATER', 'Der Zerrissene', '#e8c83a'], ['AUSSTELLUNG', 'Klimt & Freunde', '#d8b040'], ['KINO', 'Sommerkino Karlsplatz', '#2a6a4a'], ['DONAUINSELFEST', 'Live · Gratis', '#ff4ad2']];
@@ -103,7 +129,7 @@ const PRISM = (() => { const sh = new THREE.Shape([new THREE.Vector2(-.5, 0), ne
 
 VA.make = function (ctx, q, opt) {
   opt = opt || {}; const K = AV.kit, M = K.M, BG = K.BG, r = rnd(4711), win = !!opt.winter;
-  const sty = [[], [], [], []], base = [], port = [], solid = [], metal = [], glow = [], lits = [];
+  const sty = [[], [], [], []], base = [], port = [], solid = [], metal = [], glow = [], lits = [], blades = [];
   const ROOF = win ? [0xf4f6fa, 0xe8ecf2] : [0x5a8a7a, 0x4a4e58, 0x9a4a32, 0x5a6a72];
   VA._shop = VA._shop || { n: 0, used: [] }; let doorN = 0; const used = VA._shop.used; const SH = VA._shop;   /* shop names are unique across every neighbourhood instance */
   const LW = (x, z, ry, lx, lz) => [x + lx * Math.cos(ry) + lz * Math.sin(ry), z - lx * Math.sin(ry) + lz * Math.cos(ry)];
@@ -126,10 +152,15 @@ VA.make = function (ctx, q, opt) {
   /* Viennese lamp hung on a cable across a side street */
   const cables = []; const lamp = (ax, az, bx, bz) => { const mx = (ax + bx) / 2, mz = (az + bz) / 2; for (const [px, pz] of [[ax, az], [bx, bz]]) { for (let j = 0; j < 6; j++) { const t0 = j / 6, t1 = (j + 1) / 6, y = t => 8.2 - Math.sin(t * Math.PI) * .5; cables.push(px + (mx - px) * t0, y(t0), pz + (mz - pz) * t0, px + (mx - px) * t1, y(t1), pz + (mz - pz) * t1) } }
     metal.push([BG.cyl, 0x2a2a2e, M(mx, 7.55, mz, .05, .5, .05)], [BG.cone, 0x2a2a2e, M(mx, 7.2, mz, .5, .3, .5)]); glow.push([BG.sph, 0xfff0c8, M(mx, 7, mz, .3, .18, .3)]) };
+  /* a Nasenschild: hanging sign on a wrought-iron bracket, perpendicular to the facade (readable from both directions along the street) */
+  const blade = (fx, fz, nx, nz, y, cell) => { const x = fx + nx * .95, z = fz + nz * .95, ry = Math.atan2(nx, nz) + Math.PI / 2;
+    for (const e of [0, Math.PI]) blades.push([cellUV(new THREE.PlaneGeometry(.95, .95), cell % 16, 4, 4), 0xffffff, M(x, y, z, 1, 1, 1, 0, ry + e, 0)]);
+    metal.push([BG.box, 0x1a1a1a, M(fx + nx * .55, y + .6, fz + nz * .55, Math.abs(nz) * .05 + Math.abs(nx) * 1.15, .05, Math.abs(nx) * .05 + Math.abs(nz) * 1.15)], [BG.box, 0xc8a040, M(fx + nx * .2, y + .3, fz + nz * .2, .06, .7, .06)]) };
   const flush = () => { const grp = opt.group || ctx.group, det = opt.detail || grp, R0 = [];
     sty.forEach((parts, k) => { if (!parts.length) return; const T = styleTex(k, q), m = new THREE.MeshStandardMaterial({ map: T.map, vertexColors: true, roughness: .85, emissive: 0xffffff, emissiveMap: T.glow, emissiveIntensity: .25 }); m.userData.lin = 1; R0.push(m); grp.add(new THREE.Mesh(K.merge(parts), m)) });
     if (base.length) { const m = new THREE.MeshStandardMaterial({ map: baseTex(q), roughness: .9 }); m.userData.lin = 1; grp.add(new THREE.Mesh(K.merge(base), m)) }
     if (port.length) { const pt = portalTex(q), m = new THREE.MeshStandardMaterial({ map: pt, roughness: .55, emissive: 0xffffff, emissiveMap: pt, emissiveIntensity: .22, polygonOffset: true, polygonOffsetFactor: -2 }); m.userData.lin = 1; R0.push(m); det.add(new THREE.Mesh(K.merge(port), m)) }
+    if (blades.length) { const bt = bladeTex(), m = new THREE.MeshStandardMaterial({ map: bt, side: THREE.FrontSide, roughness: .45, metalness: .3, emissive: 0xffffff, emissiveMap: bt, emissiveIntensity: .2, polygonOffset: true, polygonOffsetFactor: -1 }); m.userData.lin = 1; R0.push(m); det.add(new THREE.Mesh(K.merge(blades), m)) }
     if (lits.length) { const m = new THREE.MeshStandardMaterial({ map: litTex(), roughness: .8 }); m.userData.lin = 1; det.add(new THREE.Mesh(K.merge(lits), m)) }
     const vm = o => { const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true }, o)); m.userData.lin = 1; return m };
     if (solid.length) grp.add(new THREE.Mesh(K.merge(solid), vm({ roughness: .8 }))); if (metal.length) det.add(new THREE.Mesh(K.merge(metal), vm({ roughness: .4, metalness: .6 })));
@@ -137,6 +168,6 @@ VA.make = function (ctx, q, opt) {
     if (cables.length) { const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(cables, 3)); det.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x1a1a1a }))) }
     ctx.upd.push(() => { const nk = AV.nightK || 0; for (const m of R0) m.emissiveIntensity = (m.map === TX.port ? .2 : .2) + nk * .8 });
     VA.fx = { shops: SH.n, doors: (VA.fx ? VA.fx.doors : 0) + doorN, used } };
-  return { bar, litfass, lamp, flush, used };
+  return { bar, litfass, lamp, blade, flush, used };
 };
 })(window.AV);

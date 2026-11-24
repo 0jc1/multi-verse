@@ -541,3 +541,36 @@ Filled in at the end of each milestone. See `## Milestone log`.
 
   - Draw calls are the same or lower: the city is merged per neighbourhood, with detail streamed per neighbourhood.
   - The denser city costs up to about 5 FPS at Prater and Karlsplatz on Medium.
+
+### Milestone 7c: Vienna Innere Stadt, a historic centre laid out street by street
+
+- **Stephansplatz:** stays the square south of the cathedral. Its reservation now ends at z −2 (it used to reach z 6, taking most of the centre).
+- **Kärntner Straße:** a 9 m pedestrian street paved in granite, from Stephansplatz to the Ring. Both sides are continuous street walls of 10–11 m buildings (19–21 m tall) with ground-floor shops on nearly every frontage, and Nasenschilder.
+- **Graben:** a pedestrian street west of the cathedral with the **Pestsäule** (a clouds column on a stone base, gilded top) and building rows north and south. It is short: the Ring curves close here.
+- **North of the cathedral:** a row of houses facing the spire.
+- **East block:** between the square and the bar street.
+- **Hofburg:** a Baroque wing with a copper dome on a drum, a lantern and a six-column portico, facing a paved **Heldenplatz** with an equestrian statue.
+- **Staatsoper:** across the Ring at the end of Kärntner Straße, beside the south radial road: a 7-arch loggia, statues and a copper roof.
+- **Nasenschilder (new, `vienna_arch.js`):** 16 hand-painted hanging signs on wrought-iron brackets, readable from both directions along the street: Café, Konditorei, Apotheke (red A), Tabak Trafik, Bäckerei (pretzel), Uhren, Juwelier, Weinstube, Friseur, Hotel zur Post, Bierhaus, Bücher, Optik, Schuhe, Musikhaus, Heuriger.
+- **Map:** the landmarks are labelled (Hofburg · Heldenplatz, Graben · Pestsäule, Staatsoper) alongside the 9 neighbourhoods.
+- **Fix:** a neighbourhood made only of hand-laid rows was never flushed. Every neighbourhood is now flushed.
+- **Tests:** `suite_vienna` 49/49, adding:
+  - the three landmarks are built
+  - walking Kärntner Straße from Stephansplatz to the Ring
+  - walking onto the Graben
+  - path finding from the Graben to the Hofburg
+  - 5 new screenshots
+- **Real-GPU FPS** (plugged in, Medium):
+
+| View | After | Before (laptop was hotter) |
+|---|---|---|
+| Stephansplatz | 36.5 | 29.9 |
+| Kärntner Straße | 55.0 | 30.7 |
+| Ringstraße | 55.3 | 46.5 |
+| Café street | 60.1 | 44.9 |
+| Prater | 60.0 | 46.5 |
+| Karlsplatz | 59.3 | 43.3 |
+| Naschmarkt | 60.0 | 45.2 |
+
+  The "before" build ran while the laptop was hotter, so this is not a fair before/after comparison. The new build is at 36.5 FPS or better on Medium in every view; Stephansplatz is the heaviest.
+- **Astro-9 megacity "hover-lane crossing" (24/25 reported by the owner):** not reproduced. That is 25/25 once plus three route-only runs on this branch, and one route-only run each on the stable preview and the perf branch. It is recorded as an open, unreproduced intermittent, not as fixed. The route checks in `suite_astro9_mega` and `suite_astro9_neon` now name what blocks each failing point.

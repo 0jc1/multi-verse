@@ -68,6 +68,14 @@
   - neighbourhood labels on the map
   - 4 cross-neighbourhood walks verified
 
+- **Innere Stadt (7c):**
+  - Kärntner Straße (continuous street walls, shops, hanging signs)
+  - Graben with the Pestsäule
+  - Hofburg with Heldenplatz
+  - Staatsoper
+  - 16 Nasenschilder
+  - granite pedestrian paving
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.
@@ -83,6 +91,8 @@
 - **FPS gain in Pai after the optimisation:** draw calls and triangles dropped. FPS stayed within the laptop's thermal drift, which was up to 17 FPS between identical runs.
 
 ## Open issues
+
+- **Astro-9 megacity "hover-lane crossing" (reported 24/25):** not reproduced in 6 runs across 3 builds. The route checks now name what blocks each point.
 
 - **Pinar avenue in Madrid:** an intermittent block on the "both sidewalks" check. The blocked point moves between runs, so something moving causes it.
 - **Pai north end:** an intermittent route miss. The cause isn't proven; the route check now records the exact blocker.

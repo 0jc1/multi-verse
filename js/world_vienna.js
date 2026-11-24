@@ -22,7 +22,7 @@ const H = (x, z) => Math.max(0, 26 - Math.hypot(x + 150, z + 125) * .42);   // K
 const RADIALS = [[[CX + 67, CZ], [188, -8]], [[CX, CZ + 67], [0, 148]], [[CX - 47, CZ + 47], [-150, 96]], [[CX - 67, CZ], [-188, -15]], [[CX - 44, CZ - 47], [-128, -136]], [[CX + 40, CZ - 52], [60, -112]], [[CX + 47, CZ + 47], [150, 118]]];
 const roadD = (x, z) => { let d = Math.abs(Math.hypot(x - CX, z - CZ) - RING) - 5; for (const r of RADIALS) d = Math.min(d, segD(x, z, r[0], r[1]) - 4.5); return d };
 const R = (x0, x1, z0, z1) => ({ x0, x1, z0, z1 });
-const LAND = { steph: R(-34, 30, -54, 6), bars: R(14, 58, -60, -40), wurst: R(22, 62, -10, 14), flex: R(-58, -40, -14, 2), nasch: R(-84, -16, 48, 70), karl: R(-24, 52, 80, 124), stadt: R(60, 114, 26, 72),
+const LAND = { steph: R(-36, 30, -50, -2), bars: R(14, 58, -60, -40), wurst: R(22, 62, -10, 14), flex: R(-58, -40, -14, 2), nasch: R(-84, -16, 48, 70), karl: R(-24, 52, 80, 124), stadt: R(60, 114, 26, 72),
   prater: R(108, 188, -48, 24), xmas: R(124, 182, 38, 90), belv: R(62, 118, 92, 136), schon: R(-146, -54, 92, 150), memory: R(-14, 26, 118, 146), portal: R(152, 186, 106, 140), d22: R(100, 190, -150, -96), kahl: R(-190, -100, -150, -80) };
 const inRect = (r, x, z, m) => x > r.x0 - (m || 0) && x < r.x1 + (m || 0) && z > r.z0 - (m || 0) && z < r.z1 + (m || 0);
 

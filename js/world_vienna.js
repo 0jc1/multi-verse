@@ -7,6 +7,7 @@
    Modes: Summer / Winter (F or phone "Fest"). */
 'use strict';
 (function (AV) {
+let VA_CAFE = null;
 const tr = AV.tr, TAU = AV.TAU, K = AV.kit, A = AV.arch, CY = AV.city, MD = AV.media;
 const XMIN = -190, XMAX = 190, ZMIN = -150, ZMAX = 150, CX = 0, CZ = -15, RING = 62, WY = -.35;
 const season = () => (AV.S.vienna && AV.S.vienna.season) || 'summer';
@@ -86,15 +87,53 @@ AV.registerWorld({
     const bar = (x, z, len, dep, h, ry, col) => { const g = F.uvScale(new THREE.BoxGeometry(1, 1, 1), Math.max(1, Math.round(len / 4)), Math.max(1, Math.round(h / 3.5))); B.city.add(facM, g, col, K.M(x, h / 2, z, len, h, dep, 0, ry, 0));
       B.roofs.add(MT.v, PRISM, ROOFC[(Math.abs(x * 7 + z * 3) | 0) % ROOFC.length], K.M(x, h, z, dep + .6, 3.2, len + .6, 0, ry + Math.PI / 2, 0));
       const c = Math.cos(ry), s = Math.sin(ry); for (const sd of [-1, 1]) box(B.glow, MT.v, [0xffd890, 0xffb860, 0xfff0c8][(Math.abs(x + z) | 0) % 3], x + s * sd * (dep / 2 + .02), 1.5, z + c * sd * (dep / 2 + .02), len * .8, 1.6, .05, ry, .55) };
-    const STEP = 30, HALF = 11.5, cityCols = [];
+    const STEP = 30, HALF = 11.5, cityCols = [], sites = [], VAk = AV.viennaArch ? AV.viennaArch.make(ctx, q, { winter: win }) : null, cafePeople = [];
     for (let gx = XMIN + 16; gx < XMAX - 10; gx += STEP) for (let gz = ZMIN + 16; gz < ZMAX - 10; gz += STEP) {
       const x = gx + (rng() - .5) * 2, z = gz + (rng() - .5) * 2; let ok = true;
       for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) { const px = x + dx * (HALF + 2), pz = z + dz * (HALF + 2); if (waterAt(px, pz) || canalD(px, pz) < 7 || Math.abs(danS(px, pz)) < 21 || roadD(px, pz) < 2 || reserved(px, pz, 2) || H(px, pz) > .2) ok = false } if (!ok) continue;
-      const inner = Math.hypot(x - CX, z - CZ) < RING, hh = inner ? 16 + rng() * 6 : 13 + rng() * 6, col = PAL[(rng() * PAL.length) | 0], d = 7.5;
-      bar(x, z - HALF + d / 2, HALF * 2, d, hh, 0, col); bar(x, z + HALF - d / 2, HALF * 2, d, hh + (rng() - .5) * 3, 0, PAL[(rng() * PAL.length) | 0]);
-      bar(x - HALF + d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, col); bar(x + HALF - d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, PAL[(rng() * PAL.length) | 0]);
-      ctx.cols.push([x - HALF, x + HALF, z - HALF, z + HALF]); cityCols.push([x, z]);
-    }
+      const inner = Math.hypot(x - CX, z - CZ) < RING, hh = inner ? 16 + rng() * 6 : 13 + rng() * 6, col = PAL[(rng() * PAL.length) | 0], d = 7.5;   /* same random draws, same order as before: everything else in Vienna stays where it was */
+      const h2 = hh + (rng() - .5) * 3, c2 = PAL[(rng() * PAL.length) | 0], c3 = PAL[(rng() * PAL.length) | 0]; sites.push({ x, z, hh, h2, col, c2, c3, d }) }
+    /* Cinematic V1 (7a): one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
+    let cafe = null; if (VAk) { let best = 1e9; for (const st of sites) { const dd = Math.hypot(st.x - CX, st.z - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 50 && roadD(st.x, st.z + HALF + 3) > 1 && !waterAt(st.x, st.z + HALF + 4) && sc < best) { best = sc; cafe = st } } }
+    for (const st of sites) { const { x, z, hh, h2, col, c2, c3, d } = st;
+      if (!VAk) { bar(x, z - HALF + d / 2, HALF * 2, d, hh, 0, col); bar(x, z + HALF - d / 2, HALF * 2, d, h2, 0, c2); bar(x - HALF + d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, col); bar(x + HALF - d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, c3); ctx.cols.push([x - HALF, x + HALF, z - HALF, z + HALF]); cityCols.push([x, z]); continue }
+      const tower = (Math.abs((x * 7 + z * 13) | 0) % 4) === 0;
+      VAk.bar(x, z - HALF + d / 2, HALF * 2, d, hh, 0, col, -1, { corner: tower ? 1 : 0 }); VAk.bar(x - HALF + d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, col, -1); VAk.bar(x + HALF - d / 2, z, HALF * 2 - d * 2, d, hh, Math.PI / 2, c3, 1);
+      if (st !== cafe) { VAk.bar(x, z + HALF - d / 2, HALF * 2, d, h2, 0, c2, 1); ctx.cols.push([x - HALF, x + HALF, z - HALF, z + HALF]) }
+      else { VAk.bar(x, z + HALF - d / 2, HALF * 2, d, h2, 0, c2, 1, { noBase: true, noShops: true });   /* upper floors over the café */
+        ctx.cols.push([x - HALF, x + HALF, z - HALF, z + HALF - d]); kaffeehaus(x - HALF, x + HALF, z + HALF - d, z + HALF) }
+      cityCols.push([x, z]) }
+    if (VAk) { const has = (x, z) => sites.some(o => Math.hypot(o.x - x, o.z - z) < 5);
+      for (const st of sites) { const { x, z } = st;
+        if (has(x + STEP, z)) for (const oz of [-6, 6]) VAk.lamp(x + HALF, z + oz, x + STEP - HALF, z + oz);   /* lamps hung across the side streets */
+        if (has(x, z + STEP)) for (const ox of [-6, 6]) VAk.lamp(x + ox, z + HALF, x + ox, z + STEP - HALF);
+        const lx = x + HALF + 1.9, lz = z + HALF + 1.9; if ((Math.abs((x + z * 3) | 0) % 3) === 0 && roadD(lx, lz) > 1.5 && !waterAt(lx, lz) && !reserved(lx, lz, 1) && !(cafe && Math.hypot(lx - cafe.x, lz - cafe.z - HALF) < 14)) VAk.litfass(lx, lz) }   /* Litfaßsäulen */
+      VAk.flush() }
+    function kaffeehaus(x0, x1, z0, z1) {   /* CAFÉ ZUCKERL: marble tables, bentwood chairs, red banquette, cake vitrine, espresso machine, chandeliers, mirrors, newspapers */
+      const cx = (x0 + x1) / 2, h = 4.2, t = .35, dz = 1.2;
+      const wall = (ax, bx, az, bz, col) => { box(B.misc, MT.stucco, col || 0xe8dcc4, (ax + bx) / 2, h / 2, (az + bz) / 2, bx - ax, h, bz - az); ctx.cols.push([ax, bx, az, bz]) };
+      wall(x0, x1, z0, z0 + t, 0xd8c8a8); wall(x0, x0 + t, z0, z1); wall(x1 - t, x1, z0, z1); wall(x0, cx - dz, z1 - t, z1, 0x2a2018); wall(cx + dz, x1, z1 - t, z1, 0x2a2018); box(B.misc, MT.wood, 0x2a2018, cx, (2.7 + h) / 2, z1 - t / 2, dz * 2, h - 2.7, t);
+      for (const wx of [-8.5, -4.5, 4.5, 8.5]) box(B.glow, MT.v, 0xffe8b8, cx + wx, 1.9, z1 + .02, 3, 2.4, .04, 0, .5);   /* tall café windows, warm light inside */
+      box(B.misc, MT.v, 0x141414, cx, 3.7, z1 + .12, 14, .7, .1);    /* black fascia, gold lettering bar */
+      { const c = document.createElement('canvas'); c.width = 1024; c.height = 96; const g = c.getContext('2d'); g.fillStyle = '#0e0c0a'; g.fillRect(0, 0, 1024, 96); g.strokeStyle = '#c8a050'; g.lineWidth = 3; g.strokeRect(8, 8, 1008, 80); g.fillStyle = '#e8c860'; g.font = 'italic 700 54px "Times New Roman",Georgia,serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Café Zuckerl', 420, 50); g.font = '700 22px Georgia,serif'; g.fillText('· SEIT 1898 · KONDITOREI ·', 800, 52); const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; tx.anisotropy = 8; const m = new THREE.MeshStandardMaterial({ map: tx, emissive: 0xffffff, emissiveMap: tx, emissiveIntensity: .35, roughness: .4 }); m.userData.lin = 1; const pl = new THREE.Mesh(new THREE.PlaneGeometry(13, 1.2), m); pl.position.set(cx, 3.7, z1 + .19); grp.add(pl) }   /* gold serif on black, the Kaffeehaus way */
+      box(B.misc, MT.v, 0xe8e0d0, cx, .02, (z0 + z1) / 2, x1 - x0 - .7, .04, z1 - z0 - .7);
+      for (let i = 0; i < 10; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2) box(B.misc, MT.v, 0x3a3a40, x0 + 1.4 + i * 2.2, .045, z0 + 1 + j * 1.6, 2.2, .01, 1.6);   /* black-and-white marble floor */
+      box(B.misc, MT.v, 0xf4ecd8, cx, h + .05, (z0 + z1) / 2, x1 - x0, .1, z1 - z0);
+      box(B.misc, MT.v, 0x8a1a2a, cx - 2, .45, z0 + .8, 15, .9, .9); box(B.misc, MT.v, 0x8a1a2a, cx - 2, 1.05, z0 + .45, 15, .9, .2); ctx.cols.push([cx - 9.5, cx + 5.5, z0, z0 + 1.25]);   /* red velvet banquette */
+      for (let k = -3; k <= 2; k++) box(B.glow, MT.v, 0xd8c8a0, cx + k * 2.6 - 1, 2.6, z0 + t + .02, 2.2, 1.6, .02, 0, .25);   /* mirrors */
+      for (const [tx, tz] of [[-7.5, 2.2], [-4.5, 2.2], [-1.5, 2.2], [2.5, 2.2], [-6, 4.6], [-2.5, 4.6], [3, 4.8]]) { const x = cx + tx, z = z0 + tz; B.misc.add(MT.stone, A.geo('cyl'), 0xf4f0ea, K.M(x, .75, z, .38, .05, .38)); B.misc.add(MT.shiny, A.geo('cyl'), 0x2a2a2a, K.M(x, .37, z, .04, .74, .04)); ctx.circles.push([x, z, .42]);
+        for (const a of [0, Math.PI]) { const sx = x + Math.cos(a) * .7, sz = z + Math.sin(a) * .7; B.misc.add(MT.wood, A.geo('cyl'), 0x4a2a18, K.M(sx, .46, sz, .2, .04, .2)); box(B.misc, MT.wood, 0x4a2a18, sx + Math.cos(a) * .18, .75, sz, .04, .6, .34) } }   /* bentwood chairs */
+      box(B.misc, MT.wood, 0x5a3a24, x1 - 2.2, .55, z0 + 3.2, 1.6, 1.1, 4.2); box(B.glow, MT.v, 0xfff4e0, x1 - 2.2, 1.35, z0 + 3.2, 1.4, .5, 4, 0, .35); ctx.cols.push([x1 - 3, x1 - 1.4, z0 + 1.1, z0 + 5.3]);   /* cake vitrine */
+      for (let k = 0; k < 6; k++) B.misc.add(MT.v, A.geo('cyl'), [0x5a2a1a, 0xf4d8e8, 0xe8c86a, 0x5a2a1a, 0xc83a4a, 0xf4f0e0][k], K.M(x1 - 2.2, 1.25, z0 + 1.6 + k * .65, .22, .14, .22));
+      box(B.misc, MT.shiny, 0xc0c0c8, x1 - 1, 1.3, z0 + 5.9, .5, .5, .8); box(B.misc, MT.wood, 0x5a3a24, x0 + .7, 1.1, z0 + 5.6, .3, 1.8, 1.4);   /* espresso machine, newspaper rack */
+      for (let k = 0; k < 4; k++) box(B.misc, MT.v, 0xf4f0e0, x0 + .9, .6 + k * .4, z0 + 5.6, .05, .3, 1.1);
+      for (const cxx of [cx - 6, cx, cx + 5]) { B.misc.add(MT.shiny, A.geo('cyl'), 0xc8a050, K.M(cxx, h - .35, (z0 + z1) / 2, .02, .6, .02)); B.glow.add(MT.v, A.geo('sph'), 0xfff0c8, K.M(cxx, h - .8, (z0 + z1) / 2, .45, .25, .45), 1) }   /* chandeliers */
+      const lt = new THREE.PointLight(0xffd8a0, 1.1, 18); lt.position.set(cx, h - 1, (z0 + z1) / 2); grp.add(lt);
+      T(x1 - 3.4, z0 + 3.2, 2.2, () => tr('☕ Café Zuckerl: Melange, Apfelstrudel, Torte', '☕ Café Zuckerl: Melange, Apfelstrudel, tarta'), () => AV.shop && AV.shop.open({ id: 'v_zuckerl', name: ['Café Zuckerl', 'Café Zuckerl'], greet: ['Herr Ober Franz, bow-tie, silver tray, no smile: “Bitte schön. A Melange? We also have the strudel. It is from this morning. Mostly.”', 'Herr Ober Franz, pajarita y bandeja de plata, sin sonreír: “Bitte schön. ¿Una Melange? Tenemos strudel. Es de esta mañana. Casi.”'], items: [['v_melange', 5], ['v_strudel', 6], ['v_torte', 7]] }));
+      T(x0 + 1.6, z0 + 5.6, 2, () => tr('📰 Read the newspapers on their wooden holders', '📰 Leer los periódicos en sus soportes de madera'), () => { AV.vitals && AV.vitals.add(3, 2); AV.toast(tr('Three papers, two opinions, one coffee going cold. Time stops agreeably here.', 'Tres periódicos, dos opiniones y un café enfriándose. Aquí el tiempo se detiene con gusto.')) });
+      cafePeople.push({ kind: 'human', x: x1 - 3.6, z: z0 + 5.2, mode: 'idle', name: 'Herr Ober Franz', yaw: -Math.PI / 2, lines: [['A Viennese waiter is never late. The customer is early.', 'Un camarero vienés nunca llega tarde. Es el cliente el que llega pronto.']] },
+        { kind: 'human', x: cx - 7.5, z: z0 + 3, mode: 'look', face: [cx - 7.5, z0 + 2.2] }, { kind: 'human', x: cx - 2.5, z: z0 + 5.4, mode: 'chat', face: [cx - 1.5, z0 + 4.2] }, { kind: 'ape', x: cx - 1.5, z: z0 + 4.2, mode: 'chat', face: [cx - 2.5, z0 + 5.4] });
+      VA_CAFE = { x0, x1, z0, z1, door: [cx, z1] } }
     /* 22nd district: glass towers across the Danube */
     [[146, -128, 10, 46], [160, -142, 12, 72], [136, -146, 9, 38], [176, -146, 10, 56]].forEach(([x, z, w, h]) => { box(B.misc, MT.shiny, 0x7a98b8, x, h / 2, z, w, h, w); box(B.glow, MT.v, 0x9ad8ff, x, h / 2, z + w / 2 + .03, w * .9, h * .95, .05, 0, .25); ctx.cols.push([x - w / 2, x + w / 2, z - w / 2, z + w / 2]) });
 
@@ -265,7 +304,7 @@ AV.registerWorld({
       ctx.upd.push((dt, t) => boats.forEach((b, k) => { const tt = (t * .015 + k * .33) % 1, p = danP(30 + tt * 260), off = (k - 1) * 8; b.position.set(p[0] + DN[0] * (off + (off ? 0 : 10)), WY + .1, p[1] + DN[1] * (off + (off ? 0 : 10))); b.rotation.y = -Math.atan2(DD[1], DD[0]) + Math.PI / 2; b.rotation.z = Math.sin(t + k) * .05 })) }
 
     /* ---------- people: friends, bartenders, ravers, tourists ---------- */
-    const BS = [];
+    const BS = []; cafePeople.forEach(p => BS.push(p));   /* the Kaffeehaus staff + guests first, so every quality keeps them */
     const add = (kind, x, z, o) => BS.push(Object.assign({ kind, x, z }, o || {}));
     add('human', 24, -44, { mode: 'idle', name: 'Barman Sean (Waxy’s)', yaw: 0 }); add('human', 34, -53.4, { mode: 'idle', name: 'Lukas', yaw: 0 }); add('human', 46, -53.4, { mode: 'idle', name: 'Don', yaw: 0 });
     add('human', 30, -40, { area: { x: 34, z: -42, r: 6 }, name: 'Old friend Max' }); add('ape', 40, -40, { area: { x: 36, z: -40, r: 6 } }); add('human', 42, -44, { mode: 'dance' });
@@ -285,6 +324,7 @@ AV.registerWorld({
     const nB = Math.round(BS.length * [.45, .7, 1][q]); const beings = AV.beings.spawn(ctx, BS.slice(0, nB).map((b, i) => Object.assign({ seed: 300 + i }, b)));
     beings.forEach((b, i) => { if (BS[i] && BS[i].gold) { const gold = new THREE.MeshStandardMaterial({ color: 0xffc83a, metalness: 1, roughness: .25, skinning: true }); gold.userData.lin = 1; b.h.traverse(o => { if (o.isSkinnedMesh) o.material = Array.isArray(o.material) ? o.material.map(() => gold) : gold }) } });
 
+    AV.viennaCafe = VA_CAFE;
     /* ---------- flush ---------- */
     for (const k in B) B[k].flush(ctx);
     ctx.leave.push(() => MD.resetFrames());

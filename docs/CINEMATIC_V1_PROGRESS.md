@@ -471,3 +471,43 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - Neither the minivan nor any runtime-placed object (rentals, taxi stands, activity spots, Songkran tubs) can reach (0,-62) or (11,-69.2).
   - Both points were free when probed, and the route step passed 3 runs in a row.
   - Cause still unproven. The route check now records the exact blocker, so the next occurrence will identify it.
+
+### Milestone 7a: Vienna, Viennese buildings + Café Zuckerl (`js/vienna_arch.js`)
+
+- **Every street side of Vienna's perimeter blocks is now a Viennese building.** The footprints, collisions and random layout are exactly as before, so trees, people and landmarks did not move. Each building gets:
+  - **one of four façade styles**, tinted per building, with lit windows that show room interiors and glow brighter at night:
+    - Gründerzeit historicist: alternating triangular and segmental pediments, consoles, rusticated pilasters
+    - Jugendstil: arched windows, gilded tendrils, a green tile band
+    - Baroque: pilasters, scrolled window crowns
+    - Biedermeier: green shutters
+  - **a rusticated stone ground floor with shop portals.** There are 24 unique shops, each name used once, in wooden portals with gold lettering and themed window displays: Konditorei Ehrlich, Buchhandlung Wörtersee, Apotheke zum Goldenen Hirschen, Tabak Trafik, Heuriger zum Fass and more. There are also 8 house-door types: numbered doors, iron gates, tagged shutters, "zu vermieten".
+  - a string course, a cornice, a mansard roof (copper, slate or tile), and wrought-iron balconies.
+- **Roofline details:** dormers on the street side (on High, both sides; none on Low), chimneys, and copper-domed corner towers on about a quarter of the blocks.
+- **Street furniture:** Viennese lamps hung on cables across the side streets, and Litfaßsäulen at street corners with concert, opera, exhibition and cinema posters. Litfaßsäulen are kept away from roads, water and reserved areas.
+- **Café Zuckerl**, an enterable Kaffeehaus in the south ground floor of one block just outside the Ring:
+  - gold-serif fascia ("Café Zuckerl · seit 1898 · Konditorei") and tall lit windows
+  - black-and-white marble floor, 7 marble tables with bentwood chairs, a red velvet banquette, mirrors and chandeliers
+  - a cake vitrine, an espresso machine and a newspaper rack
+  - Herr Ober Franz, the waiter, plus three guests (reading, talking)
+  - you can order a Wiener Melange (5), Apfelstrudel (6) or Viennese chocolate torte (7), and read the newspapers
+- **New `suite_vienna.js`** passes 22/22. It checks:
+  - the module builds with unique shop names, and the café is placed
+  - walking in through the café door to the counter, buying a Melange, and the waiter being present
+  - Waxy's, the Würstel stand and the U-Bahn still work
+  - the full Ringstraße loop by path finding (12 legs)
+  - no JS errors
+  - 5 screenshots
+- **Real-GPU FPS** (`suite_vienna_fps.js`, Medium, plugged in):
+
+| View | Before ×2 (warm laptop) | After, first version | After, trimmed (cool) | Before (cool) |
+|---|---|---|---|---|
+| Stephansplatz | 34.1 / 33.5 | 33.3 | 52.8 | 60.1 |
+| Ringstraße east | 46.6 / 41.4 | 45.4 | 60.1 | 60.1 |
+| Café street | 49.8 / 46.8 | 43.9 | 60.1 | 60.1 |
+| Prater | 54.3 / 47.8 | 42.1 | 60.0 | 60.0 |
+| Karlsplatz | 44.4 / 43.0 | 38.3 | 59.3 | 60.1 |
+| Naschmarkt | 48.0 / 44.2 | 42.2 | 60.1 | 60.1 |
+
+  - The first version of the new architecture cost about 3–6 FPS in some warm-laptop views. Courtyard-side dormers were then removed on Medium and Low.
+  - In the cool state, the trimmed build is at the 60 FPS cap except Stephansplatz (52.8 vs 60.1).
+  - Draw calls are lower in the trimmed build: café street 302 → 257, Naschmarkt 204 → 157.

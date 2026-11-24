@@ -45,6 +45,21 @@
 - **Crowd density:** visible-crowd caps, and saner numbers in Pai.
 - **Vegetation:** bigger chunks on Low and Medium (fewer draw calls in every world).
 
+### Vienna
+
+- **Viennese buildings** on every street side of the perimeter blocks:
+  - 4 façade styles
+  - 24 unique shops with gold-lettered portals
+  - mansard roofs and dormers
+  - copper-domed corner towers
+  - wrought-iron balconies
+- **Street furniture:** Litfaßsäulen, and lamps hung on cables across the side streets.
+- **Café Zuckerl**, an enterable Kaffeehaus:
+  - order a Melange, Apfelstrudel or torte
+  - read the newspapers
+  - a waiter and guests
+- **Verified by**  (22/22) and real-GPU FPS ().
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.
@@ -73,6 +88,11 @@
   - believable daily routines for the NPCs
   - Paradise Circus fire show polish
 - **Astro-9:** districts beyond the 12 streets, richer interiors, and more varied alien NPC behaviour.
-- **Vienna:** the full cinematic upgrade (architecture, trams, cafés, courtyards). Not started.
+- **Vienna (still to do):**
+  - neighbourhood identities (Naschmarkt stalls, Spittelberg lanes, Ringstraße palaces)
+  - tram stops with shelters
+  - more enterable shops and a Heuriger
+  - NPC daily routines
+  - fixing the white haze (fog and sky)
 - **Da Nang and Chiang Mai:** a street-detail pass.
 - **NPC routines across worlds:** customers visit shops, vendors work their stalls, nightlife busier at night.

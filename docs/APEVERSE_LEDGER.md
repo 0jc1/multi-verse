@@ -76,6 +76,12 @@
   - 16 Nasenschilder
   - granite pedestrian paving
 
+- **Ring tram line (7d):**
+  - tracks in a stone bed
+  - catenary poles and contact wires
+  - 4 named stops with shelters, signs and waiting passengers
+  - the rideable Ring tram is unchanged and verified
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.

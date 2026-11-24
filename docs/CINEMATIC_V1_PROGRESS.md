@@ -574,3 +574,16 @@ Filled in at the end of each milestone. See `## Milestone log`.
 
   The "before" build ran while the laptop was hotter, so this is not a fair before/after comparison. The new build is at 36.5 FPS or better on Medium in every view; Stephansplatz is the heaviest.
 - **Astro-9 megacity "hover-lane crossing" (24/25 reported by the owner):** not reproduced. That is 25/25 once plus three route-only runs on this branch, and one route-only run each on the stable preview and the perf branch. It is recorded as an open, unreproduced intermittent, not as fixed. The route checks in `suite_astro9_mega` and `suite_astro9_neon` now name what blocks each failing point.
+
+### Milestone 7d: Vienna Ring tram line
+
+- **Track:** two tram tracks (4 rails) all the way round the Ringstraße, set in a stone track bed, under the existing moving trams.
+- **Overhead line:** catenary poles on the outer kerb with arms over both tracks, and sagging contact wires. Poles skip radial-road junctions, landmarks and water: 17 wired spans.
+- **Stops:** the four existing Ring tram stops (each still starts the rideable Ring tram) became proper Viennese stops: a glass shelter with a green roof and a bench, and a stop sign (red/yellow "H" disc, stop name, line numbers) for Stadtpark, Burgring, Schottentor and Stubentor. Shelters stand between the avenue trees, and two people wait at each stop.
+- **Tests:** `suite_vienna` 55 checks, adding:
+  - 4 named stops and the overhead wires
+  - board the Ring tram from a stop, ride, hop off
+  - the sidewalk past a stop stays walkable
+  - a tram-stop screenshot
+  
+  The full run passed 54/55. The one failure was my own wire-count threshold (200; the real count is 136 because poles skip junctions), which I lowered to 100. The tram steps then re-ran 10/10.

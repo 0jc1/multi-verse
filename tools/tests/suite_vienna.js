@@ -31,11 +31,13 @@ window.APE_T = (() => {
     let b = walk([[-4, -6], [-4, 2], [-4, 36], [-4, 44]]); c('walk Kärntner Straße from Stephansplatz to the Ring', !b.length, b.slice(0, 5).join(' | '));
     b = walk([[-34, -30], [-38, -30], [-39.5, -30]]); c('walk onto the Graben from Stephansplatz', !b.length, b.slice(0, 5).join(' | ')); c('Graben → Hofburg (path finding)', reach([-38, -30], [-28, 26]));
     c('Kärntner Straße has hanging signs + shops', true) });
+  step('Ring tram line: tracks, wires, stops, ride', async c => { const T2 = AV.viennaTram; c('4 named stops + overhead wires', !!T2 && T2.stops.length === 4 && T2.wires > 100, JSON.stringify(T2)); const t = tgt(/Ring tram stop/); c('tram stop interaction', !!t); if (t) { at(t.x, t.z); t.fn(); await sleep(1500); c('riding the Ring tram', !!(AV.vienna && AV.vienna.ride)); const off = tgt(/Hop off/); if (off) off.fn(); await sleep(500); c('hopped off', !(AV.vienna && AV.vienna.ride)) } const b = walk([[66, -15], [69, -15]]); c('stop + poles do not block the sidewalk crossing', b.length === 0, b.join(' | ')) });
   const shot = (name, file, fn) => step(name, async c => { fn(); await sleep(6000); c('render', true, JSON.stringify(AV.R.info.render)) }, { shot: file });
   shot('street of Viennese buildings', 'v_street', () => { const C = AV.viennaCafe; at(C.door[0] - 22, C.door[1] + 3.5, -Math.PI / 2 - .15, .12) });
   shot('Café Zuckerl front', 'v_cafe_front', () => { const C = AV.viennaCafe; at(C.door[0] + 6, C.door[1] + 7, Math.PI / 4 - .1, .12) });
   shot('Café Zuckerl inside', 'v_cafe_inside', () => { const C = AV.viennaCafe; at(C.door[0] + .5, C.door[1] - 1.2, -.1, .02) });
   shot('Ringstraße', 'v_ring', () => at(66, -15, Math.PI, .08));
+  shot('tram stop on the Ring', 'v_tramstop', () => { const n = 56, k = Math.round((30 * Math.PI / 180) / (Math.PI * 2 / n) - .5), a = (k + .5) * Math.PI * 2 / n + .05; at(Math.cos(a) * 63.5, -15 + Math.sin(a) * 63.5, Math.atan2(-Math.cos(a), -Math.sin(a)), .05) });
   shot('Stephansplatz', 'v_steph', () => at(-4, 4, 0, .1));
   shot('Kärntner Straße looking north to the cathedral', 'v_kaerntner', () => at(-4, 34, 0, .12));
   shot('Kärntner Straße looking south', 'v_kaerntner_s', () => at(-4, 4, Math.PI, .06));

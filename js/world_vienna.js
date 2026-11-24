@@ -298,6 +298,31 @@ AV.registerWorld({
     [30, 120, 210, 300].forEach(d => { const a = d * Math.PI / 180, x = CX + Math.cos(a) * (RING + 7), z = CZ + Math.sin(a) * (RING + 7); box(B.misc, MT.shiny, 0xd8202a, x, 1.6, z, .2, 3.2, .2); box(B.glow, MT.v, 0xffffff, x, 3.2, z, .9, .5, .1, -a, .8);
       T(x, z, 2.6, () => tr('Ring tram stop: ride around the Ringstraße (2)', 'Parada de tranvía: dar la vuelta al Ring (2)'), () => { if (ride || !AV.txn(-2, 'Ring tram')) return; const m = new THREE.Mesh(CY.VB.tram(0xd8202a), tramM); grp.add(m); ride = AV.vienna.ride = { a, v: 0, mesh: m }; AV.P.yaw = -a + Math.PI; AV.toast(tr('All aboard the Ring tram! E / Act to hop off anywhere.', '¡Al tranvía del Ring! E / Act para bajarte donde quieras.')) }) });
     T(0, 0, 6, () => tr('Hop off the tram', 'Bajarse del tranvía'), endRide, () => !!ride); const rideT = ctx.T[ctx.T.length - 1];
+    /* ---------- Cinematic V1 (7d): the Ring tram line - two tracks set in a stone band, catenary poles + sagging contact wires,
+       proper stops (glass shelter, roof, bench, stop sign with the stop name + lines) between the avenue trees, people waiting ---------- */
+    const stopPeople = []; { const TT = [], wires = [], N = 160, nearRadial = (x, z) => RADIALS.some(r => segD(x, z, r[0], r[1]) < 6);
+      for (const rt of [RING - 1.6, RING + 1.6]) for (let i = 0; i < N; i++) { const a0 = i / N * TAU, a1 = (i + 1) / N * TAU, am = (a0 + a1) / 2, len = rt * (a1 - a0) + .05;
+        for (const dr of [-.72, .72]) { const r2 = rt + dr; B.misc.add(MT.shiny, A.geo('box'), 0x8a8a92, K.M(CX + Math.cos(am) * r2, .05, CZ + Math.sin(am) * r2, len, .05, .08, 0, -am + Math.PI / 2, 0)) }
+        box(B.misc, MT.stone, 0x7a7672, CX + Math.cos(am) * rt, .022, CZ + Math.sin(am) * rt, len, .02, 2.6, -am + Math.PI / 2) }   /* rails + stone track bed */
+      const np = 44; let prev = null; for (let i = 0; i <= np; i++) { const a = i / np * TAU, x = CX + Math.cos(a) * (RING + 5.4), z = CZ + Math.sin(a) * (RING + 5.4);
+        if (nearRadial(x, z) || reserved(x, z, 0) || waterAt(x, z)) { prev = null; continue }
+        B.misc.add(MT.shiny, A.geo('cyl'), 0x3a4a3a, K.M(x, 3.2, z, .12, 6.4, .12)); box(B.misc, MT.shiny, 0x3a4a3a, CX + Math.cos(a) * (RING + 2.6), 6.2, CZ + Math.sin(a) * (RING + 2.6), 5.8, .1, .1, -a); ctx.circles.push([x, z, .18]);
+        const cur = [RING - 1.6, RING + 1.6].map(rt => [CX + Math.cos(a) * rt, CZ + Math.sin(a) * rt]); if (prev) for (let k = 0; k < 2; k++) for (let j = 0; j < 4; j++) { const t0 = j / 4, t1 = (j + 1) / 4, y = t => 6.05 - Math.sin(t * Math.PI) * .25; wires.push(prev[k][0] + (cur[k][0] - prev[k][0]) * t0, y(t0), prev[k][1] + (cur[k][1] - prev[k][1]) * t0, prev[k][0] + (cur[k][0] - prev[k][0]) * t1, y(t1), prev[k][1] + (cur[k][1] - prev[k][1]) * t1) }
+        prev = cur }
+      const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(wires, 3)); grp.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x2a2a2a })));
+      const STOPS = [[30, 'Stadtpark', '2 · 71 · D'], [120, 'Burgring', '1 · 2 · 71'], [210, 'Schottentor', '1 · 37 · 38 · D'], [300, 'Stubentor', '2 · 3 · 71']];
+      const sc = document.createElement('canvas'); sc.width = 1024; sc.height = 256; const g = sc.getContext('2d'); STOPS.forEach(([d, n, lines], i) => { const X = i * 256; g.fillStyle = '#f4f4f0'; g.fillRect(X + 4, 4, 248, 248); g.strokeStyle = '#1a1a1a'; g.lineWidth = 3; g.strokeRect(X + 8, 8, 240, 240);
+        g.fillStyle = '#c8102e'; g.beginPath(); g.arc(X + 128, 74, 52, 0, TAU); g.fill(); g.fillStyle = '#ffd200'; g.beginPath(); g.arc(X + 128, 74, 40, 0, TAU); g.fill(); g.fillStyle = '#1a6a3a'; g.font = '900 56px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('H', X + 128, 76);
+        g.fillStyle = '#1a1a1a'; g.font = '700 30px Arial'; g.fillText(n, X + 128, 160, 230); g.font = '700 24px Arial'; g.fillStyle = '#c8102e'; g.fillText(lines, X + 128, 205, 230) });
+      const st = new THREE.CanvasTexture(sc); st.encoding = THREE.sRGBEncoding; st.anisotropy = 8; const sm = new THREE.MeshStandardMaterial({ map: st, roughness: .5, emissive: 0xffffff, emissiveMap: st, emissiveIntensity: .2, side: THREE.DoubleSide }); sm.userData.lin = 1; const sp = [];
+      const nT = [40, 56, 72][q]; STOPS.forEach(([d, n], i) => { const k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5), a = (k + .5) * TAU / nT, rr = RING + 7.6, x = CX + Math.cos(a) * rr, z = CZ + Math.sin(a) * rr, ry = -a + Math.PI / 2, tx = -Math.sin(a), tz = Math.cos(a), nx = Math.cos(a), nz = Math.sin(a);   /* between two avenue trees */
+        box(B.misc, MT.v, 0x2a4a3a, x, 2.65, z, 3.8, .12, 1.8, ry); box(B.glow, MT.v, 0xc8e0e8, x + nx * .75, 1.4, z + nz * .75, 3.6, 2.2, .04, ry, .12);   /* roof + glass back panel */
+        for (const e of [-1, 1]) { B.misc.add(MT.shiny, A.geo('cyl'), 0x2a2a2a, K.M(x + tx * e * 1.8 + nx * .75, 1.3, z + tz * e * 1.8 + nz * .75, .05, 2.6, .05)); ctx.circles.push([x + tx * e * 1.8 + nx * .75, z + tz * e * 1.8 + nz * .75, .25]) }
+        box(B.misc, MT.wood, 0x5a3a24, x + nx * .45, .46, z + nz * .45, 2.4, .08, .42, ry); ctx.circles.push([x + nx * .45, z + nz * .45, .5]);
+        const px = x - tx * 2.6 - nx * .3, pz = z - tz * 2.6 - nz * .3; B.misc.add(MT.shiny, A.geo('cyl'), 0x3a3a3a, K.M(px, 1.6, pz, .05, 3.2, .05)); ctx.circles.push([px, pz, .15]);
+        const gq = new THREE.PlaneGeometry(.9, .9), uv = gq.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setXY(j, (i + uv.getX(j)) / 4, uv.getY(j)); sp.push([gq, 0xffffff, K.M(px, 3.1, pz, 1, 1, 1, 0, ry + Math.PI / 2, 0)]);
+        stopPeople.push({ kind: 'human', x: x - nx * .3 + tx * .7, z: z - nz * .3 + tz * .7, mode: 'look', face: [x - nx * 4, z - nz * 4] }, { kind: i % 2 ? 'ape' : 'human', x: x - nx * .1 - tx * .9, z: z - nz * .1 - tz * .9, mode: 'look', face: [x - nx * 4 - tx * 3, z - nz * 4 - tz * 3] }) });
+      grp.add(new THREE.Mesh(K.merge(sp), sm)); AV.viennaTram = { stops: STOPS.map(s2 => s2[1]), wires: wires.length / 6 } }
     ctx.upd.push((dt0, t) => { if (!ride) return; const r = ride, now = AV.now(), dt = Math.min(.25, now - (r.last || now)); r.last = now; r.v += (7 - r.v) * Math.min(1, dt * .8); r.a += r.v / RING * dt;
       const x = CX + Math.cos(r.a) * (RING - 1.6), z = CZ + Math.sin(r.a) * (RING - 1.6), yaw = Math.atan2(-Math.sin(r.a), Math.cos(r.a)); r.mesh.position.set(x, 0, z); r.mesh.rotation.y = yaw;
       const P = AV.P; P.x = x - Math.sin(yaw) * 3; P.z = z - Math.cos(yaw) * 3; P.y = 0; P.vx = P.vz = P.vy = 0; AV.cam.position.set(P.x, 2.3, P.z); rideT.x = P.x; rideT.z = P.z });
@@ -311,7 +336,7 @@ AV.registerWorld({
       ctx.upd.push((dt, t) => boats.forEach((b, k) => { const tt = (t * .015 + k * .33) % 1, p = danP(30 + tt * 260), off = (k - 1) * 8; b.position.set(p[0] + DN[0] * (off + (off ? 0 : 10)), WY + .1, p[1] + DN[1] * (off + (off ? 0 : 10))); b.rotation.y = -Math.atan2(DD[1], DD[0]) + Math.PI / 2; b.rotation.z = Math.sin(t + k) * .05 })) }
 
     /* ---------- people: friends, bartenders, ravers, tourists ---------- */
-    const BS = []; cafePeople.forEach(p => BS.push(p));   /* the Kaffeehaus staff + guests first, so every quality keeps them */
+    const BS = []; cafePeople.forEach(p => BS.push(p)); stopPeople.forEach(p => BS.push(p));   /* + people waiting at the tram stops */   /* the Kaffeehaus staff + guests first, so every quality keeps them */
     const add = (kind, x, z, o) => BS.push(Object.assign({ kind, x, z }, o || {}));
     add('human', 24, -44, { mode: 'idle', name: 'Barman Sean (Waxy’s)', yaw: 0 }); add('human', 34, -53.4, { mode: 'idle', name: 'Lukas', yaw: 0 }); add('human', 46, -53.4, { mode: 'idle', name: 'Don', yaw: 0 });
     add('human', 30, -40, { area: { x: 34, z: -42, r: 6 }, name: 'Old friend Max' }); add('ape', 40, -40, { area: { x: 36, z: -40, r: 6 } }); add('human', 42, -44, { mode: 'dance' });

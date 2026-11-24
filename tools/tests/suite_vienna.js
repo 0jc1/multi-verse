@@ -55,7 +55,20 @@ window.APE_T = (() => {
   shot('Neubau lanes', 'v_neubau', () => at(-112.5, 20, Math.PI / 2, .08));
   shot('Mariahilfer Straße', 'v_mahue', () => at(-80, 62, Math.PI / 2, .06));
   shot('Brigittenau', 'v_brig', () => at(40, -100, Math.PI / 2, .08));
-  shot('overview from above', 'v_overview', () => { at(0, 40, Math.PI, -.55); AV.P.y = 70 });
+  step('neighbourhood looks + clear air', async c => { const L = AV.viennaCity.look; c('roof mix: Biedermeier gables, Gemeindebau flat roofs, mansards', !!L && L.gable >= 8 && L.flat >= 8 && L.mans >= 40, JSON.stringify(L));
+    c('Jugendstil friezes + Gemeindebau inscriptions', !!L && L.orn >= 5 && L.insc >= 2, L && ('orn ' + L.orn + ' · insc ' + L.insc)); const PB = AV.viennaCity.postsBy || {}, noPost = Object.keys(PB).filter(id => id !== 'inner' && !PB[id] && AV.viennaCity.blocks.some(b => b.hood.id === id && !b.square)); c('lamp posts in every outer neighbourhood', !!L && L.post >= 20 && !noPost.length, JSON.stringify(PB));
+    const hz = new Set((AV.viennaCity.blocks || []).filter(b => !b.square && !b.part).map(b => b.hood.id)); c('summer fog pushed back (no white haze)', AV.W.fog[1] >= 800, JSON.stringify(AV.W.fog));
+    const miss = []; for (const [x, z, fz] of AV.viennaCity.posts || []) { const m = (z + fz) / 2, w2 = walk([[x - 1.5, m], [x + 1.5, m]]); if (w2.length) miss.push(w2[0]) } c('city beyond the map (suburbs, spires, hills, ground skirt)', !!AV.viennaBackdrop && AV.viennaBackdrop.parts >= 300, JSON.stringify(AV.viennaBackdrop)); c('sidewalk passes every lamp post', !miss.length, miss.slice(0, 5).join(' | ')) });
+  const hoodAt = (id, yaw) => { const bl = AV.viennaCity.blocks.filter(b => b.hood.id === id && !b.square && !b.part), b = bl[Math.min(2, bl.length - 1)]; if (b) at(b.x0 - b.hood.st / 2, b.z1 + 5, yaw == null ? -.2 : yaw, .14) };
+  shot('Wieden (Jugendstil)', 'v_look_wieden', () => hoodAt('wieden'));
+  shot('Spittelberg (Biedermeier gables)', 'v_look_neubau', () => hoodAt('neubau'));
+  shot('Brigittenau (Gemeindebau)', 'v_look_brig', () => hoodAt('brig'));
+  shot('Josefstadt', 'v_look_josef', () => hoodAt('josef'));
+  shot('Favoriten', 'v_look_favor', () => hoodAt('favor'));
+  shot('Mariahilfer Straße', 'v_look_mahue', () => hoodAt('mahue'));
+  shot('overview from above', 'v_overview', () => { at(0, 40, Math.PI, -.55); AV.P.y = 70; const iv = setInterval(() => { AV.P.y = 70; AV.P.vy = 0 }, 10); setTimeout(() => clearInterval(iv), 6800) });   /* held up: on a real GPU the player would fall before the capture */
+  shot('evening street (lamps + windows)', 'v_look_night', () => { AV.S.time = 21 * 60 + 30; hoodAt('alser') });
+  step('back to daytime', async c => { AV.S.time = 12 * 60; await sleep(500); c('day', true) });
   let active = [];
   return { names(mobile) { active = steps.filter(s => !!s.mobile === !!mobile || s.name === 'boot'); return active.map(s => s.name) },
     async exec(i) { const s = active[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };

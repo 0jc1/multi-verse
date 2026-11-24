@@ -73,6 +73,20 @@ AV.registerWorld({
     const seg = [110, 150, 190][q], tg = new THREE.PlaneGeometry(XMAX - XMIN, ZMAX - ZMIN, seg, Math.round(seg * .8)); tg.rotateX(-Math.PI / 2);
     const tp = tg.attributes.position; for (let i = 0; i < tp.count; i++) { const x = tp.getX(i), z = tp.getZ(i); tp.setY(i, waterAt(x, z) ? -1.6 : H(x, z)) } tg.computeVertexNormals();
     const gm = new THREE.MeshStandardMaterial({ map: groundTex([1024, 2048, 2048][q], win), roughness: .95 }); gm.userData.lin = 1; const ground = new THREE.Mesh(tg, gm); ground.receiveShadow = true; grp.add(ground);
+    /* 7f: the city beyond the map - a ground skirt, outer suburbs with church spires, the Danube tower and the Wienerwald hills, so no street
+       ends in empty white sky; the fog turns them blue-grey (aerial perspective). One merged mesh, no collisions, no shadows. */
+    { let s0 = 777; const rr = () => (s0 = (s0 * 16807) % 2147483647) / 2147483647, out = (x, z) => x < XMIN - 14 || x > XMAX + 14 || z < ZMIN - 14 || z > ZMAX + 14, BG = K.BG, P2 = [], HIP = new THREE.ConeGeometry(.7071, 1, 4).rotateY(Math.PI / 4);   /* hipped roof over a unit square */
+      const N = [220, 420, 560][q], RC = win ? [0xeef0f4, 0xe2e6ec] : [0x8a5a48, 0x5a6a72, 0x6a7a72, 0x7a6058], WC = win ? [0xd8d4cc, 0xccc8c0] : [0xd8cdb8, 0xc8c0b0, 0xe0d4b8, 0xb8b4ac, 0xd0c4a8];
+      for (let i = 0, t = 0; i < N && t < N * 8; t++) { const a = rr() * TAU, d = 215 + Math.pow(rr(), 1.4) * 270, x = CX + Math.cos(a) * d * 1.2, z = CZ + Math.sin(a) * d; if (!out(x, z)) continue; i++;
+        const w = 10 + rr() * 16, dp = 10 + rr() * 14, h = 8 + rr() * 15, ry = Math.round(rr() * 4) * Math.PI / 2 + (rr() - .5) * .4;
+        P2.push([BG.box, WC[i % WC.length], K.M(x, h / 2, z, w, h, dp, 0, ry, 0)], [HIP, RC[i % RC.length], K.M(x, h + 1.75, z, w * 1.02, 3.5, dp * 1.02, 0, ry, 0)]);
+        if (i % 23 === 7) P2.push([BG.box, 0xd0c8b8, K.M(x + 8, 15, z, 4.5, 30, 4.5)], [BG.cone, win ? 0xe8ecf0 : 0x4a6a5a, K.M(x + 8, 35, z, 3, 10, 3)]) }   /* parish church spires */
+      P2.push([BG.cyl, 0xd8d8d4, K.M(330, 75, -330, 3.2, 150, 3.2)], [BG.cyl, 0xc8ccd0, K.M(330, 146, -330, 10, 9, 10)], [BG.cyl, 0x8a9098, K.M(330, 165, -330, .8, 30, .8)]);   /* the Danube tower, across the river to the north-east */
+      for (let k = 0; k < 7; k++) { const a = Math.PI * (1.02 + k * .085), d = 500 + rr() * 90; P2.push([BG.sph, win ? 0xe6eaf0 : 0x4a6a3a, K.M(CX + Math.cos(a) * d * 1.2, -12, CZ + Math.sin(a) * d, 150 + rr() * 70, 55 + rr() * 35, 110)]) }   /* the Wienerwald */
+      const bm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 }); bm.userData.lin = 1; const bk = new THREE.Mesh(K.merge(P2), bm); bk.name = 'v_backdrop'; grp.add(bk);
+      const SK = [[-1000, 1000, -1000, ZMIN], [-1000, 1000, ZMAX, 1000], [-1000, XMIN, ZMIN, ZMAX], [XMAX, 1000, ZMIN, ZMAX]].map(([x0, x1, z0, z1]) => [new THREE.PlaneGeometry(x1 - x0, z1 - z0).rotateX(-Math.PI / 2), win ? 0xe8ecf0 : 0x66705a, K.M((x0 + x1) / 2, -.05, (z0 + z1) / 2, 1, 1, 1)]);   /* ground skirt: four strips around the map */
+      const smt = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }); smt.userData.lin = 1; const sk = new THREE.Mesh(K.merge(SK), smt); sk.name = 'v_skirt'; grp.add(sk);
+      AV.viennaBackdrop = { parts: P2.length, tris: bk.geometry.index ? bk.geometry.index.count / 3 : bk.geometry.attributes.position.count / 3 } }
     const wopt = { deep: 0x1a4a6a, shallow: 0x4a9ab8, sky: 0xb8d8f0, iri: .15, opacity: .9 };
     { const dc = danP(120), dm = K.waterPlane(ctx, new THREE.PlaneGeometry(420, 36), WY, wopt); dm.position.x = dc[0]; dm.position.z = dc[1]; dm.rotation.order = 'YXZ'; dm.rotation.y = -Math.atan2(DD[1], DD[0]) }   /* YXZ: yaw in world space, the plane stays flat */
     for (let i = 1; i < CANAL.length; i++) { const a = CANAL[i - 1], b = CANAL[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]), m = K.waterPlane(ctx, new THREE.PlaneGeometry(l + 8, 8.6), WY, wopt); m.position.x = (a[0] + b[0]) / 2; m.position.z = (a[1] + b[1]) / 2; m.rotation.order = 'YXZ'; m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
@@ -97,7 +111,7 @@ AV.registerWorld({
        The 7a grid above still draws its random numbers (so trees / people / everything later stays where it was) but is only built
        if the city module is missing. */
     let VCITY = null;
-    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus, RADIALS, stopAngles: [30, 120, 210, 300].map(d => { const nT = [40, 56, 72][q], k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5); return (k + .5) * TAU / nT }) }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
+    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus, RADIALS, bounds: [XMIN, XMAX, ZMIN, ZMAX], stopAngles: [30, 120, 210, 300].map(d => { const nT = [40, 56, 72][q], k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5); return (k + .5) * TAU / nT }) }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
     else {
     /* (7a fallback) one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
     let cafe = null; if (VAk) { let best = 1e9; for (const st of sites) { const dd = Math.hypot(st.x - CX, st.z - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 50 && roadD(st.x, st.z + HALF + 3) > 1 && !waterAt(st.x, st.z + HALF + 4) && sc < best) { best = sc; cafe = st } } }
@@ -362,7 +376,7 @@ AV.registerWorld({
     ctx.leave.push(() => MD.resetFrames());
     const here = AV.vienna.lastPos || null; AV.vienna.lastPos = null;
     return {
-      name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: [70, 330], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .6, .6], dome: { cloud: 1, swirl: .15 } } : { dome: { cloud: .6, swirl: .2 } },
+      name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: win ? [90, 480] : [140, 900], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .5, .45], dome: { cloud: 1, swirl: .15 } } : { tint: [0x4a86e8, 0x94b0d8, .38, .42], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .04, cloud: .4, glow: .4 } },   /* 7f: clear Central-European summer air instead of the white haze */
       surface: (x, z) => { if (x < XMIN + 2 || x > XMAX - 2 || z < ZMIN + 2 || z > ZMAX - 2) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterAt(x, z)) return WY; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
       arrivals: { default: { x: 160, z: 116, yaw: Math.PI * .75 }, ape_gate: { x: 160, z: 116, yaw: Math.PI * .75 }, pipe: { x: 156, z: 112, yaw: Math.PI * .75 }, here: here || { x: 160, z: 116, yaw: Math.PI * .75 } }, defaultArrival: 'default',
       mapDistricts: VCITY ? VCITY.districts : null, noDecor: (x, z) => !!(AV.viennaCity && AV.viennaCity.noDecor && AV.viennaCity.noDecor(x, z)),   /* 7b: neighbourhood labels on the map */

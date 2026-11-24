@@ -619,3 +619,34 @@ Filled in at the end of each milestone. See `## Milestone log`.
 | Naschmarkt | 45.5 | 43.2 | 40.5 |
 
   Run 1 started on a hot laptop and fell to a 0.85 resolution scale. Run 2 is within noise of 7d everywhere. The measurable cost is draw calls on Kärntner Straße: about 413 versus 372. **No FPS change is claimed either way.** Re-measure plugged in to confirm.
+
+### Milestone 7f: Vienna neighbourhood architecture, lighting and the white haze
+
+- **Neighbourhood looks (`vienna_city.js` LOOK table + `vienna_arch.js`):** each district now has its own façade palette, roof mix, ornament and trim.
+  - **Spittelberg/Neubau:** low pastel Biedermeier houses with red-tiled gable roofs (10–14 m).
+  - **Brigittenau and Favoriten:** flat-roofed Gemeindebau blocks (parapet, gravel roof, stair house) in ochre/salmon, some carrying the red inscription "ERBAUT VON DER GEMEINDE WIEN IN DEN JAHREN …" over the ground floor.
+  - **Wieden and Mariahilfer Straße:** white Jugendstil fronts with a gilded band and a green-tiled frieze with gold medallions under the cornice.
+  - **Josefstadt:** pastel Biedermeier and Baroque.
+  - **Leopoldstadt, Alsergrund, Landstraße:** sober Gründerzeit beige and grey.
+
+  One look is applied per block, so blocks are coherent. Built: 98 mansard, 18 gable and 18 flat-roof street fronts, 13 Jugendstil friezes, 2 inscriptions.
+- **The white haze, found and fixed:**
+  - The game rendered nothing beyond the 380 × 300 m map, so every street that reached the edge ended in near-white horizon sky.
+  - A sky-tint test showed the tint does reach the sky, and that the overview haze was ordinary distance fog in a near-white fog colour.
+  - Fix: a **city beyond the map** in one merged mesh with no collisions: a ground skirt, about 420 suburb buildings with hipped roofs on Medium (220 on Low, 560 on High; about 11.8k triangles on Medium), parish-church spires, the Danube tower to the north-east, and the Wienerwald hills to the north-west.
+  - Air: Madrid-like fog distance (summer 140–900 m), with a bluer fog tint, so the suburbs fade blue-grey.
+- **Lighting:**
+  - Green cast-iron lamp posts with two lanterns on the kerb of every outer block: 53 posts in 8 neighbourhoods; Landstraße has no regular blocks yet. Map-edge blocks use the inward kerb. Posts skip spots next to existing objects, and decorations are kept out of the gap between post and façade.
+  - At night, warm additive light pools appear on the pavement under every post and hung lamp. They cost one draw call per neighbourhood and fade in with the night factor.
+- **Tests:** `suite_vienna` adds "neighbourhood looks + clear air":
+  - roof mix, friezes and inscriptions built
+  - lamp posts in every outer neighbourhood
+  - the sidewalk passes every post (walk between post and façade)
+  - the city beyond the map built
+  - summer fog ≥ 800 m
+  - 6 neighbourhood screenshots, an evening street screenshot and a held overview
+
+  **Full run: 76/76.**
+- **Real-GPU FPS (ON BATTERY, A/B/A, Medium):** 7f ran 50.2 / 52.0 / 59.6 / 60.0 / 60.1 / 60.1 / 50.8, then 38.4 / 36.0 / 60.0 / 60.1 / 50.8 / 59.0 / 60.1. The 7e commit in between ran 31.4 / 29.5 / 46.0 / 49.3 / 45.7 / 42.0 / 46.5. Views in order: Stephansplatz, Kärntner Straße, Ringstraße, café street, Prater, Karlsplatz, Naschmarkt.
+  - Draw calls and triangles are within ±10% of 7e.
+  - **No regression. No speed-up is claimed:** battery noise between identical runs is larger than the difference.

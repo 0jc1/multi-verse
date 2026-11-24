@@ -90,6 +90,12 @@
   - zebra crossings at the tram stops
   - no clutter on pedestrian streets, lanes or gateways
 
+- **Neighbourhood looks, lighting, haze (7f):**
+  - per-district palettes and roofs: Biedermeier gables, Gemeindebau flat roofs with inscriptions, Jugendstil friezes
+  - lamp posts in 8 outer neighbourhoods, plus night light pools
+  - a city beyond the map (suburbs, spires, Danube tower, Wienerwald) and Madrid-like fog, replacing the white empty horizon
+  - suite 76/76
+
 ### Chiang Mai
 
 - **Street layout, verified in the game:** Giant Hostel and Big Blues face each other across the road; CHAT is 64 m from the hostel, and Pineapple Express is 147 m.
@@ -102,6 +108,7 @@
 
 ## Measured but not proven
 
+- **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.
 - **Vienna 7e FPS:** measured on battery only (A/B/A). It is within noise of 7d, with about 40 more draw calls on Kärntner Straße. It still needs a plugged-in re-measure.
 - **FPS gain in Pai after the optimisation:** draw calls and triangles dropped. FPS stayed within the laptop's thermal drift, which was up to 17 FPS between identical runs.
 
@@ -123,9 +130,9 @@
 - **Astro-9:** districts beyond the 12 streets, richer interiors, and more varied alien NPC behaviour.
 - **Vienna (still to do):**
   - neighbourhood identities (Naschmarkt stalls, Ringstraße palaces; Spittelberg lanes started in 7e)
-  - architecture and lighting pass across the 9 neighbourhoods; Mariahilfer Straße and Favoriten are still sparse
+  - Mariahilfer Straße and Favoriten are still sparse (few blocks); Landstraße has no regular blocks
+  - landmarks: Rathaus, Parliament, a better Hofburg statue
   - more enterable shops and a Heuriger
   - NPC daily routines
-  - fixing the white haze (fog and sky)
 - **Da Nang and Chiang Mai:** a street-detail pass.
 - **NPC routines across worlds:** customers visit shops, vendors work their stalls, nightlife busier at night.

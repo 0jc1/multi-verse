@@ -64,10 +64,10 @@ MK.build = function (ctx) {
   for (let x = -94, k = 0; x <= -24; x += 5, k++) {   /* fabric canopies strung across the street, sagging in the middle */
     const col = CLOTH[k % CLOTH.length], y0 = 6.2, sag = .9;
     for (const [z0, z1] of [[84.5, 94], [94, 103.5]]) { const zm = (z0 + z1) / 2, len = z1 - z0, tilt = (z0 < 94 ? 1 : -1) * Math.atan2(sag, len); cloth.push([BG.box, col, M(x, y0 - sag / 2, zm, 3.6, .03, Math.hypot(len, sag), tilt, 0, 0)]) }
-    if (!nearDoor(x)) { solid.push([BG.cyl, 0x3a2a1a, M(x, 3.1, 84.6, .07, 6.2, .07)]); circ(x, 84.6, .12) } solid.push([BG.cyl, 0x3a2a1a, M(x, 3.1, 103.4, .07, 6.2, .07)]); circ(x, 103.4, .12);   /* no pole in a doorway */
+    if (!nearDoor(x) && !(AV.astro9streets && AV.astro9streets.soukGaps.some(d => Math.abs(x - d) < 2.4))) { solid.push([BG.cyl, 0x3a2a1a, M(x, 3.1, 84.6, .07, 6.2, .07)]); circ(x, 84.6, .12) } solid.push([BG.cyl, 0x3a2a1a, M(x, 3.1, 103.4, .07, 6.2, .07)]); circ(x, 103.4, .12);   /* no pole in a doorway */
     if (k % 2 === 0) { solid.push([BG.cyl, 0x2a2a2a, M(x, 5.1, 94, .015, .9, .015)], [BG.cone, 0xb8862a, M(x, 4.55, 94, .3, .45, .3)]); glow.push([BG.sph, 0xffc86a, M(x, 4.35, 94, .2, .2, .2), 1]) } }   /* brass lamps */
   for (let i = 0; i < 4; i++) { const x = -84 + i * 18; rugs.push([cell(3.2, 2.2, i, 4, 1), 0xffffff, M(x, .03, 99.8 + (i % 2) * .4, 1, 1, 1, -Math.PI / 2, 0, 0)]) }   /* rugs laid out in front of the south stalls */
-  for (let x = -92; x < -22; x += 1.7) { if (nearDoor(x) || r() < .3) continue; const z = 85.4 + r() * .6, kind = (r() * 3) | 0;   /* spice sacks, crates, pots between the shop doors */
+  for (let x = -92; x < -22; x += 1.7) { if (nearDoor(x) || r() < .3 || (AV.astro9streets && AV.astro9streets.soukGaps.some(d => Math.abs(x - d) < 2.6))) continue; const z = 85.4 + r() * .6, kind = (r() * 3) | 0;   /* spice sacks, crates, pots between the shop doors */
     if (kind === 0) { solid.push([BG.hem || BG.sph, [0xc8501a, 0xe8b82a, 0x8a2a1a, 0x5a7a2a][(r() * 4) | 0], M(x, .02, z, .38, .5, .38)]) }
     else if (kind === 1) { solid.push([BG.box, 0x7a5a32, M(x, .3, z, .6, .6, .6, 0, r(), 0)]); if (r() < .5) solid.push([BG.box, 0x6a4a28, M(x, .85, z, .5, .5, .5, 0, r(), 0)]) }
     else solid.push([BG.cyl, 0xa85a2a, M(x, .45, z, .28, .9, .28)], [BG.cyl, 0x8a4a20, M(x, .92, z, .18, .06, .18)]);

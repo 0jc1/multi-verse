@@ -227,7 +227,7 @@ AR.build = function (ctx) {
   { const tm = new THREE.MeshStandardMaterial({ map: terrTex(), roughness: .55, metalness: .05 }); tm.userData.lin = 1; const tg = new THREE.PlaneGeometry(14, 81); const uv = tg.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * 14 / 3.5, uv.getY(k) * 81 / 3.5);
     const tf = new THREE.Mesh(tg, tm); tf.rotation.x = -Math.PI / 2; tf.position.set(0, .022, 119 + 40.5); tf.receiveShadow = true; grp.add(tf);
     /* gallery-spot lamp posts with exhibition banners */
-    const LAMPS = [[-6.2, 136], [-6.2, 143], [-6.2, 161], [-6.2, 168.5], [-6.2, 196], [6.2, 140], [6.2, 160], [6.2, 168.5], [6.2, 196], [6.2, 118]];
+    const LAMPS = [[-6.2, 136], [-6.2, 143], [-6.2, 161], [-6.2, 168.5], [-6.2, 196], [6.2, 140], [6.2, 160], [6.2, 176], [6.2, 196], [6.2, 118]];
     LAMPS.forEach(([x, z], i) => { const s = Math.sign(x); solid.push([BG.cyl, 0x2a2a34, M(x, 2.6, z, .09, 5.2, .09)], [BG.box, 0x2a2a34, M(x - s * .5, 5.1, z, 1.1, .07, .07)], [BG.cone, 0x2a2a34, M(x - s * 1, 4.85, z, .22, .35, .22, Math.PI, 0, 0)]); glow.push([BG.sph, 0xfff4e0, M(x - s * 1, 4.62, z, .14, .06, .14)]); circ(x, z, .2);
       if (i < BAN.length) bans.push([cell(.9, 1.9, i, 8, 1), 0xffffff, M(x - s * .45, 3.6, z, 1, 1, 1, 0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0)], [cell(.9, 1.9, i, 8, 1), 0xffffff, M(x - s * .45 + .01 * s, 3.6, z, 1, 1, 1, 0, s > 0 ? Math.PI / 2 : -Math.PI / 2, 0)]) });
     /* kinetic ring sculpture (west side, leaves the middle of the avenue free) */

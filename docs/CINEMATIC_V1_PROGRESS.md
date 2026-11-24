@@ -224,3 +224,86 @@ Filled in at the end of each milestone. See `## Milestone log`.
   - the Spray Lab, Cinema 9 and Orbit Lounge doors
   - interactions, people and the tag wall
 - **Plan for the owner's "Living Megacity" brief:** `docs/ASTRO9_CITY_PLAN.md`.
+
+### Milestone 5: Astro-9 Living Megacity, the connected street network (`js/astro9_streets.js`, `js/astro9_blocks.js`)
+
+- **All 12 planned streets are built and walkable:**
+  - Kepler Street (curved road)
+  - Ring Lane
+  - Coil Street (S-curve)
+  - Terrace Steps: ramps up to a raised court at y 3
+  - Undergrid Row: a sunken, covered passage at y −3
+  - Gutter Lane and Fuse Court
+  - Greenway
+  - Sporeline Passage
+  - Souk Lane and Lantern Lane
+  - Terrace Street and Cinema Passage
+  - Hangar Road
+  - Skylift: a passage off Neon Boulevard, a 30 m switchback ramp tower and a bridge onto the Sky Market, plus a lift
+- **Street dressing:** textured asphalt, hex pavers, cobbles and tiles (world-UV, merged per material), kerbs, lane paint, zebra crossings, drains, manholes, lamps (warm and dim in the Undergrid), overhead cables in the alleys, and 22 street-name signs with an alien-glyph line.
+- **Neon Boulevard:** its building rows now open onto Skylift, Coil and Sporeline. All 4 enterable shops are kept.
+- **Older modules respect the streets:** they keep their towers off the network (`reserve()`), and the Art Avenue railings open onto Ring Lane and Cinema Passage.
+- **Buildings:** 68 fitted to the frontage. They are rotated with the street, never on a walkable surface, and never on another structure. They come from 7 architecture families:
+  - glass towers with setbacks
+  - weathered workshops with stairs and pipes
+  - balcony apartments with roof gardens
+  - living-wall biotech
+  - stacked container modules
+  - corrugated industrial sheds
+  - souk plaster with domes
+- **Façades:** textures repeat in metres. Lit windows show room interiors and glow in their own colours, and most windows stay dark.
+- **Signs:** 32 unique hand-made fascia signs in 6 lettering styles, plus window displays and posters.
+- **12 enterable businesses, each with a worker and a working interaction:**
+  - Waveform (records, with a playable synth)
+  - Kepler Tech Market
+  - Orbit Bean café on the raised court
+  - Terrace 7B (rent a room and sleep)
+  - Spin Cycle laundromat
+  - Seedbank lab
+  - Bolt Mother's robot workshop (underground)
+  - Club Undertow (underground, with DJ decks and dancers)
+  - Dumpling Hole (front door on Fuse Court, back door on Kepler: a shortcut)
+  - Curio Vault
+  - Slurp Nebula noodle bar
+  - Hover Customs garage (repaint, plus hover-bike hire)
+  - Kepler Street scooter hire
+- **Landmark and discoveries:**
+  - The Kepler Arcology, a 95 m tower with five rotated tiers, rings and sky gardens.
+  - Junk Oracle and a lantern stall in the bazaar lanes.
+  - A listening booth.
+  - A three-tailed cat that matches the LOST CAT poster in Mural Alley.
+  - Sparky, the robot dog.
+  - A delivery bot patrolling the Undergrid.
+  - A moss shrine.
+  - A terrace garden viewpoint.
+  - A Skybridge viewpoint.
+- **People:** fewer and purposeful (8 / 13 / 18 on Low / Medium / High): workers at counters, residents, DJ and dancers, plus two conversations on the street.
+- **Map:** the full map (J) shows street names along the streets and 9 new districts. Shops appear as places once visited.
+- **Streaming:** each neighbourhood's detail is hidden beyond 130–210 m and its building shells beyond 290–540 m.
+- **Tests:** new `suite_astro9_streets` 96/97, and the one failure (the Hangar Road rental rack) was fixed and re-checked 34/34. It covers:
+  - all 17 street pieces end to end
+  - 8 complete loops (A–H) plus Fuse Court
+  - no climbs over 0.6 m
+  - the ramps up to y 30 and the bridge
+  - rails between the ramp strips
+  - the sunken passage depth
+  - hover-bike clearance on all 5 roads and lanes
+  - walking into all 12 businesses to the counter
+  - old features intact
+  - map streets and districts
+  - 15 screenshots
+- **Regressions:** `astro9_neon` 37/37, `astro9_mega` 25/25, `astro9_metro` 30/30, `astro9_d2` 23/23, `astro9_art` 27/27, `astro9_market` 25/25.
+- **Performance, measured** (`suite_astro9_perf`, Medium, same viewpoints, headless software GL, so ms is only comparable run to run on this machine):
+
+| View | Before: draw calls / triangles / ms | After: draw calls / triangles / ms |
+|---|---|---|
+| Neon Boulevard | 132 / 493k / 615 | 135 / 390k / 435 |
+| Spiral Plaza | 245 / 827k / 449 | 322 / 962k / 398 |
+| Art Avenue | 236 / 827k / 452 | 307 / 960k / 422 |
+| Kepler Street | 132 / 386k / 286 | 228 / 688k / 374 |
+| Undergrid | 378 / 760k / 315 | 466 / 1062k / 371 |
+| Terraces | 107 / 359k / 311 | 181 / 467k / 328 |
+| Biotech | 99 / 341k / 240 | 150 / 448k / 258 |
+| West Homes | 97 / 239k / 240 | 121 / 265k / 235 |
+
+  Lights: 32 exist, but only the 4 nearest are on (light budget). Real-GPU FPS on the owner's laptop is still not measured.

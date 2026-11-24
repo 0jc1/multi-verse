@@ -140,7 +140,7 @@ NB.build = function (ctx) {
   for (const x of [133, 221]) for (const z of [89.0, 101.0]) { trim.push([BG.box, 0x1a1820, M(x, .02, z, 1.4, .04, 1.0)]); trim.push([BG.cyl, 0x3a2a3a, M(x, 1.2, z, .14, 2.4, .14)]); plants.push([x, z, 1.6, 2.2]); ctx.circles.push([x, z, .45]) }   /* alien trees in kerbside pits */
   /* ---------- buildings ---------- */
   const lots = []; { const W = [14, 18, 12, 16, 20, 13, 15, 17, 12, 16, 14, 19];
-    const NOBUILD = { n: [[ALLEY[0], ALLEY[1]]], s: [[130, 150], [172, 188]] };   /* alley, Club Subterra facade, Biotech path */
+    const SG = AV.astro9streets ? AV.astro9streets.neonGaps : { n: [], s: [] }, NOBUILD = { n: [[ALLEY[0], ALLEY[1]]].concat(SG.n), s: [[130, 150], [172, 188]].concat(SG.s).sort((a, b) => a[0] - b[0]) };   /* alley, Club Subterra facade, Biotech path */
     for (const side of ['n', 's']) { let x = X0 + 4, i = side === 'n' ? 0 : 5; while (x < X1 - 8) { let w = W[i++ % W.length]; if (x + w > X1 - 2) w = X1 - 2 - x;
         const hit = NOBUILD[side].find(f => x < f[1] && x + w > f[0]); if (hit) { if (hit[0] - x >= 8) w = hit[0] - x; else { x = hit[1]; continue } }
         if (w >= 8) lots.push({ side, x0: x, x1: x + w }); x += w } } }

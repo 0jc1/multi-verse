@@ -58,7 +58,7 @@
   - order a Melange, Apfelstrudel or torte
   - read the newspapers
   - a waiter and guests
-- **Verified by**  (22/22) and real-GPU FPS ().
+- **Verified by** `suite_vienna` (22/22) and real-GPU FPS (`suite_vienna_fps`).
 
 ### Chiang Mai
 

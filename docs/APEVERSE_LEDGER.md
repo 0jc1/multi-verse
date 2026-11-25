@@ -161,6 +161,15 @@
 - **Old traffic:** the looping avenue traffic is retired in Madrid.
 - **Tests:** suite_traffic 26/26.
 
+### M11 living NPCs (apeverse-2-living-worlds branch)
+
+- **Residents:** ten named Madrid residents (`js/residents.js`) with homes, workplaces and daily schedules. They walk the barrio on a grid A* plus the city pedestrian graph, and are simulated when far away.
+- **Relationships:** memory and friendship, context dialogue that notices your outfit, shop, flat and car, tips, favours and tapas invitations.
+- **Hooks:** hire Dani or Inés into your shop; recruit Kofi for your band.
+- **Reputation and panel:** reputation `{barrio, business, music}`; People panel on Z.
+- **Save:** new optional fields `npcs`, `rep`, `band`.
+- **Tests:** suite_npc 84/84 (real GPU only: headless is too slow for walking). Full regression green.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

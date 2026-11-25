@@ -187,6 +187,15 @@
 - **Artwork:** the owner's Groove Dealers poster, duplicate-checked as new.
 - **Tests:** suite_fest 38/38.
 
+### M15 Koh Tao (apeverse-2-living-worlds branch)
+
+- **World:** `js/world_koh_tao.js`: Sairee Beach, the walking lane and 5 sois, the hill-road viewpoint and Mae Haad pier with the ferry (travel map).
+- **Enterable business:** Blue Turtle Divers.
+- **Activity:** snorkelling (mask, underwater view, a 7-species reef log, Reef Explorer).
+- **Night:** fire show, plus Sairee Fire Night on the festival calendar.
+- **Look:** a per-world post grade, because the default bloom washed the bright beach white.
+- **Tests:** suite_kohtao 42/42.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

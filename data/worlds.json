@@ -436,5 +436,24 @@
   ],
   "kind": "legacy_v08",
   "art_refs": []
+ },
+ {
+  "id": "koh_tao",
+  "name": "Koh Tao",
+  "roadmap_no": null,
+  "core_identity": "Small Thai dive island: Sairee Beach, the walking lane, a snorkel reef off the sand, granite boulders, Mae Haad pier",
+  "music_identity": "Beach-bar reggae, waves, longtail engines, geckos at night",
+  "status": "playable",
+  "landmarks": [
+   "Sairee Beach",
+   "Sairee walking lane",
+   "Blue Turtle Divers",
+   "House reef",
+   "Firefly Beach Bar (fire show)",
+   "Sairee viewpoint",
+   "Mae Haad pier"
+  ],
+  "kind": "apeverse2_destination",
+  "art_refs": []
  }
 ]

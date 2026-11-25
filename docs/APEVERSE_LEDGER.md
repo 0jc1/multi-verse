@@ -153,6 +153,14 @@
 - **Tests:** suite_biz 46/46.
 - **Measured but not proven:** FPS 43 in the shop on battery.
 
+### M7C traffic (apeverse-2-living-worlds branch)
+
+- **Network:** Madrid street-grid traffic with right-hand lanes and traffic lights at 354 junctions, drawn near you.
+- **Behaviour:** cars follow, queue, stop at red, turn, and stop for you and for pedestrians.
+- **Interaction:** traffic is solid for your car and streams around you.
+- **Old traffic:** the looping avenue traffic is retired in Madrid.
+- **Tests:** suite_traffic 26/26.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

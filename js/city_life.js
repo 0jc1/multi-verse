@@ -37,7 +37,7 @@ CY.crowd = function (ctx, opt) {
         const h = new THREE.Group(); h.add(made.root); h.position.set(w.x, w.y, w.z); h.rotation.y = w.yaw; ctx.group.add(h);
         w.h = h; w.actor = made.actor; w.body = made.root; w.si = i;
       });
-      cr.built = true; return cr;
+      cr.built = true; (ctx.crowds = ctx.crowds || []).push(cr);   /* 2.0: traffic sees pedestrians */ return cr;
     },
     setVisible(fn) { list.forEach(w => w.vis = fn(w)) }
   };
@@ -197,6 +197,7 @@ CY.traffic = function (ctx, loops, spec, opt) {
     const P = AV.P, dens = opt.density ? opt.density() : api.density();
     for (const c of cars) c.active = c.wake < dens;
     for (const c of cars) {
+      if (!c.im.visible) continue;   /* 2.0: replaced by traffic.js in this world (hidden, silent) */
       const lp = L[c.li]; if (!c.active) { c.im.setMatrixAt(c.i, ZERO); continue }
       const p = at(lp, c.s, c.two), ahead = at(lp, c.s + 3.2, c.two), dP = Math.hypot(ahead[0] - P.x, ahead[1] - P.z), stop = dP < 2.4 || (api.stopAt && api.stopAt(p[0], p[1]));
       let gap = 1e9; for (const o of cars) { if (o === c || !o.active || o.li !== c.li || (!lp.mixed && o.two !== c.two)) continue; const d = (((o.s - c.s) % lp.len) + lp.len) % lp.len - (o.len + c.len) / 2; if (d < gap) gap = d }   // bumper-to-bumper distance to the vehicle ahead

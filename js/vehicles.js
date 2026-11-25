@@ -138,7 +138,7 @@ function drive(s, dt, f, sd, run) {
   /* 2.0: the vehicle has a length - probe the front bumper (and its corners) or the rear when reversing, so a car never noses into a wall */
   const R = REACH[s.rec ? s.rec.kind : ''] || [.5, .5], W = AV.W, fv = fwd(P.yaw), rt = [-fv[1], fv[0]];
   if (W && Math.abs(s.v) > .05) { const sg = s.v > 0 ? 1 : -1, reach = (sg > 0 ? R[0] : R[1]) + Math.abs(s.v) * dt, hw = R[2] || 0;
-    for (const o of hw ? [0, -hw, hw] : [0]) { const x = P.x + fv[0] * reach * sg + rt[0] * o, z = P.z + fv[1] * reach * sg + rt[1] * o; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .12)) { if (Math.abs(s.v) > 4.5) { s.bumps = (s.bumps || 0) + 1; blip(90, .18, 'triangle', .2) } s.v = 0; s.blocked = true; break } } }
+    for (const o of hw ? [0, -hw, hw] : [0]) { const x = P.x + fv[0] * reach * sg + rt[0] * o, z = P.z + fv[1] * reach * sg + rt[1] * o; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .12) || (AV.dynBlock && AV.dynBlock(x, z, .12))) {   /* + NPC traffic cars */ if (Math.abs(s.v) > 4.5) { s.bumps = (s.bumps || 0) + 1; blip(90, .18, 'triangle', .2) } s.v = 0; s.blocked = true; break } } }
   s.want = Math.abs(s.v) * dt; return [fv[0] * s.v, fv[1] * s.v];
 }
 

@@ -1,0 +1,5 @@
+# M10: the owner's local audio library is catalogued and copied locally, never committed
+local/
+assets/music/library/
+assets/music/jungle_dub/
+assets/music/stone_ape_band/

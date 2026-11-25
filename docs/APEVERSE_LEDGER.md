@@ -170,6 +170,16 @@
 - **Save:** new optional fields `npcs`, `rep`, `band`.
 - **Tests:** suite_npc 84/84 (real GPU only: headless is too slow for walking). Full regression green.
 
+### M10 music + bands (apeverse-2-living-worlds branch)
+
+- **Catalogue:** `tools/music_catalog.mjs` catalogues the owner's local library into gitignored `local/` and restores the 16 missing playlist originals by exact name. Copied audio is gitignored and never committed.
+- **Stone Ape Band:** sets, setlist board and attendance reputation.
+- **Your band:** rehearsals, songs, booked gigs at Sala Malasaña with members on stage and a dancing crowd.
+- **DJ nights:** booked nights at four booths with pay.
+- **Panel:** gig guide and band panel.
+- **Save:** `S.band`, `S.djNights`, `S.sab`.
+- **Bug fixed:** a save-key collision with the DJ mixer (`S.dj`).
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

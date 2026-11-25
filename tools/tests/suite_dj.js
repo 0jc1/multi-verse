@@ -22,6 +22,7 @@ window.APE_T = (() => {
   step('tempo, sync, EQ, filter, hot cues, loops, FX', async c => {
     const a = DJ().decks.a, b = DJ().decks.b;
     slide($('djRa'), 1.04); c('tempo fader: +4 %', Math.abs(a.el.playbackRate - 1.04) < .001 && Math.abs(DJ().ebpm('a') - DJ().bpm('a') * 1.04) < .01, DJ().ebpm('a').toFixed(2));
+    { const ra = DJ().bpm('a') * a.el.playbackRate, rb = DJ().bpm('b'); if (![ra, ra * 2, ra / 2].some(x => Math.abs(x / rb - 1) <= .16)) { /* 2.0: the library has more tracks; sync is only defined within ±16 % - give deck B deck A's track */ const i = DJ().tracks.findIndex(x => x.file === a.track.file); DJ().load('b', i); await until(() => DJ().peaks[a.track.file] && DJ().decks.b.track && DJ().decks.b.track.file === a.track.file, 60000); DJ().play('b', true); await until(() => b.el.currentTime > .3, 20000) } }
     $('djSyb').click(); const eb = DJ().ebpm('b'), ea = DJ().ebpm('a'); c('SYNC: deck B matches deck A’s tempo (or half / double time)', [ea, ea * 2, ea / 2].some(t => Math.abs(eb - t) < .05), DJ().ebpm('a').toFixed(2) + ' vs ' + DJ().ebpm('b').toFixed(2));
     let dp = Math.abs(DJ().phase('a') - DJ().phase('b')); dp = Math.min(dp, 1 - dp); c('SYNC snaps the beat phase', dp < .08, dp.toFixed(3));
     c('key lock on (pitch kept)', b.el.preservesPitch !== false);

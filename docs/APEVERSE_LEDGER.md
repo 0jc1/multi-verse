@@ -144,6 +144,15 @@
 - **Tests:** suite_home 61/61.
 - **Fixed alongside:** the garage hotkey G was shadowed by graphics quality, so the garage moved to Y.
 
+### M9 player business (apeverse-2-living-worlds branch)
+
+- **Premises:** lease or buy a commercial unit in Malasaña and turn it into your own clothing shop.
+- **Running it:** name and sign; products from the catalogue or your design studio, bought wholesale and priced by you; staff; opening hours.
+- **Customers:** hourly price-sensitive demand, plus visible customers who buy at the counter.
+- **Books and extras:** a ledger, upgrades, and a bounded 24 h catch-up.
+- **Tests:** suite_biz 46/46.
+- **Measured but not proven:** FPS 43 in the shop on battery.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

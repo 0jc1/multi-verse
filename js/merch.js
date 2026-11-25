@@ -135,9 +135,10 @@ function shirtParts(parts, prints, x, y, z, ry, col, hood, did) { const K = AV.k
   if (hood) parts.push([B.box, col, L(0, -.06, -.05, .3, .18, .08)]);
   (prints[did] = prints[did] || []).push([PL, L(0, -.36, .03, .34, .34, 1)]) }
 
-function buildShop(W, sh) {
-  const WD = 11, DP = 8.6, H = 4.2, site = findSite(W, sh, WD, DP); MC.shops[W.id] = { ok: !!site, brand: sh.brand };
-  if (!site) { console.warn('merch: no site for', sh.brand, 'in', W.id); return }
+function buildShop(W, sh, opt) {
+  opt = opt || {}; const key = opt.key || W.id, c0 = W.ctx.cols.length, ci0 = W.ctx.circles.length, t0 = W.T.length;   /* M9: player shops use their own key, a fixed site, their own designs */
+  const WD = 11, DP = 8.6, H = 4.2, site = opt.site || findSite(W, sh, WD, DP); MC.shops[key] = { ok: !!site, brand: sh.brand };
+  if (!site) { console.warn('merch: no site for', sh.brand, 'in', W.id); return null }
   const K = AV.kit, M = K.M, B = K.BG, ctx = W.ctx, { x: cx, z: cz, ry, y: y0 } = site, c = Math.cos(ry), s = Math.sin(ry), w2 = (lx, lz) => [cx + lx * c + lz * s, cz - lx * s + lz * c];
   const L = (lx, ly, lz, sx, sy, sz, rx, ryy, rz) => { const [x, z] = w2(lx, lz); return M(x, y0 + ly, z, sx, sy, sz, rx || 0, ry + (ryy || 0), rz || 0) };
   const grp = new THREE.Group(); grp.name = 'merch_' + sh.key; const det = new THREE.Group(); grp.add(det); ctx.group.add(grp);
@@ -152,10 +153,10 @@ function buildShop(W, sh) {
   solid.push([B.box, sh.awn, L(0, 3.0, hd + .75, WD - .4, .08, 1.5)], [B.box, sh.trim, L(0, 2.9, hd + 1.48, WD - .4, .2, .04)]);   /* flat awning with a valance */
   /* the sign */
   { const sg = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.3), new THREE.MeshStandardMaterial({ map: signTex(sh.sign), emissive: 0xffffff, roughness: .5 })); sg.material.emissiveMap = sg.material.map; sg.material.emissiveIntensity = .35; sg.material.userData.lin = 1;
-    const [x, z] = w2(0, hd + .2); sg.position.set(x, y0 + 3.55, z); sg.rotation.y = ry; grp.add(sg); MC.shops[W.id].sign = sg.material }
+    const [x, z] = w2(0, hd + .2); sg.position.set(x, y0 + 3.55, z); sg.rotation.y = ry; grp.add(sg); MC.shops[key].sign = sg.material }
   /* inside: ceiling light strips (emissive), cashier counter front-left, rails left + right, table centre, posters on the back wall, fitting room back-right */
   for (const lx of [-3, 0, 3]) glow.push([B.box, 0xfff2d8, L(lx, H - .06, -.5, .2, .04, DP - 2.5)]);
-  const ds = designsOf(sh), D = k => ds[k % ds.length].id;
+  const ds = sh.designs && sh.designs.length ? sh.designs : designsOf(sh), D = k => ds[k % ds.length].id;
   /* cashier */
   solid.push([B.box, sh.trim, L(-hw + 1.6, .55, hd - 2.1, 2.2, 1.1, .7)], [B.box, 0xf0ece4, L(-hw + 1.6, 1.12, hd - 2.1, 2.3, .05, .8)], [B.box, 0x2a2a2e, L(-hw + 1.2, 1.28, hd - 2.2, .4, .25, .3)]); wallBox(-hw + .5, -hw + 2.7, hd - 2.45, hd - 1.75);
   /* rails: tees on the left wall, hoodies on the right */
@@ -179,31 +180,38 @@ function buildShop(W, sh) {
   for (const id in prints) { const m = new THREE.MeshStandardMaterial({ map: MC.printTex(id), transparent: true, alphaTest: .08, roughness: .85, polygonOffset: true, polygonOffsetFactor: -2 }); det.add(new THREE.Mesh(K.merge(prints[id].map(([g, mm]) => [g, 0xffffff, mm])), m)) }
   for (const id in art) { const m = new THREE.MeshStandardMaterial({ map: MC.artTex(id), roughness: .6 }); m.userData.lin = 1; det.add(new THREE.Mesh(K.merge(art[id].map(([g, mm]) => [g, 0xffffff, mm])), m)) }
   /* interior light so it reads warm at night without a shadow-casting light */
-  { const pl = new THREE.PointLight(0xffe2c0, 0, 9, 2); const [x, z] = w2(0, -.5); pl.position.set(x, y0 + 3.4, z); grp.add(pl); ctx.upd.push(() => { const nk = AV.nightK || 0; pl.intensity = .25 + nk * .9; if (MC.shops[W.id].sign) MC.shops[W.id].sign.emissiveIntensity = .35 + nk * .65 }) }
+  { const pl = new THREE.PointLight(0xffe2c0, 0, 9, 2); const [x, z] = w2(0, -.5); pl.position.set(x, y0 + 3.4, z); grp.add(pl); ctx.upd.push(() => { const nk = AV.nightK || 0; pl.intensity = .25 + nk * .9; if (MC.shops[key] && MC.shops[key].sign) MC.shops[key].sign.emissiveIntensity = .35 + nk * .65 }) }
   /* people: staff behind the counter, a mannequin by the window in the house design, the fitting-room reflection */
   const people = []; const actor = (look, lx, lz, yaw, name) => { try { const A = AV.chars.softActor('human', 4242 + people.length * 17, { lod: true, shells: 0, shadow: false, look, name }); const h = new THREE.Group(); const [x, z] = w2(lx, lz); h.position.set(x, y0 + .08, z); h.rotation.y = ry + yaw; h.add(A.root); grp.add(h); const p = { h, A: A.actor, name }; people.push(p); return p } catch (e) { console.warn('merch actor', e); return null } };
   const staff = actor({ sp: sh.key === 'solterra' ? 'human_b' : sh.key === 'moonmelt' ? 'human_b' : 'human_a', height: 1.68, skin: [0xc68642, 0xe0ac69, 0xd8a47a][Object.keys(SHOPS).indexOf(W.id) % 3], hair: 0x2a1a10, style: sh.key === 'moonmelt' ? 'long' : 'bun', shirt: { col: FABRIC.cream[0], print: sh.hero }, pants: { col: 0x2a2a34, kind: 'denim' } }, -hw + 1.6, hd - 2.85, 0, sh.staff[0]);
   if (staff) circ.push([...w2(-hw + 1.6, hd - 2.85), .4]);
   const mq = actor({ sp: 'human_a', height: 1.78, skin: 0xd8d4ce, hair: 0xd8d4ce, style: 'short', shirt: { col: FABRIC.black[0], print: ds[1 % ds.length].id, o: GAR.hoodie.o }, pants: { col: 0x3a3a40, kind: 'twill' } }, 2.7, hd - .9, Math.PI * .1, 'mannequin');   /* behind the right display window, facing the street */
   if (mq) circ.push([...w2(2.7, hd - .9), .45]);
-  const S = MC.shops[W.id]; Object.assign(S, { site, grp, det, people, staff, w2, y0, ry, fitting: w2(fx, fz + .3), mirrorAt: w2(fx, mz - .55), counter: w2(-hw + 1.6, hd - 1.35), door: w2(0, hd + 1.2), inside: w2(0, hd - .9), rails: [w2(-hw + 1.4, -1.8), w2(hw - 1.4, .8)], sh });
+  const S = MC.shops[key]; Object.assign(S, { key, site, grp, det, people, staff, w2, y0, ry, fitting: w2(fx, fz + .3), mirrorAt: w2(fx, mz - .55), counter: w2(-hw + 1.6, hd - 1.35), door: w2(0, hd + 1.2), inside: w2(0, hd - .9), rails: [w2(-hw + 1.4, -1.8), w2(hw - 1.4, .8)], sh });
   S.makeMirror = () => { if (S.double) { const old = S.double; grp.remove(old.h); const i = people.indexOf(old); if (i >= 0) people.splice(i, 1); S.double = null } const w = S.tryOn || MC.wear() || { design: sh.hero, garment: 'tee', color: 'cream' };
     const p = actor({ sp: 'human_a', height: 1.8, skin: 0xdca47c, hair: 0x4a2c18, style: 'messy', beard: true, glasses: true, shirt: { col: FABRIC[w.color || 'cream'][0], print: w.design, o: GAR[w.garment].o }, pants: { fab: 'elephant', shorts: true }, foot: 'flip', shoe: 0x4a5a2a }, fx, mz - .62, 0, 'Ztonedape (mirror)');
     if (p) { S.double = p; S.doubleWear = Object.assign({}, w) } };
   S.makeMirror();
+  if (staff && sh.noStaff) { staff.hidden = true; staff.h.visible = false }   /* a player shop without hired staff */
   /* interactions */
-  const T = (x, z, r, label, fn) => W.T.push({ x, z, r, label, fn });
+  const T = (x, z, r, label, fn) => W.T.push({ x, z, r, label, fn }); if (opt.interact !== false) {
   T(...S.counter, 1.6, () => tr('🛍️ ' + sh.brand + ': browse + buy (' + sh.staff[0] + ')', '🛍️ ' + sh.brand + ': mirar y comprar (' + sh.staff[0] + ')'), () => MC.open(W.id));
   S.rails.forEach((r, i) => T(...r, 1.4, () => tr(i ? '🧥 Hoodie rail' : '👕 T-shirt rail', i ? '🧥 Perchero de sudaderas' : '👕 Perchero de camisetas'), () => MC.open(W.id, { garment: i ? 'hoodie' : 'tee' })));
   T(...S.fitting, 1.1, () => tr('🪞 Fitting room: try something on', '🪞 Probador: pruébate algo'), () => MC.open(W.id, { tryOn: true }));
-  (W.places = W.places || []).push({ id: 'merch_' + sh.key, name: [sh.brand + ' store', 'Tienda ' + sh.brand], x: S.door[0], z: S.door[1], yaw: ry + Math.PI });
+  (W.places = W.places || []).push({ id: 'merch_' + sh.key, name: [sh.brand + ' store', 'Tienda ' + sh.brand], x: S.door[0], z: S.door[1], yaw: ry + Math.PI }) }
   /* animate the people; hide the interior detail far away */
-  ctx.upd.push(dt => { const P = AV.P, d = Math.hypot(P.x - cx, P.z - cz); det.visible = d < 70; for (const p of people) { p.h.visible = d < 60; if (d < 40 && p.A) { if (p.A.play) p.A.play('Idle'); if (p !== mq && p.A.mixer) p.A.mixer.update(dt) } } });
+  ctx.upd.push(dt => { const P = AV.P, d = Math.hypot(P.x - cx, P.z - cz); det.visible = d < 70; if (S.gone) return; for (const p of people) { p.h.visible = d < 60 && !p.hidden; if (d < 40 && p.A) { if (p.A.play) p.A.play('Idle'); if (p !== mq && p.A.mixer) p.A.mixer.update(dt) } } });
   if (mq && mq.A && mq.A.mixer) { mq.A.play && mq.A.play('Idle'); mq.A.mixer.update(.01) }   /* the mannequin holds still */
   const nd = W.noDecor; W.noDecor = (x, z) => { const lx = (x - cx) * c - (z - cz) * s, lz = (x - cx) * s + (z - cz) * c; return (Math.abs(lx) < hw + 1.2 && lz > -hd - 1.2 && lz < hd + 4) || !!(nd && nd(x, z)) };   /* nothing scattered in or at the store */
-  ctx.leave.push(() => { for (const p of people) if (p.A && p.A.mixer) p.A.mixer.stopAllAction(); delete MC.shops[W.id] });
-  MC.stats['shop_' + W.id] = { designs: ds.length, x: +cx.toFixed(1), z: +cz.toFixed(1), anchor: site.anchor, backed: site.backed, siteMs: site.ms };
+  ctx.leave.push(() => { for (const p of people) if (p.A && p.A.mixer) p.A.mixer.stopAllAction(); delete MC.shops[key] });
+  const myCols = W.ctx.cols.slice(c0), myCirc = W.ctx.circles.slice(ci0), myT = W.T.slice(t0);
+  S.dispose = () => { S.gone = true; grp.parent && grp.parent.remove(grp); for (const q of myCols) { const i = W.ctx.cols.indexOf(q); if (i >= 0) W.ctx.cols.splice(i, 1) } for (const q of myCirc) { const i = W.ctx.circles.indexOf(q); if (i >= 0) W.ctx.circles.splice(i, 1) } for (const t of myT) { const i = W.T.indexOf(t); if (i >= 0) W.T.splice(i, 1) } delete MC.shops[key] };   /* rebuild after a rename / repaint */
+  MC.stats['shop_' + key] = { designs: ds.length, x: +cx.toFixed(1), z: +cz.toFixed(1), anchor: site.anchor, backed: site.backed, siteMs: site.ms };
+  return S;
 }
+MC.buildShop = buildShop; MC.findSite = findSite; MC.signTex = signTex;
+/* M9: player-made designs join the texture + wardrobe system (not the brand catalogue) */
+MC.custom = []; MC.addDesign = d => { if (byId[d.id]) Object.assign(byId[d.id], d); else { byId[d.id] = d; MC.custom.push(d) } delete TEX[d.id]; delete PTEX[d.id]; if (AV.ITEMS) for (const g in GAR) { const id = MC.itemId(d.id, g); AV.ITEMS[id] = { n: [d.brand + ' · ' + d.name[0] + ' ' + GAR[g].n[0].toLowerCase(), d.brand + ' · ' + d.name[1] + ' (' + GAR[g].n[1].toLowerCase() + ')'], cat: 'clothing', ic: GAR[g].ic, use: 'wear', keep: true, model: 'shirt', col: 0xf2ead8, price: 0, say: ['You put on your own design.', 'Te pones tu propio diseño.'], merch: { design: d.id, garment: g, brand: d.brand }, onUse: () => { MC.equip(d.id, g); if (AV.bag && AV.bag.equip) AV.bag.equip(null) } } } return d };
 MC.refreshMirrors = () => { for (const k in MC.shops) { const S = MC.shops[k]; if (S && S.makeMirror) S.makeMirror() } };
 const prevEnter = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (prevEnter) prevEnter(W); register(); const sh = SHOPS[W && W.id]; if (sh && W.ctx && !MC.shops[W.id]) { try { buildShop(W, sh) } catch (e) { console.warn('merch shop failed', e); MC.shops[W.id] = { ok: false, err: String(e) } } } };
 

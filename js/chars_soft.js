@@ -60,6 +60,7 @@ function shirtCfg(sh, K) {
   else Object.assign(o, { cols: sh.cols || [sh.col, sh.col, sh.col, sh.col], alb: PBR.tex('furVar'), albS: 6, albMask: [.25, .25, .25, .25] });
   if (sh.fab && sh.cols) o.cols = sh.cols, o.albMask = sh.albMask || [1, 0, 0, 1];   // printed shirt under a plain vest
   if (sh.decal) o.decal = { tex: DECAL[sh.decal](), rect: [0, chestY + .02 * s, .24 * s, .24 * s], side: 1 };
+  if (sh.print && AV.merch && AV.merch.printTex) o.decal = { tex: AV.merch.printTex(sh.print), rect: [0, chestY - .035 * s, .3 * s, .3 * s], side: 1 };   /* M6: a clothing-store design printed on the chest */
   return o;
 }
 function pantsCfg(p) {
@@ -89,7 +90,7 @@ function look(o) {
   const hs = STYLE[o.style || 'short'], shoe = hexN(o.shoe == null ? 0x2a2a2c : o.shoe), flip = o.foot === 'flip';
   const L = { kind: 'human', human: true, sp, skin, eye: hexN(o.eye || 0x4a2a10), shells: 0, shadow: o.shadow,
     dark: new THREE.Color(skin).multiplyScalar(.72).lerp(new THREE.Color(0xa04a4a), .25).getHex(), nail: new THREE.Color(skin).lerp(new THREE.Color(0xffe8e0), .45).getHex(),
-    shirt: { o: Object.assign({ loose: sh.loose || 1.08, sleeve: sh.sleeveless ? .07 : .5 }, sh.o || {}), col: hexN(sh.col == null ? 0xe8e4da : sh.col), fab: sh.fab, decal: sh.decal },
+    shirt: { o: Object.assign({ loose: sh.loose || 1.08, sleeve: sh.sleeveless ? .07 : .5 }, sh.o || {}), col: hexN(sh.col == null ? 0xe8e4da : sh.col), fab: sh.fab, decal: sh.decal, print: sh.print },
     pants: { o: Object.assign({ loose: pt.loose || (pt.shorts ? 1.14 : 1.06) }, pt.shorts ? { shorts: true } : {}), col: hexN(pt.col == null ? 0x3a3a52 : pt.col), kind: pt.kind || 'twill', fab: pt.fab },
     shoes: { o: flip ? { flip: true } : o.boots ? { high: true } : {}, cols: flip ? [shoe, 0x2a2622, shoe, new THREE.Color(shoe).multiplyScalar(.7).getHex()] : o.boots ? [shoe, new THREE.Color(shoe).multiplyScalar(.55).getHex(), new THREE.Color(shoe).multiplyScalar(.8).getHex(), shoe] : [shoe, 0xf0ece4, 0xe8e4da, new THREE.Color(shoe).multiplyScalar(.75).getHex()] },
     hat: hs ? { style: hs, cols: hs === 'cap' ? [hexN(o.capCol || 0x2a6a3a), hexN(o.capCol || 0x2a6a3a)] : [hair, hair] } : null,
@@ -257,7 +258,7 @@ function randomHuman(seed, o) {
   const sp = r() < .5 ? 'human_a' : 'human_b', shorts = r() < .45, flip = shorts && r() < .5, fabbed = r() < .22;
   return look({ sp, height: (sp === 'human_a' ? 1.68 : 1.57) + r() * .16, skin: pick(HUM.skin), hair: pick(HUM.hair), style: pick(HUM.styles), capCol: pick(HUM.shirt), eye: pick([0x4a2a10, 0x2a1a0a, 0x3a6a8a, 0x4a6a3a]),
     beard: sp === 'human_a' && r() < .22, glasses: r() < .2,
-    shirt: fabbed ? { fab: pick(HUM.fabs), albS: 2.2 } : { col: pick(HUM.shirt) }, pants: (p => ({ col: p[0], kind: p[1], shorts }))(pick(HUM.pants)),
+    shirt: fabbed ? { fab: pick(HUM.fabs), albS: 2.2 } : ((pr => pr ? { col: pr.col, print: pr.id, o: pr.o } : { col: pick(HUM.shirt) })(AV.merch && AV.merch.npcPrint ? AV.merch.npcPrint(seed) : null)),   /* M6: a minority wear store designs (own random stream: every other look is unchanged) */ pants: (p => ({ col: p[0], kind: p[1], shorts }))(pick(HUM.pants)),
     foot: flip ? 'flip' : 'sneaker', shoe: pick(HUM.shoe), lod: o.lod, shadow: o.shadow });
 }
 const APE = { furs: [0x3a2a20, 0x5a3a22, 0x2a2a2a, 0x7a4a2a, 0xc8682a, 0x4a3a30], skins: [0xc79a6e, 0x8a6650, 0xb0846a, 0x6a4a3a], shirt: [0xff4ad2, 0xffd84a, 0x3ad8ff, 0x7aff8a, 0xff8a3a, 0xe83a30, 0xffffff, 0x2a2a3a, 0x8a3ab8, 0x2a6ad8] };
@@ -265,7 +266,7 @@ const APE = { furs: [0x3a2a20, 0x5a3a22, 0x2a2a2a, 0x7a4a2a, 0xc8682a, 0x4a3a30]
 function randomApe(seed, o) {
   const r = rng((seed | 0) * 2246822519 + 3266489917), pick = a => a[Math.floor(r() * a.length) % a.length], skin = pick(APE.skins), hat = r() < .4 ? pick(APE.shirt) : null;
   return { kind: 'npc', sp: 'chimp', ov: o.lod ? { s: 1.0, h: o.lod === 'crowd' ? .022 : .016 } : { s: 1.0 }, fur: pick(APE.furs), skin, dark: new THREE.Color(skin).multiplyScalar(.45).getHex(), nail: 0xd8b090, tip: 0xffffff, eye: 0x6a3a14, strandF: 250, shells: o.shells == null ? 12 : o.shells, shadow: o.shadow,
-    shirt: { o: { loose: 1.04, sleeve: .55 }, col: pick(APE.shirt) }, pants: { o: { loose: 1.1 }, col: pick([0x3a3a52, 0x2a2a2a, 0x5a3a2a, 0x3a5a3a]), kind: 'twill' }, shoes: { o: {}, cols: [pick([0x2a2a2c, 0xe8e4da, 0xd84a3a]), 0xe8e4da, 0x2a2a2c, 0x5a5a62] },
+    shirt: (pr => pr ? { o: { loose: 1.04, sleeve: .55 }, col: pr.col, print: pr.id } : { o: { loose: 1.04, sleeve: .55 }, col: pick(APE.shirt) })(AV.merch && AV.merch.npcPrint ? AV.merch.npcPrint(seed * 3 + 11) : null), pants: { o: { loose: 1.1 }, col: pick([0x3a3a52, 0x2a2a2a, 0x5a3a2a, 0x3a5a3a]), kind: 'twill' }, shoes: { o: {}, cols: [pick([0x2a2a2c, 0xe8e4da, 0xd84a3a]), 0xe8e4da, 0x2a2a2c, 0x5a5a62] },
     hat: hat != null ? { style: 'kufi', cols: [hat, hat] } : null, size: .88 + r() * .16 };
 }
 const NAMES = { human: ['Backpacker Bea', 'Lars', 'Mai', 'Tomás', 'Aiko', 'Jules', 'Priya', 'Somchai', 'Noi', 'Ken', 'Lola', 'Finn'], ape: ['Bongo', 'Kofi', 'Mambo', 'Rasta Rumble', 'Coco', 'Big Banana', 'Dubwise', 'Selector Simba', 'Irie Ike'] };
@@ -275,7 +276,9 @@ C.softActor = function (kind, seed, opt) {
   opt = opt || {};
   let st;
   if (kind === 'ape') { const L = randomApe(seed, opt); st = SO.build(L); st.npc = true; st.g.userData.kind = undefined; st.g.scale.setScalar(L.size) }
-  else st = buildHuman(opt.look ? look(Object.assign({ lod: opt.lod, shadow: opt.shadow }, typeof opt.look === 'function' ? opt.look(seed) : opt.look)) : randomHuman(seed, opt), { puppet: false });
+  else { let lo = opt.look ? (typeof opt.look === 'function' ? opt.look(seed) : opt.look) : null;
+    if (lo && (typeof opt.look === 'function' || opt.crowd) && AV.merch && AV.merch.npcPrint) { const sh = lo.shirt || {}, so = sh.o || {}; if (!sh.fab && !sh.decal && !sh.print && !sh.sleeveless && !so.jacket && !so.robe && !so.open) { const pr = AV.merch.npcPrint(seed); if (pr) lo = Object.assign({}, lo, { shirt: Object.assign({}, sh, { col: pr.col, print: pr.id, o: pr.o || sh.o }) }) } }   /* M6: procedural crowds too (explicit named looks are never changed) */
+    st = buildHuman(lo ? look(Object.assign({ lod: opt.lod, shadow: opt.shadow }, lo)) : randomHuman(seed, opt), { puppet: false }) }
   if (opt.dress) opt.dress(st);   // chars_regional.js: hats, props, uniform materials
   const g = st.g, ctrl = C.brain(g, { external: true, beat: opt.beat || SO.defBeat }), R = st.R, I = st.I;
   const clip = d => ({ timeScale: 1, time: 0, getEffectiveWeight: () => 1, getClip: () => ({ duration: d }), reset() { return this }, play() { return this }, stop() { return this } });

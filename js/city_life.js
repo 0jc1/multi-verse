@@ -33,7 +33,7 @@ CY.crowd = function (ctx, opt) {
         const regional = C.regional && roleFor[w.v] ? C.regional.actor(roleFor[w.v], w.seed) : null;
         const look = regional ? regional.look : { skin: w.cols.skin, hair: w.cols.hair, style: w.v === 'monk' ? 'bald' : undefined,
           shirt: { col: w.cols.shirt, o: /^(monk|nun|robe|keff|hijab)$/.test(w.v) ? { robe: .72 } : undefined }, pants: { col: w.cols.pants }, shadow: false };
-        const made = C.softActor('human', w.seed, { lod: opt.lod || 'crowd', shells: 0, shadow: false, look, dress: regional && regional.dress });
+        const made = C.softActor('human', w.seed, { lod: opt.lod || 'crowd', shells: 0, shadow: false, look, dress: regional && regional.dress, crowd: true });   /* crowd: may wear a store design (M6) */
         const h = new THREE.Group(); h.add(made.root); h.position.set(w.x, w.y, w.z); h.rotation.y = w.yaw; ctx.group.add(h);
         w.h = h; w.actor = made.actor; w.body = made.root; w.si = i;
       });

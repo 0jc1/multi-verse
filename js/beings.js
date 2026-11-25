@@ -21,7 +21,7 @@ BE.make = function (kind, seed, over, opt) {
     throw new Error('Ambient NPCs require the soft-body character pipeline');
   /* humans + apes, soft body (chars_soft.js C.softActor) */
   if (softOK && (kind === 'human' || kind === 'ape') && AV.chars.softActor) {
-    const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false, look: opt.look, dress: opt.dress, name: opt.name }); return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
+    const m = AV.chars.softActor(kind, seed, { lod: opt.lod, shells: opt.shells, shadow: false, look: opt.look, dress: opt.dress, name: opt.name, crowd: !opt.name });   /* unnamed ambient people may wear a store design (M6) */ return { root: m.root, clips: [], actor: m.actor, name: m.name, kind, S: m.S };
   }
   /* every other species (alien, robot, frog, spirit) is a soft-body alien build too: sculpted Zib / Orbo bodies with
      spring-bone belly + antennae; the species stays readable through its colour palette and suit trim */

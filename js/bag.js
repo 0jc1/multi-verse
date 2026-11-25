@@ -80,7 +80,7 @@ BAG.use = function (id) {
 };
 function finish(a) {
   const d = a.d; if (d.fx) AV.fx.add(d.fx.type, d.fx.amt);
-  if (!d.keep) BAG.remove(a.id); if (d.needs) BAG.remove(d.needs);
+  if (!d.keep) BAG.remove(a.id); if (d.needs) BAG.remove(d.needs); if (d.onUse) try { d.onUse(a.id) } catch (e) { console.warn(e) }   /* M6: clothing equips itself */
   AV.toast(d.ic + ' ' + tr(d.say[0], d.say[1])); AV.dlg && AV.dlg.event('use_' + d.cat);
   if (d.use === 'smoke' && AV.cm && AV.cm.cur && AV.W.id === 'chiang_mai') { const cr = AV.cm.cur.crew; for (const k of ['dino', 'zape']) { const n = cr[k]; if (n && Math.hypot(n.g.position.x - AV.P.x, n.g.position.z - AV.P.z) < 7) { AV.npc.bark(n, k === 'dino' ? tr('Puff puff pass, man.', 'Calada, calada y pasa, tío.') : tr('Respect the bench, respect the smoke.', 'Respeta el banco, respeta el humo.')); break } } }
 }

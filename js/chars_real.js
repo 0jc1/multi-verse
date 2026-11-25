@@ -100,6 +100,7 @@ function shirtMat(L, K) {
   else if (S.pattern === 'floral') Object.assign(o, { cols: [0xffffff, 0xffffff, 0xffffff, 0xffffff], alb: PBR.tex('floral'), albS: 1.9, albMask: [1, 1, 1, 1], albMode: 1, h: PBR.tex('twill'), hS: 9, rough: [.7, .7, .7, .7], sheen: 0x5a4a2a });
   else Object.assign(o, { cols: [S.col, S.col, S.col, S.col], alb: PBR.tex('furVar'), albS: 6, albMask: [.25, .25, .25, .25] });
   if (S.decal === 'logo') o.decal = { tex: PBR.tex('logo'), rect: [0, chestY + .045 * s, .36 * s, .36 * s], side: 1 };
+  if (S.print && AV.merch && AV.merch.printTex) o.decal = { tex: AV.merch.printTex(S.print), rect: [0, chestY - .01 * s, .32 * s, .32 * s], side: 1 };   /* M6 */
   return PBR.charMat(o);
 }
 function pantsMat(L) {

@@ -158,7 +158,7 @@ These are first-pass judgements to set priorities, not measurements.
 | M3 Vienna remaining (NPC behaviours, Rathaus/Parliament, Heuriger, sparse districts) | PARTIAL |
 | M4 Pai + Chiang Mai, Da Nang/Madrid | PLANNED |
 | M5 vehicles, traffic, eat/drink/smoke economy | PLANNED |
-| M6 merch pipeline, wardrobe, branded shops | BLOCKED on owner answers: the SOLTERRA/SOLVERA question for retail labels, and the missing pack files. In-game intake can start from the 23 Nov ZIP. |
+| M6 merch pipeline, wardrobe, branded shops | **Implemented and verified** (see `docs/MERCH.md`): 43 designs, 4 brands (APEVERSE, MOONMELT SUPPLY CO., SOLTERRA, ZtonedApe), 4 enterable stores, try-on mirror, buy/wear/save, NPC prints; `suite_merch` 92/92. SWAG blocked (no artwork on disk). |
 | M7 new real-world cities | PLANNED |
 | M8 fantasy backlog | PLANNED |
 | M9 release/QA/public deploy | PLANNED; public deploy needs owner authorisation |

@@ -114,6 +114,15 @@
 - **Save safety:** sandbox key for tests, a session backup with fallback, and no invalid writes.
 - **Calmer NPCs:** rare waving, browsing, longer pauses.
 
+### M6 clothing stores (expansion branch)
+
+- **Catalogue:** 43 designs, 4 brands (APEVERSE, MOONMELT SUPPLY CO., SOLTERRA, ZtonedApe).
+- **Stores:** 4 enterable stores (Ape Town, Pai, Madrid, Jungle Dub) with racks, mannequin, staff, and a fitting-room mirror showing Ztonedape in the try-on.
+- **Wearing:** real chest prints on garments; buy, wear and save.
+- **Townsfolk:** about 9.5% of them wear designs.
+- **Fixed:** the shared shop panel was off-screen for every shop.
+- **Open:** SWAG has no artwork; 2 SOLVERA-lettered designs are held; the sheet designs need full-resolution masters. See docs/MERCH.md.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

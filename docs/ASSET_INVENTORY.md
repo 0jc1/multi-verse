@@ -1,6 +1,8 @@
-# Asset inventory (M0, 24 Nov 2026)
+# Asset inventory (M0, 24 Nov 2026; updated M6, 25 Nov 2026)
 
-What is physically on disk as of this check. **Nothing below has been imported into the game.** No merch artwork is in the repository yet.
+> **Update (M6):** 43 clothing designs are now imported as in-game textures. See `docs/MERCH.md` for what was used, what is held and what is still needed (SWAG, SOLTERRA-lettered versions, full-resolution masters).
+
+What was physically on disk at the M0 check (24 Nov 2026). At that point nothing had been imported; M6 has since imported the clothing designs listed in `docs/MERCH.md`.
 
 ## Instruction pack for the 24 Nov master prompt
 

@@ -26,7 +26,7 @@ ML.ROLE = ROLE;
 /* ======================= Stone Ape Band: schedule + setlist ======================= */
 const SETS = [{ h: 19, len: 90, n: L('Sunset set', 'Set del atardecer') }, { h: 22, len: 90, n: L('Late set', 'Set de la noche') }];
 ML.SETS = SETS;
-ML.setNow = (t = AV.S.time) => SETS.find(s => t >= s.h * 60 && t < s.h * 60 + s.len) || null;
+ML.setNow = (t = AV.S.time) => (AV.fest && AV.fest.headNow && t === AV.S.time && AV.fest.headNow('hanging_bazaar')) ? null : SETS.find(s => t >= s.h * 60 && t < s.h * 60 + s.len) || null;
 ML.nextSet = (t = AV.S.time) => SETS.find(s => s.h * 60 > t) || SETS[0];
 ML.setlist = i => { const T = ((AV.MUSIC || {}).stone_ape_band || {}).tracks || [], half = Math.ceil(T.length / 2); return (i === 0 ? T.slice(0, half) : T.slice(half).concat(T.slice(0, 1))).map(t => t.title) };
 let sab = null;   /* { x, z, acc, key } while in Ape Town */
@@ -107,6 +107,7 @@ function bookingsTick() { const S = st(), b = S.band.booked, d = S.djNights.book
 ML.panel = function (tab) { tab = tab || 'gigs'; const S = st(), b = S.band, h = hr(), dayWord = d => d === AV.S.day ? tr('tonight', 'esta noche') : d === AV.S.day + 1 ? tr('tomorrow', 'mañana') : tr('day ', 'día ') + d;
   let x = '<b>🎸 ' + tr('Band & gigs', 'Banda y conciertos') + '</b> · ' + tr('music rep ', 'reputación musical ') + Math.round(S.rep.music) + ' · ' + b.fans + tr(' fans', ' fans') + '<div class="row"><button data-tab="gigs"' + (tab === 'gigs' ? ' disabled' : '') + '>' + tr('Gig guide', 'Agenda') + '</button><button data-tab="band"' + (tab === 'band' ? ' disabled' : '') + '>' + tr('Your band', 'Tu banda') + '</button></div>';
   if (tab === 'gigs') { const now = ML.setNow(); x += '<div class="note"><b>Stone Ape Band</b> · Ape Town, ' + tr('Lotus Stage', 'Escenario de Loto') + '<br>' + SETS.map(s => (now === s ? '🔴 ' : '') + String(s.h).padStart(2, '0') + ':00 ' + say(s.n)).join(' · ') + '</div>';
+    x += AV.fest && AV.fest.guideHtml ? AV.fest.guideHtml() : '';   /* M14 festivals */
     const K = AV.people && AV.people.R && AV.people.R.kofi; if (K) x += '<div class="note"><b>Kofi</b> · ' + K.day.filter(d => d[3] === 'busking' || d[3] === 'gig').map(d => (d[0] % 24) + ':00–' + (d[1] % 24) + ':00 ' + (d[3] === 'busking' ? 'Puerta del Sol' : 'Sala Malasaña')).join(' · ') + '</div>';
     const g = b.booked; x += '<div class="note"><b>' + tr('Your band', 'Tu banda') + '</b> · Sala Malasaña<br>' + (g && !g.done ? '🎤 ' + tr('Booked: ', 'Reservado: ') + dayWord(g.day) + ' 22:00' + (inWindow(g) ? tr(' — go to the stage and play!', ' — ¡ve al escenario y toca!') : '') : (b.members.length && b.songs.length >= 2 ? '<button data-gig>' + tr('Book a gig at Sala Malasaña', 'Reservar concierto en Sala Malasaña') + '</button>' : tr('Needs 1+ band member and 2+ songs (', 'Necesita 1+ miembro y 2+ canciones (') + b.members.length + ' · ' + b.songs.length + ')')) + '</div>';
     const d = S.djNights.booked, dOpen = d && !d.done; x += '<div class="note"><b>' + tr('DJ nights', 'Noches de DJ') + '</b> (22:00–02:00)' + (dOpen ? '<br>🎧 ' + tr('Booked: ', 'Reservado: ') + say(VEN[d.v].n) + ', ' + dayWord(d.day) : '') + '</div><div class="bgrid">';

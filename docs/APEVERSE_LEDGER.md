@@ -180,6 +180,13 @@
 - **Save:** `S.band`, `S.djNights`, `S.sab`.
 - **Bug fixed:** a save-key collision with the DJ mixer (`S.dj`).
 
+### M14 festivals, first slice (apeverse-2-living-worlds branch)
+
+- **Calendar:** weekday festival calendar (`js/festivals.js`).
+- **Hanging Bazaar:** Groove Dealers "Live at the Hanging Bazaar" in Ape Town on Saturdays. It has lantern festoons, canopies, the poster on a stage screen and two boards, a "Vinyls from the Stars" stall, a festival crowd and a headline that replaces the late set.
+- **Artwork:** the owner's Groove Dealers poster, duplicate-checked as new.
+- **Tests:** suite_fest 38/38.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

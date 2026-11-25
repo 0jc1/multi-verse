@@ -196,6 +196,14 @@
 - **Look:** a per-world post grade, because the default bloom washed the bright beach white.
 - **Tests:** suite_kohtao 42/42.
 
+### M12 consumables and effects (apeverse-2-living-worlds branch)
+
+- **Photosensitivity guard** in `effects.js`.
+- **Raw dose:** `AV.fx.raw` and `AV.fx.impaired` read the dose itself.
+- **No impaired driving.**
+- **Table service:** `js/tables.js` adds a table with a real local menu at Madrid (La Esquina), Koh Tao (Firefly) and Pai (Rainny), with responsible service.
+- **Tests:** suite_consume 47/47.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

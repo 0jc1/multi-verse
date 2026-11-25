@@ -33,7 +33,7 @@ function apply(force) {
   const blur = L.drink * 1.3 + L.smoke * .35;
   /* M12 photosensitivity guard: whatever the dose or settings, the filter can only drift slowly (no flicker, no flashes) */
   const dt0 = Math.min(.25, Math.max(0, now - (G.t || now))); G.t = now; const lim = (k, v, perS) => { if (G[k] == null) G[k] = v;   /* even a forced refresh drifts: the guard never jumps */ else G[k] += Math.max(-perS * dt0, Math.min(perS * dt0, v - G[k])); return G[k] };
-  const hueS = lim('hue', hue, 24), satS = lim('sat', sat, .25), conS = lim('con', con, .08), briS = lim('bri', bri, .05); FX.guard = { hue: hueS, sat: satS, con: conS, bri: briS };
+  const hueS = lim('hue', hue, 24), satS = lim('sat', sat, .25), conS = lim('con', con, .08), briS = lim('bri', bri, .05); FX.guard = { t: now, hue: hueS, sat: satS, con: conS, bri: briS };
   const f = 'hue-rotate(' + hueS.toFixed(1) + 'deg) saturate(' + satS.toFixed(2) + ') contrast(' + conS.toFixed(2) + ') brightness(' + briS.toFixed(2) + ')' + (blur > .05 ? ' blur(' + blur.toFixed(2) + 'px)' : '');
   if (f !== lastF) { c.style.filter = f; lastF = f }
   if (vig) { const o = Math.min(.85, L.smoke * .5 + L.psy * .6 + L.drink * .35 + L.glow * .4); vig.style.opacity = o.toFixed(3); const h = (t * 12) % 360; vig.style.background = 'radial-gradient(ellipse at 50% 50%, transparent 45%, ' + (L.psy > L.smoke ? 'hsla(' + h.toFixed(0) + ',90%,55%,.55)' : L.glow > L.smoke ? 'rgba(90,255,160,.4)' : L.drink > L.smoke ? 'rgba(60,40,30,.5)' : 'rgba(255,160,90,.45)') + ' 100%)' }

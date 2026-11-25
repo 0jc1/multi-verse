@@ -126,13 +126,23 @@
 ### M7 driving (apeverse-2-living-worlds branch)
 
 - **Madrid dealer:** buy and own a scooter (350) or a car (1200).
-- **Garage:** locate, valet, repaint, sell.
+- **Garage (Y):** locate, valet, repaint, sell.
 - **Camera and lights:** chase camera (C), headlights, brake lights.
 - **Collision:** respects vehicle length (the car nose no longer enters walls).
 - **GPS:** guidance bar on the street graph.
 - **Persistence:** across saves, days and worlds.
 - **Tests:** suite_drive 39/39; suite_vehicles 52/52.
 - **Not done:** traffic lights, pedestrian-aware NPC traffic, damage. See docs/DRIVING.md.
+
+### M8 housing (apeverse-2-living-worlds branch)
+
+- **The flat:** Piso 2B in Pinar, rent (140 for 7 days) or buy (3000), with an enterable flat.
+- **Furnishing:** a 19-piece furniture shop, gaze placement (fit rules), and move / rotate / store.
+- **Customising:** 8 wall colours and 4 floors.
+- **Using it:** sleep and respawn, a wardrobe (wears M6 clothes), and a record player that only offers records whose files exist and confirms real playback.
+- **Persistence:** everything saved; furniture is kept when rent expires.
+- **Tests:** suite_home 61/61.
+- **Fixed alongside:** the garage hotkey G was shadowed by graphics quality, so the garage moved to Y.
 
 ## Measured but not proven
 

@@ -15,7 +15,7 @@ The purchase is refused if you are short of credits.
 
 **Own it.** Owned vehicles never expire; rentals still end at midnight. They stay parked exactly where you get off, are saved with the game (`AV.S.veh.list`, `owned: true`), and survive reloads, world travel and the passing of days.
 
-**Garage** (G, or the dealer counter) lists every vehicle you own in every world. For each one you can:
+**Garage** (Y, or the dealer counter; G is the existing graphics-quality key) lists every vehicle you own in every world. For each one you can:
 - **Locate** it: sets a GPS waypoint.
 - **Bring it here:** valet, 15 credits.
 - **Repaint** it: 40 credits, cycles through 10 colours.

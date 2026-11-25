@@ -2,7 +2,7 @@
    Madrid first, as the master plan asks: one polished car and one polished scooter you can OWN.
      - Dealer "Autos y Motos Pinar" in your barrio: buy the scooter (350) or the car (1200) with credits; it is parked at the lot.
      - Owned vehicles never expire (rentals still end at midnight) and are saved with the game (AV.S.veh.list, owned: true).
-     - Garage panel (G, or the dealer counter): every vehicle you own, in every world - locate it (GPS waypoint on the
+     - Garage panel (Y, or the dealer counter): every vehicle you own, in every world - locate it (GPS waypoint on the
        street network), bring it to you (valet, 15), repaint it (40), sell it back (half price).
      - Chase camera: C toggles first person / third person behind the vehicle (pulled in so it never ends inside a wall);
        scooters and bikes show the rider in third person. Phone: the camera button while riding.
@@ -58,7 +58,7 @@ G.buy = function (wid, kind, col) { const dl = G.dealers[wid], W = AV.W; if (!dl
   let [x, z] = dl.bay; if (!AV.isFree(W, x, z, kind === 'car' ? 1.6 : .8)) { const sp = AV.safeSpot(W, x, z); x = sp[0]; z = sp[1] }
   const rec = VEH.rent(kind, x, z, VEH.openYaw(W, x, z, dl.lot.ry + Math.PI), { price: 0, col: col != null ? col : it.cols[0], ride: false, stand: 'owned' });
   rec.owned = true; rec.until = OWN_UNTIL; rec.model = it.model; rec.bought = AV.S.day; AV.save();
-  AV.toast('🔑 ' + tr('It is yours: ', 'Es tuyo: ') + say(it.model) + tr('. Parked at the lot. G = your garage.', '. Aparcado en el concesionario. G = tu garaje.')); G.stats.bought = (G.stats.bought || 0) + 1; return rec };
+  AV.toast('🔑 ' + tr('It is yours: ', 'Es tuyo: ') + say(it.model) + tr('. Parked at the lot. Y = your garage.', '. Aparcado en el concesionario. Y = tu garaje.')); G.stats.bought = (G.stats.bought || 0) + 1; return rec };
 G.paint = function (rec) { if (!rec || !rec.owned) return false; const i = PALETTE.indexOf(rec.col), next = PALETTE[(i + 1) % PALETTE.length]; if (!AV.txn(-PAINT, tr('Paint job', 'Pintura'))) return false; rec.col = next; if (!(ACT.cur && ACT.cur.rec === rec)) VEH.respawn(rec); AV.save(); return true };
 G.valet = function (rec) { const W = AV.W; if (!rec || !rec.owned || !W || rec.w !== W.id || (ACT.cur && ACT.cur.rec === rec)) return false; if (!AV.txn(-VALET, tr('Valet', 'Aparcacoches'))) return false; const P = AV.P, f = [-Math.sin(P.yaw), -Math.cos(P.yaw)];
   let x = P.x + f[0] * 3, z = P.z + f[1] * 3; if (!AV.isFree(W, x, z, rec.kind === 'car' ? 1.5 : .7)) { const sp = AV.safeSpot(W, x, z); x = sp[0]; z = sp[1] } rec.x = x; rec.z = z; rec.yaw = VEH.openYaw(W, x, z, P.yaw); VEH.respawn(rec); AV.save(); return true };
@@ -83,7 +83,7 @@ G.panel = function (wid) { const W = AV.W, dl = G.dealers[wid || (W && W.id)], u
     p.querySelectorAll('[data-pnt]').forEach(b => b.onclick = () => { G.paint(byId(b.dataset.pnt)); render() });
     p.querySelectorAll('[data-sel]').forEach(b => b.onclick = () => { const r = byId(b.dataset.sel); if (!r) return; if (b.dataset.sure) { G.sell(r); render() } else { b.dataset.sure = 1; b.textContent = tr('Sure? Sell', '¿Seguro? Vender') } }) };   /* two-step, no browser dialog */
   render() };
-AV.keymap = AV.keymap || {}; const kG = AV.keymap.KeyG; AV.keymap.KeyG = () => { if (kG) kG(); if (!AV.blocking()) G.panel() };
+AV.keymap = AV.keymap || {}; const kY = AV.keymap.KeyY; AV.keymap.KeyY = () => { if (kY) kY(); if (!AV.blocking()) G.panel() };   /* Y = your vehicles (core already uses G for graphics quality) */
 
 /* ---------- chase camera, rider, lights, brake lights ---------- */
 const set = () => { const S = AV.S; S.set.drive = S.set.drive || { chase: false }; return S.set.drive };

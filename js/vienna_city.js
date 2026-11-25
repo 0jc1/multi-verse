@@ -165,7 +165,7 @@ VC.build = function (E) {
       if (e && i % 2 === 0) hd.VA.lamp(b.x1 + .2, b.cz, e.x0 - .2, b.cz); if (s && i % 2 === 1) hd.VA.lamp(b.cx, b.z1 + .2, b.cx, s.z0 - .2);
       if (hd.id !== 'inner' && i % 6 === 3 && !b.square) { const x = b.x1 + 1.1, z = b.z1 + 1.1; if (roadD(x, z) > 1.5 && !waterAt(x, z)) hd.VA.litfass(x, z) } });
     if (hd.id !== 'inner') list.forEach(b => { if (b.square) return; const S = E.bounds && b.z0 - 4 < E.bounds[2], x = b.cx + (S ? 1 : -1) * (b.x1 - b.x0) / 4, z = S ? b.z1 + 1.95 : b.z0 - 1.95, fz = S ? b.z1 : b.z0;   /* at the map's north edge: the south kerb */
-      if (roadD(x, z) > 1.2 && !waterAt(x, z) && !VC.noDecor(x, z) && !ctx.circles.some(c => Math.hypot(c[0] - x, c[1] - (z + fz) / 2) < c[2] + 1.9)) { hd.VA.post(x, z); hd.posts = (hd.posts || 0) + 1; posts.push([+x.toFixed(2), +z.toFixed(2), fz]); NOD.push([x - 1.6, x + 1.6, Math.min(z, fz) - .4, Math.max(z, fz) + .4]) } });   /* a lamp post on every block's kerb: every neighbourhood is lit */
+      if (roadD(x, z) > 1.2 && !waterAt(x, z) && !VC.noDecor(x, z) && !ctx.circles.some(c => Math.hypot(c[0] - x, c[1] - (z + fz) / 2) < c[2] + 1.9)) { hd.VA.post(x, z); hd.posts = (hd.posts || 0) + 1; posts.push([+x.toFixed(2), +z.toFixed(2), fz]); NOD.push([x - 2.5, x + 2.5, Math.min(z, fz) - .4, Math.max(z, fz) + .4]) } });   /* a lamp post on every block's kerb: every neighbourhood is lit */
     hd.VA.flush(); const sm = new THREE.MeshStandardMaterial({ map: sideTex(q), roughness: .85 }); sm.userData.lin = 1; if (hd.side.length) { const m = new THREE.Mesh(K.merge(hd.side), sm); m.receiveShadow = true; hd.grp.add(m) }
     if (hd.extra.length) { const vm = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8 }); vm.userData.lin = 1; hd.grp.add(new THREE.Mesh(K.merge(hd.extra), vm)) }
     const L2 = hd.id === 'inner' ? list.concat(rows.map(w => ({ cx: (w.x0 + w.x1) / 2, cz: (w.z0 + w.z1) / 2, x0: w.x0, x1: w.x1, z0: w.z0, z1: w.z1 }))) : list; if (!L2.length) { hd.bbox = [0, 0, 0, 0]; continue } const cx = L2.reduce((a, b) => a + b.cx, 0) / L2.length, cz = L2.reduce((a, b) => a + b.cz, 0) / L2.length; districts.push({ id: 'v_' + hd.id, name: hd.name, x: cx, z: cz });
@@ -174,6 +174,7 @@ VC.build = function (E) {
   const D = [80, 120, 170][q]; let tk = 0;
   ctx.upd.push(dt => { if ((tk -= dt) > 0) return; tk = .5; const P = AV.P; for (const hd of byHood.keys()) { const [x0, x1, z0, z1] = hd.bbox, dx = Math.max(x0 - P.x, 0, P.x - x1), dz = Math.max(z0 - P.z, 0, P.z - z1); hd.det.visible = Math.hypot(dx, dz) < D } });
   VC.fx = { ring: ringB.length, blocks: blocks.length, squares: blocks.filter(b => b.square).length, hoods: districts.map(d => d.name + ' ' + byHood.get([...byHood.keys()].find(h => 'v_' + h.id === d.id)).length) };
+  VC.nearBlock = (x, z, m) => blocks.some(b => !b.square && x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m) || rows.some(w => x > w.x0 - m && x < w.x1 + m && z > w.z0 - m && z < w.z1 + m);
   VC.landmarks = lm; VC.blocks = blocks; VC.look = AV.viennaArch.stats; VC.postsBy = Object.fromEntries(ALL.map(h => [h.id, h.posts || 0])); return { blocks, cafe, districts: districts.concat(lm.map(l => ({ id: 'v_lm_' + l.name, name: l.name, x: l.x, z: l.z }))) };
 };
 })(window.AV);

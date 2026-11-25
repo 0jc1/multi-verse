@@ -64,13 +64,15 @@ function findCenter(W, rng) {
 }
 /* free spots around the centre, spaced apart, reachable from it, facing it (local +z points at the centre) */
 function spotter(W, c, rng) {
-  const used = [], priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z));
+  const used = [], priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z)), roads = W.mapRoads || [];
+  /* M1: market props never stand on a sidewalk or a road: keep them 6 m beyond every mapped road edge and out of a world's no-decoration zones (it used to land on the Pinar sidewalks, depending on the save seed) */
+  const sideD = (x, z) => { let d = 1e9; for (const q of roads) { const dx = q[2] - q[0], dz = q[3] - q[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - q[0]) * dx + (z - q[1]) * dz) / l2)); d = Math.min(d, Math.hypot(x - q[0] - dx * t, z - q[1] - dz * t) - (q[4] || 6) / 2) } return d };
   return function (r0, r1, rad, o) {
     o = o || {};
     for (let i = 0; i < 120; i++) {
       const a = o.ang != null ? o.ang + (rng() - .5) * 1.2 : rng() * TAU, r = r0 + rng() * (r1 - r0), x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r, y = W.surface(x, z);
       if (y == null || Math.abs(y - c.y) > 1.2 || !AV.isFree(W, x, z, Math.max(.6, rad)) || priv(x, z)) continue;
-      if (used.some(u => Math.hypot(u[0] - x, u[1] - z) < u[2] + rad + .6) || !NP.clear(W, c.x, c.z, x, z, .4) || (o.check && !o.check(x, z))) continue;
+      if (used.some(u => Math.hypot(u[0] - x, u[1] - z) < u[2] + rad + .6) || !NP.clear(W, c.x, c.z, x, z, .4) || (o.check && !o.check(x, z)) || (!o.ghost && (sideD(x, z) < rad + 6 || (W.noDecor && W.noDecor(x, z))))) continue;
       if (!o.ghost) used.push([x, z, rad]);
       return { x, z, y, yaw: Math.atan2(c.x - x, c.z - z) };
     }

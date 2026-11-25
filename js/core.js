@@ -40,12 +40,18 @@ function migrate(o) {            // V0.8 (v:1) -> V0.9 (v:2). Pure function; the
   s.mem = Object.assign(AV.fresh().mem, o.mem || {}); s.media = o.media && typeof o.media === 'object' ? o.media : { seen: {} };
   s.set = Object.assign(AV.fresh().set, o.set || {}); s.pipe = true; return s;
 }
+/* M1 save safety: the key can be pointed at a sandbox (tests never touch the player's save); before the first overwrite of a session the
+   previous save is copied to <key>_bak, and an unreadable / invalid main save falls back to it; an invalid state is never written. */
+AV.saveKey = KEY;
 AV.loadSave = function () {
-  try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (valid(o)) return { s: Object.assign(AV.fresh(), o), from: 'v09' } } } catch (e) { console.warn('v09 save unreadable', e) }
+  const K0 = AV.saveKey || KEY;
+  for (const [k, from] of [[K0, 'v09'], [K0 + '_bak', 'v09-backup']]) { try { const r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); if (valid(o)) return { s: Object.assign(AV.fresh(), o), from } } } catch (e) { console.warn(k + ' save unreadable', e) } }
+  if (K0 !== KEY) return null;
   for (const k of OLD) { try { const r = localStorage.getItem(k); if (!r) continue; const o = JSON.parse(r); if (valid(o)) { const s = migrate(o); s.migrated = k; return { s, from: k } } } catch (e) { console.warn(k + ' save unreadable; kept untouched', e) } }
   return null;
 };
-AV.save = function () { if (!AV.running) return; AV.S.seen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(AV.S)) } catch (e) { } };
+AV.save = function () { if (!AV.running) return; const S = AV.S; if (!valid(S) || !isFinite(S.money)) { console.warn('save skipped: invalid game state'); return } S.seen = Date.now();
+  try { const k = AV.saveKey || KEY; if (AV._bakFor !== k) { const prev = localStorage.getItem(k); if (prev) localStorage.setItem(k + '_bak', prev); AV._bakFor = k } localStorage.setItem(k, JSON.stringify(S)) } catch (e) { } };
 AV.exportSave = () => JSON.stringify(AV.S);
 AV.abs = () => AV.S.day * 1440 + AV.S.time;
 

@@ -50,7 +50,7 @@ CY.crowd = function (ctx, opt) {
     else if (w.route) { const p = w.route[w.ri]; tx = p[0]; tz = p[1] } else { w.moving = false; return }
     const dx = tx - w.x, dz = tz - w.z, d = Math.hypot(dx, dz);
     if (d < .3) {
-      if (w.nav) { const links = w.nav.links[w.to].filter(j => j !== w.from); w.from = w.to; w.to = links.length ? links[Math.random() * links.length | 0] : w.from; if (Math.random() < (w.idleProb == null ? .06 : w.idleProb)) { w.pause = 3 + Math.random() * 7; w.mode = 'idle' } }
+      if (w.nav) { const links = w.nav.links[w.to].filter(j => j !== w.from); w.from = w.to; w.to = links.length ? links[Math.random() * links.length | 0] : w.from; if (Math.random() < (w.idleProb == null ? .14 : w.idleProb)) { w.pause = 6 + Math.random() * 10; w.mode = 'idle' }   /* M1: calmer crowd (was 6% / 3-10 s) */ }
       else { const p = w.route[w.ri]; if (p[2]) { w.pause = p[2]; w.mode = p[3] || 'idle' } w.ri++; if (w.ri >= w.route.length) { if (w.loop === false) { w.route = null; w.ri = 0 } else w.ri = 0 } }
       w.moving = false; return;
     }

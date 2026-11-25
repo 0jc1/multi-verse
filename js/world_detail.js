@@ -42,12 +42,18 @@ D.apply = function (W) {
   const ar = W.arrivals && (W.arrivals.default || {}), Ts = W.T.slice(), priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z));
   const roadD = (x, z) => { let d = 1e9; for (const r of roads) d = Math.min(d, segD(x, z, r) - (r[4] || 6) / 2); return d };
   const nearT = (x, z, m) => Ts.some(t => Math.hypot(t.x - x, t.z - z) < (t.r || 2) + m);
+  /* the nearest WALL face (axis-aligned building box) within 1.3 m: [x, z on the face, outward normal x, z] - circles (trees, posts) are not walls */
+  const cols = ctx.cols, wallAt = (x, z) => { let best = null, bd = 1.3; for (const c of cols) { if (x < c[0] - 1.3 || x > c[1] + 1.3 || z < c[2] - 1.3 || z > c[3] + 1.3) continue; const nx = Math.max(c[0], Math.min(x, c[1])), nz = Math.max(c[2], Math.min(z, c[3])), d = Math.hypot(x - nx, z - nz); if (d > .01 && d < bd) { bd = d; best = [nx, nz, (x - nx) / d, (z - nz) / d] } } return best };
+  const placed = [];   /* every clutter item, for the placement tests */
   const flora = [], clut = {}, people = [], tries = [2500, 4500, 7000][q], capF = [140, 260, 320][q], capC = [50, 110, 180][q];
   for (let i = 0; i < tries && (flora.length < capF || Object.values(clut).reduce((a, b) => a + b.length, 0) < capC); i++) {
     const x = x0 + rng() * (x1 - x0), z = z0 + rng() * (z1 - z0), y = W.surface(x, z); if (y === null || y === undefined || Math.abs(y) > 40 || priv(x, z) || (W.noDecor && W.noDecor(x, z))) continue;   /* a world can keep streets / lanes / courtyards free of scattered decoration */
     if (ar && Math.hypot(x - ar.x, z - ar.z) < 7 || nearT(x, z, 1.2) || (W.places || []).some(p => Math.hypot(p.x - x, p.z - z) < 3) || !AV.isFree(W, x, z, .5)) continue;   /* never in front of a named entrance */ const rd = roadD(x, z);
-    if (!AV.isFree(W, x, z, 1.7) && rd > .8) { const k = c.clutter[(rng() * c.clutter.length) | 0], n = Object.values(clut).reduce((a, b) => a + b.length, 0); if (n < capC) { (clut[k] = clut[k] || []).push({ x, y, z, s: .9 + rng() * .25, ry: rng() * Math.PI * 2, tint: k === 'moto' ? .5 + rng() * .5 : null }); ctx.circles.push([x, z, k === 'moto' ? .5 : .4]); W.circles = ctx.circles } }
-    else if (rd > 2.5 && AV.isFree(W, x, z, 3) && flora.length < capF) flora.push({ x, y, z, s: .7 + rng() * .7, k: c.flora[(rng() * c.flora.length) | 0], col: c.cols[(rng() * c.cols.length) | 0] }) }
+    if (!AV.isFree(W, x, z, 1.7) && rd > .8) { const wl = wallAt(x, z), k = c.clutter[(rng() * c.clutter.length) | 0], n = Object.values(clut).reduce((a, b) => a + b.length, 0), rr = k === 'moto' ? .5 : .4;
+      if (wl && n < capC) { const off = rr + .12, px = wl[0] + wl[2] * off, pz = wl[1] + wl[3] * off, py = W.surface(px, pz), w1x = px + wl[2] * (rr + .9), w1z = pz + wl[3] * (rr + .9), w2x = px + wl[2] * (rr + 1.6), w2z = pz + wl[3] * (rr + 1.6);   /* against the wall + a 1.2 m+ walkway beside it */
+        if (py !== null && py !== undefined && AV.isFree(W, px, pz, rr + .05) && W.surface(w1x, w1z) !== null && AV.isFree(W, w1x, w1z, .45) && AV.isFree(W, w2x, w2z, .45) && roadD(px, pz) > 1.2 && !(W.noDecor && W.noDecor(px, pz)) && !nearT(px, pz, 1.5)) {
+          (clut[k] = clut[k] || []).push({ x: px, y: py, z: pz, s: .9 + rng() * .25, ry: k === 'moto' ? Math.atan2(wl[2], wl[3]) + Math.PI / 2 : rng() * Math.PI * 2, tint: k === 'moto' ? .5 + rng() * .5 : null }); ctx.circles.push([px, pz, rr]); W.circles = ctx.circles; placed.push([+px.toFixed(2), +pz.toFixed(2), k]) } } }
+    else if (rd > 2.5 && AV.isFree(W, x, z, 3) && flora.length < capF && !(W.floraOK && !W.floraOK(x, z))) flora.push({ x, y, z, s: .7 + rng() * .7, k: c.flora[(rng() * c.flora.length) | 0], col: c.cols[(rng() * c.cols.length) | 0] }) }
   /* flora: one instanced set per species + colour */
   const byK = {}; flora.forEach(f => { const key = f.k + (f.k === 'flower' ? f.col : ''); (byK[key] = byK[key] || { k: f.k, col: f.col, it: [] }).it.push({ x: f.x, y: f.y, z: f.z, s: f.s }) });
   const far = [120, 180, 260][q];
@@ -76,6 +82,7 @@ D.apply = function (W) {
       const n = 2 + (i % 2); for (let k = 0; k < n; k++) { const b = k / n * Math.PI * 2, x = gx + Math.cos(b) * .7, z = gz + Math.sin(b) * .7, v = c.people[(i * 3 + k) % c.people.length]; people.push(1); cr.add({ v: ok(v) ? v : 'man', x, z, y: gy, yaw: Math.atan2(gx - x, gz - z), mode: 'talk' }) } });
     if (people.length) try { cr.build() } catch (e) { console.warn('detail crowd', e) } }
   AV.lin && AV.lin(ctx.group);
+  D.placed = D.placed || {}; D.placed[W.id] = placed; D.floraAt = D.floraAt || {}; D.floraAt[W.id] = flora.map(f => [+f.x.toFixed(1), +f.z.toFixed(1)]);
   D.stats[W.id] = { flora: flora.length, clutter: Object.values(clut).reduce((a, b) => a + b.length, 0), poles, shrines, strings, people: people.length };
 };
 const prevE = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (prevE) prevE(W); try { D.apply(W) } catch (e) { console.warn('world detail failed', e) } };

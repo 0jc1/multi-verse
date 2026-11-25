@@ -7,7 +7,7 @@ window.APE_T = (() => {
   const settled = () => AV.W && $('fade').style.opacity === '0';
   const tgt = re => AV.W.T.find(t => (!t.show || t.show()) && re.test(lab(t)));
   const at = (x, z) => { AV.P.x = x; AV.P.z = z; AV.P.y = AV.W.surface(x, z) || 0 };
-  const walk = pts => { const bad = []; for (let k = 1; k < pts.length; k++) { const [x0, z0] = pts[k - 1], [x1, z1] = pts[k], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (AV.W.surface(x, z) === null || !AV.isFree(AV.W, x, z, .35)) bad.push(x.toFixed(1) + ',' + z.toFixed(1)) } } return bad };
+  const walk = pts => { const bad = []; for (let k = 1; k < pts.length; k++) { const [x0, z0] = pts[k - 1], [x1, z1] = pts[k], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (AV.W.surface(x, z) === null || !AV.isFree(AV.W, x, z, .35)) { const W = AV.W, cc = W.circles.find(q => Math.hypot(x - q[0], z - q[1]) < q[2] + .35), rr = W.cols.find(q => x > q[0] - .35 && x < q[1] + .35 && z > q[2] - .35 && z < q[3] + .35); bad.push(x.toFixed(1) + ',' + z.toFixed(1) + (W.surface(x, z) === null ? ' [void]' : cc ? ' [circle ' + cc.map(v => +(+v).toFixed(2)).join(',') + ' #' + W.circles.indexOf(cc) + '/' + W.circles.length + ']' : rr ? ' [col ' + rr.map(v => +(+v).toFixed(1)).join(',') + ']' : ' [edge]')) } }   /* names the blocker */ } return bad };
   const buy = async (re, item) => { const t = tgt(re); if (!t) return 'no target'; at(t.x, t.z); t.fn(); await sleep(300); const b = document.querySelector('[data-buy="' + item + '"]'); if (!b) { AV.closeTop(); return 'no item' } b.click(); await sleep(500); AV.closeTop(); return AV.bag.count(item) };
   const SZ = 1000, GV = SZ - 124, MX = -60;
   const shot = async (x, z, yaw, pitch, hr) => { if (hr != null) AV.S.time = hr * 60; at(x, z); AV.P.yaw = yaw; AV.P.pitch = pitch || 0; await sleep(6000) };
@@ -16,6 +16,10 @@ window.APE_T = (() => {
     c('Madrid is playable', AV.isPlayable('madrid')); AV.travel('madrid'); c('Madrid', await until(() => AV.W && AV.W.id === 'madrid' && settled(), 120000)); c('no world error', !$('err').textContent, $('err').textContent);
     c('arrive in Pinar de Chamartín by the metro', Math.hypot(AV.P.x + 30, AV.P.z + 2) < 6, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1)) });
 
+  step('Pinar sidewalks clear for any save seed (M1: Wandering Market placement)', async c => { const seeds = [11, 4242, 31337, 77777, 90001, 123], miss = []; const s0 = AV.S.seed;
+    for (const sd of seeds) { AV.S.seed = sd; AV.travel('ape_town'); await until(() => AV.W && AV.W.id === 'ape_town' && document.getElementById('fade').style.opacity === '0', 150000); AV.travel('madrid'); await until(() => AV.W && AV.W.id === 'madrid' && document.getElementById('fade').style.opacity === '0', 150000); await sleep(2500);
+      const b = walk([[-88, -10], [88, -10], [88, 10], [-88, 10]]); if (b.length) miss.push('seed ' + sd + ': ' + b.slice(0, 2).join(' | ')) }
+    AV.S.seed = s0; c('both Pinar sidewalks walkable under 6 seeds', !miss.length, miss.join(' || ')) });
   step('Pinar: avenue, park, bar, bakery, fruit shop', async c => {
     const R = { 'avenue, both sidewalks': [[-88, -10], [88, -10], [88, 10], [-88, 10]], 'avenue → park → fountain loop': [[0, 10], [0, 34], [-20, 50], [0, 74], [20, 50]] };
     for (const k in R) { const b = walk(R[k]); c(k, !b.length, b.slice(0, 6).join(' | ')) }

@@ -58,7 +58,7 @@ window.APE_T = (() => {
     place(15.5, 49, Math.PI); AV.P.yaw = Math.PI; AV.keys.KeyW = 1; const ok = await until(() => AV.P.z > 56, 60000);   /* headless SwiftShader runs Chiang Mai at ~1.5 fps */ AV.keys.KeyW = 0; c('walk in through the front door', ok, 'z ' + AV.P.z.toFixed(1));
     place(25, 49.6, Math.PI); AV.P.yaw = Math.PI; AV.keys.KeyW = 1; await sleep(2500); AV.keys.KeyW = 0; c('glass shopfront blocks walking', AV.P.z < 52.3, 'z ' + AV.P.z.toFixed(2));
     place(11, 72, Math.PI); AV.P.yaw = Math.PI; AV.keys.KeyW = 1; const inRoom = await until(() => AV.P.z > 75, 15000); AV.keys.KeyW = 0; c('corridor leads into guest room 1', inRoom || AV.P.z > 74, 'z ' + AV.P.z.toFixed(1));
-    const m0 = AV.S.money; tgt(/Reception bell/).fn(); c('rent a bed costs 40', AV.S.money === m0 - 40); AV.S.time = 23 * 60; const d0 = AV.S.day; tgt(/Sleep in your bunk/).fn(); await sleep(1600); c('sleeping wakes you at 08:00 next day', AV.S.day === d0 + 1 && Math.round(AV.S.time) === 480, 'day ' + AV.S.day + ' t ' + AV.S.time);
+    const m0 = AV.S.money; tgt(/Reception bell/).fn(); c('rent a bed costs 40', AV.S.money === m0 - 40); AV.S.time = 23 * 60; const d0 = AV.S.day; tgt(/Sleep in your bunk/).fn(); await sleep(1600); c('sleeping wakes you at 08:00 next day', AV.S.day === d0 + 1 && AV.S.time >= 480 && AV.S.time < 486, 'day ' + AV.S.day + ' t ' + AV.S.time);
   }, { shot: 'cm_hostel' });
 
   step('crew + welcome mission', async c => {

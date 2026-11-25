@@ -17,6 +17,10 @@ window.APE_T = (() => {
     b = bad([[175, 88], [175, 102]]); c('crossing the hover lane', !b.length, b.join(' '));
     b = bad([[199, 86], [199, 80], [199, 77]]); c('Black Market alley walkable', !b.length, b.join(' '));
     c('Food Ring → boulevard still connected', !bad([[80, 95], [94, 95], [100, 88]]).length) });
+  step('hover-lane crossing + sidewalks clear for any save seed (M1)', async c => { const seeds = [11, 4242, 31337, 77777, 90001, 123], miss = [], s0 = AV.S.seed, fd = () => $('fade').style.opacity === '0';
+    for (const sd of seeds) { AV.S.seed = sd; AV.travel('ape_town'); await until(() => AV.W && AV.W.id === 'ape_town' && fd(), 150000); AV.travel('astro9'); await until(() => AV.W && AV.W.id === 'astro9' && fd(), 150000); await sleep(2500);
+      for (const [k, p, tol] of [['crossing', [[175, 88], [175, 102]], 0], ['north sidewalk', [[96, 86.5], [258, 86.5]], 2], ['south sidewalk', [[96, 103.5], [258, 103.5]], 2]]) { const b = bad(p); if (b.length > tol) miss.push('seed ' + sd + ' ' + k + ': ' + b.slice(0, 2).join(' ')) } }
+    AV.S.seed = s0; c('hover-lane crossing + both sidewalks under 6 seeds', !miss.length, miss.join(' || ')) });
   const shopStep = (k, re) => step('enter ' + k, async c => { const NB = AV.astro9neon, lot = NB.lots.find(l => l.enter === k); c(k + ' lot', !!lot); if (!lot) return;
     const b = bad([lot.door, lot.inside]); c(k + ': walk in through the door', !b.length, b.join(' '));
     const t = tgt(re); c(k + ': counter interaction inside', !!t && Math.hypot(t.x - lot.inside[0], t.z - lot.inside[1]) < .5, t && t.x.toFixed(1) + ',' + t.z.toFixed(1));

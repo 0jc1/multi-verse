@@ -106,6 +106,14 @@
 - **Cost attribution:** a GPU cost-attribution step that hides one category at a time.
 - **Route checks:** the Pai route check reports what blocks each failing point.
 
+### M1 fixes (expansion branch)
+
+- **Pinar avenue and Pai north-route blocks:** root cause was the Wandering Market's seed-random props. Fixed and proven under 6 seeds.
+- **Pai night:** the street lamps no longer light the street like day.
+- **Street clutter:** stands against walls with walkway clearance. No flowers on Vienna's streets.
+- **Save safety:** sandbox key for tests, a session backup with fallback, and no invalid writes.
+- **Calmer NPCs:** rare waving, browsing, longer pauses.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.
@@ -116,9 +124,6 @@
 
 - **Astro-9 megacity "hover-lane crossing" (reported 24/25):** not reproduced in 6 runs across 3 builds. The route checks now name what blocks each point.
 
-- **Pinar avenue in Madrid:** an intermittent block on the "both sidewalks" check. The blocked point moves between runs, so something moving causes it.
-- **Pai north end:** an intermittent route miss. The cause isn't proven; the route check now records the exact blocker.
-- **Night shots:** in Pai's test screenshots, the sky shows daylight at 19:00.
 
 ## Planned (not built yet)
 

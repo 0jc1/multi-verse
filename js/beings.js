@@ -5,7 +5,7 @@
    Performance: animation pauses beyond 45 m and bodies hide beyond 90 m; counts and sculpt detail scale with quality. */
 'use strict';
 (function (AV) {
-const tr = AV.tr, TAU = AV.TAU, F = AV.forge, BE = AV.beings = { list: [] };
+const tr = AV.tr, TAU = AV.TAU, F = AV.forge, BE = AV.beings = { list: [], stats: { wave: 0, dance: 0, browse: 0, walk: 0 } };   /* M1: counters for the calm-routine tests */
 const pick = (r, a) => a[Math.floor(r() * a.length) % a.length];
 
 const ALIEN_SKINS = ['#86d0b4', '#b07aff', '#7ab8ff', '#e88ad8', '#a8e86a', '#ffb05a'];
@@ -94,7 +94,7 @@ BE.spawn = function (ctx, specs) {
     const b = { h, mixer, acts, cur: null, kind: s.kind, name: s.name || made.name, mode: s.mode || 'wander', area: s.area || { x: s.x, z: s.z, r: 8 }, speed: s.speed || (.8 + Math.random() * .5), stride: 4 * (made.S.thigh + made.S.shin) * Math.sin(F.WALK_SWING), fy: s.y || 0, target: null, wait: Math.random() * 3, danceUntil: 0, talkT: -99, off: Math.random() * 10,
       greet: s.greet || null, lines: s.lines || null, role: s.role || null, face: s.face || null, gT: 0, waveT: 0,
       headB: made.root.getObjectByName('head') || null, faceY: A ? A.faceY * made.root.scale.y : ((made.S && made.S.head && made.S.head[1]) || .15) * .85, actor: A || null };
-    b.play = (n, f) => { if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
+    b.play = (n, f) => { if (n !== b.cur && BE.stats[n.toLowerCase()] != null) BE.stats[n.toLowerCase()]++; if (A) { A.play(n); b.cur = A.cur; return } if (b.cur === n || !acts[n]) return; const nx = acts[n], old = b.cur && acts[b.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.play(); if (old) { if (f) nx.crossFadeFrom(old, f, false); else old.stop() } b.cur = n };
     b.play(b.mode === 'dance' || b.mode === 'float' ? 'Dance' : 'Idle');
     const tg = { x: s.x, z: s.z, r: 2.4, label: () => tr('Talk to ', 'Hablar con ') + b.name, fn: () => BE.chat(b), being: b, show: () => !b.ko }; ctx.T.push(tg); b.tg = tg;
     out.push(b);
@@ -110,15 +110,16 @@ BE.spawn = function (ctx, specs) {
       if (talking) { b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * (locked ? 9 : 5)); if (b.cur === 'Wave' && AV.now() - b.talkT > 2.2) b.play('Idle', .3) }
       else if (b.mode === 'dance' || b.mode === 'float' || AV.now() < b.danceUntil) { b.play('Dance', .3); const a = b.acts.Dance; if (a && a.getEffectiveWeight() > .99) a.time = ((((beat + b.off * .25) % 4) + 4) % 4) / 4 * a.getClip().duration; if (b.mode === 'float') b.h.position.y = b.fy + Math.sin(t * .6 + b.off) * .35; if (AV.now() >= b.danceUntil && b.mode === 'wander') b.play('Idle', .3) }
       else if (b.mode === 'chat') {   /* Cinematic V1: two or three people actually talking - they face each other, take turns, gesture */
-        if (AV.now() > b.gT) { b.gT = AV.now() + 2.5 + Math.random() * 4; if (Math.random() < .4) { b.play('Wave', .3); b.waveT = AV.now() } if (b.actor) b.actor.talk(1.4 + Math.random()) }
+        if (AV.now() > b.gT) { b.gT = AV.now() + 4 + Math.random() * 5; if (Math.random() < .03) { b.play('Wave', .3); b.waveT = AV.now() } if (b.actor) b.actor.talk(1.4 + Math.random()) }   /* M1: talk + gesture; a wave is rare (was 40% every 2.5-6.5 s) */
         if (b.cur === 'Wave' && AV.now() - b.waveT > 1.8) b.play('Idle', .4); if (b.cur !== 'Wave') b.play('Idle', .3);
         if (b.face) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(b.face[0] - b.h.position.x, b.face[1] - b.h.position.z), dt * 3) }
       else if (b.mode === 'look') {   /* Cinematic V1: looking at something (a painting, a wall, an easel); glances at you when you come close */
         b.play('Idle', .3); const f = d < 2.6 ? [P.x, P.z] : b.face; if (f) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(f[0] - b.h.position.x, f[1] - b.h.position.z), dt * 2.5) }
       else if (b.mode === 'idle') { b.play('Idle', .3); if (d < 4) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(dx, dz), dt * 2) }
       else {   /* wander */
-        if (!b.target) { b.wait -= dt; b.play('Idle', .4); if (b.wait <= 0 && w) { for (let k = 0; k < 8; k++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * b.area.r, x = b.area.x + Math.cos(a) * r, z = b.area.z + Math.sin(a) * r; if (AV.isFree(w, x, z, .7)) { b.target = [x, z]; break } } b.wait = 4 + Math.random() * 8 } }
-        else { const tx = b.target[0] - b.h.position.x, tz = b.target[1] - b.h.position.z, l = Math.hypot(tx, tz); if (l < .3) { b.target = null } else { b.play('Walk', .3); if (b.acts.Walk) b.acts.Walk.timeScale = b.speed / b.stride; const st = Math.min(l, b.speed * dt), nx = b.h.position.x + tx / l * st, nz = b.h.position.z + tz / l * st;
+        if (b.browseUntil && AV.now() < b.browseUntil) { b.play('Idle', .4); if (b.browseAt) b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(b.browseAt[0] - b.h.position.x, b.browseAt[1] - b.h.position.z), dt * 2) }   /* M1: browsing */
+        else if (!b.target) { b.wait -= dt; b.play('Idle', .4); if (b.wait <= 0 && w) { for (let k = 0; k < 8; k++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * b.area.r, x = b.area.x + Math.cos(a) * r, z = b.area.z + Math.sin(a) * r; if (AV.isFree(w, x, z, .7)) { b.target = [x, z]; break } } b.wait = 6 + Math.random() * 10 } }
+        else { const tx = b.target[0] - b.h.position.x, tz = b.target[1] - b.h.position.z, l = Math.hypot(tx, tz); if (l < .3) { b.target = null; if (Math.random() < .55) { const px = b.h.position.x, pz = b.h.position.z, nT = w && w.T ? w.T.filter(t => !t.being && Math.hypot(t.x - px, t.z - pz) < 10) : [], t2 = nT.length ? nT[(Math.random() * nT.length) | 0] : null; b.browseAt = t2 ? [t2.x, t2.z] : [px + Math.sin(b.h.rotation.y) * 3, pz + Math.cos(b.h.rotation.y) * 3]; b.browseUntil = AV.now() + 10 + Math.random() * 15; BE.stats.browse++ } } else { b.play('Walk', .3); if (b.acts.Walk) b.acts.Walk.timeScale = b.speed / b.stride; const st = Math.min(l, b.speed * dt), nx = b.h.position.x + tx / l * st, nz = b.h.position.z + tz / l * st;
           if (w && !AV.isFree(w, nx, nz, .45)) b.target = null; else { b.h.position.x = nx; b.h.position.z = nz; const sy = w && w.surface(nx, nz); b.h.position.y = (sy || 0) + (b.fy || 0); b.h.rotation.y = turn(b.h.rotation.y, Math.atan2(tx, tz), dt * 6) } } }
       }
       if (!b.tgFixed) { b.tg.x = b.h.position.x; b.tg.z = b.h.position.z } b.mixer.update(dt);   /* V1.0: counter staff keep their target at the counter front */

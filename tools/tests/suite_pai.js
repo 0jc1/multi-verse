@@ -18,6 +18,10 @@ window.APE_T = (() => {
     c('Pai is its own world (Chiang Mai + Jungle Dub separate)', AV.isPlayable('pai') && AV.isPlayable('chiang_mai') && AV.isPlayable('jungle_dub')); c('Pai', await travel('pai')); c('no world error', !$('err').textContent, $('err').textContent);
     c('arrive at the bus station', Math.hypot(AV.P.x - PL().bus[0], AV.P.z - PL().bus[1]) < 12, AV.P.x.toFixed(1) + ',' + AV.P.z.toFixed(1)) });
 
+  step('routes clear for any save seed (M1: Wandering Market placement)', async c => { const seeds = [11, 4242, 31337, 77777, 90001, 123], miss = [], s0 = AV.S.seed, fd = () => document.getElementById('fade').style.opacity === '0';
+    for (const sd of seeds) { AV.S.seed = sd; AV.travel('ape_town'); await until(() => AV.W && AV.W.id === 'ape_town' && fd(), 150000); AV.travel('pai'); await until(() => AV.W && AV.W.id === 'pai' && fd(), 150000); await sleep(2500);
+      for (const [k, p] of [['north end → south end', [[PL().bus[0] - 2, PL().bus[1] + 6], [0, -64], [0, 64]]], ['north end → Sunset Bar', [[0, -66], [PL().sunset[0] + 4, PL().sunset[1] + 10]]], ['north end → Paradise', [[6, -66], [PL().paradise[0] - 4, PL().paradise[1] + 10]]]]) { const b = walk(p); if (b.length) miss.push('seed ' + sd + ' ' + k + ': ' + b.slice(0, 2).join(' | ')) } }
+    AV.S.seed = s0; c('Walking Street + north routes walkable under 6 seeds', !miss.length, miss.join(' || ')) });
   step('routes: no blocked paths', async c => {
     const R = { 'bus → Walking Street (north end → south end)': [[PL().bus[0] - 2, PL().bus[1] + 6], [0, -64], [0, 64]], 'street → Tea & Drum Circle lane': [[0, 13], [PL().tea[0] + 4, PL().tea[1] - 2]], 'street → river lane → hostel bar → bamboo bridge → east bank': [[0, 2], [60, 2], [84, 2], [100, 2]],
       'bridge → jungle trail': [[100, 2], [PL().jungle[0] - 2, PL().jungle[1]]], 'north end → Sunset Bar deck': [[0, -66], [PL().sunset[0] + 4, PL().sunset[1] + 10], [PL().sunset[0] + 8, PL().sunset[1] + 7], [PL().sunset[0] + 6, PL().sunset[1] + 4.8]], 'north end → Paradise Circus': [[6, -66], [PL().paradise[0] - 4, PL().paradise[1] + 10], [PL().paradise[0], PL().paradise[1] + 6.5]],
@@ -51,7 +55,7 @@ window.APE_T = (() => {
   step('west façades', async c => { await shot(2.6, -42, Math.PI * .75, .18, 16); c('rendered', true) }, { shot: 'pai_facades_w' });
   step('east façades', async c => { await shot(-2.6, 20, -Math.PI * .75, .18, 16); c('rendered', true) }, { shot: 'pai_facades_e' });
   step('day street', async c => { await shot(0, -60, Math.PI, .02, 11); c('rendered', true) }, { shot: 'pai_street_day' });
-  step('night street', async c => { await shot(0, -60, Math.PI, .02, 21); c('rendered', true) }, { shot: 'pai_street_night' });
+  step('night street', async c => { await shot(0, -60, Math.PI, .02, 21); c('rendered', true); const L = []; AV.W.group.traverse(o => { if (o.isPointLight && o.intensity > 0) L.push(o) }); c('street lamps are local warm pools, not daylight floods (M1)', L.every(l => l.distance > 0 && l.distance <= 18), JSON.stringify(L.map(l => [+l.intensity.toFixed(2), l.distance, l.decay]))) }, { shot: 'pai_street_night' });
   step('sunset bar', async c => { await shot(PL().sunset[0] + 3, PL().sunset[1] + 14, 0, .02, 18); c('rendered', true) }, { shot: 'pai_sunset_bar' });
   step('river hostel', async c => { await shot(48, 2, -Math.PI / 2, -.05, 17); c('rendered', true) }, { shot: 'pai_hostel' });
 

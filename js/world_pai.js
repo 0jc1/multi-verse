@@ -337,11 +337,11 @@ AV.registerWorld({
     const spinner = put(PL.paradise[0], PL.paradise[1] + .6, 0, 'dance', 'dancer');
     crowd.build();
     /* warm street lamps for the evening (a few real lights; the lanterns do the rest) */
-    const lamps = [-48, -16, 16, 48].map(z => { const l = new THREE.PointLight(0xffb060, 0, 26); l.position.set(0, 4, z); grp.add(l); return l });
+    const lamps = [-48, -16, 16, 48].map(z => { const l = new THREE.PointLight(0xff9a48, 0, 15, 2); l.position.set(0, 4.5, z);   /* M1: warm local pools (was 1.6 / 26 m / linear falloff, which lit the whole street like daylight at night) */ grp.add(l); return l });
     if (AV.beings && AV.beings.spawn) { const keep = AV.beings.list; try { AV.beings.spawn(ctx, [{ kind: 'human', x: -2, y: 0, z: -40, yaw: 0, mode: 'idle', seed: 7201 }, { kind: 'human', x: 60, y: 0, z: 2, yaw: 1, mode: 'idle', seed: 7203 }, { kind: 'ape', x: 2, y: 0, z: 18, yaw: Math.PI, mode: 'idle', seed: 7202 }, { kind: 'human', x: PL.sunset[0] + 4, y: H(PL.sunset[0] + 4, PL.sunset[1] + 6), z: PL.sunset[1] + 6, yaw: 0, mode: 'idle', seed: 7204 }].slice(0, [1, 2, 4][q]).map(b => Object.assign(b, { lod: true })));   /* coarser sculpt: these are background talkers */   /* realistic talkers are ~200k triangles each: 1 on Low, 2 Medium, 4 High */ AV.beings.list = (keep || []).concat(AV.beings.list || []) } catch (e) { console.warn('pai beings', e) } }
     /* ---------- life by the hour ---------- */
     ctx.upd.push((dt, t) => { const ev = eve(), fo = fireOn();
-      stallG.visible = ev; nightWalk.forEach(w => w.vis = ev); const nk = AV.nightK || 0; lamps.forEach(l => l.intensity = nk * 1.6); party.forEach((w, i) => w.vis = ev || i < 3); watchers.forEach((w, i) => w.vis = fo || i < 4); spinner.vis = fo;
+      stallG.visible = ev; nightWalk.forEach(w => w.vis = ev); const nk = AV.nightK || 0; lamps.forEach(l => l.intensity = nk * 1.25); party.forEach((w, i) => w.vis = ev || i < 3); watchers.forEach((w, i) => w.vis = fo || i < 4); spinner.vis = fo;
       fireG.visible = fo; fireL.intensity = fo ? 2.4 + Math.sin(t * 17) * .7 : 0;
       if (fo) { fireBalls.forEach((b, k) => { const a = t * 5.2 + k * Math.PI; b.position.set(Math.cos(a) * 1.15, 1.5 + Math.sin(a) * 1.15, Math.sin(t * 1.3) * .3) }); trail.forEach((m, i) => { const k = i % 2, a = (t - (i >> 1) * .02) * 5.2 + k * Math.PI; m.position.set(Math.cos(a) * 1.15, 1.5 + Math.sin(a) * 1.15, Math.sin(t * 1.3) * .3); m.material.opacity = .5 * (1 - (i >> 1) / 20) }) }
       tubs.forEach((o, k) => { o.position.y = -.42 + Math.sin(t + k) * .05; o.position.z = -60 + ((t * 1.1 + k * 40) % 140) }) });

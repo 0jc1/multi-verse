@@ -181,7 +181,7 @@ SO.trigger = function (type) {
   const op = openerFor(t, b); b.encounter = { until: AV.now() + 45, op };
   const tg = b.tg, l0 = tg.label, f0 = tg.fn; tg.label = () => '💬 ' + b.name + tr(' wants to talk!', ' quiere hablar contigo!'); tg.fn = () => { restore(); SO.talk(b, op) };
   const restore = () => { tg.label = l0; tg.fn = f0; b.encounter = null }; b.encounter.restore = restore;
-  if (b.mode === 'wander') { const dx = P.x - b.h.position.x, dz = P.z - b.h.position.z, d = Math.hypot(dx, dz) || 1; b.target = [P.x - dx / d * 1.6, P.z - dz / d * 1.6] }
+  if (b.mode === 'wander') { b.browseUntil = 0; const dx = P.x - b.h.position.x, dz = P.z - b.h.position.z, d = Math.hypot(dx, dz) || 1; b.target = [P.x - dx / d * 1.6, P.z - dz / d * 1.6] }
   b.play && b.play('Wave', .25); b.talkT = AV.now() - 3;
   AV.toast(tr(b.name + ' waves at you: “' + say(op.line).slice(0, 60) + '…” (go over and press E)', b.name + ' te saluda: “' + say(op.line).slice(0, 60) + '…” (acércate y pulsa E)'));
   return b;

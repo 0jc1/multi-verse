@@ -48,8 +48,8 @@
 | # | Milestone | First deliverable | Status |
 |---|---|---|---|
 | M6 | Merchandise + clothing | 4 brand stores, wardrobe, persistence, NPC prints | **Verified** (SWAG blocked on artwork) |
-| M7 | Driving | **Madrid:** an ownable car + scooter (buy at a dealer, keep, park, garage, paint), chase camera toggle, headlights/brake lights, persistence | in progress |
-| M7B | Map + GPS | Turn-by-turn guidance while walking/driving on Madrid's street graph; owned vehicles + destination on the minimap; tap-to-expand atlas on phones | in progress |
+| M7 | Driving | **Madrid:** an ownable car + scooter (buy at a dealer, keep, park, garage, paint), chase camera toggle, headlights/brake lights, persistence | **Implemented and verified (Madrid slice)**: suite_drive 39/39, vehicle-length collision; see docs/DRIVING.md. Indicators, damage/repair, upgrades and other worlds' dealers are planned |
+| M7B | Map + GPS | Turn-by-turn guidance while walking/driving on Madrid's street graph; owned vehicles + destination on the minimap; tap-to-expand atlas on phones | **Implemented and verified (Madrid)**: GPS bar with arrow + route distance; other worlds fall back to a straight line until they get a street graph |
 | M7C | Traffic | NPC cars on Madrid's road graph with lane offsets, stopping for the player and pedestrians, despawn outside view | planned |
 | M8 | Housing | One Madrid apartment: rent/buy, enterable interior, furniture catalogue, place/move/rotate/remove, persistent layout, sleep/respawn | planned |
 | M9 | Player business | Own the clothing shop: stock, prices, opening hours, NPC customers, bounded offline earnings, player-designed listings | planned |

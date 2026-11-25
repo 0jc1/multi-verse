@@ -123,6 +123,17 @@
 - **Fixed:** the shared shop panel was off-screen for every shop.
 - **Open:** SWAG has no artwork; 2 SOLVERA-lettered designs are held; the sheet designs need full-resolution masters. See docs/MERCH.md.
 
+### M7 driving (apeverse-2-living-worlds branch)
+
+- **Madrid dealer:** buy and own a scooter (350) or a car (1200).
+- **Garage:** locate, valet, repaint, sell.
+- **Camera and lights:** chase camera (C), headlights, brake lights.
+- **Collision:** respects vehicle length (the car nose no longer enters walls).
+- **GPS:** guidance bar on the street graph.
+- **Persistence:** across saves, days and worlds.
+- **Tests:** suite_drive 39/39; suite_vehicles 52/52.
+- **Not done:** traffic lights, pedestrian-aware NPC traffic, damage. See docs/DRIVING.md.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.
@@ -130,6 +141,8 @@
 - **FPS gain in Pai after the optimisation:** draw calls and triangles dropped. FPS stayed within the laptop's thermal drift, which was up to 17 FPS between identical runs.
 
 ## Open issues
+
+- **suite_play, pre-existing (also failing on the M0 and M1 commits):** "Chiang Mai court: court floor is walkable" and "casual three-pointer goes in".
 
 - **Astro-9 megacity "hover-lane crossing" (reported 24/25):** not reproduced in 6 runs across 3 builds. The route checks now name what blocks each point.
 

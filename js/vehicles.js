@@ -21,6 +21,8 @@ const KINDS = {
   hoverbike: { n: L('Hover bike', 'Moto flotante'), icon: '🏍', top: 17, boost: 21, acc: 6.5, brake: 9, turn: 2, eye: 1.7, back: .3, horn: 'chime', engine: 'hover' }
 };
 const VEH = AV.veh = { KINDS };
+/* body reach from the rider point: [front, rear, half-width for the corner probes] (meshes are drawn offset by KINDS.back) */
+const REACH = { car: [2.05, 2.6, .78], tuktuk: [1.5, 1.6, .6], scooter: [1.05, .8, 0], bicycle: [.95, .9, 0], escooter: [.6, .5, 0], hover: [.6, .5, 0], hoverbike: [1.3, 1.1, 0] }; VEH.REACH = REACH;
 const st = () => { const S = AV.S; S.veh = S.veh || { list: [], n: 0 }; return S.veh };
 const blip = (f, d, w, v) => A.blip && A.blip(f, d, w, v);
 
@@ -133,7 +135,11 @@ function drive(s, dt, f, sd, run) {
   if (!P.on) s.v *= 1 - Math.min(1, .3 * dt);
   const grip = Math.min(1, Math.abs(s.v) / 2.2 + .15), turn = K.turn * grip * (s.v < 0 ? -1 : 1) / (1 + Math.abs(s.v) * .04);
   P.yaw -= sd * turn * dt; const tl = -sd * Math.min(.16, Math.abs(s.v) / K.top * .16); s.lean += (tl - s.lean) * Math.min(1, dt * 5);
-  s.want = Math.abs(s.v) * dt; const fv = fwd(P.yaw); return [fv[0] * s.v, fv[1] * s.v];
+  /* 2.0: the vehicle has a length - probe the front bumper (and its corners) or the rear when reversing, so a car never noses into a wall */
+  const R = REACH[s.rec ? s.rec.kind : ''] || [.5, .5], W = AV.W, fv = fwd(P.yaw), rt = [-fv[1], fv[0]];
+  if (W && Math.abs(s.v) > .05) { const sg = s.v > 0 ? 1 : -1, reach = (sg > 0 ? R[0] : R[1]) + Math.abs(s.v) * dt, hw = R[2] || 0;
+    for (const o of hw ? [0, -hw, hw] : [0]) { const x = P.x + fv[0] * reach * sg + rt[0] * o, z = P.z + fv[1] * reach * sg + rt[1] * o; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .12)) { if (Math.abs(s.v) > 4.5) { s.bumps = (s.bumps || 0) + 1; blip(90, .18, 'triangle', .2) } s.v = 0; s.blocked = true; break } } }
+  s.want = Math.abs(s.v) * dt; return [fv[0] * s.v, fv[1] * s.v];
 }
 
 /* ---------- rental stands, placed from configuration (AV.act.PLACES) ---------- */
@@ -172,4 +178,6 @@ add('ape_town', [{ type: 'rental', id: 'at_bike', kind: 'bicycle', x: 7, z: 92, 
 add('jungle_dub', [{ type: 'rental', id: 'jd_bike', kind: 'bicycle', x: 7, z: 26, ry: 0, price: 0, name: ['Bamboo bike rack', 'Bicis de bambú'], col: 0x6a8a3a, cols: [0xc8a04a, 0xb08a3a, 0xd8b85a] }]);
 add('astro9', [{ type: 'rental', id: 'a9_hover', kind: 'hover', x: -7, z: 26, ry: 0, price: 10, name: ['Hover scooter dock', 'Muelle de patinetes flotantes'], col: 0x4ad8ff, cols: [0x4ad8ff, 0xff4ad2, 0xffd84a] }]);
 VEH._drive = drive;
+VEH.geo = geoFor; VEH.spawnParked = spawnParked;   /* 2.0 (garage.js): repaint / bring-to-you rebuild a parked vehicle */
+VEH.respawn = rec => { live.filter(o => o.rec === rec).forEach(dropLive); if (AV.W && rec.w === AV.W.id) spawnParked(AV.W, rec) };
 })(window.AV);

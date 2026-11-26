@@ -135,7 +135,7 @@ ACT.register('instspot', { place(W, p) {
     if (p.kind === 'drums') for (let k = 0; k < 8; k++) { const kk = new THREE.Mesh(AV.G.box, AV.std([0xff4ad2, 0x4ad8ff, 0xffd84a, 0x7aff8a][k % 4], .4, 0, [0xff4ad2, 0x4ad8ff, 0xffd84a, 0x7aff8a][k % 4], .6)); kk.scale.set(.22, .03, .16); kk.position.set(-.42 + (k % 4) * .28, .97, (k < 4 ? -.09 : .1)); g.add(kk) } }
   W.circles.push([x, z, .7]); AV.lin(g); W.group.add(g);
   const v = { type: 'inst', p, W, x, z, g };
-  W.T.push({ x: x, z: z + 1.3, r: 2, show: () => !ACT.cur, label: () => '🎶 ' + (p.band ? tr('Jam with the Stone Ape Band: ', 'Tocar con la Stone Ape Band: ') : tr('Play the ', 'Tocar: ')) + say(INST[p.kind].n), fn: () => ACT.start('instrument', { v, kind: p.kind }) });
+  W.T.push({ x: x, z: z + 1.3, r: 2, show: () => !ACT.cur, label: () => '🎶 ' + (p.band ? (p.bandName ? tr('Jam with ', 'Tocar con ') + say(p.bandName) + ': ' : tr('Jam with the Stone Ape Band: ', 'Tocar con la Stone Ape Band: ')) : tr('Play the ', 'Tocar: ')) + say(INST[p.kind].n), fn: () => ACT.start('instrument', { v, kind: p.kind }) });
   return v } });
 
 /* ---------- where they are (configuration, same code everywhere) ---------- */

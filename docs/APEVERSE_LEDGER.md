@@ -273,6 +273,25 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Amsterdam district 2: the Museum quarter + Vondelpark (apeverse-2-living-worlds branch)
+
+Details in `docs/AMSTERDAM.md`. Code: `js/amsterdam_zuid.js`, plus hooks in `world_amsterdam.js` and `amsterdam_life.js`.
+
+- **Getting there:**
+  - The Vijzelstraat, then the Singelgracht (3 bridges, the tram/road bridge nearly flat), then the Stadhouderskade.
+  - The tram runs from Dam to a terminus at the museum.
+  - Taxi stands at the museum and the park.
+- **The museum** (Nationaal Apenmuseum, fictional): a public passage through it, a ticket desk, a gate, a gallery with 9 procedural paintings, Ruben's trail (+30 and a poster), and a museum shop.
+- **Museumplein:** a lawn, a pool, an ice cream cart, a poffertjes stand, and the Klankgebouw and Museum Nu exteriors.
+- **Stadhouderskade shops:** SWAG, ApePhone, SOLTERRA Living, Chocolaterie Puur and Pannenkoekenhuis De Zuidkant.
+- **Vondelpark:** gates, a path loop, 3 ponds with ducks you can feed, about 110 trees, the bandstand, the rose garden, Theehuis De Reiger, bike rental, cyclists, parakeets, and a lawn jam from 13:00 to 19:00 with a free ukulele. Its music uses an existing playlist.
+- **New residents:** Ruben, Sanne and Lotte.
+- **Shared-code changes:**
+  - **World edge:** the world grows south; the old north edge is kept, so no empty strips open beside the Jordaan.
+  - **`house()`:** can put windows on its back face (rows whose backs face a park).
+  - **`music_play`:** jam spots can name their band.
+- **Tests:** `suite_amsterdam` 142/142 on mains power. The district's three FPS samples all hit the 60 fps cap.
+
 ### 2.1 Amsterdam: first playable district (apeverse-2-living-worlds branch)
 
 Details in `docs/AMSTERDAM.md`.

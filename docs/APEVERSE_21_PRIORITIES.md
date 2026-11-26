@@ -40,10 +40,10 @@ Last updated 26 Nov 2026, after the Brand District pilot. **DONE** means built, 
 ## 4. New destinations
 
 - **DONE:**
+  - Amsterdam district 2: the Museum quarter + Vondelpark (museum with a walk-through passage and a gallery trail, Museumplein, Stadhouderskade brand shops, Vondelpark with ponds, ducks and an afternoon lawn jam, tram to Museumplein). `suite_amsterdam` 142/142.
   - Amsterdam first district: Centraal, Damrak, Dam, the Singel and Herengracht, the Jordaan. Release gate auto-tested, 85/85.
 - **NEXT for Amsterdam:**
   - Leidseplein / Rembrandtplein nightlife.
-  - Vondelpark and Museumplein.
   - The NDSM ferry.
   - The Bloemendaal beach trip.
   - More walk-in interiors.

@@ -105,3 +105,23 @@ Regression turned up an intermittent ApePhone failure, unrelated to routing. The
 Every sampled route is now under the 400 ms budget.
 
 **Rides (`js/rides.js`):** walking-route legs are now string-pulled. Every corner whose shortcut is clear for a vehicle is dropped, so taxis take smooth lines instead of grid zigzags. The Koh Tao songthaew covers 20 m in its first 6 s again; it had dropped to 4–6 m with the twistier route.
+
+
+## 2.1: roads for vehicles, warm GPS everywhere
+
+**Madrid's Pinar barrio is joined to the grid** (`js/road_links.js`).
+- **What was wrong:** the barrio street (z 0, x −92…92) stopped 48 m short of the grid avenues at x = ±140, across paved plazas.
+- **Fix:** two real connector streets are built across the plaza edges: 8 m of asphalt, kerbs, a dashed centre line and zebra crossings.
+- **Gran Vía east:** gets a 22 m link to the x = 140 avenue.
+- **What uses them:** they join `W.mapRoads` before `traffic.js` reads it, so AI cars drive them and the new junctions get traffic lights.
+- **Clearance check:** every connector is checked against the world's collision first, and one that isn't clear is skipped and reported.
+- **Not connected, on purpose:** Calle Montera and Malasaña are stone-paved pedestrian streets, so cars never route through them.
+- **Result:** Madrid's street map goes from 7 separate pieces to 4. A barrio taxi now picks you up at the kerb and drives 100% on streets.
+
+**When you drive, the GPS follows streets.** Riding your own car, Zip-EV, tuk-tuk or scooter in a world with a street map, the minimap route and turn bar come from the road planner the taxis use. Walking and cycling keep the walkable route. Madrid test: 100% of 199 route points on streets.
+
+**Background warm-up** (`pathfind.js`).
+- **How it works:** after entering a world, idle frames fill the GPS cost cache bin by bin (nearest to you first, then around every place), within 2.5 ms per frame.
+- **Memory:** the cache is a 4 KB byte array per 16 m bin, about 1 MB for a whole world.
+- **Astro-9:** 517 bins in about 84 s, worst frame 25 ms. After that every sampled route takes ≤ 8 ms (it was 300–520 ms cold).
+- **`suite_gps`:** back to 88/88.

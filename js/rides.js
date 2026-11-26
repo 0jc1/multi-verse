@@ -219,5 +219,10 @@ if (TR) { const go0 = TR.go; TR.go0 = go0;
     const c = (TR.CFG && TR.CFG[W.id]) || {}, ok = RD.start({ x, z, name, price, icon: c.taxi ? c.taxi.icon : '🚕', title: c.taxi ? tr(c.taxi.n[0], c.taxi.n[1]) : 'Taxi' });
     if (!ok) { if (price) AV.txn(price, 'Taxi refund'); return go0.call(TR, x, z, name, 0) }   /* could not plan a drive: old fade ride, free */
     TR.rides = (TR.rides || 0) + 1; return true } }
+/* driving your own vehicle: the GPS (minimap route + turn bar) follows the street network instead of footpaths where the world has
+   one; walking, bicycles and worlds without a street map keep the walkable route */
+RD.driving = () => { const c = ACT.cur; return !!(c && c.id === 'ride' && c.rec && /^(car|woblr|tuktuk|scooter)$/.test(c.rec.kind)) };
+addEventListener('load', () => { const MM = AV.minimap; if (!MM || !MM._route) return; const r0 = MM._route;
+  MM._route = (x, z) => { const W = AV.W; if (W && RD.driving() && RD.net(W)) { const p = RD.plan(W, { x: AV.P.x, z: AV.P.z }, { x, z }); if (p.how === 'road') { RD.stats.gpsRoad = (RD.stats.gpsRoad || 0) + 1; return p.pts.slice(1) } } return r0(x, z) } });
 const prevE = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (prevE) prevE(W); RD.cur = null };
 })(window.AV);

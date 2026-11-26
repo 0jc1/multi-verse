@@ -22,8 +22,8 @@ Last updated 26 Nov 2026, after the Brand District pilot. **DONE** means built, 
   - **Dealers in 6 more worlds** (Bambu Motors in Chiang Mai, Pai, Koh Tao and Da Nang; Astro-9 Hover Customs; Woblr Wien), with buy, drive, park and save.
   - Portal freight for owned vehicles between worlds, with per-world vehicle rules.
   - Zippit e-scooter rental on Brand Row.
+  - Madrid's Pinar streets connected to the grid; the driving GPS follows streets; GPS is warmed in idle frames (Astro-9 routes ≤ 8 ms).
 - **NEXT:**
-  - Connect Madrid's Pinar barrio streets to the road map.
   - KongKart taxi branding, once the owner picks the name.
   - AI road traffic outside Madrid (Vienna, Da Nang, Chiang Mai), which needs curved-road support.
 
@@ -58,7 +58,6 @@ Only after the cross-world systems above, as the brief orders.
 
 ## Known failures carried forward (not hidden)
 
-- `suite_gps`: one cold Astro-9 route at 417 ms (budget 400). It appeared when the dealer place shifted the sampled pairs. The next step is to warm the path cache in idle frames.
 
 - `suite_gfx`: 4 pre-existing failures.
 - `suite_pai`: one outdated ambience check.

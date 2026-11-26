@@ -273,6 +273,15 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Routing: roads for vehicles, Pinar connected, warm GPS (apeverse-2-living-worlds branch)
+
+- **Madrid Pinar:** connector streets to the grid (with traffic lights), plus a Gran Vía east link. Pedestrian streets are kept car-free.
+- **Driving GPS:** follows streets.
+- **GPS warm-up in idle frames:** Astro-9 routes now take ≤ 8 ms.
+- **Retrieval:** owned vehicles in all six new worlds come back after a save and load, can be ridden, brought to you (valet) and located. That's tested with the game's loader and a state swap; it isn't a full page reload.
+- **Tests:** `suite_roads` 18/18 (new), `suite_dealers` 82/82 (retrieval added).
+- **Regression:** madrid 79/79, traffic 26/26, drive 39/39, rides 192/192, gps 88/88, minimap 41/41, home 61/61, npc 84/84, integration 131/131, sources 65/65, brand 123/123, vehicles 52/52.
+
 ### 2.1 Vehicles in more worlds (apeverse-2-living-worlds branch)
 
 - **Dealers in 6 more worlds:** Bambu Motors in Chiang Mai (scooter, tuk-tuk, bicycle), Pai, Koh Tao and Da Nang; Astro-9 Hover Customs (hover bike, hover scooter); Woblr Motors Wien (Zip-EV, bicycle). Each has a local-language sign.

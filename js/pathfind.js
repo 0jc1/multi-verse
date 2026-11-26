@@ -29,12 +29,13 @@ function index(W) { const I = W.__pf; if (I && I.nc === W.cols.length && I.nr ==
   PF.stats.rebuilds = (PF.stats.rebuilds || 0) + 1; return W.__pf = { nc: W.cols.length, nr: W.circles.length, nrd: (W.mapRoads || []).length, lastC: W.cols[W.cols.length - 1], lastR: W.circles[W.circles.length - 1], cols, circ, roads, cache: new Map(), size: 0 } }
 const segD = (px, pz, r) => { const dx = r[2] - r[0], dz = r[3] - r[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - r[0]) * dx + (pz - r[1]) * dz) / l2)); return Math.hypot(px - r[0] - dx * t, pz - r[1] - dz * t) };
 /* 0 blocked, 1 walk, 2 carriageway */
-function cost(W, I, x, z) { const qx = Math.round(x * 4), qz = Math.round(z * 4), bin = Math.floor(qx / 64) * 65536 + Math.floor(qz / 64); let bc = I.cache.get(bin); if (!bc) I.cache.set(bin, bc = new Map()); const k = qx * 131072 + qz; let v = bc.get(k); if (v !== undefined) return v; v = 1;
+/* cache: one 64x64 Int8Array per 16 m bin (-1 = not computed yet), ~4 KB per bin */
+function cost(W, I, x, z) { const qx = Math.round(x * 4), qz = Math.round(z * 4), gx = Math.floor(qx / 64), gz = Math.floor(qz / 64), bin = gx * 65536 + gz; let bc = I.cache.get(bin); if (!bc) { I.cache.set(bin, bc = new Int8Array(4096).fill(-1)) } const k = (qx - gx * 64) * 64 + (qz - gz * 64); let v = bc[k]; if (v >= 0) return v; v = 1;
   const s = W.surface(x, z); if (s === null || W.surface(x + M, z) === null || W.surface(x - M, z) === null || W.surface(x, z + M) === null || W.surface(x, z - M) === null) v = 0;
   else { const bk = Math.floor(x / B) + ',' + Math.floor(z / B); for (const c of I.cols.get(bk) || []) if (x > c[0] - M && x < c[1] + M && z > c[2] - M && z < c[3] + M) { v = 0; break }
     if (v) for (const c of I.circ.get(bk) || []) if (Math.hypot(x - c[0], z - c[1]) < c[2] + M) { v = 0; break }
     if (v) for (const r of I.roads.get(bk) || []) if (segD(x, z, r) < (r[4] || 6) / 2) { v = 2; break } }
-  if (++I.size > 600000) { I.cache.clear(); I.size = 0 } bc.set(k, v); return v }
+  bc[k] = v; return v }
 PF.walkable = (W, x, z) => cost(W, index(W), x, z) > 0;
 function los(W, I, a, b, strict) { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / .25)); let road = 0; for (let i = 1; i < n; i++) { const t = i / n, v = cost(W, I, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t); if (!v) return false; if (v === 2) road++ } return !strict || road * .25 < 16 }   /* 0.25 m samples: a diagonal cannot clip a thin wall corner */
 function snap(W, I, p, cell) { if (cost(W, I, p[0], p[1])) return p; for (let r = cell; r < 14; r += cell * .5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = p[0] + Math.cos(a) * r, z = p[1] + Math.sin(a) * r; if (cost(W, I, x, z)) return [x, z] } return null }
@@ -66,6 +67,18 @@ PF.route = function (W, a, b) { const t0 = performance.now(), I = index(W), A = 
     if (!out) { out = [Bp]; how = 'straight (no path found)'; PF.stats.fails++ } }
   if (how !== 'los' && !how.startsWith('straight')) { const L = out[out.length - 1]; if ((L[0] !== Bp[0] || L[1] !== Bp[1]) && los(W, I, L, Bp, false)) out.push(Bp) }
   const ms = performance.now() - t0; PF.stats.routes++; PF.stats.ms = +ms.toFixed(1); PF.stats.maxMs = Math.max(PF.stats.maxMs, +ms.toFixed(1)); PF.stats.how = how; return out };
+/* 2.1: WARM-UP. The first route through an area pays for computing its cost cells (surface + collision per 0.25 m cell); repeats
+   are 3-5x faster.  After entering a world, idle frames fill the cache bin by bin (16 m bins, nearest to you first, then around every
+   named place), within a 2.5 ms-per-frame budget, so warming never causes a hitch of its own.  PF.stats.warm = bins done. */
+let WQ = null;
+function warmQueue(W) { const I = index(W), ps = (W.places || []).filter(p => p && isFinite(p.x)), P = AV.P, seen = new Set(), q = [];
+  const ring = (cx, cz, R) => { for (let bx = Math.floor((cx - R) / B); bx <= Math.floor((cx + R) / B); bx++) for (let bz = Math.floor((cz - R) / B); bz <= Math.floor((cz + R) / B); bz++) { const k = bx * 65536 + bz; if (seen.has(k)) continue; seen.add(k); q.push([bx, bz, Math.hypot((bx + .5) * B - P.x, (bz + .5) * B - P.z)]) } };
+  ring(P.x, P.z, 64); for (const p of ps) ring(p.x, p.z, 40); q.sort((a, b) => a[2] - b[2]); return { W, I, q, i: 0, cell: 0 } }
+PF.warmStart = W => { WQ = W ? warmQueue(W) : null; PF.stats.warm = 0; PF.stats.warmBins = WQ ? WQ.q.length : 0 };
+AV.frameFns.push(() => { if (!WQ || WQ.W !== AV.W || !AV.running) return; const t0 = performance.now(), I = index(WQ.W);
+  while (WQ.i < WQ.q.length && performance.now() - t0 < 2.5) { const [bx, bz] = WQ.q[WQ.i]; for (let n = 0; n < 256 && WQ.cell < 4096; n++, WQ.cell++) { const cx = WQ.cell & 63, cz = WQ.cell >> 6; cost(WQ.W, I, bx * B + cx * .25, bz * B + cz * .25) } if (WQ.cell >= 4096) { WQ.cell = 0; WQ.i++; PF.stats.warm++ } }
+  if (WQ.i >= WQ.q.length) { PF.stats.warmMs = Math.round(performance.now() - (PF.stats.warmT0 || 0)); WQ = null } });
+{ const pe = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (pe) pe(W); WQ = null; setTimeout(() => { if (AV.W === W) { PF.stats.warmT0 = performance.now(); PF.warmStart(W) } }, 2000) } }
 /* the GPS uses it in every world */
 addEventListener('load', () => { const MM = AV.minimap; if (!MM) return; const r0 = MM._route; MM._routeOld = r0;
   /* minimap.js keeps its own routeTo for setDest + re-routing; route through AV.path by replacing the function it calls */

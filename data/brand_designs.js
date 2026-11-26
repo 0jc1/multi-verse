@@ -1,0 +1,36 @@
+/* APEVERSE 2.1 - data/brand_designs.js : SWAG garment designs for the Brand District (loaded after merch_catalog.js, before merch.js).
+   SWAG had no original artwork on this laptop (only a concept board), so these prints are ORIGINAL in-game lettering drawn here in
+   code, following the board's direction (cream graffiti letters with a dark outline, a crown, drips, tie-dye, palm sunsets). The
+   concept board itself is never used as a texture.  quality: 'procedural-original' (not owner print masters; real-world printing
+   would need clean vector art from the owner).  They join AV.MERCH, so merch.js handles try-on, buy, wear, save and NPC prints. */
+'use strict';
+(function () {
+  const M = window.AV && window.AV.MERCH; if (!M || typeof document === 'undefined') return;
+  const S = 512, mk = draw => { const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'); g.fillStyle = '#f7f1e3'; g.fillRect(0, 0, S, S); draw(g); return c.toDataURL('image/png') };
+  const crown = (g, x, y, s, col) => { g.save(); g.translate(x, y); g.scale(s, s); g.fillStyle = col || '#f2c230'; g.strokeStyle = '#1b1320'; g.lineWidth = 6; g.beginPath(); g.moveTo(-60, 30); g.lineTo(-70, -30); g.lineTo(-35, 0); g.lineTo(0, -45); g.lineTo(35, 0); g.lineTo(70, -30); g.lineTo(60, 30); g.closePath(); g.fill(); g.stroke(); for (const cx of [-70, 0, 70]) { g.beginPath(); g.arc(cx, cx ? -34 : -50, 8, 0, 7); g.fill(); g.stroke() } g.restore() };
+  /* graffiti word: per-letter tilt + bounce, thick dark outline, highlight, optional drips */
+  const word = (g, txt, x, y, size, fill, out, opt) => { opt = opt || {}; g.save(); g.font = '900 ' + size + 'px Impact, "Arial Black", sans-serif'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round';
+    const ws = [...txt].map(ch => g.measureText(ch).width * .92), tot = ws.reduce((a, b) => a + b, 0); let cx = x - tot / 2;
+    [...txt].forEach((ch, i) => { const w = ws[i]; g.save(); g.translate(cx + w / 2, y + (opt.bounce ? Math.sin(i * 1.7) * size * .06 : 0)); g.rotate((opt.tilt || 0) * (i % 2 ? 1 : -1)); g.textAlign = 'center';
+      g.lineWidth = size * .2; g.strokeStyle = out; g.strokeText(ch, 0, 0); g.fillStyle = fill; g.fillText(ch, 0, 0); if (opt.shine) { g.fillStyle = 'rgba(255,255,255,.45)'; g.fillText(ch, -size * .03, -size * .04); g.fillStyle = fill; g.fillText(ch, 0, size * .02) }
+      if (opt.drip) { g.fillStyle = opt.dripCol || out; for (let k = 0; k < 2; k++) { const dx = (k ? .22 : -.18) * w, L = size * (.2 + ((i * 7 + k * 3) % 5) * .07); g.fillRect(dx - size * .025, size * .02, size * .05, L); g.beginPath(); g.arc(dx, size * .02 + L, size * .04, 0, 7); g.fill() } }
+      g.restore(); cx += w }); g.restore() };
+  const designs = [
+    ['swag_classic', ['SWAG Classic', 'SWAG Clásico'], g => { crown(g, 256, 118, 1.1); word(g, 'SWAG', 256, 330, 190, '#f4ead0', '#1b1320', { tilt: .06, bounce: 1, shine: 1 }); g.font = 'bold 40px "Arial Black", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#7a3aa8'; g.fillText('APEVERSE', 256, 420) }],
+    ['swag_tiedye', ['SWAG Tie-Dye Swirl', 'SWAG Remolino Tie-Dye'], g => { const cols = ['#ff5ab0', '#ffd23a', '#3ad8c8', '#8a5aff', '#ff8a3a']; g.save(); g.translate(256, 256); for (let r = 230; r > 10; r -= 12) for (let a = 0; a < 6.28; a += .09) { g.fillStyle = cols[Math.floor((a * 2 + r / 23) % cols.length)]; g.beginPath(); g.arc(Math.cos(a + r / 60) * r * .95, Math.sin(a + r / 60) * r * .95, 13, 0, 7); g.fill() } g.restore();
+      word(g, 'SWAG', 256, 300, 170, '#fff8e8', '#1b1320', { tilt: .05, drip: 1, dripCol: '#1b1320' }) }],
+    ['swag_crown_tag', ['SWAG Crown Tag', 'SWAG Firma con Corona'], g => { g.save(); g.translate(256, 270); g.rotate(-.12); word(g, 'swag', 0, 0, 200, '#1b1320', '#1b1320', { tilt: .12, drip: 1 }); g.restore(); crown(g, 330, 130, .8, '#f2c230'); g.strokeStyle = '#ff4ab0'; g.lineWidth = 8; g.beginPath(); g.moveTo(90, 360); g.bezierCurveTo(200, 400, 320, 330, 430, 380); g.stroke() }],
+    ['swag_higher', ['SWAG Higher Thinking', 'SWAG Pensar Más Alto'], g => { g.fillStyle = '#ffb02a'; g.beginPath(); g.arc(256, 250, 90, 0, 7); g.fill(); g.strokeStyle = '#ff7a2a'; g.lineWidth = 10; for (let k = 0; k < 16; k++) { const a = k / 16 * 6.283; g.beginPath(); g.moveTo(256 + Math.cos(a) * 105, 250 + Math.sin(a) * 105); g.lineTo(256 + Math.cos(a) * 140, 250 + Math.sin(a) * 140); g.stroke() }
+      for (const [x, s, c] of [[150, 1, '#d83a3a'], [362, .8, '#8a5aff']]) { g.fillStyle = '#f4ead0'; g.fillRect(x - 10 * s, 330, 20 * s, 60 * s); g.fillStyle = c; g.beginPath(); g.ellipse(x, 335, 50 * s, 34 * s, 0, Math.PI, 0); g.fill(); g.fillStyle = '#fff'; for (const d of [-20, 6, 26]) { g.beginPath(); g.arc(x + d * s, 318, 6 * s, 0, 7); g.fill() } }
+      g.font = '900 52px Impact, "Arial Black", sans-serif'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = '#1b1320'; g.fillStyle = '#3aa85a'; g.strokeText('HIGHER', 256, 96); g.fillText('HIGHER', 256, 96); g.strokeText('THINKING', 256, 150); g.fillText('THINKING', 256, 150); g.font = 'bold 34px "Arial Black", sans-serif'; g.fillStyle = '#1b1320'; g.fillText('SWAG', 256, 460) }],
+    ['swag_palms', ['SWAG Palm Sunset', 'SWAG Atardecer de Palmeras'], g => { const gr = g.createLinearGradient(0, 90, 0, 380); gr.addColorStop(0, '#ff5ab0'); gr.addColorStop(.6, '#ffb02a'); gr.addColorStop(1, '#ffe08a'); g.fillStyle = gr; g.beginPath(); g.arc(256, 280, 175, Math.PI, 0); g.fill(); g.fillStyle = '#7a3aa8'; for (let k = 0; k < 5; k++) g.fillRect(81, 200 + k * 18, 350, 5);
+      g.fillStyle = '#1b1320'; for (const [x, h, l] of [[150, 190, -1], [372, 160, 1]]) { g.fillRect(x - 6, 280 - h, 12, h); for (let k = 0; k < 6; k++) { g.save(); g.translate(x, 280 - h); g.rotate(-2.6 + k * .55); g.beginPath(); g.ellipse(45, 0, 48, 12, 0, 0, 7); g.fill(); g.restore() } }
+      g.fillRect(70, 280, 372, 10); word(g, 'SWAG', 256, 400, 120, '#f4ead0', '#1b1320', { tilt: .04 }); g.font = 'bold 30px "Arial Black", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#7a3aa8'; g.fillText('× APEVERSE', 256, 450) }],
+    ['swag_alien', ['SWAG Alien Peace', 'SWAG Paz Alienígena'], g => { g.fillStyle = '#8ad86a'; g.beginPath(); g.ellipse(256, 230, 110, 140, 0, 0, 7); g.fill(); g.lineWidth = 8; g.strokeStyle = '#1b1320'; g.stroke(); g.fillStyle = '#1b1320'; for (const s of [-1, 1]) { g.save(); g.translate(256 + s * 48, 230); g.rotate(s * .5); g.beginPath(); g.ellipse(0, 0, 40, 22, 0, 0, 7); g.fill(); g.restore() }
+      g.lineWidth = 7; g.beginPath(); g.arc(256, 300, 18, .2, Math.PI - .2); g.stroke(); g.strokeStyle = '#f2c230'; g.lineWidth = 12; g.beginPath(); g.arc(256, 230, 165, 0, 7); g.stroke(); g.beginPath(); g.moveTo(256, 65); g.lineTo(256, 395); g.moveTo(256, 230); g.lineTo(140, 345); g.moveTo(256, 230); g.lineTo(372, 345); g.stroke(); word(g, 'SWAG', 256, 470, 80, '#f4ead0', '#1b1320') }]
+  ];
+  M.collections.swag = { brand: 'SWAG', n: ['SWAG Streetwear', 'SWAG Streetwear'] };
+  if (M.brands.indexOf('SWAG') < 0) M.brands.push('SWAG');
+  for (const [id, name, draw] of designs) { if (M.designs.some(d => d.id === id)) continue; let url = ''; try { url = mk(draw) } catch (e) { continue }
+    M.designs.push({ id, name, brand: 'SWAG', collection: 'swag', tex: url, thumb: url, source: 'procedural (data/brand_designs.js)', quality: 'procedural-original', realWorldUrl: null }) }
+})();

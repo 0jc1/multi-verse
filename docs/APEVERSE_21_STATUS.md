@@ -8,6 +8,8 @@ Source brief: `APEVERSE_21_LIVING_MULTIVERSE_OVERHAUL_20261126` (kept outside th
 - **MISSING:** nobody has found it in the game.
 - **VERIFIED BY HUMAN:** nothing is marked this way yet. That needs the owner's playtest.
 
+> **Update (Phase 3):** Brand Row and the ApeMart Express / PuffPop rollout are built. See `docs/BRAND_DISTRICT.md`, `docs/BRAND_RECONCILIATION_21.md` and the living priority list in `docs/APEVERSE_21_PRIORITIES.md`.
+
 ## Failures and gaps first
 
 ### Still open after this milestone

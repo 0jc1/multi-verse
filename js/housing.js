@@ -45,7 +45,7 @@ const CAT = H.CAT = {
   desk: { n: L('Desk + computer', 'Escritorio + ordenador'), ic: '💻', p: 110, w: 1.2, d: .6, parts: () => [[B().box, 0xe8e0d0, M(0, .74, 0, 1.2, .04, .6)], [B().box, 0x8a8a8e, M(-.55, .36, 0, .04, .72, .55)], [B().box, 0x8a8a8e, M(.55, .36, 0, .04, .72, .55)], [B().box, 0x1e1e22, M(0, 1.02, -.18, .55, .34, .03)], [B().box, 0x3a8ad8, M(0, 1.02, -.16, .5, .3, .01), 1], [B().box, 0x2a2a2e, M(0, .77, .08, .4, .02, .14)]] },
   poster: { n: L('Poster (store design)', 'Póster (diseño de la tienda)'), ic: '🖼', p: 20, wall: true, size: .8 },
   print: { n: L('Framed art print', 'Lámina enmarcada'), ic: '🖼', p: 60, wall: true, size: 1.1, frame: true } };
-const ORDER = ['bed', 'sofa', 'armchair', 'coffee', 'dining', 'chair', 'lamp', 'plant', 'rug', 'shelf', 'wardrobe', 'record', 'speakers', 'tv', 'dj', 'arcade', 'desk', 'poster', 'print'];
+const ORDER = H.ORDER = ['bed', 'sofa', 'armchair', 'coffee', 'dining', 'chair', 'lamp', 'plant', 'rug', 'shelf', 'wardrobe', 'record', 'speakers', 'tv', 'dj', 'arcade', 'desk', 'poster', 'print'];   /* 2.1: brand furniture (SOLTERRA Living) is appended */
 const geoCache = {}; const geoOf = k => geoCache[k] || (geoCache[k] = AV.kit.merge(CAT[k].parts()));
 const st = () => { const S = AV.S; S.homes = S.homes || {}; return S.homes };
 const rec = pid => st()[pid] || null;

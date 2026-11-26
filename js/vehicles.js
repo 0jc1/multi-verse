@@ -18,11 +18,13 @@ const KINDS = {
   hover: { n: L('Hover scooter', 'Patinete flotante'), icon: '🛸', top: 9, boost: 9, acc: 4, brake: 5, turn: 2.6, eye: 1.85, back: 0, horn: 'chime', engine: 'hover' },
   tuktuk: { n: L('Tuk-tuk', 'Tuk-tuk'), icon: '🛺', top: 9, boost: 10.5, acc: 3.2, brake: 8, turn: 1.5, eye: 1.55, back: -.36, horn: 'horn', engine: 'petrol' },
   car: { n: L('Small car', 'Coche pequeño'), icon: '🚗', top: 15, boost: 17, acc: 4.2, brake: 10, turn: 1.25, eye: 1.2, back: -.3, horn: 'horn', engine: 'petrol' },
-  hoverbike: { n: L('Hover bike', 'Moto flotante'), icon: '🏍', top: 17, boost: 21, acc: 6.5, brake: 9, turn: 2, eye: 1.7, back: .3, horn: 'chime', engine: 'hover' }
+  hoverbike: { n: L('Hover bike', 'Moto flotante'), icon: '🏍', top: 17, boost: 21, acc: 6.5, brake: 9, turn: 2, eye: 1.7, back: .3, horn: 'chime', engine: 'hover' },
+  /* 2.1 Brand District: Woblr Motors Zip-EV, a tiny electric city car (mesh from js/brand_district.js via VEH.extraGeo) */
+  woblr: { n: L('Woblr Zip-EV', 'Woblr Zip-EV'), icon: '🚙', top: 13.5, boost: 14.5, acc: 4.8, brake: 10, turn: 1.45, eye: 1.25, back: -.2, horn: 'chime', engine: 'electric' }
 };
 const VEH = AV.veh = { KINDS };
 /* body reach from the rider point: [front, rear, half-width for the corner probes] (meshes are drawn offset by KINDS.back) */
-const REACH = { car: [2.05, 2.6, .78], tuktuk: [1.5, 1.6, .6], scooter: [1.05, .8, 0], bicycle: [.95, .9, 0], escooter: [.6, .5, 0], hover: [.6, .5, 0], hoverbike: [1.3, 1.1, 0] }; VEH.REACH = REACH;
+const REACH = { woblr: [1.6, 1.7, .74], car: [2.05, 2.6, .78], tuktuk: [1.5, 1.6, .6], scooter: [1.05, .8, 0], bicycle: [.95, .9, 0], escooter: [.6, .5, 0], hover: [.6, .5, 0], hoverbike: [1.3, 1.1, 0] }; VEH.REACH = REACH;
 const st = () => { const S = AV.S; S.veh = S.veh || { list: [], n: 0 }; return S.veh };
 const blip = (f, d, w, v) => A.blip && A.blip(f, d, w, v);
 
@@ -31,7 +33,8 @@ const meshCache = {};
 function geoFor(kind, col) {
   const k = kind + col; if (meshCache[k]) return meshCache[k];
   let g;
-  if (/^(bicycle|scooter|tuktuk|car)$/.test(kind) && CY && CY.VB && CY.VB[kind]) g = CY.VB[kind](col, { rider: false });
+  if (VEH.extraGeo && VEH.extraGeo[kind]) g = VEH.extraGeo[kind](col);   /* 2.1: brand vehicles (Woblr Zip-EV) */
+  else if (/^(bicycle|scooter|tuktuk|car)$/.test(kind) && CY && CY.VB && CY.VB[kind]) g = CY.VB[kind](col, { rider: false });
   else if (kind === 'hoverbike') {   /* sleek alien hover bike: teardrop body, cockpit, windscreen, two glowing ring pods */
     const B = AV.kit.BG, M = AV.kit.M; g = AV.kit.merge([[B.sph, col, M(0, .55, 0, .38, .3, 1.15)], [B.sph, 0x1a1a24, M(0, .78, -.15, .24, .16, .5)], [B.box, 0x9ae8ff, M(0, .95, .55, .3, .22, .04, -.5, 0, 0)], [B.cyl, 0x2a2a32, M(0, .35, .75, .32, .12, .32, 0, 0, Math.PI / 2)], [B.cyl, 0x2a2a32, M(0, .35, -.75, .32, .12, .32, 0, 0, Math.PI / 2)], [B.cyl, 0xff4ad2, M(0, .2, .75, .34, .04, .34), 1], [B.cyl, 0x4ad8ff, M(0, .2, -.75, .34, .04, .34), 1], [B.box, 0x1a1a1a, M(0, 1.02, .42, .7, .04, .04)]]);
   } else {   /* kick e-scooter / hover scooter: deck, stem, bars, two small wheels (or a glow pad) */

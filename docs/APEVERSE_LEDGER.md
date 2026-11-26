@@ -18,7 +18,7 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
   - `suite_pai`: "ambience stops outside Pai" (stale since M13).
   - `suite_jlm`: written for an older runner interface, so it can't run.
 - **Performance:** at arrival on Medium, Ape Town draws 687 calls at 39 fps and Da Nang runs at 30 fps.
-- **Not built yet:** signage pass, Brand District, Amsterdam.
+- **Brand District:** built (pilot). Not built yet: the local signage pass in existing worlds, and Amsterdam. Priorities are in `docs/APEVERSE_21_PRIORITIES.md`.
 
 ## Completed and verified
 
@@ -272,6 +272,26 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **Render time:** down 4–8% on average.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
+
+### 2.1 Phase 3: Brand Row, the Brand District pilot (apeverse-2-living-worlds branch)
+
+- **What it is:** six walk-in branded shops in Ape Town's unused east strip, each with its own architecture, an authored sign, staff and a working checkout. Full details in `docs/BRAND_DISTRICT.md`.
+- **What you can buy and use:**
+  - **SWAG:** wearable tees and hoodies.
+  - **Groove Dealers:** LPs and a boombox that plays them.
+  - **Monkey Brew:** ales (drink effect) and kombucha.
+  - **Woblr Motors:** the Zip-EV car, which you own and drive.
+  - **ApePhone Store:** skins that restyle the phone, and a lens that opens photo mode.
+  - **SOLTERRA Living:** furniture, delivered to your home stock.
+- **On the street:** an ApeMart kiosk, PuffPop vending and a Zippit dock.
+- **Performance:** one sign atlas covers all signage, and the geometry is merged.
+  - In the street: +23 draw calls, still near 60 fps.
+  - At the Ape Town arrival: +5 calls, FPS unchanged within noise.
+- **Rollout to 7 cities:** an ApeMart Express kiosk plus PuffPop vending, with a local-language subline, placed clear of walkways and roofs.
+- **Brand registry:** reconciled in `docs/BRAND_RECONCILIATION_21.md`. "Banana Republic" is renamed BANANARCHY; collisions are logged for the owner.
+- **Test:** `suite_brand`, 123/123.
+- **Regression:** merch 93/93 (test updated for SWAG; SWAG designs now carry `realWorldUrl: null`), home 61/61, drive, vehicles, phone, integration, consume, sources, rides, fest, npc and biz all pass in full.
+- **Garage:** a purchase now refunds if the vehicle can't be parked.
 
 ### 2.1 Phase 0-2: audit, rides that drive, consumable sources (apeverse-2-living-worlds branch)
 

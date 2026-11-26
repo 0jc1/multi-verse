@@ -55,8 +55,9 @@ function buildDealer(W) { const D = DEAL[W.id]; if (!D || !W.ctx) return; const 
 /* ---------- buy / own ---------- */
 G.buy = function (wid, kind, col) { const dl = G.dealers[wid], W = AV.W; if (!dl || !dl.ok || !W || W.id !== wid) return null; const it = dl.D.stock.find(x => x.kind === kind); if (!it) return null;
   if (!AV.txn(-it.price, say(it.model))) return null;
-  let [x, z] = dl.bay; if (!AV.isFree(W, x, z, kind === 'car' ? 1.6 : .8)) { const sp = AV.safeSpot(W, x, z); x = sp[0]; z = sp[1] }
+  let [x, z] = dl.bay; if (!AV.isFree(W, x, z, (kind === 'car' || kind === 'woblr') ? 1.6 : .8)) { const sp = AV.safeSpot(W, x, z); x = sp[0]; z = sp[1] }
   const rec = VEH.rent(kind, x, z, VEH.openYaw(W, x, z, dl.lot.ry + Math.PI), { price: 0, col: col != null ? col : it.cols[0], ride: false, stand: 'owned' });
+  if (!rec) { AV.txn(it.price, say(it.model) + tr(' (refund: it could not be parked)', ' (devolución: no se pudo aparcar)')); return null }   /* 2.1: never charge for a vehicle that did not appear */
   rec.owned = true; rec.until = OWN_UNTIL; rec.model = it.model; rec.bought = AV.S.day; AV.save();
   AV.toast('🔑 ' + tr('It is yours: ', 'Es tuyo: ') + say(it.model) + tr('. Parked at the lot. Y = your garage.', '. Aparcado en el concesionario. Y = tu garaje.')); G.stats.bought = (G.stats.bought || 0) + 1; return rec };
 G.paint = function (rec) { if (!rec || !rec.owned) return false; const i = PALETTE.indexOf(rec.col), next = PALETTE[(i + 1) % PALETTE.length]; if (!AV.txn(-PAINT, tr('Paint job', 'Pintura'))) return false; rec.col = next; if (!(ACT.cur && ACT.cur.rec === rec)) VEH.respawn(rec); AV.save(); return true };

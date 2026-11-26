@@ -46,11 +46,52 @@ function scan(W) { const seen = new Set(groups.map(g => g.gr)); let small = 0;
   W.group.traverse(o => { if (o.isInstancedMesh && o.castShadow && !o.userData.pfShadow) { const g = o.geometry; if (!g.boundingSphere) g.computeBoundingSphere(); if (g.boundingSphere.radius < 1.6) { o.castShadow = false; o.userData.pfShadow = 1; small++ } } });
   PF.small += small; groups = groups.filter(g => g.gr.parent) }
 const v = new THREE.Vector3();
+/* M13: BAKED MID-DISTANCE CHARACTER. A detailed character is ~4 skinned parts (body, shirt, pants, shoes: one PBR material each)
+   + eyes / lids / hair: ~9 draw calls, and the frame in busy worlds is limited by CPU time in the render call (draw calls), not
+   triangles.  In the mid tier the opaque skinned parts that share one skeleton are merged ONCE into a single skinned mesh with
+   the material's 4-slot colour blend, ambient occlusion and the shirt print (decal) baked into vertex colours (same formulas as
+   pbr.js); eyes + lids (tiny at that range) are hidden.  Near characters are untouched; leaving mid restores everything.
+   Rebuilt if the parts or their materials change (async parts, outfit changes).  AV.perf.bakeMid = false turns it off. */
+PF.bakeMid = true; PF.baked = 0;
+const decalPx = new Map();
+function texPixels(t) { const im = t && t.image; if (!im || !im.width) return null; let d = decalPx.get(im); if (d) return d; try { const c = document.createElement('canvas'), w = Math.min(256, im.width), h = Math.max(1, Math.round(im.height * w / im.width)); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h); d = { w, h, px: x.getImageData(0, 0, w, h).data } } catch (e) { d = { fail: true } } decalPx.set(im, d); return d }
+const linC = v => Math.pow(v / 255, 2.2);
+function bakeMid(g) { const parts = g.all.map(e => e.o).filter(o => o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && matOf(o) && !matOf(o).transparent && !(matOf(o).defines && 'SHELL' in matOf(o).defines) && !o.userData.pfProxy);
+  if (parts.length < 2) return null; const skel = parts[0].skeleton; if (parts.some(o => o.skeleton !== skel || !o.bindMatrix.equals(parts[0].bindMatrix) || o.parent !== parts[0].parent)) return null;
+  let nV = 0, nI = 0; for (const o of parts) { const gg = o.geometry; nV += gg.attributes.position.count; nI += gg.index ? gg.index.count : gg.attributes.position.count }
+  const pos = new Float32Array(nV * 3), nor = new Float32Array(nV * 3), col = new Float32Array(nV * 3), si = new Float32Array(nV * 4), sw = new Float32Array(nV * 4), idx = new (nV > 65535 ? Uint32Array : Uint16Array)(nI); let vo = 0, io = 0;
+  for (const o of parts) { const gg = o.geometry, A = gg.attributes, n = A.position.count, M = matOf(o), U = M.userData && M.userData.u, aM = A.aMat, aAO = A.aAO;
+    const C = U ? [U.uC0.value, U.uC1.value, U.uC2.value, U.uC3.value] : null, base = M.color || new THREE.Color(.5, .5, .5);
+    const dec = U && M.defines && 'DECAL' in M.defines && U.tDec.value ? { p: texPixels(U.tDec.value), r: U.uDec.value, side: U.uDecSide.value } : null;
+    for (let i = 0; i < n; i++) { const j = vo + i; pos[j * 3] = A.position.getX(i); pos[j * 3 + 1] = A.position.getY(i); pos[j * 3 + 2] = A.position.getZ(i);
+      if (A.normal) { nor[j * 3] = A.normal.getX(i); nor[j * 3 + 1] = A.normal.getY(i); nor[j * 3 + 2] = A.normal.getZ(i) }
+      if (A.skinIndex) { si[j * 4] = A.skinIndex.getX(i); si[j * 4 + 1] = A.skinIndex.getY(i); si[j * 4 + 2] = A.skinIndex.getZ(i); si[j * 4 + 3] = A.skinIndex.getW(i); sw[j * 4] = A.skinWeight.getX(i); sw[j * 4 + 1] = A.skinWeight.getY(i); sw[j * 4 + 2] = A.skinWeight.getZ(i); sw[j * 4 + 3] = A.skinWeight.getW(i) }   /* r128: no getComponent */
+      let r, gc, b; if (C && aM) { const w = [aM.getX(i), aM.getY(i), aM.getZ(i), aM.getW(i)]; r = C[0].r * w[0] + C[1].r * w[1] + C[2].r * w[2] + C[3].r * w[3]; gc = C[0].g * w[0] + C[1].g * w[1] + C[2].g * w[2] + C[3].g * w[3]; b = C[0].b * w[0] + C[1].b * w[1] + C[2].b * w[2] + C[3].b * w[3];
+        if (dec && dec.p && !dec.p.fail) { const px = A.position.getX(i), py = A.position.getY(i), nz = A.normal ? A.normal.getZ(i) : 1; let u = (px - dec.r.x) / dec.r.z + .5; const v = (py - dec.r.y) / dec.r.w + .5;
+          if (u > 0 && u < 1 && v > 0 && v < 1) { const s0 = x => Math.min(1, Math.max(0, (x - .15) / .3)), fac = dec.side === 0 ? s0(Math.abs(nz)) : s0(nz * dec.side); if (dec.side < 0) u = 1 - u;
+            const X = Math.min(dec.p.w - 1, Math.floor(u * dec.p.w)), Y = Math.min(dec.p.h - 1, Math.floor((1 - v) * dec.p.h)), q = (Y * dec.p.w + X) * 4, a = dec.p.px[q + 3] / 255 * fac * w[0];
+            r = r + (linC(dec.p.px[q]) - r) * a; gc = gc + (linC(dec.p.px[q + 1]) - gc) * a; b = b + (linC(dec.p.px[q + 2]) - b) * a } } }
+      else { r = base.r; gc = base.g; b = base.b } const ao = aAO ? 1 + (aAO.getX(i) - 1) * .6 : 1; col[j * 3] = r * ao; col[j * 3 + 1] = gc * ao; col[j * 3 + 2] = b * ao }
+    if (gg.index) for (let i = 0; i < gg.index.count; i++) idx[io++] = gg.index.getX(i) + vo; else for (let i = 0; i < n; i++) idx[io++] = vo + i; vo += n }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4)); geo.setIndex(new THREE.BufferAttribute(idx, 1));
+  if (!parts[0].geometry.boundingSphere) parts[0].geometry.computeBoundingSphere(); geo.boundingSphere = parts[0].geometry.boundingSphere.clone(); geo.boundingSphere.radius *= 1.3;
+  const mat = PF._bmat || (PF._bmat = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .72, metalness: 0, envMap: AV.pbr && AV.pbr.env ? AV.pbr.env() : null, envMapIntensity: .8 }); m.skinning = true; m.userData.lin = 1; m.userData.shared = true; return m })());
+  const mesh = new THREE.SkinnedMesh(geo, mat); mesh.bind(skel, parts[0].bindMatrix); mesh.frustumCulled = parts[0].frustumCulled; mesh.castShadow = false; mesh.receiveShadow = true; mesh.visible = false; mesh.userData.pfProxy = 1; mesh.userData.pfBake = 1; parts[0].parent.add(mesh);
+  const sv = new THREE.Vector3(), small = g.all.map(e => e.o).filter(o => { if (o.isSkinnedMesh || !o.isMesh || !o.geometry || o.userData.pfProxy) return false; if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); o.getWorldScale(sv); return o.geometry.boundingSphere.radius * Math.max(sv.x, sv.y, sv.z) < .07 });
+  PF.baked++; return { mesh, parts, small } }
+PF.setBake = on => { PF.bakeMid = !!on; for (const g of groups) if (g.tier === 'mid') { if (on) midOn(g); else midOff(g) } };   /* A/B within one session */
+PF.bakedNow = () => groups.filter(g => g.bakeOn).length;
+const bakeSig = g => g.all.filter(e => e.o.isSkinnedMesh).map(e => e.o.geometry.uuid + matOf(e.o).uuid).join('|');
+function midOn(g) { if (!PF.bakeMid || g.bakeOn) return;   /* already on: never re-save the hidden masks */ if (g.bk && g.bk.sig !== bakeSig(g)) { g.bk.mesh.parent && g.bk.mesh.parent.remove(g.bk.mesh); g.bk.mesh.geometry.dispose(); g.bk = null }
+  if (!g.bk) { try { g.bk = bakeMid(g) } catch (e) { g.bk = null; PF.bakeErr = String(e && e.message || e) } if (g.bk) g.bk.sig = bakeSig(g) }   /* a bad character stays unbaked; never breaks the frame */ const b = g.bk; if (!b) return; b.saved = []; for (const o of b.parts.concat(b.small)) { b.saved.push([o, o.layers.mask]); o.layers.mask = 0 } b.mesh.visible = true; g.bakeOn = true }   /* layers, not .visible: the game re-shows eyes / lids (blinks) every frame */
+function midOff(g) { const b = g.bk; if (!b || !g.bakeOn) return; for (const [o, m] of b.saved || []) o.layers.mask = m; b.saved = null; b.mesh.visible = false; g.bakeOn = false }
+
 function setTier(g, tier) { const was = g.tier; if (was === tier) return; g.tier = tier;
   if (tier === 'far' && !g.proxy) g.proxy = proxyFor(g.gr, g.meshes);
   if (was === 'near' || was === 'mid') { if (tier === 'far' || tier === 'gone') { g.vis = g.gr.visible; g.gr.visible = false } }
   else if (tier === 'near' || tier === 'mid') g.gr.visible = g.vis !== false;   /* restore what the game had, not "true" */
   for (const e of g.all) { if (e.sec) { if (tier === 'mid' && was === 'near') { e.v = e.o.visible; e.o.visible = false } else if (tier === 'near' && e.v != null) { e.o.visible = e.v; e.v = null } } if (tier !== 'near' && e.o.castShadow) e.o.castShadow = false }
+  if (tier === 'mid') midOn(g); else midOff(g);   /* M13: baked mid character */
   if (g.proxy) g.proxy.visible = tier === 'far' }
 function lod() { const P = AV.P, k = q() === 'High' ? 1 : q() === 'Medium' ? .6 : .5, sh = q() === 'High' && AV.R && AV.R.shadowMap.enabled, T = { near: 0, mid: 0, far: 0, gone: 0 };
   /* Cinematic V1: also cap how many characters get full / body detail at once (crowded streets), nearest first */

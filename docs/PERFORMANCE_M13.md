@@ -1,4 +1,4 @@
-# M13: Frame rate, the diagnosis (no speed-up shipped yet)
+# M13: Frame rate, diagnosis + baked mid-distance characters
 
 The benchmark flagged five worlds under 30 fps on battery: Da Nang, Pai, Astro-9, Chiang Mai and Jungle Dub. Ape Town makes the most draw calls. This pass was run on mains power, on the real GPU at Medium, to find out *what* limits the frame before changing anything.
 
@@ -48,9 +48,45 @@ A second test swapped every character material from `MeshPhysicalMaterial` to `M
 
 **Why reverted.** The change would also turn more characters 24–48 m away into crude stand-ins, a visible cost for a gain I can't prove. Per the project rule, no performance gain is claimed without evidence. The probe suites stay in the repo so the next attempt can be measured the same way.
 
+## Shipped: baked mid-distance characters (`js/perf_guard.js`)
+
+**What the bake does.** In the mid tier (24–48 m on Medium; 40–80 m on High), a character used to keep all its parts.
+
+- **Merge:** its opaque skinned parts sharing one skeleton (body, shirt, pants, shoes) are now merged **once** into a single skinned mesh.
+- **Colours:** the material's 4-slot colour blend, ambient occlusion and the **shirt print (decal)** are baked into vertex colours, with the same formulas as `pbr.js`. NPC designs from M6 stay visible.
+- **Small parts:** eyes and eyelids are hidden in this tier.
+- **How parts are hidden:** through render layers, not `.visible`, because the game re-shows eyes and lids every frame for blinking.
+- **Lifecycle:** built lazily, and rebuilt if a character's parts or materials change. Near characters are untouched, and walking up restores full detail.
+- **Off switch:** `AV.perf.bakeMid = false`.
+
+**In-session A/B** (`tools/tests/suite_bake.js`). The bake is toggled on and off 3 times, seconds apart, with a static camera, so thermal drift can't swamp it.
+
+| World | draw calls off → on | render-call CPU ms | FPS |
+|---|---|---|---|
+| Jungle Dub | 629 → **477** (−24%) | 14.8 → 14.1 | 46.8 → 49.3 |
+| Da Nang | 535 → **454** (−15%) | 13.7 → 13.3 | 43.8 → 44.1 |
+| Pai | 556 → **492** (−12%) | 12.8 → 12.2 | 51.1 → 51.4 |
+| Astro-9 | 452 → **415** (−8%) | 17.8 → 16.6 | 51.7 → 51.2 |
+| Ape Town | 842 → **813** (−3.5%) | 16.8 → 15.5 | 41.9 → 44.4 |
+
+**Reading the results:**
+- **Draw calls** fall consistently in every world.
+- **Render time** is 4–8% lower on average in all five.
+- **FPS** gains are small (0–6%), and individual runs overlap, so **no large speed-up is claimed**.
+- **Ape Town** gains least: its cost is its 500+ static meshes, not its characters.
+
+**Visual check.** In the same Jungle Dub view with the bake off and on, the dancing crowd 25–35 m away looks the same (clothes, colours, shapes).
+
+**Regression (real GPU):** integration 131/131, npc 84/84, merch 92/92 (NPC prints), band 62/62, fest 38/38, kohtao 42/42, consume 47/47, cm 76/76. gfx 40/44: the same 4 pre-existing failures.
+
+**Bugs found on the way:**
+- **r128 attributes:** they lack `getComponent`. The error escaped into the frame loop, so the bake is now wrapped and never breaks a frame.
+- **Blinking eyes:** `.visible` hiding was undone by blinking.
+- **Re-saved masks:** re-applying the bake re-saved already-hidden masks, which would have hidden parts permanently.
+
 ## What should actually help (next)
 
-1. **One draw call per character.** Merge each character's skinned parts (sharing one skeleton) into a single skinned mesh with per-vertex colours, in `chars_soft`. That cuts ~4 draw calls and 4 bone uploads to 1, with no visual change.
+1. **Done for the mid tier** (above). Near characters keep their full multi-material detail. Each still drags along ~40 small accessory meshes (beads, jewellery), which could be merged per character too.
 2. **Static batching in Ape Town.** Merge its 500+ unchanging meshes by material. This needs a careful list of which meshes the world animates or toggles (signs, doors, festival groups) so none get frozen.
 3. **Measure with a stable rig.** Run A/B on a cooled machine, alternating at least three times, and use the render-call time from `suite_perf_cpu.js` rather than FPS alone.
 

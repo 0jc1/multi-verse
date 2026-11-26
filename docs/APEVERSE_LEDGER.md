@@ -251,6 +251,14 @@
 - **Finding:** CPU time inside the render call (draw calls) limits the slow worlds; triangles, materials and animation don't.
 - **Reverted:** a lower character-cap change. It cut work per frame, but the FPS gain was within thermal noise.
 
+### M13 baked mid-distance characters (apeverse-2-living-worlds branch)
+
+- **Bake:** `perf_guard` merges a mid-tier character's skinned parts into one mesh, with colours, ambient occlusion and the shirt print baked into vertex colours, and hides eyes and lids.
+- **Draw calls:** down 3.5–24% in 5 worlds.
+- **Render time:** down 4–8% on average.
+- **FPS:** gains are small and within run variance.
+- **Tests:** suite_bake 30/30.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

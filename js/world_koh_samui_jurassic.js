@@ -264,7 +264,7 @@ AV.registerWorld({
   build(ctx) {
     const S = AV.S || (AV.S = {}), q = ctx.q, rng = ctx.rng, grp = ctx.group;
     S.ksj = S.ksj || {};
-    const SKY = { tint: [0xfff0d0, 0xd8f4e8, .06, .1], dome: { s1: 0xdde6ee, s2: 0xa8d8e8, swirl: .02, cloud: .55, glow: .45 } };
+    const SKY = { exp: .82, tint: [0x3a90e0, 0xa0d0e0, .38, .26],   /* M13: tropical blue (was near-white) */ dome: { s1: 0xdde6ee, s2: 0xa8d8e8, swirl: .02, cloud: .55, glow: .45 } };
     const B = { land: K.batch(), rock: K.batch(), plants: K.batch(), portal: K.batch(), cave: K.batch(), night: K.batch() };
     const occ = [];
     const T = (x, z, r, label, fn, show) => { const t = { x, z, r, label, fn, show }; ctx.T.push(t); return t };

@@ -366,7 +366,7 @@ AV.registerWorld({
     ctx.leave.push(() => { A2 && A2.stop(); ok = false });
     if (AV.media) { AV.media.ducks = (AV.media.ducks || []).filter(f => !f._pai); const d = () => AV.W && AV.W.id === 'pai' && A2 && A2.on ? Math.max(A2.lv.techno || 0, A2.lv.paradise || 0, (A2.lv.jam || 0) * .8, (A2.lv.drums || 0) * .7, (A2.lv.cafe || 0) * .6) * 1.2 : 0; d._pai = 1; AV.media.ducks.push(d) }
     AV.paiDebug = { H, PL, RIV, BR, built, surf };
-    return { name: 'Pai', surface: surf, fog: [70, 380], sky: { dome: { s1: 0xffc8a0, s2: 0x8ac0e8, swirl: .05, cloud: .55, glow: .55 } },
+    return { name: 'Pai', surface: surf, fog: [70, 380], sky: { exp: .9, tint: [0x4a8ae0, 0xa8c4d8, .34, .24], dome: { s1: 0xffc8a0, s2: 0x8ac0e8, swirl: .05, cloud: .55, glow: .55 } },
       arrivals: { default: { x: PL.bus[0] - 2, z: PL.bus[1] + 6, yaw: Math.PI }, pipe: { x: 0, z: -60, yaw: Math.PI }, ape_gate: { x: 0, z: -60, yaw: Math.PI }, bungalow: { x: 70, z: -12, yaw: 0 } }, defaultArrival: 'default',
       mapRoads: [[0, -68, 0, 68, 7]].concat(ROUTES),
       places: [{ id: 'walking', name: L('Pai Walking Street', 'Walking Street de Pai'), x: 0, z: 0, yaw: Math.PI }, { id: 'rainny', name: L('Rainny Café', 'Rainny Café'), x: -2, z: -45, yaw: Math.PI / 2 }, { id: 'ganita', name: L('Ganita Café', 'Ganita Café'), x: -2, z: -26, yaw: Math.PI / 2 }, { id: 'tea', name: L('Tea & Drum Circle', 'Té y Tambores'), x: PL.tea[0] + 6, z: PL.tea[1], yaw: Math.PI / 2 },

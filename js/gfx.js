@@ -76,7 +76,7 @@ addEventListener('resize', () => setTimeout(X.resize, 0));
 
 function params() {
   const Wp = X.world && X.world.post, P = Wp || DP, g = P.grade || {}, b = P.bloom || DP.bloom, o = X.opt(), nt = Wp ? 0 : (X.nightK || 0);
-  bloom.strength = b[0] * (1 + .45 * nt) * o.bloom; bloom.radius = b[1];
+  bloom.strength = b[0] * (Wp ? 1 : .2 + 1.25 * nt) * o.bloom;   /* M13: default look blooms at 20 % by day (bright sand / sky / paving washed the frame), x1.45 at night as before */ bloom.radius = b[1];
   bloom.threshold = X.hdr ? b[2] * (1 - .48 * nt) : (P.ldrThreshold || .88) * (1 - .32 * nt);
   const u = grade.uniforms; u.uHdr.value = X.hdr ? 1 : 0; u.uExp.value = g.exp || R.toneMappingExposure; u.uCon.value = g.con || 1; u.uSat.value = g.sat || 1; u.uVig.value = AV.S.set.reduce ? 0 : (g.vig || 0);
   u.uLift.value.fromArray(g.lift || [0, 0, 0]); u.uGain.value.fromArray(g.gain || [1, 1, 1]); u.uGrain.value = g.grain == null ? .012 : g.grain;
@@ -86,7 +86,7 @@ X.night = function (k) {
   if (Math.abs(k - X.nightK) < 1e-3) return; X.nightK = k;
   if (!X.active || !bloom || !grade || (X.world && X.world.post)) return;
   const o = X.opt();
-  bloom.strength = DP.bloom[0] * (1 + .45 * k) * o.bloom;
+  bloom.strength = DP.bloom[0] * (.2 + 1.25 * k) * o.bloom;
   bloom.threshold = X.hdr ? DP.bloom[2] * (1 - .48 * k) : DP.ldrThreshold * (1 - .32 * k);
   grade.uniforms.uExp.value = R.toneMappingExposure;
 };

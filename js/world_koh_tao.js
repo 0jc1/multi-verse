@@ -199,9 +199,9 @@ AV.registerWorld({
       const h = H(x, z); return x < sx ? Math.max(h, SEAY - 1.7) : h };
     KT.surf = surf;
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
-    return { name: 'Koh Tao', surface: surf, fog: [90, 520], sky: { tint: [0xfff2dc, 0xdceeff, .05, .1], dome: { s1: 0xd8e4ee, s2: 0x98c0e8, swirl: .02, cloud: .55, glow: .45 } },
+    return { name: 'Koh Tao', surface: surf, fog: [90, 520], sky: { exp: .8, tint: [0x3a8ae8, 0x9ac8e8, .4, .28], dome: { s1: 0xd8e4ee, s2: 0x98c0e8, swirl: .02, cloud: .55, glow: .45 } },
       speedMul: () => (AV.P.x < shoreX(AV.P.z) ? .55 : 1),
-      post: { bloom: [.28, .35, 2.4], ldrThreshold: .97, grade: { exp: null, con: 1.08, sat: 1.16, lift: [0, 0, .005], gain: [1, 1, 1], vig: .12, grain: .006 } },   /* bright sand + sea: the default bloom washed the whole frame white */
+      /* M13: the shared default grade now handles bright daylight (day-scaled bloom); Koh Tao keeps only its lower day exposure (sky.exp) */
       arrivals: { default: { x: PIER.x1 + 4, z: PIER.z - 2, yaw: 0 }, pipe: { x: 0, z: -100, yaw: Math.PI }, ferry: { x: PIER.x1 - 4, z: PIER.z, yaw: -Math.PI / 2 } }, defaultArrival: 'default',
       mapRoads: [[LANE, -112, LANE, 165, 4], [0, 0, 22, 0, 4], [22, 0, VIEW[0] - 6, -(VIEW[0] - 28) * .62, 4], [PIER.x0, PIER.z, 0, PIER.z, 4]].concat(SOIS.map(s => [-12, s, 0, s, 3])),
       places: [PLc('sairee', 'Sairee Beach', 'Playa de Sairee', shoreX(0) + 10, 4, Math.PI / 2), PLc('lane', 'Sairee walking lane', 'Calle de Sairee', 0, -30, Math.PI), PLc('divers', 'Blue Turtle Divers', 'Blue Turtle Divers', DV.x - 1.5, DV.z + DV.d / 2 + 2, Math.PI),

@@ -420,7 +420,7 @@ SK.tick = function (mins, dt) {
   AV.nightK = SK.nightK;
   SK.cloud = cl(D.cloud == null ? .62 : D.cloud, 0, 1.3);
   SK.aurora = F ? 0 : cl(D.swirl == null ? .22 : D.swirl, 0, 1) * SK.nightK * (red ? .5 : 1);
-  SK.exposure = 1.05 + .22 * SK.nightK;
+  { const de = (W && W.sky && W.sky.exp) || 1.05; SK.exposure = de + (1.27 - de) * SK.nightK }   /* M13: a bright world (white sand, pale paving, noon sky) can set a lower DAY exposure; night stays 1.27 */
 
   /* world tint (Chiang Mai weather, Jungle Dub air) */
   const tn = (W && W.sky && W.sky.tint) || null;

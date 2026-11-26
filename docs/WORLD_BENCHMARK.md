@@ -74,7 +74,7 @@ Every world without its own grade uses the default post-processing (`js/gfx.js`,
 1. **No street graph for GPS. Done:** `js/pathfind.js` routes every world over a collision grid (see docs/GPS.md). What remains is drawing streets on the minimap for worlds without `mapRoads`. These worlds have no minimap roads or walking graph, so the GPS line is straight:
    - Ape Town, Verdalux, Astro-9, Jungle Dub, Jerusalem, Judean Desert, Da Nang, Koh Samui.
    - Vienna, Chiang Mai and Pai have roads but no walking graph.
-2. **Palette and haze.** Vienna, Da Nang, Ape Town and Koh Samui are still pale: more saturated ground and façades, and a per-world grade or fog tint where needed.
+2. **Palette and haze. Mostly done:** see docs/PALETTES.md. The cause was the default bloom; it is now day-scaled, with per-world day exposure and sky tints. The noon sky stays pale, as noted there. Vienna, Da Nang, Ape Town and Koh Samui are still pale: more saturated ground and façades, and a per-world grade or fog tint where needed.
 3. **No ambient sound layers.** Ape Town, Verdalux, Jungle Dub, Chiang Mai, Jerusalem, Judean Desert, Vienna, Da Nang and Koh Samui have none, though most have music. Madrid, Pai, Astro-9 and Koh Tao do.
 4. **Low FPS** (under 30 on battery):
    - Da Nang 22, Pai 24, Astro-9 25, Chiang Mai 26, Jungle Dub 28.

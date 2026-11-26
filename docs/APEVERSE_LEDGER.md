@@ -234,6 +234,12 @@
 - **Re-routing:** at 15 m off the route.
 - **Tests:** suite_gps 88/88; 60 routes, 0 points inside buildings.
 
+### M13 palettes and haze (apeverse-2-living-worlds branch)
+
+- **Cause, measured:** the default bloom washed bright worlds white; fog and sky tint were ruled out with controlled shots.
+- **Fix:** default bloom at 20% by day (×1.45 at night as before), per-world `sky.exp` day exposure, and sky tints.
+- **Result:** contrast in washed worlds is now 0.24–0.35, against 0.12–0.18 before.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

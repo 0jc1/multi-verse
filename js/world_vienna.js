@@ -376,7 +376,7 @@ AV.registerWorld({
     ctx.leave.push(() => MD.resetFrames());
     const here = AV.vienna.lastPos || null; AV.vienna.lastPos = null;
     return {
-      name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: win ? [90, 480] : [140, 900], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .5, .45], dome: { cloud: 1, swirl: .15 } } : { tint: [0x4a86e8, 0x94b0d8, .38, .42], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .04, cloud: .4, glow: .4 } },   /* 7f: clear Central-European summer air instead of the white haze */
+      name: 'Vienna 2000s · ' + (win ? tr('Winter', 'Invierno') : tr('Summer', 'Verano')), fog: win ? [90, 480] : [140, 900], sky: win ? { tint: [0xb8c4d8, 0xd8dce8, .5, .45], dome: { cloud: 1, swirl: .15 } } : { exp: .85, tint: [0x4a86e8, 0x94b0d8, .38, .42], dome: { s1: 0xffd8b0, s2: 0x7ab0e8, swirl: .04, cloud: .4, glow: .4 } },   /* 7f: clear Central-European summer air instead of the white haze */
       surface: (x, z) => { if (x < XMIN + 2 || x > XMAX - 2 || z < ZMIN + 2 || z > ZMAX - 2) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterAt(x, z)) return WY; const p = walk.at(x, z); return p === undefined ? H(x, z) : Math.max(p, H(x, z)) },
       arrivals: { default: { x: 160, z: 116, yaw: Math.PI * .75 }, ape_gate: { x: 160, z: 116, yaw: Math.PI * .75 }, pipe: { x: 156, z: 112, yaw: Math.PI * .75 }, here: here || { x: 160, z: 116, yaw: Math.PI * .75 } }, defaultArrival: 'default',
       mapDistricts: VCITY ? VCITY.districts : null, floraOK: (x, z) => !(AV.viennaCity && AV.viennaCity.nearBlock && AV.viennaCity.nearBlock(x, z, 9)),   /* M1: no flower beds on the streets between blocks */

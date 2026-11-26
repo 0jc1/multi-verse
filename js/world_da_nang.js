@@ -192,7 +192,7 @@ AV.registerWorld({
   build(ctx) {
     const S = AV.S, q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk(), lo = q === 0, hi = q === 2;
     S.dn = S.dn || { done: {}, weather: 'clear', locks: 0 }; S.dn.done = S.dn.done || {};
-    const SKY = { tint: [0xfff2dc, 0xdceeff, .05, .1], dome: { s1: 0xdde6ee, s2: 0xa8c8e8, swirl: .02, cloud: .55, glow: .55 } };
+    const SKY = { exp: .8, tint: [0x3a8ae8, 0x9ac4e8, .4, .28], dome: { s1: 0xdde6ee, s2: 0xa8c8e8, swirl: .02, cloud: .55, glow: .55 } };
     const B = { city: K.batch(), east: K.batch(), land: K.batch(), beach: K.batch(), decor: K.batch(), night: K.batch(), sky: K.batch() };
     const occ = [], lit = [];
     const box = (b, mat, col, x0, x1, y0, y1, z0, z1, glow) => b.add(mat, BG.box, col, M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0), glow);
@@ -707,7 +707,7 @@ AV.registerWorld({
       if (hudEl && AV.now() > hudT) { hudT = AV.now() + .4; const n = LIST.filter(l => S.dn.done[l[0]]).length, w = { clear: '☀', cloudy: '☁', rain: '🌧' }[S.dn.weather] || ''; hudEl.style.display = 'block'; hudEl.textContent = 'Đà Nẵng ' + w + (swim ? tr(' · swimming', ' · nadando') : '') + (showOn() ? tr(' · 🐉 dragon show!', ' · 🐉 ¡espectáculo del dragón!') : '') + ' · ' + tr('bucket list ', 'lista ') + n + '/' + LIST.length + ' · F' }
     });
     function rollWeather() { const r = Math.random(); S.dn.weather = r < .7 ? 'clear' : r < .88 ? 'cloudy' : 'rain'; applyWeather(); if (S.dn.weather === 'rain') AV.toast(tr('A warm tropical downpour sweeps in from the sea. Scooters sprout ponchos.', 'Un chaparrón tropical llega del mar. Las motos se llenan de chubasqueros.')) }
-    function applyWeather() { const w = S.dn.weather; rainFx.on = w === 'rain'; SKY.tint = w === 'rain' ? [0x5a6a7a, 0x7a8a8a, .55, .6] : w === 'cloudy' ? [0x9aa8b8, 0xb8c0c8, .3, .3] : [0xfff2dc, 0xdceeff, .05, .1]; SKY.dome.cloud = w === 'clear' ? .55 : 1.15; seaNear.uniforms.uAmp.value = w === 'rain' ? 1.6 : 1; if (AV.W && AV.W.sky === SKY) { AV.scene.fog.near = w === 'rain' ? 40 : 80; AV.scene.fog.far = w === 'rain' ? 260 : 460 } }
+    function applyWeather() { const w = S.dn.weather; rainFx.on = w === 'rain'; SKY.tint = w === 'rain' ? [0x5a6a7a, 0x7a8a8a, .55, .6] : w === 'cloudy' ? [0x9aa8b8, 0xb8c0c8, .3, .3] /* M13: clear = blue */ : [0x3a8ae8, 0x9ac4e8, .4, .28]; SKY.dome.cloud = w === 'clear' ? .55 : 1.15; seaNear.uniforms.uAmp.value = w === 'rain' ? 1.6 : 1; if (AV.W && AV.W.sky === SKY) { AV.scene.fog.near = w === 'rain' ? 40 : 80; AV.scene.fog.far = w === 'rain' ? 260 : 460 } }
     ctx.upd.push((() => { let once = false; return () => { if (!once) { once = true; applyWeather() } } })());
     ctx.leave.push(() => { if (hudEl) hudEl.style.display = 'none'; basketRide = null; wheelRide = null; MDreset() });
     const MDreset = () => { if (AV.media && AV.media.resetFrames) AV.media.resetFrames() };

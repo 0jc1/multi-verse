@@ -430,7 +430,7 @@ AV.registerWorld({
 
     const zilFront = [zilPos[0] - zout[0] * 13, zilPos[1] - zout[1] * 13];
     return {
-      name: 'Ape Town', stage: { pos: stagePos }, fog: [70, 330], sky: { dome: { s1: 0xff6ad5, s2: 0x9a7aff, swirl: .42, cloud: .9, glow: .55 } },
+      name: 'Ape Town', stage: { pos: stagePos }, fog: [70, 330], sky: { exp: .85, tint: [0x7a7ae8, 0xb8aee0, .34, .24], dome: { s1: 0xff6ad5, s2: 0x9a7aff, swirl: .42, cloud: .9, glow: .55 } }   /* M13: lavender-blue day sky (was washed white) */,
       surface: (x, z) => { if (ell(x, z) >= 1) return null; const b = walk.bridgeAt(x, z); if (b !== undefined) return b; if (waterDepth(x, z) > -.2) return -.35; const h = H(x, z), p = walk.at(x, z); return p === undefined ? h : Math.max(p, h) },
       arrivals: { default: { x: 0, z: 95, yaw: 0 }, finca: { x: 0, z: 97, yaw: 0 }, pipe: { x: 0, z: 90, yaw: 0 }, ape_gate: { x: GX, z: GZ + 4, yaw: 0 },
         verdalux: { x: GX + Math.cos(deg(-135)) * 6, z: GZ + Math.sin(deg(-135)) * 6, yaw: faceYaw(GX + Math.cos(deg(-135)) * 6, GZ + Math.sin(deg(-135)) * 6, GX, GZ + 20) },

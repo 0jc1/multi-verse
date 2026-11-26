@@ -46,7 +46,7 @@ TK.open = function (n) {
   const S = st(), met = S.v1.met[n.id] || 0; S.v1.met[n.id] = met + 1;
   const hi = met ? L(typeof n.back === 'function' ? n.back(S) : n.back || n.first) : L(n.first);
   const p = AV.panel('cmp', '<b>' + L(n.name) + '</b><div class="note" id="tkL">' + hi + '</div><div class="grid">' + n.opts.map((o, i) => '<button data-o="' + i + '">' + L(o.label) + '</button>').join('') + '<button data-close>' + tr('Goodbye', 'Adiós') + '</button></div>');
-  p.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { const o = n.opts[+b.dataset.o]; if (o.say) $('tkL').textContent = L(typeof o.say === 'function' ? o.say(S) : o.say); if (o.fn) o.fn() });
+  p.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { const o = n.opts[+b.dataset.o]; if (o.say && $('tkL')) $('tkL').textContent = L(typeof o.say === 'function' ? o.say(S) : o.say); if (o.fn) o.fn() });
   AV.dlg && AV.dlg.event && AV.dlg.event('talk_' + n.id); AV.save();
 };
 

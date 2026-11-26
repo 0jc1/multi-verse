@@ -69,3 +69,24 @@
   - Clothing textures are small derived JPEGs.
 - **Spelling:** the brands are spelled ZtonedApe, APEVERSE, MOONMELT SUPPLY CO., SOLTERRA and SWAG.
 - **Fictional systems:** underground storylines, cultivation and social clubs are abstract fictional mechanics, never real-world instructions.
+
+## Apeverse 2.1 (brief of 26 Nov 2026): phase order
+
+**Phase 1, audit:** done. See `docs/APEVERSE_21_STATUS.md`.
+
+**Phase 2, working gameplay:**
+- **Done:** rides that drive, and consumable sources in the gap worlds.
+- **Next:**
+  - owned or rented vehicles outside Madrid
+  - Chiang Mai journey J2, end to end
+  - an Astro-9 hover vehicle you can buy
+
+**Phase 3, Brandverse pilot:** a Brand District in Ape Town with 8-12 working businesses (SWAG, SOLTERRA, Groove Dealers record shop, Woblr/Zippit vehicles, ApeMart, Monkey Brew…), with brand name collisions logged for the owner.
+
+**Phase 4, visual and signage pass:** authored local storefronts (Vienna, Madrid, Chiang Mai/Pai, Da Nang, Astro-9, Ape Town), plus Ape Town static batching.
+
+**Phase 5, cross-world rollout.**
+
+**Phase 6, new worlds:** Amsterdam, then Tokyo, each behind the release gate.
+
+**Phase 7, public playability:** only with the owner's authorization.

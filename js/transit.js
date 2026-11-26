@@ -31,7 +31,11 @@ const CFG = {
   koh_samui_jurassic: { taxi: { icon: '🚙', n: L('Ranger jeep', 'Jeep de guardas'), base: 6, per: .03, say: L('A ranger leans out: “Arms inside the jeep. The big ones bite.”', 'Un guarda se asoma: “Brazos dentro del jeep. Los grandes muerden.”') },
     stands: [['arrival', 6, 6]], rent: [['arrival', -8, 8, 'car', 20, L('Jeep hire', 'Alquiler de jeep'), 0x6a7a3a, [0x6a7a3a, 0xc8a04a, 0x3a5a3a]]] },
   vienna: { taxi: { icon: '🚕', n: L('Taxi', 'Taxi'), base: 5, per: .02, say: L('“Grüß Gott. Wohin?”', '“Grüß Gott. ¿Adónde?”') }, stands: [['arrival', -6, 6]], rent: [] },
-  jungle_dub: { taxi: { icon: '🛶', n: L('River canoe ferry', 'Canoa del río'), base: 3, per: .03, say: L('A boatman taps the canoe. “Sit low, man. Easy ride.”', 'Un barquero golpea la canoa. “Siéntate abajo, man. Viaje tranquilo.”') }, stands: [['arrival', -6, 4]], rent: [] }
+  jungle_dub: { taxi: { icon: '🛶', n: L('River canoe ferry', 'Canoa del río'), base: 3, per: .03, say: L('A boatman taps the canoe. “Sit low, man. Easy ride.”', 'Un barquero golpea la canoa. “Siéntate abajo, man. Viaje tranquilo.”') }, stands: [['arrival', -6, 4]], rent: [] },
+  /* 2.1: the audit found no hired ride in these worlds */
+  koh_tao: { taxi: { icon: '🛻', n: L('Songthaew taxi', 'Taxi songthaew'), base: 6, per: .05, say: L('A blue pickup with two benches in the back. “Sairee? Mae Haad? Hop in.”', 'Una pickup azul con dos bancos detrás. “¿Sairee? ¿Mae Haad? Sube.”') }, stands: [['lane', 6, 4], ['pier', 6, -6]], rent: [] },
+  jerusalem: { taxi: { icon: '🚕', n: L('Taxi (sherut)', 'Taxi (sherut)'), base: 6, per: .03, say: L('A white taxi slows down. “Shalom! Where to?”', 'Un taxi blanco frena. “¡Shalom! ¿Adónde?”') }, stands: [['mamilla', 6, -6], ['shuk', 6, 6]], rent: [] },
+  judean_desert: { taxi: { icon: '🚙', n: L('Desert jeep', 'Jeep del desierto'), base: 6, per: .02, say: L('A dusty jeep with a canvas roof. “Masada, Ein Gedi, the beach — yalla.”', 'Un jeep polvoriento con techo de lona. “Masada, Ein Gedi, la playa: yalla.”') }, stands: [['beach', 8, 4], ['oasis', 6, 6]], rent: [] }
 };
 TR.CFG = CFG;
 const anchor = (W, id) => { if (id === 'arrival') { const a = W.arrivals && (W.arrivals.default || W.arrivals[W.defaultArrival]); return a ? [a.x, a.z] : [AV.P.x, AV.P.z] } const p = (W.places || []).find(q => q.id === id); return p ? [p.x, p.z] : null };

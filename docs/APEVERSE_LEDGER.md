@@ -6,6 +6,20 @@
 
 **Completed** means built, tested in the running game, and pushed. **Planned** means not built yet.
 
+## 2.1 open failures and gaps (read first)
+
+Full board: `docs/APEVERSE_21_STATUS.md`.
+
+- **Da Nang and Judean Desert:** no fictional effects item, by design under the local rules (alcohol only). Needs the owner's OK.
+- **Verdalux:** no hired ride, on purpose (a 3-place walking moon).
+- **Madrid's Pinar barrio streets** aren't connected to the main road map, so the taxi waits on the main street.
+- **Pre-existing test failures:**
+  - `suite_gfx`: 4 failures.
+  - `suite_pai`: "ambience stops outside Pai" (stale since M13).
+  - `suite_jlm`: written for an older runner interface, so it can't run.
+- **Performance:** at arrival on Medium, Ape Town draws 687 calls at 39 fps and Da Nang runs at 30 fps.
+- **Not built yet:** signage pass, Brand District, Amsterdam.
+
 ## Completed and verified
 
 ### Astro-9
@@ -258,6 +272,18 @@
 - **Render time:** down 4–8% on average.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
+
+### 2.1 Phase 0-2: audit, rides that drive, consumable sources (apeverse-2-living-worlds branch)
+
+- **Audit:** `suite_audit21` builds a world-by-system board for all 13 playable worlds.
+- **Rides:** `js/rides.js`. Every taxi or shuttle stand, and the map's 🚕 button, now drives you along streets or walkable routes in a real vehicle. Madrid taxis stop at red lights. You can pull over (with a refund) or skip.
+  - **New stands:** Koh Tao, Jerusalem and Judean Desert.
+  - **Test:** `suite_rides`, 192/192.
+- **Consumable sources:** `js/consume_sources.js`.
+  - **Madrid:** La Nube, a members' club with a street door and a lounge.
+  - **Stalls:** Pai and Koh Tao herb shops (adults 20+), Café Nargila in Jerusalem, the Ranger Snack Hut and cave mushroom in Koh Samui, and Vela's Forage Basket in Verdalux.
+  - **Test:** `suite_sources`, 65/65.
+- **Regression:** integration 131/131, consume 47/47, cm 76/76, kohtao 42/42, drive 39/39, vehicles 52/52, gps 88/88, phone 43/43.
 
 ## Measured but not proven
 

@@ -221,6 +221,13 @@
 - **Jobs app** in the phone, and a HUD job line.
 - **Tests:** suite_careers 50/50.
 
+### M13 world benchmark, first slice (apeverse-2-living-worlds branch)
+
+- **Benchmark:** `tools/tests/suite_worlds.js` and `tools/bench_images.mjs` score all 13 worlds.
+- **Shared grade fix:** the default post grade in `js/gfx.js` no longer washes bright worlds white. Contrast is measured up in Vienna, Koh Samui, Da Nang, Jungle Dub and Pai, and night glow is unchanged.
+- **Gap list:** prioritised in docs/WORLD_BENCHMARK.md.
+- **Open:** suite_gfx has 4 pre-existing failures (they expect pre-V0.10 "no post" in other worlds).
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

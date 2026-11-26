@@ -18,7 +18,10 @@ X.supported = () => !!(THREE.EffectComposer && THREE.RenderPass && THREE.UnrealB
 X.postWanted = () => { const o = X.opt(); return X.supported() && (o.post === 'auto' ? Q() > 0 : o.post === 'on') };
 X.reflWanted = () => { const o = X.opt(); return o.refl === 'auto' ? Q() > 0 : o.refl === 'on' };
 /* default look for worlds that do not declare their own `post` (V0.10: every world gets bloom) */
-const DP = X.defPost = { bloom: [.5, .55, 1.55], ldrThreshold: .88, grade: { exp: null, con: 1.02, sat: 1.05, lift: [0, 0, 0], gain: [1, 1, 1], vig: .1, grain: .009 } };
+/* M13: the old default (bloom .5 / radius .55 / threshold 1.55 HDR, .88 LDR) bloomed the bright daytime sky + pale ground into a white veil in
+   Vienna, Da Nang, Ape Town, Koh Samui... (measured: saturation .03-.08, 60-80 % near-white pixels).  Bloom now only catches truly bright things
+   (lamps, neon, fire, the sun); the night boost below (x1.45 strength, threshold x.52) keeps night glow. */
+const DP = X.defPost = { bloom: [.32, .42, 2.6], ldrThreshold: .96, grade: { exp: null, con: 1.06, sat: 1.12, lift: [0, 0, 0], gain: [1, 1, 1], vig: .1, grain: .008 } };
 X.nightK = 0;
 
 /* ---------- colour grading pass ---------- */

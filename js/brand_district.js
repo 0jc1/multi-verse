@@ -335,7 +335,7 @@ BD.solPanel = function () { const render = msg => { const pid = BD.homeId(), d =
    machine, near each city's arrival on free ground (never on a mapped carriageway or next to another interaction).  Local sublines:
    es "supermercado", de "Supermarkt", th "ร้านสะดวกซื้อ" (convenience store), vi "Cửa hàng tiện lợi" (convenience store),
    he "מכולת" (grocery).  Stock = the brand snacks + one local staple the world already sells (existing item ids). */
-const ROLL = { madrid: ['supermercado', 'md_cafe'], vienna: ['Supermarkt', 'almdudler'], chiang_mai: ['ร้านสะดวกซื้อ', 'thai_tea'], pai: ['ร้านสะดวกซื้อ', 'thai_tea'], koh_tao: ['ร้านสะดวกซื้อ', 'coconut'], da_nang: ['Cửa hàng tiện lợi', 'ca_phe_sua_da'], jerusalem: ['מכולת', 'mint_tea'] };
+const ROLL = { madrid: ['supermercado', 'md_cafe'], vienna: ['Supermarkt', 'almdudler'], chiang_mai: ['ร้านสะดวกซื้อ', 'thai_tea'], pai: ['ร้านสะดวกซื้อ', 'thai_tea'], koh_tao: ['ร้านสะดวกซื้อ', 'coconut'], da_nang: ['Cửa hàng tiện lợi', 'ca_phe_sua_da'], jerusalem: ['מכולת', 'mint_tea'], amsterdam: ['supermarkt', 'nl_stroopwafel'] };
 BD.roll = {};
 function canvasTex2(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t }
 /* placement rules (same walkway data as tables.js, wider margins for a 3 x 2 m kiosk): clear of the walking graph (W.mapNav), crowd

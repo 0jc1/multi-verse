@@ -1,0 +1,157 @@
+/* APEVERSE 2.1 - amsterdam_life.js : life in AMSTERDAM (world_amsterdam.js builds the city, this runs it).
+   - People: a walking graph over quays, bridges, Damrak, Dam and the Jordaan lane; pedestrians, cyclists in the red bike lanes and
+     along the Singel, trams up and down Damrak.
+   - Five named residents with daily routines and 4-choice conversations that DO things: Noor (canal boat captain), Jasper (bike
+     shop), Fenna (café musician), Daan (coffeeshop host), Imani (market seller).  They walk between their places when you are near.
+   - Businesses (all fictional): Café 't Gouden Kraantje (walk-in brown café), Coffeeshop De Blauwe Lantaarn (walk-in, 18+ notice,
+     house rules: no alcohol), Groove Dealers Platen (walk-in record shop), Jasper's Fietsen (rent or buy a bike), Bakkerij Van der
+     Molen, Vlaamse Frites stand, Monkey Brew Proeflokaal, Kaashandel Jansen, a flower stall, De Waterkant (live music every evening).
+   - Rides: tram Centraal <-> Dam (visible, on the rails), canal boat tour on the Herengracht with Noor (under the bridges), taxis.
+   - King's Day (Koningsdag) on the Apeverse calendar every Sunday: orange bunting, vrijmarkt stalls, orange crowds, a DJ boat on the
+     Singel; normal life the rest of the week.  Story: "Fenna's setlist".  Save: optional S.ams. */
+'use strict';
+(function (AV) {
+const tr = AV.tr, L = (e, s) => [e, s], say = a => tr(a[0], a[1]), TAU = Math.PI * 2;
+const AMS = AV.amsterdam; if (!AMS) return;
+const I = (id, o) => { if (!AV.ITEMS[id]) AV.ITEMS[id] = o };
+I('nl_stroopwafel', { n: L('Stroopwafel', 'Stroopwafel'), cat: 'food', ic: '🧇', use: 'eat', model: 'bowl', col: 0xc8903a, price: 3, say: L('Warm caramel between two thin waffles. Dangerous.', 'Caramelo caliente entre dos gofres finos. Peligroso.') });
+I('nl_appeltaart', { n: L('Appeltaart met slagroom', 'Tarta de manzana con nata'), cat: 'food', ic: '🥧', use: 'eat', model: 'bowl', col: 0xd8a050, price: 5, say: L('Tall, cinnamon-y, with a cloud of cream.', 'Alta, con canela y una nube de nata.') });
+I('nl_bitterballen', { n: L('Bitterballen (6)', 'Bitterballen (6)'), cat: 'food', ic: '🧆', use: 'eat', model: 'skewer', col: 0x8a5a2a, price: 7, say: L('Crunchy outside, molten inside. Blow first.', 'Crujientes por fuera, fundidas por dentro. Sopla primero.') });
+I('nl_frites', { n: L('Vlaamse frites met mayo', 'Patatas fritas con mayonesa'), cat: 'food', ic: '🍟', use: 'eat', model: 'sack', col: 0xf2c230, price: 5, say: L('Thick, double-fried, a mountain of mayo.', 'Gruesas, fritas dos veces, una montaña de mayonesa.') });
+I('nl_kaas', { n: L('Belegen Gouda (slice pack)', 'Gouda curado (lonchas)'), cat: 'food', ic: '🧀', use: 'eat', model: 'sack', col: 0xf2d23a, price: 6, say: L('Nutty, salty, slightly crystal-crunchy.', 'A nuez, salado, con cristalitos crujientes.') });
+I('nl_pils', { n: L('Pils (fluitje)', 'Cerveza (fluitje)'), cat: 'drink', ic: '🍺', use: 'drink', fx: { type: 'drink', amt: .28 }, model: 'bottle', col: 0xf2c230, price: 6, say: L('Small glass, big head of foam. Proost!', 'Vaso pequeño, mucha espuma. ¡Proost!') });
+I('nl_jenever', { n: L('Jonge jenever', 'Ginebra joven (jenever)'), cat: 'drink', ic: '🥃', use: 'drink', fx: { type: 'drink', amt: .38 }, model: 'cup', col: 0xe8e4da, price: 5, say: L('Bend down and sip it from the brim. Tradition.', 'Agáchate y sórbela del borde. Tradición.') });
+I('nl_koffie', { n: L('Koffie verkeerd', 'Café con leche (verkeerd)'), cat: 'drink', ic: '☕', use: 'drink', fx: { type: 'sober', amt: .15 }, model: 'cup', col: 0xc8a070, price: 3, say: L('Milky coffee with a little biscuit on the side.', 'Café con leche y una galletita al lado.') });
+I('nl_muntthee', { n: L('Verse muntthee', 'Té de menta fresca'), cat: 'drink', ic: '🍵', use: 'drink', fx: { type: 'sober', amt: .1 }, model: 'cup', col: 0x7ad87a, price: 3, say: L('A glass full of fresh mint and honey.', 'Un vaso lleno de menta fresca y miel.') });
+I('nl_spacecake', { n: L('Space cake (fictional, adults only)', 'Space cake (ficticio, solo adultos)'), cat: 'food', ic: '🍰', use: 'eat', fx: { type: 'smoke', amt: .4 }, model: 'bowl', col: 0x6a4a2a, price: 12, say: L('Slow to start. Sit down, drink water, no plans.', 'Tarda en subir. Siéntate, bebe agua, sin planes.') });
+I('nl_kroon', { n: L('Orange King’s Day crown', 'Corona naranja de Koningsdag'), cat: 'souvenir', ic: '👑', use: 'look', keep: true, model: 'card', col: 0xff7a1a, price: 5, say: L('Plastic, orange, absolutely necessary.', 'De plástico, naranja, absolutamente necesaria.') });
+I('nl_tulpen', { n: L('Bunch of tulips', 'Ramo de tulipanes'), cat: 'souvenir', ic: '🌷', use: 'look', keep: true, model: 'card', col: 0xff4a6a, price: 6, say: L('Ten tulips in paper. Somebody will be happy.', 'Diez tulipanes en papel. Alguien se alegrará.') });
+
+AMS.life = function (ctx, E) {
+  const W0 = ctx, K = AV.kit, CY = AV.city, BG = K.BG, q = ctx.q, rng = ctx.rng, S = AV.S, sh = E.sh, T = E.T, st = E.st;
+  const hour = () => (S.time / 60) % 24, festOn = () => !!(AV.fest && AV.fest.active && AV.fest.active('koningsdag'));
+  /* ---------- walking graph ---------- */
+  const nodes = [], edges = [], line = pts => { let prev = -1; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = [pts[i], pts[i + 1]], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(d / 8)); for (let k = (i ? 1 : 0); k <= n; k++) { nodes.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); const id = nodes.length - 1; if (prev >= 0) edges.push([prev, id]); prev = id } } };
+  for (const x of [-10, 10]) line([[x, -144], [x, 70]]); for (const x of [-99, -121, -149, -171, -197]) line([[x, -130], [x, 60]]);
+  line([[-10, -60], [-200, -60]]); line([[-10, 10], [-200, 10]]); line([[-40, -140], [40, -140]]); line([[-40, -30], [40, -30]]); line([[-40, -10], [40, -10]]); line([[-99, 45], [-121, 45]]); line([[-149, 45], [-171, 45]]); line([[-99, -100], [-121, -100]]);
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 3.5 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
+  const NAV = CY.nav(nodes, edges); AMS.nav = { nodes, links: NAV.links }; AMS.stats.navNodes = nodes.length;
+  /* ---------- crowds: pedestrians, King's Day crowd (orange), staff ---------- */
+  const crowd = CY.crowd(ctx), V = ['tourist', 'woman', 'man', 'backpacker', 'woman', 'man'];
+  for (let i = 0; i < [16, 26, 38][q]; i++) { const n0 = nodes[(rng() * nodes.length) | 0]; crowd.add({ v: V[i % 6], x: n0[0], z: n0[1], nav: NAV, idleProb: .2 }) }
+  const orange = []; for (let i = 0; i < [12, 20, 28][q]; i++) { const n0 = nodes[(rng() * nodes.length) | 0]; orange.push(crowd.add({ v: V[i % 6], x: n0[0], z: n0[1], nav: NAV, idleProb: .35, cols: { skin: [0xf0c8a8, 0xd8a070, 0x8a5a3a, 0x5a3a24][i % 4], hair: [0x2a1a10, 0xc8a050, 0x5a3a20][i % 3], shirt: 0xff7a1a, pants: [0x1a2a4a, 0xff7a1a, 0x1a1a1a][i % 3] } })) }
+  const staff = (x, z, yaw, v, shirt) => crowd.add({ v, x, z, yaw, mode: 'idle', cols: { skin: [0xf0c8a8, 0xd8a070, 0x8a5a3a][(x | 0) & 1 ? 1 : 0], hair: 0x3a2414, shirt, pants: 0x1a1a1a } });
+  /* named residents: walkers with a schedule (spot by hour); they walk there when you are near, otherwise they are simply there */
+  const spot = (k, u) => { const s = sh[k]; return s ? [s.x + s.face * (u || 2.2), s.z] : null };
+  const inS = (it, u) => it ? [it.X(u), (it.z0 + it.z1) / 2] : null;
+  const PEOPLE = {
+    noor: { n: 'Noor', role: L('canal boat captain', 'capitana de barco'), v: 'woman', cols: { skin: 0xf0c8a8, hair: 0xc8a050, shirt: 0x1a3a6a, pants: 0x1a1a1a }, sched: [[8, [-150.5, -108]], [18, inS(E.kr, 3.5)], [23, [-149, -100]]] },
+    jasper: { n: 'Jasper', role: L('bike mechanic', 'mecánico de bicis'), v: 'man', cols: { skin: 0xd8a070, hair: 0x2a1a10, shirt: 0x3a6a3a, pants: 0x2a2a3a }, sched: [[9, spot('fietsen', 1.6)], [18, spot('proeflokaal', 2)], [22, spot('fietsen', 1.6)]] },
+    fenna: { n: 'Fenna', role: L('café musician', 'música del café'), v: 'woman', cols: { skin: 0xf4d0b8, hair: 0x8a2a1a, shirt: 0x6a2a5a, pants: 0x1a1a2a }, sched: [[10, inS(E.kr, 2.5)], [19, spot('waterkant', 1.8)], [1, [-197, -20]]] },
+    daan: { n: 'Daan', role: L('coffeeshop host', 'anfitrión del coffeeshop'), v: 'man', cols: { skin: 0x8a5a3a, hair: 0x1a1a1a, shirt: 0x2a4a8a, pants: 0x1a1a1a }, sched: [[10, inS(E.ln, 6.2)], [1, [-197, -40]]] },
+    imani: { n: 'Imani', role: L('market seller', 'vendedora del mercado'), v: 'woman', cols: { skin: 0x5a3a24, hair: 0x1a1a1a, shirt: 0xf2c230, pants: 0x2a3a6a }, sched: [[9, [28, -33]], [17, [-197, 0]]] }
+  };
+  const W = () => AV.W; const named = {};
+  /* the slot whose start hour is the latest one not after now; before the earliest start, the latest slot of the day still runs */
+  const slotOf = p => { const h = hour(); let s = null; for (const e of p.sched) if (e[0] <= h && (!s || e[0] > s[0])) s = e; if (!s) s = p.sched.reduce((a, e) => e[0] > a[0] ? e : a); return s };
+  for (const [id, p] of Object.entries(PEOPLE)) { const s0 = slotOf(p); if (!s0[1]) continue; const w = crowd.add({ v: p.v, x: s0[1][0], z: s0[1][1], mode: 'idle', cols: p.cols }); named[id] = { p, w, slot: s0 };
+    const t = T(w.x, w.z, 2, () => tr('Talk to ', 'Hablar con ') + p.n + ' (' + say(p.role) + ')', () => talk(id)); named[id].t = t }
+  AMS.named = named;
+  ctx.upd.push(() => { for (const id in named) { const o = named[id], s = slotOf(o.p); o.t.x = o.w.x; o.t.z = o.w.z; if (s === o.slot || !s[1]) continue; o.slot = s; const near = Math.hypot(AV.P.x - o.w.x, AV.P.z - o.w.z) < 70;
+      if (near && AV.path) { let pts = null; try { pts = AV.path.route(AV.W, { x: o.w.x, z: o.w.z }, { x: s[1][0], z: s[1][1] }) } catch (e) { } if (pts && pts.length) { o.w.route = pts.map(p2 => [p2[0], p2[1]]).concat([[s[1][0], s[1][1], 1e9, 'idle']]); o.w.ri = 0; o.w.loop = false; o.w.mode = 'walk'; o.w.base = 'walk'; continue } }
+      o.w.x = s[1][0]; o.w.z = s[1][1]; o.w.route = null; o.w.mode = 'idle' } });
+  /* staff behind counters */
+  if (E.kr) staff(E.kr.X(6.9), (E.kr.z0 + E.kr.z1) / 2, 0, 'man', 0x2a1a10); if (E.ln) staff(E.ln.X(6.4), (E.ln.z0 + E.ln.z1) / 2 + 1, 0, 'man', 0x1a2a4a); if (E.pl) staff(E.pl.X(8.4), E.pl.z1 - 1.8, 0, 'woman', 0x8a1a1a);
+  /* ---------- bikes + trams ---------- */
+  if (CY.traffic) { try { CY.traffic(ctx, [{ pts: [[-1.6, -140], [-1.6, 80], [1.6, 80], [1.6, -140]], off: 0 }], [{ type: 'tram', col: 0xf4f4f4, n: [1, 2, 2][q], speed: 6 }], { density: () => 1 });
+      CY.traffic(ctx, [{ pts: [[-7.3, -140], [-7.3, -46], [7.3, -46], [7.3, -140]], off: 0 }, { pts: [[-98, -58], [-98, 8], [-11, 8], [-11, -58]], off: 0 }], [{ type: 'bicycle', col: 0x1a1a1a, n: [4, 7, 10][q], speed: 4.5 }, { type: 'bicycle', col: 0x2a4a8a, n: [2, 4, 6][q], speed: 4 }], { density: () => hour() > 6 && hour() < 23 ? 1 : .4 }) } catch (e) { console.warn('ams traffic', e) } }
+  crowd.build();
+  /* ---------- shops ---------- */
+  const shop = (k, u, V2, label, gate) => { const s = sh[k]; if (!s) return; const x = s.x + s.face * (u || 1.4), z = s.z; Object.assign(V2, { x, z, reach: 5 }); T(x, z, 2.2, () => tr(label[0], label[1]), () => gate ? gate(V2) : AV.shop.open(V2), null, 'shop') };
+  const counter = (it, u, V2, label, gate) => { if (!it) return; const x = it.X(u), z = (it.z0 + it.z1) / 2; Object.assign(V2, { x, z, reach: 5 }); T(x, z, 2.2, () => tr(label[0], label[1]), () => gate ? gate(V2) : AV.shop.open(V2), null, 'shop') };
+  counter(E.kr, 4.8, { id: 'ams_kraantje', name: L("Café 't Gouden Kraantje", "Café 't Gouden Kraantje"), greet: L('Wim polishes a glass: “Goedenavond! A fluitje, a jenever, bitterballen?”', 'Wim saca brillo a un vaso: “¡Goedenavond! ¿Un fluitje, un jenever, bitterballen?”'), items: [['nl_pils', 6], ['nl_jenever', 5], ['nl_koffie', 3], ['nl_bitterballen', 7], ['nl_appeltaart', 6], ['water', 2]] }, L("🍺 Bar (Wim): drinks + bitterballen", '🍺 Barra (Wim): bebidas + bitterballen'));
+  const gate18 = V2 => { const s = st(); if (s.cs) return AV.shop.open(V2); const p = AV.panel('cmp', '<b>Coffeeshop De Blauwe Lantaarn</b><div class="note">' + tr('House rules on the wall: 18+ only · no alcohol · no hard drugs · take it slow, drink water · no driving after. (Fictional game venue: no real-world advice or sourcing.)', 'Normas en la pared: solo 18+ · sin alcohol · sin drogas duras · con calma, bebe agua · nada de conducir después. (Local ficticio del juego: sin consejos ni compras reales.)') + '</div><div class="row"><button id="csOk">' + tr('I’m 18+ — show the menu', 'Tengo 18+ — ver la carta') + '</button><button data-close>' + tr('No thanks', 'No, gracias') + '</button></div>'); p.querySelector('#csOk').onclick = () => { s.cs = AV.S.day; AV.closePanel('cmp'); setTimeout(() => AV.shop.open(V2), 200) } };
+  counter(E.ln, 4.4, { id: 'ams_lantaarn', name: L('Coffeeshop De Blauwe Lantaarn', 'Coffeeshop De Blauwe Lantaarn'), greet: L('Daan: “Welkom. Sit anywhere, the mint tea is fresh.”', 'Daan: “Welkom. Siéntate donde quieras, el té de menta es fresco.”'), items: [['pre', 15], ['herb', 10], ['pipe', 30], ['nl_spacecake', 12], ['nl_muntthee', 3], ['water', 2]] }, L('🌿 Coffeeshop counter (adults 18+, fictional)', '🌿 Mostrador del coffeeshop (adultos 18+, ficticio)'), gate18);
+  counter(E.pl, 6.6, { id: 'ams_platen', name: L('Groove Dealers Platen', 'Groove Dealers Platen'), greet: L('“Goedemiddag! New pressings in the front bin, tweedehands at the back.”', '“¡Goedemiddag! Novedades delante, segunda mano al fondo.”'), items: [['gd_lp_dub', 25], ['gd_lp_sab', 25], ['gd_lp_road', 25], ['gd_boombox', 90]].filter(([i]) => AV.ITEMS[i]) }, L('💿 Groove Dealers Platen: records + boombox', '💿 Groove Dealers Platen: discos + boombox'));
+  shop('molen', 1.4, { id: 'ams_molen', name: L('Bakkerij Van der Molen', 'Bakkerij Van der Molen'), greet: L('“Stroopwafels straight off the iron!”', '“¡Stroopwafels recién hechos!”'), items: [['nl_stroopwafel', 3], ['nl_appeltaart', 5], ['nl_koffie', 3]] }, L('🧇 Bakkerij Van der Molen: stroopwafels, appeltaart', '🧇 Bakkerij Van der Molen: stroopwafels, tarta de manzana'));
+  shop('proeflokaal', 1.4, { id: 'ams_mb', name: L('Monkey Brew Proeflokaal', 'Monkey Brew Proeflokaal'), greet: L('“A proeflokaal: small glasses, big flavours.”', '“Un proeflokaal: vasos pequeños, grandes sabores.”'), items: [['mb_hazy', 12], ['mb_ipa', 13], ['mb_kombucha', 8], ['water', 1]].filter(([i]) => AV.ITEMS[i]) }, L('🍺 Monkey Brew Proeflokaal (tasting room)', '🍺 Monkey Brew Proeflokaal (sala de cata)'));
+  shop('kaas', 1.4, { id: 'ams_kaas', name: L('Kaashandel Jansen', 'Kaashandel Jansen'), greet: L('“Jong, belegen of oud? Taste first!”', '“¿Joven, curado o viejo? ¡Prueba primero!”'), items: [['nl_kaas', 6], ['nl_stroopwafel', 3]] }, L('🧀 Kaashandel Jansen: cheese', '🧀 Kaashandel Jansen: queso'));
+  /* frites stand on Damrak + flower stall on Dam (small kiosks) */
+  const kiosk = (x, z, col, label, V2) => { const g = new THREE.Group(), m = AV.std(col, .6); for (const [sx, sy, sz, px, py, pz] of [[2.4, 1.1, 1.4, 0, .55, 0], [2.7, .12, 1.8, 0, 2.5, 0], [.08, 2.4, .08, -1.2, 1.2, -.6], [.08, 2.4, .08, 1.2, 1.2, -.6]]) { const b = new THREE.Mesh(AV.G.box, m); b.scale.set(sx, sy, sz); b.position.set(px, py, pz); g.add(b) } g.position.set(x, 0, z); AV.lin && AV.lin(g); ctx.group.add(g); ctx.cols.push([x - 1.3, x + 1.3, z - .8, z + .8]); Object.assign(V2, { x: x + 1.8, z, reach: 5 }); T(x + 1.8, z, 2, () => tr(label[0], label[1]), () => AV.shop.open(V2), null, 'shop'); return g };
+  kiosk(-10.4, -78, 0xf2c230, L('🍟 Vlaamse Frites stand', '🍟 Puesto de Vlaamse Frites'), { id: 'ams_frites', name: L('Vlaamse Frites', 'Vlaamse Frites'), greet: L('“Mayo, satésaus or oorlog? (Oorlog = both, plus onions.)”', '“¿Mayo, satésaus u oorlog? (Oorlog = las dos, más cebolla.)”'), items: [['nl_frites', 5], ['water', 2]] });
+  kiosk(30, -36, 0x2a5a2a, L('🌷 Flower stall (Imani): tulips', '🌷 Puesto de flores (Imani): tulipanes'), { id: 'ams_bloemen', name: L('Bloemen', 'Bloemen'), greet: L('Imani: “Tulips from the bulb fields — ten for six.”', 'Imani: “Tulipanes de los campos de bulbos: diez por seis.”'), items: [['nl_tulpen', 6], ['nl_stroopwafel', 3]] });
+  /* ---------- Jasper's Fietsen: rent or buy a bike ---------- */
+  { const s = sh.fietsen; if (s) { const x = s.x + s.face * 1.4, z = s.z, bay = [s.x + s.face * 3.2, s.z + 3];
+      let placed = false; ctx.upd.push(() => { if (placed || !AV.W || AV.W.id !== 'amsterdam' || !AV.act || !AV.act.place) return; placed = true; try { AV.act.place(AV.W, { type: 'rental', id: 'ams_fietsen', kind: 'bicycle', x: s.x + s.face * 3.4, z: s.z - 4, ry: 0, price: 8, name: L("Jasper's Fietsen rental", "Alquiler Jasper's Fietsen"), col: 0x1a1a1a, cols: [0x1a1a1a, 0x2a4a8a, 0x8a1a1a] }); AMS.stats.rental = true } catch (e) { AMS.stats.rentErr = String(e) } });   /* placed once the world object exists */
+      AMS.bikeShop = { x, z, bay };
+      T(x, z, 2.2, () => tr("🚲 Jasper's Fietsen: buy a bike (or rent one outside)", "🚲 Jasper's Fietsen: comprar bici (o alquilar fuera)"), () => AMS.bikePanel(), null, 'shop') } }
+  /* ---------- De Waterkant: live music every evening ---------- */
+  let music0 = null, musicWho = null; const venue = spot('waterkant', 2);
+  if (venue) T(venue[0], venue[1], 2.4, () => { const h = hour(); return h >= 20 || h < 1 ? tr('🎶 De Waterkant: live music now (tip the band, 5)', '🎶 De Waterkant: música en directo (propina al grupo, 5)') : tr('🎶 De Waterkant: live music every evening from 20:00', '🎶 De Waterkant: música en directo cada noche desde las 20:00') }, () => { const h = hour(); if (h >= 20 || h < 1) { if (AV.txn(-5, 'Tip at De Waterkant')) AV.toast(tr('🎶 The band nods. Fenna dedicates the next song to you.', '🎶 El grupo te saluda. Fenna te dedica la próxima canción.')) } else AV.toast(tr('Tonight from 20:00: Fenna (acoustic), then the Stone Ape Band.', 'Esta noche desde las 20:00: Fenna (acústico) y después la Stone Ape Band.')) }, null, 'venue');
+  /* ---------- tram + canal boat ---------- */
+  const RD = AV.rides; const TRAM = { geo: c => CY.VB.tram(c), col: 0xf4f4f4, v: 7.5, eng: 'electric', chase: true, chaseDist: 13, chaseH: 4.4, noBlock: true };
+  const boatGeo = c => K.merge([[BG.box, 0x1a1a1a, K.M(0, .15, 0, 2.6, .6, 11)], [BG.box, c, K.M(0, .55, 0, 2.7, .3, 11.2)], [BG.box, 0x9ac8e0, K.M(0, 1.1, -.5, 2.3, .9, 8)], [BG.box, 0xf4f4f4, K.M(0, 1.58, -.5, 2.4, .08, 8.2)], [BG.cone, c, K.M(0, .45, 5.9, 1.3, 1.2, .9, Math.PI / 2, 0, 0)]]);
+  const BOAT = { geo: boatGeo, col: 0x2a4a8a, v: 4.5, eng: 'petrol', water: -1.55, chase: true, chaseFree: true, chaseDist: 8, chaseH: 3, noBlock: true };
+  AMS.TRAM = TRAM; AMS.BOAT = BOAT;
+  const tramStop = (z, toZ, name) => T(9.4, z, 2.4, () => tr('🚋 Tram to ', '🚋 Tranvía a ') + name + tr(' (2 credits)', ' (2 créditos)'), () => { if (!RD || RD.cur) return; if (!AV.txn(-2, 'Tram')) return; const ln = toZ > z ? -1.6 : 1.6, ok = RD.start({ pts: [[ln, z], [ln, (z + toZ) / 2], [ln, toZ]],   /* the track for this direction (AI trams run south on x -1.6, north on +1.6) */ veh: TRAM, out: [9.4, toZ], name, price: 2, icon: '🚋', title: tr('Tram', 'Tranvía') }); if (ok) st().tram++; else AV.txn(2, 'Tram refund') }, null, 'tram');
+  tramStop(-124, -40, 'Dam'); tramStop(-40, -124, 'Centraal');
+  AMS.boatTrip = () => { if (!RD || RD.cur) return false; if (!AV.txn(-12, 'Canal boat tour')) return false; const fe = festOn(), pts = [[-158.5, -108], [-158.5, -40], [-158.5, 20], [-158.5, 52], [-160, 58], [-161.5, 52], [-161.5, 0], [-161.5, -60], [-161.5, -110]];
+    const ok = RD.start({ pts, veh: Object.assign({}, BOAT, fe ? { col: 0xff7a1a } : {}), out: [-150.5, -110], name: 'Herengracht', price: 12, icon: '🛥', title: fe ? tr('King’s Day boat party', 'Fiesta en barco de Koningsdag') : tr('Canal boat tour', 'Paseo en barco por los canales') });
+    if (ok) { st().boat++; AV.toast(fe ? tr('🛥 Oranje boven! Noor turns up the music and the whole canal waves back.', '🛥 ¡Oranje boven! Noor sube la música y todo el canal saluda.') : tr('🛥 Noor: “Welcome aboard. Heads down for the bridges!”', '🛥 Noor: “Bienvenidos a bordo. ¡Cabezas abajo en los puentes!”')) } else AV.txn(12, 'Boat refund'); return ok };
+  T(-150.5, -110, 2.4, () => festOn() ? tr('🛥 King’s Day boat party on the Herengracht (12)', '🛥 Fiesta en barco por el Herengracht (12)') : tr('🛥 Canal boat tour on the Herengracht (12)', '🛥 Paseo en barco por el Herengracht (12)'), () => AMS.boatTrip(), null, 'boat');
+  /* ---------- the portal ---------- */
+  T(-16, -132, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'amsterdam' && (!AV.worldMeta(id) || AV.worldMeta(id).status !== 'planned'));
+    const p = AV.panel('cmp', '<b>' + tr('Apeverse Portal', 'Portal Apeverse') + '</b><div class="grid">' + ws.map(id => '<button data-w="' + id + '">' + ((AV.worldMeta(id) || {}).name || id) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
+    p.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { AV.closePanel('cmp'); AV.audio && AV.audio.whoosh && AV.audio.whoosh(); AV.travel(b.dataset.w, 'amsterdam') }) }, null, 'portal');
+  { const g = new THREE.Mesh(new THREE.TorusGeometry(2.2, .22, 10, 40), AV.std(0x7a4aff, .3, .2, 0x9a6aff, 1.4)); g.position.set(-19, 2.6, -132); g.rotation.y = Math.PI / 2; ctx.group.add(g); ctx.circles.push([-19, -132, .4]) }
+  /* ---------- King's Day: decorations, orange crowd, vrijmarkt, DJ boat music ---------- */
+  const stallT = E.STALLS.map(([x, z], i) => T(x, z, 1.8, () => tr('🟠 Vrijmarkt stall: secondhand bargains', '🟠 Puesto del vrijmarkt: gangas de segunda mano'), () => AV.shop.open({ id: 'ams_vrij' + i, name: L('Vrijmarkt', 'Vrijmarkt'), greet: L('“Everything must go! Alles moet weg!”', '“¡Todo debe irse! ¡Alles moet weg!”'), items: [['nl_kroon', 5], ['nl_stroopwafel', 3], ['postcard', 2], ['tee', 15]].filter(([id]) => AV.ITEMS[id]), x, z, reach: 4 }), () => festOn(), 'shop'));
+  ctx.upd.push(() => { const on = festOn(), h = hour(); E.fest.visible = on; orange.forEach(w => w.vis = on); AMS.stats.fest = on;
+    const want = on && h >= 12 ? 'dj' : (h >= 20 || h < 1) ? 'venue' : null; const Wc = AV.W; if (!Wc || Wc.id !== 'amsterdam') return;
+    if (want !== musicWho) { if (music0 === null) music0 = Wc.music || false; if (want === 'dj') Wc.music = { playlist: 'jungle_dub', pos: { x: -110, y: 1, z: -30 }, bed: .2 }; else if (want === 'venue' && venue) Wc.music = { playlist: 'stone_ape_band', pos: { x: venue[0], y: 2, z: venue[1] }, bed: .08 }; else { Wc.music = music0 || undefined; music0 = null } musicWho = want; AMS.stats.music = want; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
+  ctx.leave.push(() => { musicWho = null; music0 = null });
+  /* ---------- conversations (4 choices, each can do something) ---------- */
+  const TK = AV.talk; function talk(id) { const o = named[id]; if (!o || !TK) return; const s = st(); s.met[id] = (s.met[id] || 0) + 1; const q2 = s.q = s.q || {};
+    const O = {
+      noor: [{ label: L('What’s your work like?', '¿Cómo es tu trabajo?'), say: L('“Forty years of bridges and I still duck. Tours leave from the Herengracht stop all day.”', '“Cuarenta años de puentes y aún me agacho. Los paseos salen de la parada del Herengracht todo el día.”') },
+        { label: L('Tell me about the canals', 'Háblame de los canales'), say: L('“Singel was the old city moat. The ring came after — merchants wanted water at their doors.”', '“El Singel era el foso de la ciudad. El anillo vino después: los mercaderes querían agua en la puerta.”') },
+        { label: L('What do you listen to?', '¿Qué música escuchas?'), say: L('“Whatever drifts out of De Waterkant at night. Fenna sings there.”', '“Lo que sale de De Waterkant por la noche. Fenna canta allí.”') },
+        { label: L('Take me on a boat tour (12)', 'Llévame de paseo en barco (12)'), fn: () => { AV.closePanel('cmp'); setTimeout(() => AMS.boatTrip(), 300) } }],
+      jasper: [{ label: L('How’s the bike trade?', '¿Qué tal el negocio de bicis?'), say: L('“Busy. Everyone has two bikes: a good one and the one they lock outside.”', '“Mucho trabajo. Todos tienen dos bicis: la buena y la que dejan fuera atada.”') },
+        { label: L('Any cycling rules?', '¿Alguna regla para ir en bici?'), say: L('“Red lanes are for bikes. Ride on the right, ring before you pass, never block a tram track.”', '“Los carriles rojos son para bicis. Por la derecha, toca el timbre antes de adelantar y nunca bloquees el tranvía.”') },
+        { label: L('What music do you like?', '¿Qué música te gusta?'), say: L('“Old records from Groove Dealers Platen. They press them heavy.”', '“Discos viejos de Groove Dealers Platen. Los prensan pesados.”') },
+        { label: L('Show me your bikes', 'Enséñame tus bicis'), fn: () => { AV.closePanel('cmp'); setTimeout(() => AMS.bikePanel(), 250) } }],
+      fenna: [{ label: L('You play here?', '¿Tocas aquí?'), say: L('“Afternoons at ’t Gouden Kraantje, evenings at De Waterkant from eight.”', '“Por la tarde en ’t Gouden Kraantje, por la noche en De Waterkant desde las ocho.”') },
+        { label: L('What’s the Jordaan like?', '¿Cómo es el Jordaan?'), say: L('“Small streets, big opinions. Everyone knows your bike.”', '“Calles pequeñas, grandes opiniones. Todos conocen tu bici.”') },
+        { label: L('Your music?', '¿Tu música?'), say: L('“Songs about water and leaving. The Stone Ape Band plays after me.”', '“Canciones sobre el agua y las despedidas. La Stone Ape Band toca después.”') },
+        { label: () => q2.setlist === 'got' ? L('I found your setlist!', '¡Encontré tu lista de canciones!') : q2.setlist ? L('Still looking for the setlist…', 'Sigo buscando la lista…') : L('Can I help with anything?', '¿Puedo ayudarte en algo?'), fn: () => { const el = document.getElementById('tkL');
+          if (!q2.setlist) { q2.setlist = 'look'; el && (el.textContent = tr('“My setlist! I left it at Groove Dealers Platen. Could you fetch it before tonight?”', '“¡Mi lista! La dejé en Groove Dealers Platen. ¿Me la traes antes de esta noche?”')); if (E.pl && AV.minimap && AV.minimap.setDest) AV.minimap.setDest(E.pl.X(6.6), (E.pl.z0 + E.pl.z1) / 2, 'Groove Dealers Platen') }
+          else if (q2.setlist === 'got') { q2.setlist = 'done'; AV.txn(40, 'Fenna: thank you'); el && (el.textContent = tr('“You’re a hero. +40 — and tonight’s first song is for you.”', '“Eres un héroe. +40, y la primera canción de esta noche es para ti.”')); AV.quests && AV.quests.check && AV.quests.check() }
+          else el && (el.textContent = tr('“Groove Dealers Platen, the Jordaan lane. Ask at the counter.”', '“Groove Dealers Platen, en la calle del Jordaan. Pregunta en el mostrador.”')) } }],
+      daan: [{ label: L('How does the coffeeshop work?', '¿Cómo funciona el coffeeshop?'), say: L('“Eighteen plus, no alcohol, no rush. Mint tea is free if you sit with me.”', '“Mayores de dieciocho, sin alcohol, sin prisas. El té de menta es gratis si te sientas conmigo.”') },
+        { label: L('Is the Jordaan your home?', '¿El Jordaan es tu casa?'), say: L('“Born on the Lauriergracht. My grandmother sold herring.”', '“Nací en el Lauriergracht. Mi abuela vendía arenques.”') },
+        { label: L('What’s playing?', '¿Qué suena?'), say: L('“Dub, always dub. It slows the clock down.”', '“Dub, siempre dub. Ralentiza el reloj.”') },
+        { label: L('Show me the menu', 'Enséñame la carta'), fn: () => { AV.closePanel('cmp'); const t = AV.W.T.find(t2 => /Coffeeshop counter/.test(typeof t2.label === 'function' ? t2.label() : '')); if (t) setTimeout(() => t.fn(), 250) } }],
+      imani: [{ label: L('What do you sell?', '¿Qué vendes?'), say: L('“Tulips by day, everything on King’s Day. The vrijmarkt is the best day of the year.”', '“Tulipanes de día, de todo en Koningsdag. El vrijmarkt es el mejor día del año.”') },
+        { label: L('When is King’s Day?', '¿Cuándo es Koningsdag?'), say: () => festOn() ? L('“Today! Wear something orange.”', '“¡Hoy! Ponte algo naranja.”') : L('“On the Apeverse calendar it comes round every Sunday. The whole city turns orange.”', '“En el calendario Apeverse llega cada domingo. Toda la ciudad se vuelve naranja.”') },
+        { label: L('Any music tips?', '¿Algún consejo musical?'), say: L('“De Waterkant on a Friday. Bring cash for the hat.”', '“De Waterkant un viernes. Lleva algo para la gorra.”') },
+        { label: L('Buy tulips', 'Comprar tulipanes'), fn: () => { AV.closePanel('cmp'); const t = AV.W.T.find(t2 => /Flower stall/.test(typeof t2.label === 'function' ? t2.label() : '')); if (t) setTimeout(() => t.fn(), 250) } }]
+    }[id];
+    TK.open({ id: 'ams_' + id, name: o.p.n + ' · ' + say(o.p.role), first: L('“Hoi! I’m ' + o.p.n + '.”', '“¡Hoi! Soy ' + o.p.n + '.”'), back: L('“Hé, you again! Hoe gaat het?”', '“¡Eh, otra vez tú! ¿Hoe gaat het?”'), opts: O.map(x => Object.assign({}, x, { label: typeof x.label === 'function' ? x.label() : x.label })) }) }
+  AMS.talk = talk;
+  /* the setlist pickup at the record shop counter */
+  if (E.pl) T(E.pl.X(7.6), E.pl.z1 - 1.4, 1.8, () => tr('📝 Pick up Fenna’s setlist (left at the counter)', '📝 Recoger la lista de Fenna (en el mostrador)'), () => { const q2 = st().q = st().q || {}; q2.setlist = 'got'; AV.toast(tr('📝 Got it: “Water Songs — 7 tracks”. Bring it to Fenna.', '📝 Ya la tienes: “Canciones de agua: 7 temas”. Llévasela a Fenna.')) }, () => { const q2 = st().q || {}; return q2.setlist === 'look' }, 'quest');
+};
+
+/* ======================= panels ======================= */
+AMS.bikePanel = function () { const G = AV.garage, B = AMS.bikeShop; if (!G || !B) return; G.dealers.amsterdam = { ok: true, D: { id: 'ams_fietsen', name: L("Jasper's Fietsen", "Jasper's Fietsen"), stock: [{ kind: 'bicycle', model: L('Omafiets (Dutch city bike)', 'Omafiets (bici holandesa)'), price: 110, cols: [0x1a1a1a, 0x2a4a8a, 0x8a1a1a, 0x3a6a3a, 0xe8e4da] }, { kind: 'escooter', model: L('Zippit e-step', 'Patinete Zippit'), price: 160, cols: [0xc8f03a, 0x1a1a1a] }] }, bay: B.bay, lot: { ry: 0 }, counter: [B.x, B.z] }; G.panel('amsterdam') };
+
+/* ======================= registrations in the shared systems ======================= */
+/* registrations run on page load: transit.js, rides.js and garage.js load after this file */
+addEventListener('load', () => {
+if (AV.transit && AV.transit.CFG && !AV.transit.CFG.amsterdam) AV.transit.CFG.amsterdam = { taxi: { icon: '🚕', n: L('Taxi', 'Taxi'), base: 6, per: .03, say: L('An electric taxi glides up. “Goedendag! Waarheen?”', 'Un taxi eléctrico se detiene. “¡Goedendag! ¿Waarheen?”') }, stands: [['centraal', 18, 6], ['dam', 26, -12]], rent: [] };
+if (AV.rides && AV.rides.VEH && !AV.rides.VEH.amsterdam) AV.rides.VEH.amsterdam = { vb: 'car', col: 0x1c1c20, v: 9, eng: 'electric' };
+if (AV.garage && AV.garage.ALLOW && !AV.garage.ALLOW.amsterdam) AV.garage.ALLOW.amsterdam = ['bicycle', 'escooter', 'scooter', 'car', 'woblr'];
+});
+addEventListener('load', () => { const F = AV.fest; if (F && F.LIST && !F.LIST.koningsdag) F.LIST.koningsdag = { w: 'amsterdam', where: L('Amsterdam: Dam, Damrak, the canals', 'Ámsterdam: Dam, Damrak, los canales'), wd: 6, h: 9, len: 15 * 60, n: L('King’s Day (Koningsdag)', 'Día del Rey (Koningsdag)'), head: { h: 20, len: 120, n: L('DJ boat on the Singel', 'Barco DJ en el Singel') } } });
+})(window.AV);

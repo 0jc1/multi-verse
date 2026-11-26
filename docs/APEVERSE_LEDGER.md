@@ -273,6 +273,22 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Amsterdam: first playable district (apeverse-2-living-worlds branch)
+
+Details in `docs/AMSTERDAM.md`.
+
+- **The city:**
+  - **Route:** Centraal Station → Damrak and its basin → Dam Square → the Singel and Herengracht canals (7 walkable arched bridges; the water is real) → the Jordaan lane.
+  - **Architecture:** a canal-house kit with 5 gable types and a forward lean.
+  - **Signage:** one sign atlas of authored Dutch shop signs with window displays.
+- **Businesses:** 3 walk-in (brown café, 18+ coffeeshop with house rules, Groove Dealers Platen) and 5 counters (bakery, frites, cheese, Monkey Brew Proeflokaal, flowers), plus ApeMart Express ("supermarkt"), PuffPop and the De Waterkant live venue.
+- **Getting around:** a visible tram Centraal ↔ Dam on the rails, a canal boat tour under the bridges, electric taxis, and Jasper's Fietsen (rent, or buy an omafiets or e-step).
+- **People:** 5 named residents with daily routines and 4-choice conversations that act; the story mission "Fenna's setlist"; King's Day every Sunday on the Apeverse calendar (orange decorations, vrijmarkt, orange crowds, a DJ boat), with normal life otherwise.
+- **Tests:** `suite_amsterdam` 85/85, the release gate (mobile and human playtest still open). Integration now covers 14 worlds: 138/138.
+- **Frame rate (Medium, laptop on battery):** arrival 53.6 fps (72 draw calls), Damrak 58, Jordaan 46.8.
+- **Shared code it needed:** `rides.js` takes fixed-route rides with their own vehicle (tram on rails, boat on water, chase options). Shop windows are real glass in the walk-in shops.
+- **Battery-run timing misses:** in this session's regression on battery, `suite_gps` was 91/94 (Madrid 526 ms, Astro-9 913 ms, Koh Samui 469 ms against the 400 ms budget). All route correctness checks passed. The same pathfinder code passed 88/88 on AC power in the routing milestone. In the same run, `suite_roads`' Astro-9 warm-up reached 401/518 bins in 150 s (517/518 on AC). Re-check both on AC power.
+
 ### 2.1 Routing: roads for vehicles, Pinar connected, warm GPS (apeverse-2-living-worlds branch)
 
 - **Madrid Pinar:** connector streets to the grid (with traffic lights), plus a Gran Vía east link. Pedestrian streets are kept car-free.

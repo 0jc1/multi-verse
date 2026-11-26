@@ -39,6 +39,16 @@ Last updated 26 Nov 2026, after the Brand District pilot. **DONE** means built, 
 
 ## 4. New destinations
 
+- **DONE:**
+  - Amsterdam first district: Centraal, Damrak, Dam, the Singel and Herengracht, the Jordaan. Release gate auto-tested, 85/85.
+- **NEXT for Amsterdam:**
+  - Leidseplein / Rembrandtplein nightlife.
+  - Vondelpark and Museumplein.
+  - The NDSM ferry.
+  - The Bloemendaal beach trip.
+  - More walk-in interiors.
+  - A mobile check and a human playtest.
+
 Only after the cross-world systems above, as the brief orders.
 
 - **NEXT:** Amsterdam (present day) slice, built to the release gate in `docs/WORLD_LAUNCH_QUEUE` (2.1 pack).
@@ -57,6 +67,8 @@ Only after the cross-world systems above, as the brief orders.
   - A festival outside Ape Town that uses the brand stalls.
 
 ## Known failures carried forward (not hidden)
+
+- **GPS timing on battery:** `suite_gps` 91/94 (Madrid, Astro-9 and Koh Samui over the 400 ms budget). Correctness passes. Re-check on AC power: the same code passed 88/88 there.
 
 
 - `suite_gfx`: 4 pre-existing failures.

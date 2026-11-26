@@ -106,6 +106,7 @@ RD.plan = function (W, a, b) {
 /* ---------------- the vehicle ---------------- */
 function build(W, V) {
   const CY = AV.city, g = new THREE.Group(); let body = null;
+  if (V.geo) { body = new THREE.Mesh(V.geo(V.col), V.mat || RD._mat || (RD._mat = CY.vehMat(W.ctx))); g.add(body); AV.lin && AV.lin(g); g.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.rideVeh = 1 } }); return g }
   try { if (CY && CY.VB && CY.VB[V.vb]) { const geo = V.vb === 'scooter' ? CY.VB.scooter(V.col, { rider: true }) : CY.VB[V.vb](V.col); body = new THREE.Mesh(geo, RD._mat || (RD._mat = CY.vehMat(W.ctx))); g.add(body) } } catch (e) { body = null }
   if (!body) { body = new THREE.Mesh(AV.G.box, AV.std(V.col, .4)); body.scale.set(1.8, 1.3, 4.2); body.position.y = .8; g.add(body) }
   if (V.stripe) { const s = new THREE.Mesh(AV.G.box, AV.std(V.stripe, .5)); s.scale.set(1.76, .09, 3.2); s.position.set(0, .62, .05); g.add(s); const sign = new THREE.Mesh(AV.G.box, AV.std(0x3ad06a, .4, 0, 0x3ad06a, .9)); sign.scale.set(.45, .16, .1); sign.position.set(0, 1.5, -.3); g.add(sign) }
@@ -135,22 +136,22 @@ ACT.register('taxiride', {
   end: (s, why) => finish(s, why)
 });
 RD.start = function (o) {   /* o = { x, z, name, price, icon, title } ; fare already paid by the caller */
-  const W = AV.W; if (!W || ACT.cur || RD.cur) return false; const P = AV.P, V = vehOf(W);
-  const plan = RD.plan(W, { x: P.x, z: P.z }, { x: o.x, z: o.z }); if (plan.pts.length < 2) return false;
+  const W = AV.W; if (!W || ACT.cur || RD.cur) return false; const P = AV.P, V = o.veh || vehOf(W);   /* 2.1: o.veh = a line vehicle (tram, canal boat); o.pts = its fixed route */
+  const plan = o.pts ? { how: 'fixed', pts: o.pts, drop: o.pts[o.pts.length - 1] } : RD.plan(W, { x: P.x, z: P.z }, { x: o.x, z: o.z }); if (plan.pts.length < 2) return false;
   const curve = new THREE.CatmullRomCurve3(plan.pts.map(p => new THREE.Vector3(p[0], 0, p[1])), false, 'centripetal', .5), len = curve.getLength();
   const top = Math.max(V.v, Math.min(V.v * 2.2, len / 80));   /* long rides a bit faster: about 90 s at most */
   const veh = build(W, V), T0 = curve.getTangentAt(0); veh.position.set(plan.pts[0][0], (W.surface(plan.pts[0][0], plan.pts[0][1]) || 0) + (V.hover || 0), plan.pts[0][1]); veh.rotation.y = Math.atan2(T0.x, T0.z); W.group.add(veh); AV.P.yaw = veh.rotation.y + Math.PI; AV.P.pitch = 0;
   const lights = (plan.lights || []).map(n => ({ x: n.x, z: n.z, s: null, done: false }));
-  const r = { chase: !(V.vb === 'songthaew' || V.vb === 'pickup'), W, V, veh, curve, len, s: 0, v: 0, vmax: top, how: plan.how, lights, price: o.price || 0, blocked: 0, wait: '', eng: engine(V), dest: { x: o.x, z: o.z }, drop: plan.drop, t0: AV.now() };
+  const r = { chase: V.chase != null ? V.chase : !(V.vb === 'songthaew' || V.vb === 'pickup'), W, V, veh, curve, len, s: 0, v: 0, vmax: top, how: plan.how, lights, price: o.price || 0, blocked: 0, wait: '', eng: engine(V), dest: { x: o.x != null ? o.x : plan.drop[0], z: o.z != null ? o.z : plan.drop[1] }, drop: plan.drop, t0: AV.now() };
   /* arc length of each light along the curve (sampled) */
   if (lights.length) { const N = Math.max(40, Math.round(len / 2)); for (let i = 0; i <= N; i++) { const p = curve.getPointAt(i / N); for (const L of lights) { const d = Math.hypot(p.x - L.x, p.z - L.z); if (L.s == null || d < L.best) { L.best = d; L.s = i / N * len } } } }
-  RD.cur = r; RD.stats.rides++; RD.stats[plan.how]++; RD.stats.lastLen = Math.round(len); AV.fadeTo(1, 220);
+  r.out = o.out || null; RD.cur = r; RD.stats.rides++; RD.stats[plan.how] = (RD.stats[plan.how] || 0) + 1; RD.stats.lastLen = Math.round(len); AV.fadeTo(1, 220);
   const ok = ACT.start('taxiride', { r, name: o.name, icon: o.icon || '🚕', title: o.title || tr('Taxi', 'Taxi') }); if (!ok) { W.group.remove(veh); RD.cur = null; AV.fadeTo(0, 200); return false }
   setTimeout(() => AV.fadeTo(0, 380), 260); horn(); AV.toast((o.icon || '🚕') + ' ' + (plan.waits > 12 ? tr('Your ride waits on the main street (' + plan.waits + ' m) — you walk over and get in. ', 'Te espera en la calle principal (' + plan.waits + ' m): vas andando y subes. ') : tr('You get in. ', 'Subes. ')) + (plan.how === 'road' ? tr('The driver takes the streets: ', 'El conductor va por las calles: ') : tr('Off we go: ', 'En marcha: ')) + Math.round(len) + ' m');
   return true;
 };
 function aheadBlocked(r, x, z, hx, hz) { const W = r.W, look = 3.5 + r.v * .7, test = (px, pz, rad) => { const rx = px - x, rz = pz - z, al = rx * hx + rz * hz, sd = Math.abs(rx * -hz + rz * hx); return al > 1.5 && al < look + 2 && sd < 1.1 + rad };
-  if (r.V.hover) return null;
+  if (r.V.hover || r.V.noBlock) return null;
   if (AV.dynBlock) { for (const k of [3, 6]) if (AV.dynBlock(x + hx * (k + r.v * .3), z + hz * (k + r.v * .3), .9)) return tr('traffic ahead', 'tráfico delante') }
   for (const cr of (W.ctx && W.ctx.crowds) || []) for (const w of cr.list || []) if (w.vis !== false && w.x != null && Math.abs(w.x - x) < 10 && Math.abs(w.z - z) < 10 && test(w.x, w.z, .3)) return tr('pedestrian crossing', 'peatón cruzando');
   return null }
@@ -174,7 +175,7 @@ function tick(s, dt, t) {
     r.blocked += dt; RD.stats.maxBlocked = Math.max(RD.stats.maxBlocked, r.blocked); if (r.blocked < maxWait) { if (!r.blockCounted) { r.blockCounted = true; RD.stats.blockStops++ } target = 0; r.wait = blk; if (r.blocked > 1.2 && !r.honked) { r.honked = true; horn() } } else { target = Math.min(target, 2.2); r.wait = tr('edging past', 'pasando despacio'); if (maxWait === 3) r.edgeUntil = AV.now() + 8 } }
   else { r.blocked = 0; r.honked = false; r.blockCounted = false; r.pedWait = Math.max(0, (r.pedWait || 0) - dt * .3) }
   r.v += Math.max(-7 * dt, Math.min(2.6 * dt, target - r.v)); r.s = Math.min(r.len, r.s + r.v * dt); engineSet(r.eng, r.v, r.vmax);
-  const gy = W.surface(p.x, p.z), y = (gy == null ? (r.y || 0) : gy) + (r.V.hover ? r.V.hover + Math.sin(t * 2) * .08 : 0); r.y = y;
+  const gy = r.V.water != null ? r.V.water + Math.sin(t * 1.3) * .04 : W.surface(p.x, p.z), y = (gy == null ? (r.y || 0) : gy) + (r.V.hover ? r.V.hover + Math.sin(t * 2) * .08 : 0); r.y = y;
   r.veh.position.set(p.x, y + (r.V.hover ? 0 : Math.sin(t * 13) * .01 * Math.min(1, r.v / 4)), p.z); r.veh.rotation.y = yaw;
   /* passenger seat (back right; pillion behind the rider on a motorbike), eye ~1.2 m when seated */
   const ks = r.V.left ? 1 : -1, seat = r.V.pillion ? [0, -.45] : r.V.seat ? [r.V.seat[0] * ks, r.V.seat[1]] : [ks * .42, -.55], sx = Math.cos(yaw) * seat[0] + Math.sin(yaw) * seat[1], sz = -Math.sin(yaw) * seat[0] + Math.cos(yaw) * seat[1];
@@ -183,8 +184,8 @@ function tick(s, dt, t) {
      The chase view follows the vehicle's turns unless you are looking around with the mouse (then it waits 1.5 s). */
   const now = AV.now(); if (r.lastYaw != null && Math.abs(P.yaw - r.lastYaw) > 1e-4) r.userT = now;
   if (now - (r.userT || -9) > 1.5) { let dy = (yaw + Math.PI) - P.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); P.yaw += dy * Math.min(1, dt * 2.2) }
-  if (r.chase) { const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); let dist = 7.2; for (; dist > 2.4; dist -= .6) { const cx = p.x - fx * dist, cz = p.z - fz * dist; if (W.surface(cx, cz) !== null && AV.isFree(W, cx, cz, .2)) break }
-    AV.cam.position.set(p.x - fx * dist, y + 2.9, p.z - fz * dist); AV.cam.lookAt(p.x + fx * 4, y + 1.1, p.z + fz * 4) }
+  if (r.chase) { const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw); let dist = r.V.chaseDist || 7.2; if (!r.V.chaseFree) for (; dist > 2.4; dist -= .6) { const cx = p.x - fx * dist, cz = p.z - fz * dist; if (W.surface(cx, cz) !== null && AV.isFree(W, cx, cz, .2)) break }
+    AV.cam.position.set(p.x - fx * dist, y + (r.V.chaseH || 2.9), p.z - fz * dist); AV.cam.lookAt(p.x + fx * 4, y + 1.1, p.z + fz * 4) }
   else AV.cam.position.set(P.x, y + (r.V.pillion ? 1.45 : r.V.vb === 'car' ? 1.12 : 1.3), P.z);
   r.lastYaw = P.yaw;
   if (AV.now() - (s.lastHud || 0) > .5) { s.lastHud = AV.now(); ACT.draw() }
@@ -197,7 +198,7 @@ function finish(s, why) {
   if (why === 'world') { try { W.group.remove(r.veh) } catch (e) { } return }
   /* step out on the kerb side: try right of the car, then left, then behind */
   const yaw = r.veh.rotation.y, ks = r.V.left ? 1 : -1, out = [[1.9 * ks, 0], [-1.9 * ks, 0], [0, -3.2], [2.6 * ks, 1.5]].map(([a, b]) => [r.veh.position.x + Math.cos(yaw) * a + Math.sin(yaw) * b, r.veh.position.z - Math.sin(yaw) * a + Math.cos(yaw) * b]);
-  let spot = out.find(q => W.surface(q[0], q[1]) !== null && AV.isFree(W, q[0], q[1], .5)) || (AV.safeSpot ? AV.safeSpot(W, r.veh.position.x, r.veh.position.z) : [P.x, P.z]);
+  let spot = r.out && W.surface(r.out[0], r.out[1]) !== null ? r.out : out.find(q => W.surface(q[0], q[1]) !== null && AV.isFree(W, q[0], q[1], .5)) || (AV.safeSpot ? AV.safeSpot(W, r.veh.position.x, r.veh.position.z) : [P.x, P.z]);
   P.x = spot[0]; P.z = spot[1]; P.y = W.surface(spot[0], spot[1]) || 0; P.vx = P.vz = P.vy = 0; P.yaw = Math.atan2(-(r.dest.x - P.x), -(r.dest.z - P.z));
   if (why === 'arrive' || why === 'skip') { AV.toast((s.icon || '🚕') + ' ' + tr('You arrive at ', 'Llegas a ') + s.name + (r.price ? ' · ' + r.price + tr(' credits', ' créditos') : ''));
     if (Math.hypot(r.dest.x - P.x, r.dest.z - P.z) > 18 && AV.minimap && AV.minimap.setDest) try { AV.minimap.setDest(r.dest.x, r.dest.z, s.name) } catch (e) { } }

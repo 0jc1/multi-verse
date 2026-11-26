@@ -43,6 +43,7 @@ const G = {
 AW.G = G;
 /* ---------- presets ---------- */
 const P = AW.presets = {
+  amsterdam: () => ({ tram: G.tram(.45, () => .25 + Z(/damrak|centraal|dam\b/i, 70)() * .6), bells: G.bells(.4, () => day() ? .45 : .15), crowd: G.crowd(.35, () => .2 + Z(/dam|damrak|centraal|jordaan|kraantje|waterkant/i, 50)() * .7), gulls: G.gulls(.35, () => day() ? .3 + Z(/boat|singel|heren|damrak/i, 60)() * .5 : 0), fountain: G.fountain(.3, Z(/boat|singel|heren|gracht/i, 25)), steps: G.steps(.45, () => 1) }),
   ape_town: () => ({ birds: G.birds(.45, () => day() ? .7 : .05), crickets: G.crickets(.4, () => night() ? .8 : 0), crowd: G.crowd(.3, () => .25 + Z(/plaza|stage|food|finca/i, 45)() * .6), falls: G.river(.55, Z(/falls/i, 55)), fountain: G.fountain(.35, Z(/plaza/i, 25)), chimes: G.chimes(.4, Z(/crystal|grove/i, 40)), gong: G.gong(.5, Z(/temple|asia/i, 60)), wind: G.wind(.25, () => .35) }),
   verdalux: () => ({ hum: G.hum(.35, () => .6, 180), chimes: G.chimes(.45, () => .7), frogs: G.frogs(.35, () => .5), wind: G.wind(.3, () => .5), drums: G.drums(.5, Z(/drum/i, 40), 84) }),
   jungle_dub: () => ({ cicadas: G.cicadas(.25, () => day() ? .6 : .15), birds: G.birds(.5, () => day() ? .8 : .1, 1800, 3800), crickets: G.crickets(.4, () => night() ? .8 : 0), frogs: G.frogs(.45, () => night() ? .6 + Z(/river/i, 60)() * .4 : Z(/river/i, 50)() * .4), river: G.river(.5, Z(/river|riverbar/i, 55)), crowd: G.crowd(.3, Z(/bazaar|sound|dub/i, 50)), wind: G.wind(.2, () => .3) }),

@@ -455,5 +455,28 @@
   ],
   "kind": "apeverse2_destination",
   "art_refs": []
+ },
+ {
+  "id": "amsterdam",
+  "name": "Amsterdam",
+  "roadmap_no": null,
+  "core_identity": "Present-day canal city: Centraal Station, Damrak, Dam Square, the Singel and Herengracht canals with walkable bridges, the Jordaan lane",
+  "music_identity": "Brown-café acoustic sets, live bands at De Waterkant, King’s Day DJ boats, tram bells and bike bells",
+  "status": "playable",
+  "landmarks": [
+   "Centraal Station",
+   "Damrak + the Damrak basin",
+   "Dam Square (palace, monument)",
+   "Singel + Herengracht canals (7 bridges)",
+   "Jordaan lane",
+   "Café 't Gouden Kraantje",
+   "Coffeeshop De Blauwe Lantaarn",
+   "Groove Dealers Platen",
+   "De Waterkant"
+  ],
+  "kind": "apeverse21_destination",
+  "art_refs": [
+   "atlas/REFERENCE_MAPS/amsterdam_present.png (mood only)"
+  ]
  }
 ]

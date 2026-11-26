@@ -240,6 +240,11 @@
 - **Fix:** default bloom at 20% by day (×1.45 at night as before), per-world `sky.exp` day exposure, and sky tints.
 - **Result:** contrast in washed worlds is now 0.24–0.35, against 0.12–0.18 before.
 
+### M13 ambient sound (apeverse-2-living-worlds branch)
+
+- **Presets:** `js/ambience_worlds.js` gives 9 worlds procedural ambience whose layers follow their own places and day or night.
+- **Tests:** suite_ambience 66/66, with a real signal measured in every world.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

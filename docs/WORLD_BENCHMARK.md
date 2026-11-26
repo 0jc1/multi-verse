@@ -75,7 +75,7 @@ Every world without its own grade uses the default post-processing (`js/gfx.js`,
    - Ape Town, Verdalux, Astro-9, Jungle Dub, Jerusalem, Judean Desert, Da Nang, Koh Samui.
    - Vienna, Chiang Mai and Pai have roads but no walking graph.
 2. **Palette and haze. Mostly done:** see docs/PALETTES.md. The cause was the default bloom; it is now day-scaled, with per-world day exposure and sky tints. The noon sky stays pale, as noted there. Vienna, Da Nang, Ape Town and Koh Samui are still pale: more saturated ground and façades, and a per-world grade or fog tint where needed.
-3. **No ambient sound layers.** Ape Town, Verdalux, Jungle Dub, Chiang Mai, Jerusalem, Judean Desert, Vienna, Da Nang and Koh Samui have none, though most have music. Madrid, Pai, Astro-9 and Koh Tao do.
+3. **No ambient sound layers. Done:** `js/ambience_worlds.js` (see docs/AMBIENCE.md). Ape Town, Verdalux, Jungle Dub, Chiang Mai, Jerusalem, Judean Desert, Vienna, Da Nang and Koh Samui have none, though most have music. Madrid, Pai, Astro-9 and Koh Tao do.
 4. **Low FPS** (under 30 on battery):
    - Da Nang 22, Pai 24, Astro-9 25, Chiang Mai 26, Jungle Dub 28.
    - Ape Town draws 857 calls; its draw calls need batching.

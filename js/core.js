@@ -97,7 +97,7 @@ AV.toast = m => { const e = $('toast'); e.textContent = m; e.style.opacity = 1; 
 AV.hud = function () {
   const S = AV.S, hh = Math.floor(S.time / 60) % 24, mm = Math.floor(S.time % 60), W = AV.W;
   $('top').innerHTML = '<b>' + tr('Credits', 'Créditos') + ': ' + S.money + '</b> · ' + (W ? W.name : '') + '<br>' + tr('Day', 'Día') + ' ' + S.day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '<br>' +
-    (S.job ? tr('Job: café helper', 'Trabajo: ayudante de café') : tr('Unemployed', 'Sin trabajo')) + '<br>' + (S.rentDays > 0 ? tr('Rented: ', 'Alquilado: ') + S.rentDays + tr(' days left', ' días restantes') : tr('No home yet', 'Sin casa'));
+    (AV.careers ? AV.careers.label() : S.job ? tr('Job: café helper', 'Trabajo: ayudante de café') : tr('Unemployed', 'Sin trabajo')) + '<br>' + (S.rentDays > 0 ? tr('Rented: ', 'Alquilado: ') + S.rentDays + tr(' days left', ' días restantes') : tr('No home yet', 'Sin casa'));
 };
 AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T travel map · I inventory · O settings · M mute · R unstuck · F3 FPS · Esc menu/mouse',
   'WASD mover · Shift correr · Espacio saltar · E interactuar · P Pipa-Portal · T mapa · I inventario · O ajustes · M silencio · R desbloquear · F3 FPS · Esc menú/ratón');

@@ -212,6 +212,15 @@
 - **Z key:** it now opens the phone; Contacts is the old People panel.
 - **Tests:** suite_phone 43/43, plus 43/43 in phone mode.
 
+### M16 careers and missions (apeverse-2-living-worlds branch)
+
+- **Careers:** `js/careers.js` with ranks.
+- **New shifts:** a Madrid delivery shift (pick up, deliver against a timer, GPS) and a Koh Tao reef survey.
+- **Existing shifts counted:** the café shift, plus M10 gigs and DJ nights.
+- **Missions:** six, read from save state.
+- **Jobs app** in the phone, and a HUD job line.
+- **Tests:** suite_careers 50/50.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

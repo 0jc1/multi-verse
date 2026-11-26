@@ -12,20 +12,29 @@
 (function (AV) {
 const PF = AV.path = { stats: { routes: 0, ms: 0, maxMs: 0, fails: 0 } };
 const B = 16, M = .4;
+/* 2.1: the index used to be rebuilt (and its cost cache thrown away) whenever anything was added to W.cols / W.circles: a parked
+   vehicle, a stall, a dealer lot... so GPS went cold again and again.  Collision lists only grow during play, so appended items are
+   now added to the bins and only the cached cells of the 16 m bins they touch are dropped.  A shrink (or new roads) rebuilds. */
 function index(W) { const I = W.__pf; if (I && I.nc === W.cols.length && I.nr === W.circles.length && I.nrd === (W.mapRoads || []).length) return I;
+  if (I && I.nrd === (W.mapRoads || []).length && W.cols.length >= I.nc && W.circles.length >= I.nr && W.cols[I.nc - 1] === I.lastC && W.circles[I.nr - 1] === I.lastR) {
+    const touch = (x0, x1, z0, z1) => { for (let bx = Math.floor(x0 / B) - 1; bx <= Math.floor(x1 / B) + 1; bx++) for (let bz = Math.floor(z0 / B) - 1; bz <= Math.floor(z1 / B) + 1; bz++) I.cache.delete(bx * 65536 + bz) };   /* one bin of margin: cell rounding at bin edges */
+    const addB = (m, x0, x1, z0, z1, v) => { for (let bx = Math.floor(x0 / B); bx <= Math.floor(x1 / B); bx++) for (let bz = Math.floor(z0 / B); bz <= Math.floor(z1 / B); bz++) { const k = bx + ',' + bz; let a = m.get(k); if (!a) m.set(k, a = []); a.push(v) } touch(x0, x1, z0, z1) };
+    for (let i = I.nc; i < W.cols.length; i++) { const c = W.cols[i]; addB(I.cols, c[0] - M, c[1] + M, c[2] - M, c[3] + M, c) }
+    for (let i = I.nr; i < W.circles.length; i++) { const c = W.circles[i]; addB(I.circ, c[0] - c[2] - M, c[0] + c[2] + M, c[1] - c[2] - M, c[1] + c[2] + M, c) }
+    I.nc = W.cols.length; I.nr = W.circles.length; I.lastC = W.cols[I.nc - 1]; I.lastR = W.circles[I.nr - 1]; PF.stats.incr = (PF.stats.incr || 0) + 1; return I }
   const cols = new Map(), circ = new Map(), roads = new Map(), add = (m, x0, x1, z0, z1, v) => { for (let bx = Math.floor(x0 / B); bx <= Math.floor(x1 / B); bx++) for (let bz = Math.floor(z0 / B); bz <= Math.floor(z1 / B); bz++) { const k = bx + ',' + bz; let a = m.get(k); if (!a) m.set(k, a = []); a.push(v) } };
   for (const c of W.cols) add(cols, c[0] - M, c[1] + M, c[2] - M, c[3] + M, c);
   for (const c of W.circles) add(circ, c[0] - c[2] - M, c[0] + c[2] + M, c[1] - c[2] - M, c[1] + c[2] + M, c);
   for (const r of W.mapRoads || []) { const h = (r[4] || 6) / 2; add(roads, Math.min(r[0], r[2]) - h, Math.max(r[0], r[2]) + h, Math.min(r[1], r[3]) - h, Math.max(r[1], r[3]) + h, r) }
-  return W.__pf = { nc: W.cols.length, nr: W.circles.length, nrd: (W.mapRoads || []).length, cols, circ, roads, cache: new Map() } }
+  PF.stats.rebuilds = (PF.stats.rebuilds || 0) + 1; return W.__pf = { nc: W.cols.length, nr: W.circles.length, nrd: (W.mapRoads || []).length, lastC: W.cols[W.cols.length - 1], lastR: W.circles[W.circles.length - 1], cols, circ, roads, cache: new Map(), size: 0 } }
 const segD = (px, pz, r) => { const dx = r[2] - r[0], dz = r[3] - r[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - r[0]) * dx + (pz - r[1]) * dz) / l2)); return Math.hypot(px - r[0] - dx * t, pz - r[1] - dz * t) };
 /* 0 blocked, 1 walk, 2 carriageway */
-function cost(W, I, x, z) { const k = Math.round(x * 4) + ',' + Math.round(z * 4); let v = I.cache.get(k); if (v !== undefined) return v; v = 1;
+function cost(W, I, x, z) { const qx = Math.round(x * 4), qz = Math.round(z * 4), bin = Math.floor(qx / 64) * 65536 + Math.floor(qz / 64); let bc = I.cache.get(bin); if (!bc) I.cache.set(bin, bc = new Map()); const k = qx * 131072 + qz; let v = bc.get(k); if (v !== undefined) return v; v = 1;
   const s = W.surface(x, z); if (s === null || W.surface(x + M, z) === null || W.surface(x - M, z) === null || W.surface(x, z + M) === null || W.surface(x, z - M) === null) v = 0;
   else { const bk = Math.floor(x / B) + ',' + Math.floor(z / B); for (const c of I.cols.get(bk) || []) if (x > c[0] - M && x < c[1] + M && z > c[2] - M && z < c[3] + M) { v = 0; break }
     if (v) for (const c of I.circ.get(bk) || []) if (Math.hypot(x - c[0], z - c[1]) < c[2] + M) { v = 0; break }
     if (v) for (const r of I.roads.get(bk) || []) if (segD(x, z, r) < (r[4] || 6) / 2) { v = 2; break } }
-  if (I.cache.size > 400000) I.cache.clear(); I.cache.set(k, v); return v }
+  if (++I.size > 600000) { I.cache.clear(); I.size = 0 } bc.set(k, v); return v }
 PF.walkable = (W, x, z) => cost(W, index(W), x, z) > 0;
 function los(W, I, a, b, strict) { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / .25)); let road = 0; for (let i = 1; i < n; i++) { const t = i / n, v = cost(W, I, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t); if (!v) return false; if (v === 2) road++ } return !strict || road * .25 < 16 }   /* 0.25 m samples: a diagonal cannot clip a thin wall corner */
 function snap(W, I, p, cell) { if (cost(W, I, p[0], p[1])) return p; for (let r = cell; r < 14; r += cell * .5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = p[0] + Math.cos(a) * r, z = p[1] + Math.sin(a) * r; if (cost(W, I, x, z)) return [x, z] } return null }

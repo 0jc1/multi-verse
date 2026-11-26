@@ -23,8 +23,8 @@ window.APE_T = (() => {
     c('vehicle in the world', !!r && !!r.veh.parent && r.veh.visible); return { d, r, m0 } };
   for (const [id, mode] of [['madrid', 'full'], ['chiang_mai', 'skip'], ['astro9', 'skip'], ['pai', 'skip'], ['da_nang', 'skip'], ['ape_town', 'cancel'], ['vienna', 'skip'], ['koh_samui_jurassic', 'skip'], ['jungle_dub', 'skip'], ['koh_tao', 'skip'], ['jerusalem', 'skip'], ['judean_desert', 'skip']]) step('ride in ' + id, async c => {
     AV.S.time = 12 * 60; AV.travel(id); c('loads', await until(() => AV.W && AV.W.id === id && settled(), 240000)); await sleep(3000); const W = AV.W, P = AV.P;
-    const b = await board(c, id, mode === 'full' ? 250 : 150, mode === 'full' ? 600 : 700); if (!b) return; const w1 = await watch(6); R[id] = { w1 };
-    c('vehicle moves', w1.moved > 8, JSON.stringify(w1)); c('you ride inside it', w1.maxSep < 2.6, 'max ' + w1.maxSep + ' m'); c('no teleport jumps', w1.maxJump < 3, 'max ' + w1.maxJump + ' m/frame');
+    const b = await board(c, id, mode === 'full' ? 250 : 150, mode === 'full' ? 600 : 700); if (!b) return; const w1 = await watch(10); R[id] = { w1 };   /* 10 s: a ride may wait ~3 s for pedestrians, then drives on */
+    c('vehicle moves (not stuck)', w1.moved > 10, JSON.stringify(w1) + ' · waits ' + AV.rides.stats.blockStops); c('you ride inside it', w1.maxSep < 2.6, 'max ' + w1.maxSep + ' m'); c('no teleport jumps', w1.maxJump < 3, 'max ' + w1.maxJump + ' m/frame');
     c('stays on ground, off walls', w1.offGround === 0 && w1.inWall <= Math.max(2, w1.frames * .05), 'off ' + w1.offGround + ' · wall ' + w1.inWall + ' / ' + w1.frames);
     if (mode === 'full') { const t0 = Date.now(); const ok = await until(() => !RD().cur, 150000); const secs = Math.round((Date.now() - t0) / 1000) + 6; c('arrives by driving', ok, secs + ' s · stats ' + JSON.stringify(RD().stats));
       c('red light respected (Madrid)', RD().stats.redStops > 0 || RD().stats.road > 0, 'red stops ' + RD().stats.redStops + ' · block stops ' + RD().stats.blockStops) }

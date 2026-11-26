@@ -126,3 +126,39 @@ The purchase is refused if you are short of credits.
   - no pedestrian crossing signals; pedestrians aren't routed to crossings
 - **Other worlds:** only Madrid has network traffic. Vienna, Chiang Mai, Pai and Da Nang need a `CFG` entry and, where roads aren't axis-aligned, curved-road support.
 - **Your own driving:** traffic lights don't affect it (no fines or police).
+
+
+## 2.1: owned vehicles in more worlds (`js/garage.js`)
+
+The Madrid dealer code now builds a lot in any world listed in `G.DEAL`. Each lot has:
+- its own sign, with the brand's colours and a local subline
+- its own stock, with up to three models on display
+
+| World | Dealer (fictional brand) | Sells | Sign subline |
+|---|---|---|---|
+| Madrid | Autos y Motos Pinar (M7) | scooter 350, car 1200 | VENTA · TALLER · PINTURA |
+| Ape Town | Woblr Motors, Brand Row (2.1) | Zip-EV 1500 | |
+| Chiang Mai | Bambu Motors | scooter 300, tuk-tuk 900, bicycle 80 | ร้านขายรถมอเตอร์ไซค์ (motorcycle shop) |
+| Pai | Bambu Motors | scooter 300, bicycle 90 | ร้านขายรถมอเตอร์ไซค์ |
+| Koh Tao | Bambu Motors | scooter 320, bicycle 80 | ร้านขายรถมอเตอร์ไซค์ |
+| Da Nang | Bambu Motors | scooter 300, bicycle 80 | Cửa hàng xe máy (motorbike shop) |
+| Astro-9 | Astro-9 Industries · Hover Customs | hover bike 950, hover scooter 240 | ANTI-GRAV · TUNING · PAINT |
+| Vienna | Woblr Motors · Wien | Zip-EV 1500, bicycle 120 | Autohaus · Fahrräder |
+
+**What you can do with an owned vehicle:**
+- It never expires and stays where you park it. It is saved with its world, `rec.w`.
+- From the garage (Y): locate it, bring it to you (15), repaint it (40), or sell it (half price).
+- **New: portal freight (60).** Ship an owned vehicle from another world to where you stand, but only where that kind belongs (`G.ALLOW`):
+  - hover bikes and scooters only on Astro-9 and Verdalux
+  - no cars, tuk-tuks or Zip-EVs on Koh Tao's lanes or in Jungle Dub
+  - Koh Samui and the Judean Desert take a jeep-type car
+  - The garage shows "not allowed in this world" where shipping isn't possible.
+- **The Zip-EV is treated like a car:** headlights, brake lights, chase-camera distance and parking clearance.
+- **A purchase is refunded** if the vehicle can't be parked.
+
+**Test:** `tools/tests/suite_dealers.js`, 55/55 on the real GPU. It covers the 6 new dealers: buy, drive under throttle, park, freight allowed and refused, and a sandboxed save and reload.
+
+**Open:**
+- **Madrid's Pinar barrio streets** still aren't connected to the main road map (this affects taxis).
+- **Traffic lights:** no AI traffic outside Madrid.
+- **Mobile:** not checked on mobile yet.

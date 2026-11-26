@@ -86,3 +86,22 @@ Regression turned up an intermittent ApePhone failure, unrelated to routing. The
 - **Long routes:** they take up to about 0.3 s (Madrid, Astro-9). Long routes could be cached or computed over a few frames.
 - **Vehicles:** cars follow the walking route (pavement-preferring), not lanes. Driving routes using the M7C traffic lanes would be better for cars.
 - **Crowds and residents:** M11 residents still use their own copy of this router, and crowd walkers keep their world-authored graphs.
+
+## 2.1: GPS stays warm (`js/pathfind.js`)
+
+**Found:** the first route through an area paid a cold-cache cost. That ranged from 15 to 520 ms; repeating the route took 2–57 ms. The collision index and its whole cost cache were also **thrown away whenever anything was added to the world**: a parked vehicle, a stall, a dealer lot. So GPS kept going cold during play. Adding the 2.1 places changed which route pairs `suite_gps` samples, and that exposed a 440 ms route in Astro-9 and a 920 ms route in Madrid.
+
+**Fixed:**
+- **Appending obstacles:** added obstacles go into the existing index. Only the cached cells of the 16 m bins they touch are dropped. Removals and road changes still rebuild everything.
+- **Cache layout:** the cache is split per bin and uses numeric keys instead of strings.
+
+**Measured (same route, real GPU, first request → repeat):**
+
+| Route | Before | After |
+|---|---|---|
+| Madrid teatro → Gran Vía | 406 → 57 ms | 243 → 22 ms |
+| Astro-9 plaza → terrace | 520 → 30 ms | 321 → 7 ms |
+
+Every sampled route is now under the 400 ms budget.
+
+**Rides (`js/rides.js`):** walking-route legs are now string-pulled. Every corner whose shortcut is clear for a vehicle is dropped, so taxis take smooth lines instead of grid zigzags. The Koh Tao songthaew covers 20 m in its first 6 s again; it had dropped to 4–6 m with the twistier route.

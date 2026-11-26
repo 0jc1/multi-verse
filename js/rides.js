@@ -83,7 +83,11 @@ const dedupe = pts => { const o = []; for (const p of pts) if (!o.length || Math
 
 /* plan: road route if both ends are near the street network, otherwise the walkable route finder */
 const dens = (pts, step) => { const o = [pts[0]]; for (let i = 1; i < pts.length; i++) { const p = o[o.length - 1], q = pts[i], L = Math.hypot(q[0] - p[0], q[1] - p[1]), n = Math.max(1, Math.ceil(L / step)); for (let k = 1; k <= n; k++) o.push([p[0] + (q[0] - p[0]) * k / n, p[1] + (q[1] - p[1]) * k / n]) } return o };
-const walk = (W, a, b) => { let pts = null; try { pts = AV.path && AV.path.route ? AV.path.route(W, { x: a[0], z: a[1] }, { x: b[0], z: b[1] }) : null } catch (e) { pts = null } return pts && pts.length ? [a].concat(pts.map(q => Array.isArray(q) ? q : [q.x, q.z])) : [a, b] };
+/* string-pulling: the walkable route is a 1.5-2.5 m grid path; drop every corner whose shortcut is clear for a vehicle (r .9 m),
+   so rides take smooth lines instead of zigzags (fewer corner slow-downs, nicer to watch) */
+const lineClear = (W, p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]), n = Math.max(1, Math.ceil(L / .75)); for (let k = 1; k < n; k++) { const x = p[0] + (q[0] - p[0]) * k / n, z = p[1] + (q[1] - p[1]) * k / n; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .9)) return false } return true };
+const pull = (W, pts) => { if (pts.length < 3) return pts; const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = Math.min(pts.length - 1, i + 40); while (j > i + 1 && !lineClear(W, pts[i], pts[j])) j--; out.push(pts[j]); i = j } return out };
+const walk = (W, a, b) => { let pts = null; try { pts = AV.path && AV.path.route ? AV.path.route(W, { x: a[0], z: a[1] }, { x: b[0], z: b[1] }) : null } catch (e) { pts = null } return pts && pts.length ? pull(W, [a].concat(pts.map(q => Array.isArray(q) ? q : [q.x, q.z]))) : [a, b] };
 /* plan: the street network wherever it can be reached (a short walkable-route leg onto the nearest street, and off it at the end),
    otherwise the walkable route finder.  Points are densified every 2.5 m so the smoothed curve cannot cut corners into walls. */
 RD.plan = function (W, a, b) {
@@ -164,8 +168,11 @@ function tick(s, dt, t) {
   const blk = aheadBlocked(r, p.x, p.z, Math.sin(yaw), Math.cos(yaw));
   /* traffic: wait up to 7 s; people (instanced crowds never step aside): honk, wait 3 s, then creep through at walking pace */
   const maxWait = blk === tr('traffic ahead', 'tráfico delante') ? 7 : 3;
-  if (blk) { r.blocked += dt; RD.stats.maxBlocked = Math.max(RD.stats.maxBlocked, r.blocked); if (r.blocked < maxWait) { if (!r.blockCounted) { r.blockCounted = true; RD.stats.blockStops++ } target = 0; r.wait = blk; if (r.blocked > 1.2 && !r.honked) { r.honked = true; horn() } } else { target = Math.min(target, 2.2); r.wait = tr('edging past', 'pasando despacio') } }
-  else { r.blocked = 0; r.honked = false; r.blockCounted = false }
+  const edging = maxWait === 3 && AV.now() < (r.edgeUntil || 0);   /* busy walking lane: once the driver has edged through, it keeps rolling slowly for 8 s instead of stopping for every person */
+  if (blk && edging) { target = Math.min(target, 2.2); r.wait = tr('edging through the crowd', 'avanzando entre la gente'); r.blocked = 0 }
+  else if (blk) { if (maxWait === 3) { r.pedWait = (r.pedWait || 0) + dt; if (r.pedWait > 3) { r.edgeUntil = AV.now() + 8; r.pedWait = 0 } }   /* stop-start in a crowd adds up: 3 s in total also switches to edging */
+    r.blocked += dt; RD.stats.maxBlocked = Math.max(RD.stats.maxBlocked, r.blocked); if (r.blocked < maxWait) { if (!r.blockCounted) { r.blockCounted = true; RD.stats.blockStops++ } target = 0; r.wait = blk; if (r.blocked > 1.2 && !r.honked) { r.honked = true; horn() } } else { target = Math.min(target, 2.2); r.wait = tr('edging past', 'pasando despacio'); if (maxWait === 3) r.edgeUntil = AV.now() + 8 } }
+  else { r.blocked = 0; r.honked = false; r.blockCounted = false; r.pedWait = Math.max(0, (r.pedWait || 0) - dt * .3) }
   r.v += Math.max(-7 * dt, Math.min(2.6 * dt, target - r.v)); r.s = Math.min(r.len, r.s + r.v * dt); engineSet(r.eng, r.v, r.vmax);
   const gy = W.surface(p.x, p.z), y = (gy == null ? (r.y || 0) : gy) + (r.V.hover ? r.V.hover + Math.sin(t * 2) * .08 : 0); r.y = y;
   r.veh.position.set(p.x, y + (r.V.hover ? 0 : Math.sin(t * 13) * .01 * Math.min(1, r.v / 4)), p.z); r.veh.rotation.y = yaw;

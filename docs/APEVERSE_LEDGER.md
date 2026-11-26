@@ -273,6 +273,17 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Vehicles in more worlds (apeverse-2-living-worlds branch)
+
+- **Dealers in 6 more worlds:** Bambu Motors in Chiang Mai (scooter, tuk-tuk, bicycle), Pai, Koh Tao and Da Nang; Astro-9 Hover Customs (hover bike, hover scooter); Woblr Motors Wien (Zip-EV, bicycle). Each has a local-language sign.
+- **Portal freight:** move an owned vehicle between worlds for 60, with per-world rules on which kinds belong. The garage explains a refusal.
+- **Zip-EV:** gets car lights and the car chase camera.
+- **Test:** `suite_dealers`, 55/55. Details in `docs/DRIVING.md`.
+- **GPS stays warm** (`pathfind.js`): adding an obstacle no longer throws away the collision index and cost cache; the cache is per bin with numeric keys. Cold routes are 40–50% faster, warm ones 3–5× faster (`docs/GPS.md`).
+- **Ride smoothing:** walking-route legs are string-pulled, and drivers edge through crowds after 3 s of total waiting. Jerusalem: 10 m → 49 m in the first 10 s.
+- **Regression:** dealers 55/55, rides 192/192, drive 39/39, vehicles 52/52, kohtao 42/42 (place count updated for the dealer), integration 131/131, consume 47/47, sources 65/65, brand 123/123, fest 38/38, minimap 41/41.
+- **Open:** `suite_gps` is 87/88. Adding the dealer place changed which route pairs it samples, and one cold Astro-9 route now takes 417 ms against the 400 ms budget (down from 440 before the cache fix). Logged, not hidden.
+
 ### 2.1 Phase 3: Brand Row, the Brand District pilot (apeverse-2-living-worlds branch)
 
 - **What it is:** six walk-in branded shops in Ape Town's unused east strip, each with its own architecture, an authored sign, staff and a working checkout. Full details in `docs/BRAND_DISTRICT.md`.

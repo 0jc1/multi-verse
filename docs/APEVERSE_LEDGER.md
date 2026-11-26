@@ -245,6 +245,12 @@
 - **Presets:** `js/ambience_worlds.js` gives 9 worlds procedural ambience whose layers follow their own places and day or night.
 - **Tests:** suite_ambience 66/66, with a real signal measured in every world.
 
+### M13 frame rate, diagnosis only (apeverse-2-living-worlds branch)
+
+- **Probe suites:** `tools/tests/suite_perf_worlds.js`, `suite_perf_bottleneck.js` and `suite_perf_cpu.js`.
+- **Finding:** CPU time inside the render call (draw calls) limits the slow worlds; triangles, materials and animation don't.
+- **Reverted:** a lower character-cap change. It cut work per frame, but the FPS gain was within thermal noise.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

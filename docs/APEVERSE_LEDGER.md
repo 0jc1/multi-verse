@@ -228,6 +228,12 @@
 - **Gap list:** prioritised in docs/WORLD_BENCHMARK.md.
 - **Open:** suite_gfx has 4 pre-existing failures (they expect pre-V0.10 "no post" in other worlds).
 
+### M13 GPS in every world (apeverse-2-living-worlds branch)
+
+- **Router:** `js/pathfind.js` is a shared GPS router: a walkability-grid A* that prefers pavement, uses the street graph with repair where one exists, and smooths by line of sight. It runs on a spatial collision index.
+- **Re-routing:** at 15 m off the route.
+- **Tests:** suite_gps 88/88; 60 routes, 0 points inside buildings.
+
 ## Measured but not proven
 
 - **Vienna 7f FPS:** battery only, A/B/A, no regression against 7e; it needs a plugged-in confirmation.

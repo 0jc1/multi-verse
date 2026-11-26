@@ -71,7 +71,7 @@ Every world without its own grade uses the default post-processing (`js/gfx.js`,
 
 ## Gaps against the Madrid benchmark, in priority order
 
-1. **No street graph for GPS.** These worlds have no minimap roads or walking graph, so the GPS line is straight:
+1. **No street graph for GPS. Done:** `js/pathfind.js` routes every world over a collision grid (see docs/GPS.md). What remains is drawing streets on the minimap for worlds without `mapRoads`. These worlds have no minimap roads or walking graph, so the GPS line is straight:
    - Ape Town, Verdalux, Astro-9, Jungle Dub, Jerusalem, Judean Desert, Da Nang, Koh Samui.
    - Vienna, Chiang Mai and Pai have roads but no walking graph.
 2. **Palette and haze.** Vienna, Da Nang, Ape Town and Koh Samui are still pale: more saturated ground and façades, and a per-world grade or fog tint where needed.

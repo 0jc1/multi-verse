@@ -127,12 +127,13 @@ function routeTo(x, z) {
 }
 MM._route = routeTo;
 const pathLen = p => { let l = Math.hypot(p[0][0] - AV.P.x, p[0][1] - AV.P.z); for (let i = 1; i < p.length; i++) l += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return l };
-MM.setDest = function (x, z, name) { MM.dest = { x, z, name: name || tr('Waypoint', 'Destino'), path: routeTo(x, z), w: AV.W }; const l = pathLen(MM.dest.path); AV.toast('📍 ' + MM.dest.name + ' · ' + (l > 999 ? (l / 1000).toFixed(1) + ' km' : Math.round(l) + ' m') + tr(' — follow the pink route', ' — sigue la ruta rosa')); return MM.dest };
+MM.setDest = function (x, z, name) { MM.dest = { x, z, name: name || tr('Waypoint', 'Destino'), path: MM._route(x, z), w: AV.W };   /* M13: MM._route is AV.path.route when pathfind.js is loaded */ const l = pathLen(MM.dest.path); AV.toast('📍 ' + MM.dest.name + ' · ' + (l > 999 ? (l / 1000).toFixed(1) + ' km' : Math.round(l) + ' m') + tr(' — follow the pink route', ' — sigue la ruta rosa')); return MM.dest };
 MM.clearDest = () => { MM.dest = null };
 let dt0 = 0; AV.frameFns.push(() => { const d = MM.dest; if (!d) return; if (d.w !== AV.W) { MM.dest = null; return } const P = AV.P;
   if (Math.hypot(P.x - d.x, P.z - d.z) < 12) { AV.toast('📍 ' + tr('You have arrived: ', 'Has llegado: ') + d.name); MM.dest = null; return }
   while (d.path.length > 1 && Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z) < 9) d.path.shift();
-  const now = AV.now(); if (now - dt0 > 2) { dt0 = now; if (Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z) > 45) d.path = routeTo(d.x, d.z) } });
+  const now = AV.now(); if (now - dt0 > 2) { dt0 = now; const off = (() => { let best = Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z), a = [P.x, P.z]; for (let i = 0; i < Math.min(3, d.path.length - 1); i++) { const p = d.path[i], q = d.path[i + 1], dx = q[0] - p[0], dz = q[1] - p[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((P.x - p[0]) * dx + (P.z - p[1]) * dz) / l2)); best = Math.min(best, Math.hypot(P.x - p[0] - dx * t, P.z - p[1] - dz * t)) } return best })();
+    if (off > 15) { d.path = MM._route(d.x, d.z); MM.rerouted = (MM.rerouted || 0) + 1 } } });   /* M13: off the route line by > 15 m: re-route */
 
 /* ---------- the full-screen map: zoom (wheel / + -), pan (drag), districts, places, click to set a waypoint ---------- */
 const FS = document.createElement('style'); FS.textContent = '#mmFull{position:fixed;inset:0;z-index:45;display:none;background:rgba(8,4,20,.94);font:13px Georgia,serif;color:#f4ecd8}#mmFull canvas{position:absolute;left:0;top:0;cursor:grab;touch-action:none}' +

@@ -65,7 +65,11 @@ M.emit = function (ev, data) { M.stats.events[ev] = (M.stats.events[ev] || 0) + 
   for (const id in m.a) { const s = M.cur(id), a = m.a[id]; if (s && s.k === 'ev' && s.ev === ev && (!s.data || s.data === data)) { a.base.n++; if (a.base.n >= (s.n || 1)) advance(id) } } };
 
 /* ---------- stage checks (4x a second) ---------- */
-function where(s, a) { if (!s) return null; const w = AV.W; if (typeof s.at === 'function') { const r = s.at(a && a.mv); return r ? { x: r[0], z: r[1] } : null } if (s.at && typeof s.at === 'string') { const n = AV.npc && AV.npc.find(s.at); return n ? { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y } : null }
+const placeXZ = id => { const W = AV.W; if (!W) return null; const p = (W.places || []).find(q => q.id === id); if (p && isFinite(p.x)) return [p.x, p.z]; const n = AV.npc && AV.npc.find(id); return n ? [n.g.position.x, n.g.position.z] : null };
+M.placeXZ = placeXZ;
+function spotXZ(s) { if (s.p) { const q = placeXZ(s.p); if (q) { const sp = AV.safeSpot ? AV.safeSpot(AV.W, q[0] + (s.dx || 0), q[1] + (s.dz || 0)) : q; return sp } } return s.x != null ? [s.x, s.z] : null }
+M.spotXZ = spotXZ;
+function where(s, a) { if (!s) return null; const w = AV.W; if ((s.k === 'go' || s.k === 'spot') && (s.p || s.k === 'spot')) { if (!s._xz || s._xzW !== AV.W) { s._xz = spotXZ(s); s._xzW = AV.W } return s._xz ? { x: s._xz[0], z: s._xz[1] } : null } if (typeof s.at === 'function') { const r = s.at(a && a.mv); return r ? { x: r[0], z: r[1] } : null } if (s.at && typeof s.at === 'string') { const n = AV.npc && AV.npc.find(s.at); return n ? { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y } : null }
   if (s.k === 'talk') { const n = AV.npc && AV.npc.find(s.npc); if (n) return { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y }; if (s.at) return { x: s.at[0], z: s.at[1] }; return null }
   if (s.k === 'go') return { x: s.x, z: s.z }; if (s.at) return { x: s.at[0], z: s.at[1] }; return null }
 M.where = id => { const a = st().a[id]; const s = M.cur(id); if (!s || (s.w && AV.W && s.w !== AV.W.id)) return null; return where(s, a) };
@@ -74,13 +78,19 @@ AV.frameFns.push(() => { if (!AV.running || !AV.W) return; const t = AV.now(); i
   for (const id of Object.keys(m.a)) { const a = m.a[id], s = M.cur(id); if (!s) { finish(id); continue }
     if (s.time && t - a.ts > s.time) { M.fail(id, L('Out of time.', 'Se acabó el tiempo.')); continue }
     const inW = !s.w || s.w === AV.W.id; let ok = false;
-    if (s.k === 'go') ok = inW && Math.hypot(P.x - s.x, P.z - s.z) < (s.r || 3);
+    if (s.k === 'go') { const q = s.p ? where(s, a) : { x: s.x, z: s.z }; ok = inW && !!q && Math.hypot(P.x - q.x, P.z - q.z) < (s.r || 3) }
     else if (s.k === 'have') ok = bagN(s.item) >= (s.n || 1);
     else if (s.k === 'use') ok = consDone(s.item) > a.base.cons || (!(AV.cons && AV.cons.spec && AV.cons.spec(s.item)) && bagN(s.item) < a.base.have && !(AV.bag && AV.bag.busy && AV.bag.busy()));
     else if (s.k === 'test') ok = inW && !!s.fn(S, a.mv);
     else if (s.k === 'travel') ok = AV.W.id === s.w;
     if (ok) advance(id) }
-  markers(); hud() });
+  spots(); markers(); hud() });
+/* 'spot' stages: an interaction (E) that appears at the place only while that step is active: take a photo, hand over a parcel... */
+const liveSpots = new Map();
+function spots() { const W = AV.W, m = st(), want = new Set();
+  for (const id in m.a) { const s = M.cur(id); if (!s || s.k !== 'spot' || (s.w && s.w !== W.id)) continue; const key = id + '#' + m.a[id].s; want.add(key); if (liveSpots.has(key) && liveSpots.get(key).W === W) continue; const q = where(s, m.a[id]); if (!q) continue;
+    const t = { x: q.x, z: q.z, r: s.r || 2.6, label: () => (s.ic || '✨') + ' ' + say(s.act || s.obj), fn: () => { const a = st().a[id]; if (!a || M.cur(id) !== s) return; if (s.say) AV.toast(say(s.say)); if (s.ev) M.emit(s.ev); advance(id) } }; W.T.push(t); liveSpots.set(key, { t, W }) }
+  for (const [k, v] of liveSpots) if (!want.has(k) || v.W !== W) { const i = v.W.T.indexOf(v.t); if (i >= 0) v.W.T.splice(i, 1); liveSpots.delete(k) } }
 
 /* ---------- talk stages + offers (conversations) ---------- */
 M.talkStage = function (id) { const a = st().a[id], s = M.cur(id), d = M.defs[id]; if (!s || s.k !== 'talk') return false;

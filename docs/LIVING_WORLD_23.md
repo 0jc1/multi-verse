@@ -15,7 +15,8 @@ Nothing has been merged into `main`. One agent (this one) develops 2.3.
 |---|---|
 | GPS in Astro-9: the first routes after arrival take 0.5–1.6 s | **Open.** The routes are asked for in the first seconds, before Astro-9's walking graph is built (it is built a few milliseconds per frame), so they use the fine grid. Finishing the build in one go would freeze the game for longer, so it stays open. |
 | GPS speed checks are noisy | Pai (161 / 408 ms) and Koh Samui (234 / 473 ms) took the same route method in two runs, but different times. The code path for those worlds did not change; this is load on the laptop. Treat single GPS timing failures there as noise. |
-| Mission coverage outside Ape Town and Chiang Mai | **Not started** (Milestone B). The older worlds keep their 2.0–2.2 tasks; the new engine has no content there yet. |
+| Missions per world are 4 (first pass), not the 10+ the brief asks for in major cities | Milestone B, second pass: deeper chains, random encounters, interconnected storylines. |
+| Nimbus has no 2.3 missions | It did not load in the world probe (it is not registered or has no named places). To check. |
 | Ape Town penthouse door | Not verified. The door finder found no building near the plaza, so it was moved to the Crystal Garden / Brand District. To be checked in the next probe. |
 | Character creation, vehicle theft, police, health / hospital, business expansion | Not started (Milestones C–E). |
 
@@ -51,7 +52,7 @@ Nothing has been merged into `main`. One agent (this one) develops 2.3.
     - A canvas for Luma (art; branching pitch, bonus for a bold idea).
     - Kiko's market day (find stock, set a fair or pushed price).
     - Lunch rush with Sol (dialogue puzzle; can fail and be retried).
-  - **Chiang Mai** (6 missions):
+  - **Chiang Mai** (5 missions):
     - Hustled by Nuni: a real pool game, with a bonus if you win.
     - Reception shift at Giant: three guest situations; pay depends on your answers.
     - Restock the counter: a timed run to Warorot Market.
@@ -78,14 +79,35 @@ Nothing has been merged into `main`. One agent (this one) develops 2.3.
 
 **Tests:** `tools/tests/suite_lw23a.js` plays the loop through the real game objects: kiosk, sip-by-sip drinking, the agency's rent button, the door, the bed's menu, and the conversation choices. Result: **85/85**.
 
+## Milestone B, first pass: missions in every world
+
+`js/lw_content_b.js` adds a local host to 14 worlds: Noi (Pai), Ranger Ama (Koh Samui), Linh (Đà Nẵng), Franzi (Vienna), Lola (Madrid), Joost (Amsterdam), Kenji (Tokyo), Margot (Paris), Jordi (Barcelona), Carmen (Sevilla), Paco (Cádiz), Lupita (Oaxaca), Youssef (Chefchaouen), Bia (Rio). In 6 more worlds an existing character is the giver: Vela, Captain Rook, Auntie Pearl, Professor Puff, Dalia, Salem.
+
+Each of these 20 worlds has four authored missions built on its real places:
+- **Discovery walk:** three named places, then a talk.
+- **Photo job:** a repeatable "take the photo" interaction at a landmark.
+- **Courier run:** timed, repeatable, with a hand-over interaction at the destination.
+- **Favour:** a branching talk with two outcomes, a trip and an on-the-spot action.
+
+The engine gained place-based steps and `spot` steps (an interaction that appears at the place only while that step is active).
+
+**Test:** `suite_lw23b`, **365/366**, then 22/22 for Astro-9 after one change. In every world it checks:
+- the giver is there;
+- the walk is offered, accepted, played to its three real places and paid;
+- the follow-ups unlock;
+- the courier hand-over appears at the destination and pays.
+
+The Astro-9 observatory stop (on a raised platform) was swapped for the Glow Gardens.
+
 ## Coverage report (2.3 missions only; decorative or placeholder interactions are not counted)
 
 | World | 2.3 missions | Talkable 2.3 characters | Homes for sale / rent | Notes |
 |---|---|---|---|---|
 | Ape Town | 6 | Pip, Zil, Luma, Kiko, Sol, Dash, Remy | 3 | Flagship; more planned in B |
-| Chiang Mai | 6 | Mutt, Nuni, Steve, Dino, ZtonedApe, Nunyin, Khun Pim | 2 | |
-| Madrid | 0 | none yet | 1 (from 2.0) | Has the older 2.x businesses |
-| All other worlds | 0 | none yet | 0 | Older tasks remain; Milestone B |
+| Chiang Mai | 5 | Mutt, Nuni, Steve, Dino, ZtonedApe, Nunyin, Khun Pim | 2 | |
+| Madrid | 4 | Lola | 1 (from 2.0) | Also has the older 2.x businesses |
+| Verdalux, Astro-9, Jungle Dub, Pai, Koh Tao, Koh Samui, Đà Nẵng, Vienna, Jerusalem, Judean Desert, Amsterdam, Tokyo, Paris, Barcelona, Sevilla, Cádiz, Oaxaca, Chefchaouen, Rio | 4 each | one host each | 0 | First pass |
+| Nimbus | 0 | none | 0 | See open items |
 
 ## Roadmap
 

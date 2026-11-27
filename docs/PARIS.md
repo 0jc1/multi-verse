@@ -98,4 +98,4 @@ powershell -ExecutionPolicy Bypass -File tools\tests\run_tests.ps1 -Suite tools\
 - **Métro:** a fade between two entrances. There is no platform or train.
 - **Districts:** Montmartre, the Marais, the Louvre, the Canal Saint-Martin, the Trocadéro and the Eiffel Tower itself (walkable) are future districts.
 - **Dancing:** swing and the Fête dancing are menu actions.
-- **Not checked:** no original music, no mobile check, no human playtest.
+- **Not checked:** phone emulation passes (`suite_newworlds_mobile`), but there has been no real-phone test and no human playtest.

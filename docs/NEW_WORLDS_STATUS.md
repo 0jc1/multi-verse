@@ -10,42 +10,43 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 
 | World | State | Evidence |
 |---|---|---|
-| **Tokyo** (Shibuya + Harajuku) | **playable, district 1 done** | `suite_tokyo` on the real GPU (Medium). Full run: 162/166. All four failures were test-side: a walk path into the wall, a too-short wait for a car, the GPS wait, and stop-line timing. After fixing them, every affected step passed in targeted GPU reruns (19/19 and 46/49). The remaining 3 in the 46/49 run were a step-filter artefact: "Loop Line: arrive at Harajuku" ran without the ride before it. **There is no single clean full run yet.** |
-| **Paris** (Seine + Saint-Germain) | **playable, district 1 done** | `suite_paris` on the real GPU (Medium). Full run: 129/130. The one failure was real: the cathedral collider cut the Île off from the north bridge, so the route was a 371 m detour. It is fixed (bridge moved to the parvis, colliders tightened to the footprint); the affected steps reran 30/30 and the route is now 37 m. See docs/PARIS.md. |
+| **Tokyo** (Shibuya + Harajuku) | **playable, district 1 done, polished** | `suite_tokyo` on the real GPU (Medium), latest full run: **166/167**. The one failure was in the test: talking to Yumi while standing at the record shop, the GPS correctly reports "arrived" and clears the waypoint. The check now records the waypoint request, and that step reran 23/23. Earlier history: 162/166 → test fixes. Phone emulation: `suite_newworlds_mobile`, 25/25 for both worlds. |
+| **Paris** (Seine + Saint-Germain) | **playable, district 1 done, polished** | `suite_paris` on the real GPU (Medium), latest full run: **130/130**. The earlier real bug (the cathedral collider cut the Île off from the north bridge) is fixed. Phone emulation: 25/25 (shared with Tokyo). |
 | Barcelona, Sevilla, Cádiz, Oaxaca, Rio, Chefchaouen, Medellín, NYC 1926, Ibiza, Galicia | not started | — |
 | Atlantis, LSD-DMT, Somatra, Neon Nexus, Weird Alien, Bio Jungle, Robot World, Volcanic Funk, Quantum Ziggurat, Space Jazz, Mayan Canal Kingdom | not started (registry entries are still `planned`) | — |
 
 **Sevilla note:** there is a separate Sevilla slice on `codex/agent4-sevilla-20261123`, quarantined (agent 4). It was not reused or touched; check it before building Sevilla.
 
-### Paris measurements
-Real GPU, Medium, one 2.5 s sample each:
+### Performance (polish pass, 2026-11-27)
 
-| View | FPS | Draw calls | Triangles |
-|---|---|---|---|
-| Arrival (south quai, 11:00) | 52.8 | 110 | 543k |
-| Boulevard Saint-Germain (21:00) | 39.6 | 29 | 528k |
-| Quai facing the cathedral (21:00) | 38.8 | 85 | 629k |
-| Rue de Buci (21:00) | 46.8 | 37 | 561k |
+**What changed:** the static city geometry was one merged mesh per layer, so the whole city was drawn every frame. `AV.nwkit.chunked` now merges it per tile: 64 m tiles for solids, 128 m for glass, glow and signs. Frustum culling then skips what you can't see. Tokyo's giant screens also redraw at 5 fps instead of 10.
 
-- **Build:** 308 buildings, about 32,900 merged parts (down from 48,600 after slimming the Haussmann kit), 554 sign faces, 0 atlas overflow, 13 businesses.
-- **Bottleneck:** triangle count, not draw calls. The next lever is a far-LOD version of the fill blocks and the back rows.
+**A/B in one run:** the main agent's GPU tests were running at the same time, so separate runs weren't comparable. The profiler (`AV.nwkit.noChunks` debug switch) alternated old and new, two passes each, Medium, 1536×864:
 
-### Tokyo measurements
-Real GPU (`run_tests.ps1 -Gpu`, 1536×864, Medium), one 2.5 s sample each.
-
-| View | FPS | Draw calls |
+| Tokyo view | One mesh per layer | Chunked |
 |---|---|---|
-| Arrival (Haru plaza, 11:00) | 44.8 | 136 |
-| Scramble crossing (screens, crowd, cars) | 32.4 | 305 |
-| Center Gai (21:00) | 45.6 | 90 |
-| Takeshita Street (21:00) | 36.4 | 33 |
-| Chōchin Yokochō (21:00) | 34.0 | 59 |
+| Scramble crossing | 34.9 fps | **56.0** |
+| Center Gai | 37.7 | **59.6** |
+| Yokochō | 44.7 | **59.8** |
+| Takeshita | 48.4 | **60.3** |
 
-- **Build:** 411 buildings, about 12,600 merged parts, 985 sign faces, 0 atlas overflow, 21 businesses placed.
-- **Weakest view:** the scramble, from the crowd (softActor bodies), the instanced cars and the three canvas screens. If it needs to go faster, these are the levers:
-  - fewer crossers on Medium;
-  - screen updates at 5 fps;
-  - merging the signal lamps.
+Paris was already near the 60 fps cap in that run, both ways: 54–59 fps old, 54–60 new.
+
+**Final full-suite samples** (one 2.5 s sample each, after the polish):
+- **Tokyo:** arrival 50 fps (144 calls), scramble 60.4 (358), Center Gai 60.4 (145), Takeshita 60.4 (44), yokochō 49.2 (79).
+- **Paris:** arrival 50.4 fps (172 calls, 415k tris), boulevard 60.4 (71, 185k), quai 60.4 (125, 335k), Buci 60 (66, 178k).
+
+60 fps is the frame cap, so those views show headroom on this laptop, not how much.
+
+**Phone emulation** (`run_tests.ps1 -Mobile`, 915×412, touch):
+- detected as a phone, touch controls shown;
+- the joystick walks you; ▶ Act opens shops;
+- the shop and portal panels fit the screen; GPS works;
+- 60 fps on this GPU. This is emulation on a laptop GPU, not a real phone.
+
+**Build sizes:**
+- **Tokyo:** about 418 buildings, about 12,700 parts, 986 signs.
+- **Paris:** about 314 buildings, about 33,200 parts, 595 signs.
 
 ### Tokyo release-gate checklist
 
@@ -62,7 +63,8 @@ Real GPU (`run_tests.ps1 -Gpu`, 1536×864, Medium), one 2.5 s sample each.
 | Shrine, game center, 5 residents and their routines, Yumi's quest | AUTO-TESTED |
 | Bon Odori on and off; GPS; save/load sandbox | AUTO-TESTED |
 | Screenshots | recorded (scramble, ramen, yokochō, Loop Line, Harajuku, live house, shrine, matsuri, Takeshita, Center Gai) |
-| Mobile, human playtest | **NOT DONE** |
+| Phone (emulated) | AUTO-TESTED (`suite_newworlds_mobile`) |
+| Real phone, human playtest | **NOT DONE** |
 
 ## Integration steps (for the main agent; nothing here edits shared systems)
 

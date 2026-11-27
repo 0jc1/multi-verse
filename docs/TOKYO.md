@@ -123,4 +123,4 @@ Measured results (pass counts, FPS and draw calls per view) are in `docs/NEW_WOR
 - **Districts:** Shinjuku, Akihabara, Asakusa/Ueno, Tsukiji, Odaiba, Roppongi, Shimokitazawa and Koenji from the map are future districts. Harajuku is a first slice: Takeshita Street, the station plaza and the forest shrine approach.
 - **Dancing:** the Bon Odori dance and the live-house dance are menu actions, not player animations.
 - **Original music:** none for Tokyo yet. The venues use existing playlists.
-- **Not checked:** no mobile check or human playtest.
+- **Not checked:** phone emulation passes (`suite_newworlds_mobile`), but there has been no real-phone test and no human playtest.

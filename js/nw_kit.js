@@ -28,6 +28,14 @@ NW.rowWalk = function (o) { const { id, ax, front, a0, a1, face, depth, rng, SPE
     if (!(isSp && sp[4])) cols.push(c0);
     if (isSp) SHOPS[sp[0]] = { k: sp[0], x: fx + out[0] * .2, z: fz + out[1] * .2, yaw, w, face, ax, out, al, d: depth, hollow: sp[4] || 0, c: c0, lsx };
     lot({ fx, fz, yaw, w, a, ac, out, al, isSp, sp: isSp ? sp : null, c0, lsx }); n++; a += w + .02 } return n };
+/* chunked merge: parts ([geo, hex, matrix, flag]) or sign quads ({x, z, ...}) are bucketed by position into cell x cell tiles and merged per
+   tile, so the renderer's frustum culling skips the tiles you can't see (one merged mesh for a whole city is always drawn in full).
+   Pieces longer than a tile (viaduct decks, quay walls) go to their own "wide" bucket.  Returns the meshes. */
+NW.chunked = function (items, cell, build, mat, grp, name, o) { o = o || {}; if (NW.noChunks) cell = 1e7;   /* debug/A-B: one mesh per layer */ const B = new Map(), key = (x, z) => Math.floor(x / cell) + ',' + Math.floor(z / cell);
+  for (const it of items) { let x, z, wide = false; if (Array.isArray(it)) { const e = it[2].elements; x = e[12]; z = e[14]; const sx = Math.hypot(e[0], e[1], e[2]), sz = Math.hypot(e[8], e[9], e[10]); wide = Math.max(sx, sz) > cell * 1.5 } else { x = it.x; z = it.z }
+    const k = wide ? 'wide' : key(x, z); let a = B.get(k); if (!a) B.set(k, a = []); a.push(it) }
+  const out = []; for (const [k, arr] of B) { if (!arr.length) continue; const g = build(arr); if (!g || !g.attributes.position || !g.attributes.position.count) continue; g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.name = name + '_' + k; if (o.shadow) m.castShadow = m.receiveShadow = true; if (o.order) m.renderOrder = o.order; grp.add(m); out.push(m) }
+  return out };
 /* interior: hollow special lot -> side/back walls + front wall with the door gap; returns { F(u, f), bb(u0,u1,f0,f1), door, doorIn, mid, ... }
    u = metres in from the front, f = door-relative position along the row (door at f = -(hw - 1.1)) */
 NW.interior = function (s, cols, box, P, Gl, fitFn) { if (!s || !s.hollow) return null; const depth = s.hollow, f = s.out, a = s.al, PT = (u, v) => [s.x - f[0] * u + a[0] * v, s.z - f[1] * u + a[1] * v];

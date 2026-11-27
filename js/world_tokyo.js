@@ -157,7 +157,7 @@ function tower(P, Gl, Gs, fx, fz, yaw, w, h, d, o) { const K = AV.kit, BG = K.BG
 function hut(P, Gl, fx, fz, yaw, w, h, d, rng) { const K = AV.kit, BG = K.BG, base = new THREE.Matrix4().makeRotationY(yaw).premultiply(new THREE.Matrix4().makeTranslation(fx, 0, fz));
   const put = (arr, geo, hex, x, y, z, sx, sy, sz) => { const m = K.M(x, y, z, sx, sy, sz); m.premultiply(base); arr.push([geo, hex, m, 0]) }, wc = WOOD[(rng() * 4) | 0];
   put(P, BG.box, wc, 0, h / 2, -d / 2, w, h, d); put(P, BG.box, 0x2a2a2e, 0, h + .2, -d / 2 + .2, w + .3, .3, d + .6); put(P, BG.box, 0x3a3a3e, 0, 2.9, .45, w, .12, .9);   /* roof + eave */
-  put(Gl, BG.box, 0xffb070, 0, 1.3, .04, w - .8, 2.1, .04); put(P, BG.box, 0x2a1a10, 0, 2.55, .06, w, .2, .1); for (let k = -1; k <= 1; k++) put(P, BG.box, 0x1a1008, k * (w - .8) / 3, 1.3, .07, .06, 2.1, .03);
+  put(P, BG.box, 0x3a2414, 0, .75, .04, w - .8, 1.5, .05); put(Gl, BG.box, 0xe8a060, 0, 1.95, .045, w - .8, .85, .04); put(P, BG.box, 0x2a1a10, 0, 2.55, .06, w, .2, .1); for (let k = -1; k <= 1; k++) put(P, BG.box, 0x1a1008, k * (w - .8) / 3, 1.3, .07, .06, 2.1, .03);
   put(P, BG.box, 0x1a1a1a, 0, h - 1, .05, w * .5, .9, .05);   /* upstairs window */
   for (const sx of [-1, 1]) { put(Gl, BG.sph, 0xff4a2a, sx * (w / 2 - .45), 2.4, .75, .26, .36, .26); put(P, BG.box, 0x1a1a1a, sx * (w / 2 - .45), 2.82, .75, .2, .06, .2) }   /* red chōchin lanterns */
   return base }
@@ -376,7 +376,7 @@ AV.registerWorld({
     IN.kissa = interior('kissa', it => { for (let k = 0; k < 14; k++) bx2(P, [0x1a1a1a, 0x8a1a1a, 0xf2c230, 0x2a4a8a, 0xe8e0d0][k % 5], it, it.depth - .7, it.depth - .4, .3 + (k % 5) * .5, .7 + (k % 5) * .5, -2.4 + (k >> 1) * .7, -1.9 + (k >> 1) * .7); bx2(P, 0x3a2414, it, 2.6, 3.2, 0, 1.05, -.8, 3.6);
       for (const f of [-3.4, 2.8]) bx2(P, 0x1a1410, it, it.depth - 1.5, it.depth - .8, 0, 2.6, f, f + .8); for (const u of [5.2, 7]) bx2(P, 0x6a2a1a, it, u, u + 1, 0, .55, -2.8, -1.4); it.cust = it.F(2.0, 1.4); it.staff = it.F(3.9, 1.4) });
     IN.livehouse = interior('livehouse', it => { bx2(P, 0x1a1a1e, it, it.depth - 3, it.depth - .4, 0, .9, -6.2, 6.2); for (let k = 0; k < 5; k++) bx2(Gl, [0xff4ad2, 0x4ad8ff, 0xffe14a][k % 3], it, it.depth - 2.6, it.depth - 2.4, 3.6, 3.8, -5 + k * 2.4, -4.6 + k * 2.4); for (const f of [-5.6, 5.2]) bx2(P, 0x101012, it, it.depth - 2.8, it.depth - 2, .9, 2.8, f, f + .8);
-      bx2(P, 0x2a1a12, it, 1.4, 2.2, 0, 1.1, 2.6, 6.3); bx2(Gl, 0x4ad8ff, it, 2.2, 2.26, .2, .9, 2.7, 6.2); it.cust = it.F(2.9, 4.4); it.staff = it.F(.9, 4.4); it.stage = it.F(it.depth - 1.6, 0); it.floor = it.F(5.2, 0); it.booth = it.F(it.depth - 4.2, 4.6) });
+      bx2(P, 0x2a1a12, it, 1.4, 2.2, 0, 1.1, 2.6, 6.3); bx2(Gl, 0x4ad8ff, it, 2.2, 2.26, .2, .9, 2.7, 6.2); bx2(Gl, 0x5a2a9a, it, it.depth - .42, it.depth - .38, 1.2, 3.6, -5.6, 5.6); for (let k = 0; k < 8; k++) bx2(Gl, [0xff4ad2, 0x4ad8ff][k % 2], it, it.depth - .44, it.depth - .4, 1.3 + (k % 4) * .55, 1.5 + (k % 4) * .55, -5 + k * 1.3, -4.4 + k * 1.3); it.cust = it.F(2.9, 4.4); it.staff = it.F(.9, 4.4); it.stage = it.F(it.depth - 1.6, 0); it.floor = it.F(5.2, 0); it.booth = it.F(it.depth - 4.2, 4.6) });
     IN.izakaya = interior('izakaya', it => { bx2(P, 0x6a4a2a, it, 3.8, 4.4, 0, 1.05, -.6, 2.2); bx2(P, 0xd8b890, it, 3.7, 4.5, 1.05, 1.1, -.7, 2.3); for (let k = 0; k < 3; k++) bx2(P, 0x2a1a10, it, 3, 3.4, 0, .7, -.4 + k * .9, -.1 + k * .9); for (let k = 0; k < 6; k++) bx2(P, [0x2a6a3a, 0xe8e0d0, 0x6a1a1a][k % 3], it, 6.3, 6.5, 1.3, 1.9, -1.6 + k * .5, -1.3 + k * .5); it.cust = it.F(2.7, .9); it.staff = it.F(5.3, .9) });
     TKY.interiors = IN;
     /* signs over the named shopfronts (+ window displays), noren at the yokochō doors */
@@ -386,11 +386,11 @@ AV.registerWorld({
     if (sh.livehouse) { const s = sh.livehouse; sign('poster_live', s.x + s.out[0] * .2 + s.al[0] * -4.8, 1.8, s.z + s.out[1] * .2 + s.al[1] * -4.8, 1.2, 1.8, s.yaw) }
     TKY.shops = sh;
     /* ---------- merge everything static ---------- */
-    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const solid = new THREE.Mesh(K.merge(P), solidM); solid.castShadow = solid.receiveShadow = true; solid.name = 'tky_static'; grp.add(solid);
-    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .35, depthWrite: false }); gm.userData.lin = 1; const gmesh = new THREE.Mesh(K.merge(Gs.filter(p => p[1] !== 0 || p[2].elements[0] !== 0)), gm); gmesh.renderOrder = 2; gmesh.name = 'tky_glass'; grp.add(gmesh) }
-    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; const glow = new THREE.Mesh(K.merge(Gl), glowM); glow.name = 'tky_glow'; grp.add(glow); TKY.glowM = glowM;
+    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const NWK = AV.nwkit, CELL = 64; TKY.chunks = NWK.chunked(P, CELL, a => K.merge(a), solidM, grp, 'tky_static', { shadow: true });
+    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .35, depthWrite: false }); gm.userData.lin = 1; NWK.chunked(Gs, 128, a => K.merge(a), gm, grp, 'tky_glass', { order: 2 }) }
+    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; NWK.chunked(Gl, 128, a => K.merge(a), glowM, grp, 'tky_glow'); TKY.glowM = glowM;
     const flM = new THREE.MeshBasicMaterial({ vertexColors: true }); flM.userData.lin = 1; fest.add(new THREE.Mesh(K.merge(FL), flM));
-    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .35, roughness: .55, alphaTest: .3 }); signM.userData.lin = 1; const signs = new THREE.Mesh(quadGeo(Q, SG.r), signM); signs.name = 'tky_signs'; grp.add(signs); TKY.signM = signM;
+    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .35, roughness: .55, alphaTest: .3 }); signM.userData.lin = 1; NWK.chunked(Q, 128, a => quadGeo(a, SG.r), signM, grp, 'tky_signs'); TKY.signM = signM;
     fest.add(new THREE.Mesh(quadGeo(FQ, SG.r), signM));
     TKY.stats.parts = P.length + Gl.length; TKY.stats.signs = Q.length; TKY.stats.atlasOver = (SG.over || []).length; TKY.stats.atlasBad = (SG.bad || []).length; TKY.stats.atlasUsed = SG.used;
     /* night: lit windows dim by day, signs and lanterns brighten at night */

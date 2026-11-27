@@ -69,7 +69,7 @@ const S = PLAN.streets = [
   ['lope_rueda', 'alley', 3.6, [[148, 108], [126, 118], [105, 124]], L('Calle Lope de Rueda', 'Calle Lope de Rueda')],
   ['alfaro_murillo', 'alley', 4, [[156, 109], [162, 152]], L('Calle Agua · Murillo', 'Calle Agua · Murillo')],
   ['reinoso', 'alley', 2.6, [[102, -12], [120, -15]], L('Calle Reinoso', 'Calle Reinoso'), { front: false }],
-  ['juderia', 'alley', 3.4, [[88, 40], [98, 45], [102, 52]], L('Calle Judería', 'Calle Judería'), { front: false }],
+  ['juderia', 'alley', 3.4, [[88, 40], [100, 44], [102.5, 46]], L('Calle Judería', 'Calle Judería'), { front: false }],
   ['callejon_dormitorio', 'alley', 3, [[182, 48], [166, 64]], L('Callejón del Dormitorio', 'Callejón del Dormitorio'), { cul: 'end' }],   /* a real callejón: ends at a house door */
   /* --- Triana --- */
   ['paseo_o', 'promenade', 10, [[-240, -280], [-240, -66]], L('Paseo de Nuestra Señora de la O', 'Paseo de Nuestra Señora de la O'), { sides: [1] }],
@@ -105,12 +105,12 @@ const PZ = PLAN.plazas = [
   ['venerables', { c: [158, -54], r: 9 }, L('Plaza de los Venerables', 'Plaza de los Venerables')],
   ['santa_cruz', { c: [190, 40], r: 13 }, L('Plaza de Santa Cruz', 'Plaza de Santa Cruz')],
   ['alfaro', { c: [154, 102], r: 7 }, L('Plaza de Alfaro', 'Plaza de Alfaro')],
-  ['puerta_jerez', { c: [-30, 178], r: 16 }, L('Puerta de Jerez', 'Puerta de Jerez')],
+  ['puerta_jerez', { c: [-30, 178], r: 16 }, L('Puerta de Jerez', 'Puerta de Jerez'), { car: true }],
   ['torre_oro', R(-185, -160, 120, 165), L('Torre del Oro', 'Torre del Oro')],
   ['altozano', { c: [-258, -60], r: 14 }, L('Plaza del Altozano', 'Plaza del Altozano')],
   ['mercado_triana', R(-279, -245, -112, -73), L('Mercado de Triana', 'Mercado de Triana'), { front: false }],
   ['corral_conde', { c: [-300, -100], r: 6 }, L('Corral del Conde (patio)', 'Corral del Conde (patio)'), { front: false }],
-  ['plaza_cuba', { c: [-262, 218], r: 15 }, L('Plaza de Cuba', 'Plaza de Cuba')],
+  ['plaza_cuba', { c: [-262, 218], r: 15 }, L('Plaza de Cuba', 'Plaza de Cuba'), { car: true }],
   ['feria', R(-446, -300, 244, 362), L('Real de la Feria', 'Real de la Feria'), { feria: true }]
 ];
 PLAN.opens = [['murillo', R(106, 200, 150, 184), L('Jardines de Murillo', 'Jardines de Murillo')]];
@@ -137,9 +137,11 @@ PLAN.arrival = { x: -64, z: -150, yaw: Math.PI * .1 };
 PLAN.routes = [['Plaza Nueva', [-66, -158], 'Plaza de Santa Cruz', [190, 40]], ['Plaza Nueva', [-66, -158], 'Mercado de Triana', [-262, -92]], ['Giralda', [76, -90], 'Torre del Oro', [-170, 128]],
   ['Altozano', [-258, -60], 'Plaza de Cuba', [-262, 218]], ['Plaza de Cuba', [-262, 218], 'Real de la Feria', [-380, 300]], ['El Salvador', [68, -220], 'Doña Elvira', [128, -38]],
   ['Alcázar gardens', [40, 140], 'Jardines de Murillo', [150, 166]], ['Puerta de Jerez', [-30, 178], 'Virgen de los Reyes', [76, -90]], ['Calle Alfarería', [-318, -200], 'Calle Sierpes', [-4, -240]]];
+/* streets cars may use (taxis, traffic); everything else is pedestrian: Santa Cruz, Sierpes, Tetuán, the Avenida, San Jacinto, Betis... */
+PLAN.car = ['paseo_colon', 'campana', 'santa_maria_blanca', 'menendez_pelayo', 'almirante_lobo', 'reyes_catolicos', 'adriano', 'temprado', 'castelar', 'zaragoza', 'ronda_triana', 'asuncion', 'lujan', 'pages_corro', 'callao', 'castilla'];
 /* build the network (no THREE needed) */
 PLAN.net = function () { const GW = AV.gwkit, N = GW.Net(Object.assign({ cell: .5 }, B));
-  for (const [id, kind, w, pts, name, ex] of S) N.street(id, pts, w, Object.assign({ kind, name }, ex || {}));
+  for (const [id, kind, w, pts, name, ex] of S) N.street(id, pts, w, Object.assign({ kind, name, car: PLAN.car.includes(id) }, ex || {}));
   for (const [id, sh, name, ex] of PZ) { if (sh.c) N.circle(id, sh.c[0], sh.c[1], sh.r, Object.assign({ name }, ex || {})); else N.plaza(id, sh, Object.assign({ name }, ex || {})) }
   for (const [id, poly, name] of PLAN.opens) N.open(id, poly, { name, step: 10 });
   for (const [id, sh, name] of PLAN.solids) N.solid(id, sh.c ? GW.circPoly(sh.c[0], sh.c[1], sh.r, 28) : sh, { name });

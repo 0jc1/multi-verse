@@ -120,7 +120,7 @@ AV.registerWorld({
     const t0 = performance.now();
     const N = SEV.N = PLAN.net();
     const lots = N.lots(GW.rng(7), { wmin: 6, wmax: 11, dmax: 13 });   /* fixed seed: the city is the same for everyone */
-    const P = [], Gl = [], Gs = [], Q = [], FP = [], FQ = [], FG = [];   /* solid, glow, glass, sign quads; festival solid/sign/glow */
+    const P = [], Gl = [], Gs = [], Q = [], FP = [], FQ = [], FG = [], D = [];   /* D: house detail drawn only near the camera */   /* solid, glow, glass, sign quads; festival solid/sign/glow */
     const box = (arr, hex, x0, x1, y0, y1, z0, z1, gl) => arr.push([BG.box, hex, K.M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)), gl || 0]);
     const obox = (arr, hex, ax, az, bx, bz, w, y0, y1, gl) => { const L2 = Math.hypot(bx - ax, bz - az); arr.push([BG.box, hex, K.M((ax + bx) / 2, (y0 + y1) / 2, (az + bz) / 2, L2, y1 - y0, w, 0, Math.atan2(-(bz - az), bx - ax), 0), gl || 0]) };   /* a box along a segment */
     const sign = (k, x, y, z, w, h, ry, arr) => (arr || Q).push({ k, x, y, z, w, h, ry });
@@ -141,7 +141,7 @@ AV.registerWorld({
     const lanternAt = [], plaqueDone = {};
     for (const l of lots) { const dist = district(l.x, l.z), sty = Object.assign({ q }, STY[dist]); const s = streetOf[l.src], shopP = l.sp ? 1 : s ? (s.shops != null ? s.shops : s.kind === 'alley' ? .1 : s.kind === 'lane' ? .25 : .35) : .45;
       const isShop = !!l.sp || rng() < shopP; const doorX = l.w / 2 - 1.5;
-      const H = GW.medHouse(P, Gl, l, sty, rng, { shop: isShop, lit: isShop && rng() < .7, hollow: l.hollow || 0, doorX, glass, shopCol: [0x2a1e16, 0x1e3a2a, 0x3a1a14, 0x1a1a1a, 0x5a3418][(rng() * 5) | 0], floors: l.sp ? 3 : 0 });
+      const H = GW.medHouse(P, Gl, l, sty, rng, { D, shop: isShop, lit: isShop && rng() < .7, hollow: l.hollow || 0, doorX, glass, shopCol: [0x2a1e16, 0x1e3a2a, 0x3a1a14, 0x1a1a1a, 0x5a3418][(rng() * 5) | 0], floors: l.sp ? 3 : 0 });
       l.H = H; nHouse++;
       const at = (x, z) => GW.localPt(H.base, x, z);
       if (isShop) { nShop++; const k = l.sp || GEN[(gi++ * 7 + (rng() * 3 | 0)) % GEN.length]; l.sign = k; const sw = Math.min(l.w - .8, l.sp ? 5.6 : 4.2), [sx, sz] = at(0, .2); sign(k, sx, 3.3, sz, sw, sw * (l.sp ? .208 : .219), l.yaw);
@@ -162,7 +162,7 @@ AV.registerWorld({
     /* ---------- walk-ins: carve the interior + a 2 m door, fit them out ---------- */
     const IN = SEV.interiors = {};
     for (const k in SH) { const l = SH[k]; if (!l.hollow) continue; const b = l.H.base, hd = l.hollow, w = l.w, dx = l.w / 2 - 1.5;
-      N.carve(GW.lrect(b, -w / 2 + .3, w / 2 - .3, -(hd - .3), -.3)); N.carve(GW.lrect(b, dx - 1, dx + 1, -.9, .7));
+      N.carve(GW.lrect(b, -w / 2 + .3, w / 2 - .3, -(hd - .3), -.3)); N.carve(GW.lrect(b, dx - 1.3, dx + 1.3, -1.1, .8));
       const put = GW.putter(P, b), putG = GW.putter(Gl, b);
       put(BG.box, k === 'solea' ? 0x3a1a14 : 0x8a6a4a, 0, .03, -hd / 2, w - .6, .06, hd - .6);   /* floor */
       putG(BG.box, 0xffe0b0, 0, 3.45, -hd / 2, w - 1.6, .05, hd - 2, 1);   /* ceiling light */
@@ -211,7 +211,7 @@ AV.registerWorld({
     for (let z = 116; z < 162; z += 9) for (let x = -8; x < 90; x += 11) if (freeAt(x, z, 1.6) && ((x + z) | 0) % 3) trees.push([x, z]);   /* Alcázar gardens */
     for (let z = 156; z < 182; z += 8) for (let x = 112; x < 198; x += 10) if (freeAt(x, z, 1.6)) (((x / 10) | 0) % 3 ? trees : palms).push([x, z]);   /* Murillo */
     const orangeP = q ? 3 : 1;
-    for (const [x, z] of trees) { const h = 3.2 + rng() * .8; box(P, 0x4a3a2a, x - .13, x + .13, 0, h * .45, z - .13, z + .13); P.push([BG.ico, [0x2e5a26, 0x3a6a2e, 0x34622a][(rng() * 3) | 0], K.M(x, h * .72, z, 1.6, 1.25, 1.6), 0]); if (q > 0) P.push([BG.ico, 0x3a6a2e, K.M(x + .5, h * .9, z - .3, 1, .8, 1), 0]); for (let k = 0; k < orangeP; k++) { const a = rng() * TAU; P.push([BG.sphL, 0xf08a1a, K.M(x + Math.cos(a) * 1.35, h * .7 + (rng() - .3) * .8, z + Math.sin(a) * 1.35, .12, .12, .12), 0]) } box(P, 0xb8a888, x - .55, x + .55, 0, .08, z - .55, z + .55); N.blockCircle(x, z, .25) }
+    for (const [x, z] of trees) { const h = 3.2 + rng() * .8; box(P, 0x4a3a2a, x - .13, x + .13, 0, h * .45, z - .13, z + .13); P.push([q > 1 ? BG.ico : BG.ico0, [0x2e5a26, 0x3a6a2e, 0x34622a][(rng() * 3) | 0], K.M(x, h * .72, z, 1.6, 1.25, 1.6), 0]); if (q > 0) P.push([BG.ico0, 0x3a6a2e, K.M(x + .5, h * .9, z - .3, 1, .8, 1), 0]); for (let k = 0; k < orangeP; k++) { const a = rng() * TAU; P.push([BG.sphL, 0xf08a1a, K.M(x + Math.cos(a) * 1.35, h * .7 + (rng() - .3) * .8, z + Math.sin(a) * 1.35, .12, .12, .12), 0]) } box(P, 0xb8a888, x - .55, x + .55, 0, .08, z - .55, z + .55); N.blockCircle(x, z, .25) }
     for (const [x, z] of palms) { const h = 9 + rng() * 5; for (let k = 0; k < 4; k++) P.push([BG.cyl, 0x8a7a5a, K.M(x + k * .04, h * (k + .5) / 4, z, .22 - k * .02, h / 4, .22 - k * .02), 0]); for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; P.push([BG.cone, [0x3a6a2a, 0x4a7a34][k % 2], K.M(x + Math.cos(a) * 1.5, h - .2, z + Math.sin(a) * 1.5, .5, 3.4, .12, Math.PI / 2 + .5, -a, 0), 0]) } N.blockCircle(x, z, .3) }
     for (const [x, z] of lamps.concat(trees.filter((t, i) => i % 6 === 3).map(([x2, z2]) => [x2 + 2.2, z2]))) { if (!freeAt(x, z, .8)) continue; box(P, 0x1a1a1a, x - .07, x + .07, 0, 3.9, z - .07, z + .07); box(P, 0x1a1a1a, x - .3, x + .3, 3.85, 3.95, z - .06, z + .06); for (const sx of [-.28, .28]) box(Gl, 0xffd89a, x + sx - .1, x + sx + .1, 3.95, 4.3, z - .1, z + .1, 1); N.blockCircle(x, z, .15) }
     /* toldos over Sierpes + Tetuán: canvas sails every 7 m */
@@ -222,16 +222,17 @@ AV.registerWorld({
     /* ---------- the walking graph (after every carve and prop) + the connectivity report ---------- */
     /* ---------- merge: chunked so the tiles you can't see are culled ---------- */
     GW.atlas(SIGNS, SG, 2048, 4096);
-    const solidM = K.floraMat(0, { rough: .86 }); solidM.userData.lin = 1; SEV.solids = GW.chunked(P, 64, K.merge, solidM, grp, 'sev_static', { shadow: true });
+    const solidM = K.floraMat(0, { rough: .86 }); solidM.userData.lin = 1; SEV.solids = GW.chunked(P, 64, K.merge, solidM, grp, 'sev_static', { shadow: true }); SEV.farStat = GW.lod(ctx, SEV.solids.filter(m => !/wide/.test(m.name)), 470);   /* beyond the fog: not drawn */
+    { const dm = solidM; const dms = GW.chunked(D, 40, K.merge, dm, grp, 'sev_detail'); SEV.lodStat = GW.lod(ctx, dms, [55, 85, 130][q]); SEV.stats.detailParts = D.length }
     if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .2, transparent: true, opacity: .28, depthWrite: false }); gm.userData.lin = 1; GW.chunked(Gs, 128, K.merge, gm, grp, 'sev_glass', { order: 2 }) }
     const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; GW.chunked(Gl, 128, K.merge, glowM, grp, 'sev_glow');
-    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .22, roughness: .55, alphaTest: .3, side: THREE.DoubleSide }); signM.userData.lin = 1; GW.chunked(Q, 128, qs => GW.quadGeo(qs, SG.r), signM, grp, 'sev_signs'); SEV.signM = signM;
+    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .22, roughness: .55, alphaTest: .3, side: THREE.DoubleSide }); signM.userData.lin = 1; SEV.signStat = GW.lod(ctx, GW.chunked(Q, 64, qs => GW.quadGeo(qs, SG.r), signM, grp, 'sev_signs'), [120, 180, 260][q]); SEV.signM = signM;   /* signs are unreadable far away */
     /* festival layer (shown only while the Feria is on) */
     const fest = SEV.festG = new THREE.Group(); fest.visible = false; grp.add(fest); if (SEV.LM && SEV.LM.funfair) fest.add(SEV.LM.funfair);
     if (FP.length) { const fm = K.floraMat(0, { rough: .7 }); fm.userData.lin = 1; GW.chunked(FP, 64, K.merge, fm, fest, 'sev_fest') }
     if (FG.length) { const fg = new THREE.MeshBasicMaterial({ vertexColors: true }); fg.userData.lin = 1; GW.chunked(FG, 128, K.merge, fg, fest, 'sev_fest_glow'); SEV.festGlowM = fg }
     if (FQ.length) { const fs = new THREE.Mesh(GW.quadGeo(FQ, SG.r), signM); fs.name = 'sev_fest_signs'; fest.add(fs) }
-    SEV.stats.parts = P.length + Gl.length + Gs.length; SEV.stats.festParts = FP.length + FG.length; SEV.stats.signs = Q.length; SEV.stats.atlasOver = (SG.over || []).length; SEV.stats.atlasBad = (SG.bad || []).length; SEV.stats.lots = lots.length; SEV.stats.shopsPlaced = Object.keys(SH).length;
+    SEV.stats.parts = P.length + Gl.length + Gs.length + D.length; SEV.stats.festParts = FP.length + FG.length; SEV.stats.signs = Q.length; SEV.stats.atlasOver = (SG.over || []).length; SEV.stats.atlasBad = (SG.bad || []).length; SEV.stats.lots = lots.length; SEV.stats.shopsPlaced = Object.keys(SH).length;
     /* night: lit windows + signs */
     ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 20.5 || h < 6 ? 1 : h > 19 ? (h - 19) / 1.5 : h < 7.5 ? (7.5 - h) / 1.5 : 0; signM.emissiveIntensity = .22 + .8 * n; glowM.color.setScalar(.35 + .65 * n) });
     /* ---------- life: people, shops, rides, the Feria (sevilla_life.js) ---------- */
@@ -250,7 +251,8 @@ AV.registerWorld({
     if (SEV.lifePlaces) for (const p of SEV.lifePlaces) places.push(p);
     return { name: 'Sevilla', surface: N.surface, fog: [90, 460], sky: { exp: .95, tint: [0x8ab0d8, 0xf0dcb8, .35, .3], dome: { s1: 0xf4e4c8, s2: 0x7aa8dc, swirl: .01, cloud: .35, glow: .4 } },
       arrivals: { default: { x: PLAN.arrival.x, z: PLAN.arrival.z, yaw: PLAN.arrival.yaw }, pipe: { x: -60, z: -150, yaw: PLAN.arrival.yaw }, train: { x: -30, z: -126, yaw: Math.PI } }, defaultArrival: 'default',
-      mapRoads: N.mapRoads(), places, mapNav: SEV.nav, routeGroup: () => 'main',
+      mapRoads: N.mapRoads(), places, mapNav: SEV.nav, noCar: (x, z) => !N.carOK(x, z),
+      stepMat: (x, z) => { const c = N.code(x, z); return c === 8 ? 'wood' : c === 3 || (c === 2 && x < -298 && z > 242) ? 'dirt' : 'stone' },   /* agent 3 audio2 footsteps */ routeGroup: () => 'main',
       greet: { human: [['¡Buenas! Mind the bikes on the green lane.', '¡Buenas! Cuidado con las bicis del carril verde.'], ['The Giralda is your compass: you can see it from everywhere.', 'La Giralda es tu brújula: se ve desde todas partes.']] },
       chatLines: [['The orange trees smell like heaven in March. Azahar.', 'Los naranjos huelen a gloria en marzo. Azahar.'], ['Feria on Thursday — the whole city goes to the Real.', 'Feria el jueves: toda la ciudad se va al Real.'], ['Best pescaíto is across the bridge, on Betis.', 'El mejor pescaíto, cruzando el puente, en Betis.'], ['In Santa Cruz even the locals get lost. That is the point.', 'En Santa Cruz hasta los sevillanos se pierden. De eso se trata.']],
       musicProfile: { bpm: 104, root: 52, scale: [0, 1, 4, 5, 7, 8, 10], style: 'amb' } };

@@ -95,7 +95,7 @@ RD.plan = function (W, a, b) {
   if (net) { const f = nearestEdge(net, a.x, a.z), t = nearestEdge(net, b.x, b.z);
     if (f && t && f.d < 220 && t.d < 220) { const r = dijkstra(net, f, t); if (r && r.len > 40 && r.len > f.d + t.d) { const w = Math.min(f.e.w, t.e.w), road = keepRight(dedupe(r.pts), Math.min(2.4, Math.max(1.1, w / 4)) * (vehOf(W).left ? -1 : 1));
         /* the taxi waits on the street when that is within 60 m (the step-in covers the walk to it); further away it comes to you */
-        const clear = pts => { const d = dens(pts, 1.5); return d.every(p => AV.isFree(W, p[0], p[1], 1.1)) };   /* room for a car: 1.1 m either side of its centre line */
+        const clear = pts => { const d = dens(pts, 1.5); return d.every(p => AV.isFree(W, p[0], p[1], 1.1) && !(W.noCar && W.noCar(p[0], p[1]))) };   /* 2.2: W.noCar(x, z) keeps cars out of pedestrian lanes (worlds opt in) */   /* room for a car: 1.1 m either side of its centre line */
         let head = f.d <= 25 ? [] : walk(W, A, road[0]); if (head.length && !clear(head)) head = [];   /* no car-wide way out: the taxi waits on the street */
         let tail = t.d > 25 ? walk(W, road[road.length - 1], B).slice(1) : []; if (tail.length && !clear([road[road.length - 1]].concat(tail))) tail = [];   /* drop at the kerb; the GPS shows the last bit on foot */
         const pts = dedupe(dens(head.length ? head.concat(road.slice(1), tail) : road.concat(tail), 2.5)); return { how: 'road', pts, drop: pts[pts.length - 1], lights: r.lights, len: r.len, roadIn: Math.round(f.d), waits: !head.length && f.d > 3 ? Math.round(f.d) : 0 } } } }

@@ -55,7 +55,7 @@ try {
   if ($Mobile) { [void](Send-Cdp 'Emulation.setDeviceMetricsOverride' @{ width = 915; height = 412; deviceScaleFactor = 2; mobile = $true }); [void](Send-Cdp 'Emulation.setTouchEmulationEnabled' @{ enabled = $true; maxTouchPoints = 5 })
     [void](Send-Cdp 'Emulation.setUserAgentOverride' @{ userAgent = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' }) }
   [void](Send-Cdp 'Page.addScriptToEvaluateOnNewDocument' @{ source = "window.__APE_ERRS=[];addEventListener('error',e=>{if(e.message)__APE_ERRS.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno)});addEventListener('unhandledrejection',e=>__APE_ERRS.push('rejection: '+(e.reason&&e.reason.message||e.reason)));const ce=console.error.bind(console);console.error=function(){try{const m=[].map.call(arguments,a=>String(a&&a.message||a)).join(' ');if(!/Failed to load resource/.test(m))__APE_ERRS.push('console.error: '+m.slice(0,300))}catch(x){}return ce.apply(null,arguments)};" })
-  $url = if ($FileMode) { ([Uri](Join-Path $(if ($GameRoot) { $GameRoot } else { $Root }) 'index.html')).AbsoluteUri } else { "http://localhost:$Port/index.html" }
+  $url = if ($FileMode) { ([Uri](Join-Path $(if ($GameRoot) { $GameRoot } else { $Root }) 'index.html')).AbsoluteUri } else { "http://localhost:$Port/index.html#autotest" }
   [void](Send-Cdp 'Page.navigate' @{ url = $url }); Start-Sleep -Seconds 3
   $suite = [IO.File]::ReadAllText($(if ($Suite) { $Suite } else { "$Root\tools\tests\suite_cdp.js" }))
   [void](Eval-Js ($suite + "`n;true"))

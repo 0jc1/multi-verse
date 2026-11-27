@@ -288,3 +288,43 @@ powershell -ExecutionPolicy Bypass -File tools\tests\gpu_queue.ps1 -Owner lw23 -
 - Also downloaded for later milestones: applause (concerts), lion-dance percussion (festivals), a police siren (police).
 
 **Test:** `suite_lw23d` 66/67 on the first run. The one failure was a real bug (pass-bys bypassed the recording hook), now fixed; the rerun passed 20/20.
+
+## Milestone E: onboarding, character creation, starter homes and vehicles (`js/lw_onboard.js`)
+
+- **New game opens the character creator:**
+  - live 3D preview, built with the same body pipeline as the NPCs;
+  - name; body: ZtonedApe classic (ape), male or female; skin or fur; 7 hairstyles and 9 hair colours; beard, glasses, flower;
+  - tops (ZtonedApe tee, Giant Hostel tee, Hawaiian, tie-dye, reggae, tank, plain in 7 colours); jeans, chinos, elephant pants, shorts; sneakers, flip-flops, boots;
+  - starting city (14 worlds);
+  - **two starter homes in different worlds**, chosen from 12;
+  - optional tutorial missions.
+- **Starter package:**
+  - 10 000 credits;
+  - both homes owned and **furnished**: bed, wardrobe, sofa, TV, record player, rug, lamp, plant;
+  - **a car, bicycle and scooter parked at each home** (hover car, hover scooter and hoverbike on Astro-9), shown on the map;
+  - snacks and drinks;
+  - you **wake up in your home**.
+- **Twelve starter homes:**
+  - Ape Town: Mushroom Studio.
+  - Chiang Mai: Nimman condo.
+  - Madrid: Pinar 2B.
+  - Amsterdam: Jordaan canal studio.
+  - Tokyo: Udagawa micro-apartment.
+  - Barcelona: Raval shared flat.
+  - Paris: Buci chambre de bonne.
+  - Rio: Copacabana flat.
+  - Astro-9: Spiral Plaza capsule (futuristic).
+  - Vienna: Naschmarkt Altbau flat.
+  - Pai: bamboo hut (countryside).
+  - Koh Tao: Sairee beach bungalow.
+- **Every home has a real street door.** Where the city has no suitable building wall (Rio's walk-mask streets, Astro-9, Pai's huts), `housing.js` now builds a free-standing entrance facade with wall, roof and collision.
+- **Continue** asks where to wake up: where you left off, or any home you own.
+- **Old saves** get a one-time **optional** package (one furnished home, vehicles, snacks); money, inventory and missions are untouched.
+- **Your avatar:**
+  - C while walking switches to a **third-person camera** that shows your character, with collision-aware pull-in; C while riding keeps the old vehicle camera.
+  - The ApePhone 🪞 **Me** app renames you and changes your look.
+- **Tests:** automated runs open `index.html#autotest`, where New game starts straight away as before. `suite_lw23e` **49/49**: the creator through its UI, the package, furniture, wake-up at home, vehicles in two worlds, third person, the Me app, the old-save package, the wake-up chooser, and all 12 starter doors.
+- **Not yet:**
+  - basic fictional weapons (they come with the police milestone);
+  - barbers and clothing shops charging for look changes (customization milestone);
+  - the ape body reads fairly human from behind (same pipeline as the existing ape NPCs).

@@ -301,7 +301,7 @@ AV.registerWorld({
     if (PAR.life) try { PAR.life(ctx, { T, st, sh, IN, box, TERR, STAGE, BOUQ, fest }) } catch (e) { console.warn('paris life', e); PAR.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Paris', surface: surf, fog: [90, 720], sky: { exp: .9, tint: [0x9aa8c0, 0xe8dcd0, .3, .3], dome: { s1: 0xf0dcd0, s2: 0x9ab4d8, swirl: .01, cloud: .7, glow: .35 } },
       arrivals: { default: { x: -40, z: 34.6, yaw: -PI * .62 }, pipe: { x: -36, z: 34.6, yaw: -PI * .62 }, metro: { x: 30, z: 109, yaw: PI } }, defaultArrival: 'default',
-      mapRoads, places, mapNav: PAR.nav || null,
+      mapRoads, places, mapNav: PAR.nav || null, routeGroup: (x, z) => z < -300 ? 'montmartre' : 'main', routeVia: (a, b) => a.z < -300 ? [-60, -454.4] : [34.2, 108.6],   /* 2.2: Montmartre is one line-12 ride from Saint-Germain (no walking route). routeVia = the métro entrance on the start's side */
       greet: { human: [['Bonjour ! Always say bonjour first — then ask.', '¡Bonjour! Di siempre bonjour primero y luego pregunta.'], ['The best view of the cathedral is from the Pont Neuf at sunset.', 'La mejor vista de la catedral es desde el Pont Neuf al atardecer.']] },
       chatLines: [['Jazz tonight at the Caveau. Down the stone stairs.', 'Jazz esta noche en el Caveau. Bajando las escaleras de piedra.'], ['Saturday is the Fête de la Musique — music on every corner.', 'El sábado es la Fête de la Musique: música en cada esquina.'], ['A croissant from Au Pain Doré and a café on the terrace. Voilà, Paris.', 'Un cruasán de Au Pain Doré y un café en la terraza. Voilà, París.']],
       musicProfile: { bpm: 100, root: 52, scale: [0, 2, 4, 5, 7, 9, 11], style: 'amb' } };

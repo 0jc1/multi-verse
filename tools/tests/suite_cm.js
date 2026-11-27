@@ -38,20 +38,27 @@ window.APE_T = (() => {
     c('map pins for Big Blues, Chat and Pineapple Express', !!(blues && chat && pine));
     const len = pts => pts.reduce((s, p, i) => i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0);
     const bad = pts => { const out = []; for (let k = 1; k < pts.length; k++) { const [x0, z0] = pts[k - 1], [x1, z1] = pts[k], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)); for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (W.surface(x, z) === null || !AV.isFree(W, x, z, .35)) out.push(x.toFixed(1) + ',' + z.toFixed(1)) } } return out };
-    const rBlues = [[15.5, 49], [15.5, 44], [17, 44], [17, 42.4]], rChat = [[15.5, 49], [15.5, 44], [60, 44], [60, 56.5], [62.3, 56.5]], rPine = [[62.3, 56.5], [60, 56.5], [60, 0], [78, 0], [78, 5.8]];
+    const rBlues = [[15.5, 49], [15.5, 44], [17, 44], [17, 42.4]], rChat = [[15.5, 49], [15.5, 44], [60, 44], [60, 56.5], [62.3, 56.5]], rPine = [[62.3, 56.5], [60, 56.5], [60, 0], [204, 0], [204, 5.4]];   /* 2.1: Pineapple Express moved out to Tha Phae Rd (through the gate) */
     c('Big Blues door faces the hostel door across the road', Math.abs(blues.x - hostel.x) < 4 && blues.z < 44 && hostel.z > 44 - 1, 'hostel z ' + hostel.z + ' · blues z ' + blues.z);
     let b = bad(rBlues); c('walk: hostel door → across the road → Big Blues door', !b.length, b.slice(0, 5).join(' '));
     b = bad(rChat); c('walk: hostel → Chat (one turn)', !b.length, b.slice(0, 5).join(' '));
     b = bad(rPine); c('walk: Chat → Pineapple Express (two turns)', !b.length, b.slice(0, 5).join(' '));
     const dB = len(rBlues), dC = len(rChat), dP = dC + len(rPine); c('distances: Big Blues < Chat < Pineapple Express', dB < dC && dC < dP && dC > 40 && dP > 90, dB.toFixed(0) + ' m < ' + dC.toFixed(0) + ' m < ' + dP.toFixed(0) + ' m');
     b = bad([[62.3, 56.5], [66.6, 56.5], [70, 56.5]]); c('Chat: walk in through its door', !b.length, b.join(' '));
-    b = bad([[78, 5.8], [78, 9.6], [78, 12]]); c('Pineapple Express: walk in through its door', !b.length, b.join(' '));
+    b = bad([[204, 5.4], [204, 9.3], [204, 12]]); c('Pineapple Express: walk in through its door', !b.length, b.join(' '));
+    const kae = pl('kae'), chada = pl('chada'); c('2.1: Khun Kae’s + Chada’s have their own neighbourhoods (map pins)', !!(kae && chada));
+    const far = (p, q) => Math.hypot(p.x - q.x, p.z - q.z); c('2.1: only Giant + Big Blues face each other; the others are spread out (> 40 m from Big Blues and from each other)', [kae, chada, pine].every(p => far(p, blues) > 40) && far(kae, chada) > 40 && far(kae, pine) > 40 && far(chada, pine) > 40, ['kae', 'chada', 'pine'].map((k, i) => k + ' ' + far([kae, chada, pine][i], blues).toFixed(0) + ' m').join(' · '));
+    for (const [p, nm] of [[kae, 'Khun Kae’s'], [chada, 'Chada’s']]) { b = bad([[p.x, p.z], [p.x, p.z + (p.z < kae.z + 1 && nm === 'Khun Kae’s' ? -3.6 : 3.6)]]); c('walk in through ' + nm + ' door', !b.length, b.join(' ')) }
+    c('2.1: painted boards for Khun Kae’s, Chada’s and Big Blues gig posters', ['kae', 'chada', 'gig'].every(s => { let f = false; W.group.traverse(o => { if (o.userData.cmSign === s) f = true }); return f }));
     c('painted signs mounted (no floating text)', ['pine', 'chat', 'blues'].every(s => { let f = false; W.group.traverse(o => { if (o.userData.cmSign === s) f = true }); return f }));
     c('Chat counter + book swap', !!tgt(/Chat café: Thai iced tea/) && !!tgt(/Chat book swap/)); c('Pineapple shake counter inside the new bar', (() => { const t = tgt(/pineapple shake/); return t && t.x > 70 && t.z < 20 })());
     place(17, 47, 0); AV.P.yaw = 0; AV.P.pitch = .05; await sleep(5000);
   }, { shot: 'cm_hostel_blues' });
+  step('Giant Hostel sign from across Moon Muang Rd', async c => { place(19.5, 41.5, Math.PI); AV.P.yaw = Math.PI; AV.P.pitch = .22; await sleep(5000); c('looking at the Giant Hostel sign', true) }, { shot: 'cm_giant_sign' });
   step('Chat + Pineapple Express street views', async c => { place(54, 56.5, -Math.PI / 2); AV.P.yaw = -Math.PI / 2; AV.P.pitch = .04; await sleep(5000); c('looking at Chat', true) }, { shot: 'cm_chat' });
-  step('Pineapple Express view', async c => { place(78, -3, Math.PI); AV.P.yaw = Math.PI; AV.P.pitch = .06; await sleep(5000); c('looking at Pineapple Express', true) }, { shot: 'cm_pineapple' });
+  step('Khun Kae’s view', async c => { place(36, 2, 0); AV.P.yaw = 0; AV.P.pitch = .06; await sleep(5000); c('looking at Khun Kae’s', true) }, { shot: 'cm_kae' });
+  step('Chada’s view', async c => { place(-34, -63, Math.PI); AV.P.yaw = Math.PI; AV.P.pitch = .06; await sleep(5000); c('looking at Chada’s', true) }, { shot: 'cm_chada' });
+  step('Pineapple Express view', async c => { place(204, -3, Math.PI); AV.P.yaw = Math.PI; AV.P.pitch = .06; await sleep(5000); c('looking at Pineapple Express', true) }, { shot: 'cm_pineapple' });
 
   step('Giant Hostel', async c => {
     closeAll(); for (const re of [/Reception bell/, /Festival board/, /Pool table: friendly/, /Shop counter/, /Apeverse Portal/, /Sleep in your bunk/, /Pet Bobo/]) c('target: ' + re.source, !!AV.W.T.find(t => re.test(lab(t))));

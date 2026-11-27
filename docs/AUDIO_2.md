@@ -30,11 +30,22 @@ Switch it all off with `AV.snd.off()`.
 
 ## Recordings and licences
 
-`assets/sfx/manifest.json` lists recordings by effect id. A listed file replaces the synth for that id, and anything missing falls back to the synth.
+`assets/sfx/manifest.json` maps effect ids to recordings. Each entry lists one or more files; one is picked at random, with a slight pitch variation, so repeats don't sound identical. Anything without a recording, or a file that fails to load, falls back to the synth.
 
-**The manifest is empty.** No recordings were downloaded: fetching third-party audio needs the owner's go-ahead, and each file's licence has to be checked. To add one:
-1. Put a CC0, CC-BY or owner-provided file under `assets/sfx/`.
-2. Add `{ "id": "door", "file": "assets/sfx/door_wood.ogg", "license": "CC0", "source": "<url>", "author": "<name>" }`.
+**In use now (all CC0 1.0, from OpenGameArt; about 1 MB, 35 files):**
+
+| Pack | Author | Used for |
+|---|---|---|
+| 50 RPG sound effects | Kenney | footsteps on stone and wood (10 variants), doors, coins, till |
+| 100 CC0 SFX | rubberduck | glass clinks, café dishes, splash, machines, bells, UI click, door |
+| 75 CC0 breaking / falling / hit SFX | rubberduck | glass taps (clink variants) |
+| RPG Sound Pack | artisticdude | hookah bubbling, coins |
+
+Each pack's source URL and author are recorded in the manifest. Kenney's licence file is kept in `assets/sfx/kenney_rpg/LICENSE.txt`.
+
+**Still synthesised** (no CC0 recording found in these packs): lighter, inhale and exhale, gulp, fizz, crunch and bite, stub-out, car horns, brakes, engines and traffic, crowds and café chatter, birds, water beds, and footsteps on grass, sand, dirt, water and metal.
+
+To add more, drop a CC0, CC-BY or owner-provided file under `assets/sfx/` and add it to an entry's `files`, with its licence, source and author.
 
 ## API for world builders (Agents 1, 2 and 4)
 

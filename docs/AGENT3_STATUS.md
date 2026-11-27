@@ -13,12 +13,12 @@ All tests are automated: headless Chrome on the real GPU (`-Gpu`), Medium graphi
 | | Milestone | Status | Evidence |
 |---|---|---|---|
 | A | Multi-drag smoking + consumables | **Implemented and verified (automated)** | `suite_play22`, consumables steps all pass. Screenshots: lighting, inhale, exhale, four drags, stub-out. |
-| B | Sound 2.0 | **Implemented and verified (automated)** | `suite_play22` 73/74. The one failure was in the test itself and is fixed (see below). Real recordings: **none yet**; the manifest is empty. |
+| B | Sound 2.0 | **Implemented and verified (automated)** | suite_play22 79/79. **35 CC0 recordings** (OpenGameArt, ~1 MB) now play for footsteps on hard floors, doors, coins, till, clinks, dishes, bubbles, splash, machines and bells; the rest is synthesised. See docs/AUDIO_2.md. |
 | C | Playable business loop | **Implemented and verified (automated)** | suite_biz22 **95/95**: café (lease → equip → stock → price → open → visible queue → serve / wrong item refused → tables dirty → clean → barista → wages), bar (pour game, tipsy customer → water), courier (job → GPS → deliver). Interiors are functional but blocky placeholders. |
 | D | Virtual cultivation | **Implemented and verified (automated)** | Pai farm + Astro-9 dome: plant → water / tend → growth stages → dry plants stall → harvest → stand customers buy → contracts. |
 | E | Garage / vehicles | **Implemented and verified (automated)** | Parts + tune applied on the ride (+12 % top speed), visible parts, persistence, more dealer classes; existing garage untouched. |
 | F | Dev cheats + family demo | **Implemented and verified (automated)** | All cheats incl. invalid spawn refused; family rules (adult doors / items / shop rows hidden, welcome map). Family demo start-to-finish not played by a human. |
-| G | More business types + regression | **Partial** | 4 categories (café, bar, farm, courier); hostel, gallery, record store, convenience store not built. Regression (real GPU): suite_bag **39/39**, suite_consume **47/47**, suite_play22 **73/74 + Madrid re-run 9/9** (the failure was test-side), suite_biz22 **95/95**. |
+| G | More business types + regression | **Partial** | 5 categories (café, bar, farm, courier, **hostel**). Galleries, record stores and convenience stores are not built. Latest real-GPU runs, through the shared GPU lock: suite_biz22 **109/109**, suite_play22 **79/79** (now including the CC0 recordings check). Earlier: suite_bag **39/39**, suite_consume **47/47**. |
 
 ## Performance
 

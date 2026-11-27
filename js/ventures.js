@@ -40,6 +40,11 @@ const CATS = VT.CATS = {
   farm: { n: L('Farm (virtual cultivation)', 'Granja (cultivo virtual)'), ic: '🌱', open: 9, close: 19,
     equip: { drip: [L('Drip irrigation (auto water)', 'Riego por goteo (riega solo)'), 400], lights: [L('Grow lights (faster growth)', 'Luces de cultivo (crece más rápido)'), 500], trim: [L('Trimming table (pouches → pre-rolls)', 'Mesa de manicura (bolsitas → porros)'), 300], beds: [L('Four more planters', 'Cuatro jardineras más'), 600, 4] },
     staff: { grower: [L('Grower (waters + harvests)', 'Cultivador/a (riega y cosecha)'), 40], seller: [L('Stand seller', 'Vendedor/a del puesto'), 30] }, foot: .7 },
+  hostel: { n: L('Hostel', 'Hostal'), ic: '🛏️', open: 8, close: 24,
+    menu: { dorm: { n: L('Dorm bed (per night)', 'Cama en dormitorio (por noche)'), ic: '🛏️', p: 18, need: {} }, private: { n: L('Private room (per night)', 'Habitación privada (por noche)'), ic: '🚪', p: 40, need: {} } },
+    supplies: { linen: [L('Clean linen sets', 'Juegos de sábanas limpias'), 10, 25] },
+    equip: { rooms: [L('Two more rooms', 'Dos habitaciones más'), 700, 2], lockers: [L('Guest lockers (+reputation)', 'Taquillas (+reputación)'), 250], breakfast: [L('Breakfast corner (+6 per guest night)', 'Rincón de desayuno (+6 por huésped y noche)'), 400] },
+    staff: { receptionist: [L('Receptionist (checks guests in)', 'Recepcionista (registra huéspedes)'), 40], housekeeper: [L('Housekeeper (cleans rooms)', 'Limpieza (limpia habitaciones)'), 35] }, foot: .8 },
   delivery: { n: L('Courier depot', 'Mensajería'), ic: '📦', open: 8, close: 22,
     equip: { cargo: [L('Cargo bike (2 parcels per run)', 'Bici de carga (2 paquetes por viaje)'), 450], board: [L('Priority job board (better pay)', 'Tablón prioritario (mejor paga)'), 300] },
     staff: { courier: [L('Courier', 'Mensajero/a'), 35] }, foot: 0 }
@@ -61,6 +66,7 @@ const LIST = VT.LIST = {
   md_bar: { w: 'madrid', cat: 'bar', name: L('Bar premises · Malasaña', 'Local de bar · Malasaña'), anchor: [/sol|puerta/i, /malasa/i], rent: 350, days: 7, price: 7000, foot: 9, ix: 3080, title: 'Bar Gorila' },
   pai_farm: { w: 'pai', cat: 'farm', name: L('Valley grow house · Pai (fictional)', 'Invernadero del valle · Pai (ficticio)'), anchor: [/tea/i, /walking/i], rent: 180, days: 7, price: 3800, foot: 6, ix: 3160, title: 'Pai Valley Greens', crops: ['strawberry', 'mango_haze', 'lotus_dream'] },
   a9_dome: { w: 'astro9', cat: 'farm', name: L('Hydro dome · Astro-9', 'Cúpula hidropónica · Astro-9'), anchor: [/plaza|market/i], rent: 220, days: 7, price: 5200, foot: 7, ix: 3240, title: 'Orbit Orchard', crops: ['float_fruit', 'zephyr_pod', 'moon_berry'] },
+  pai_hostel: { w: 'pai', cat: 'hostel', name: L('Backpacker house · Pai', 'Casa de mochileros · Pai'), anchor: [/walking/i, /rainny|ganita/i], rent: 240, days: 7, price: 5600, foot: 8, ix: 3400, title: 'Sleepy Ape Hostel' },
   md_courier: { w: 'madrid', cat: 'delivery', name: L('Courier depot · Madrid', 'Depósito de mensajería · Madrid'), anchor: [/gran|pinar/i, /sol/i], rent: 160, days: 7, price: 3000, foot: 0, ix: 3320, title: 'Rayo Couriers' }
 };
 const SIZE = { w: 14, d: 10 };
@@ -105,6 +111,7 @@ function dayTick(r, id) {
   while (r.paidDay < AV.S.day) { r.paidDay++; const wages = r.staff.reduce((a, s) => a + s.wage, 0), util = 10 + Object.keys(r.equip).length * 6;
     if (wages + util > 0) { if (AV.S.money >= wages + util) { AV.txn(-(wages + util), r.name + tr(': wages + utilities', ': sueldos + suministros')); log(r, tr('Wages ', 'Sueldos ') + wages + tr(' + utilities ', ' + gastos ') + util, -(wages + util)) }
       else { const q = r.staff.pop(); log(r, tr('Could not pay wages: ', 'No se pudieron pagar sueldos: ') + (q ? q.name + tr(' quit', ' se fue') : ''), 0); r.rep = Math.max(0, r.rep - 6); AV.toast('⚠️ ' + r.name + tr(': not enough credits for wages — ', ': sin créditos para sueldos — ') + (q ? q.name + tr(' quit.', ' se fue.') : '')) } }
+    if (r.cat === 'hostel') hostelNight(r);
     r.today = { rev: 0, cost: 0, served: 0, day: AV.S.day };
     if (r.st === 'rent' && r.until < AV.S.day) { r.open = false; AV.toast('📄 ' + r.name + tr(': the lease ended. Renew it at the door or in 💼 Business.', ': terminó el alquiler. Renuévalo en la puerta o en 💼 Negocios.')) } } }
 /* staff-only trading while you are in another world (or far away): one simulated hour at a time, at most 24 */
@@ -112,12 +119,18 @@ function simAway(r, id) {
   const now = Math.floor(AV.abs() / 60), from = Math.max(r.simAbs ? Math.floor(r.simAbs / 60) : now, now - 24); r.simAbs = AV.abs(); if (r.cat === 'farm') return growFarm(r);
   if (!r.open || !active(r)) return; const C = CATS[r.cat], P = LIST[id]; let earned = 0, n = 0;
   for (let h = from; h < now; h++) { const hh = h % 24, x = hh < 6 ? hh + 24 : hh; if (x < C.open || x >= C.close) continue;
+    if (r.cat === 'hostel') { const R = hostelRooms(r); if (r.staff.some(s => s.role === 'housekeeper')) for (const q of R) if (q.st === 'dirty' && (r.sup.linen || 0) > 0) { q.st = 'clean'; r.sup.linen-- }
+      if (r.staff.some(s => s.role === 'receptionist') && Math.random() < P.foot * (r.rep / 50) * .12) { const q = R.find(x => x.st === 'clean'); if (q) { const nn = 1 + Math.floor(Math.random() * 2); q.st = 'occ'; q.until = Math.floor(h / 24) + nn; q.guest = NAMES[h % NAMES.length]; earned += VT.priceOf(r, q.type) * nn; n++ } } continue }
     if (r.cat === 'delivery') { const cr = r.staff.filter(s => s.role === 'courier').length; for (let k = 0; k < cr * 2; k++) { const v = 22 + (r.equip.board ? 8 : 0); earned += v; n++ } continue }
     const cap = r.staff.filter(s => s.role === 'barista' || s.role === 'bartender').length * 7; if (!cap) continue; const want = Math.round(P.foot * (r.rep / 50) * (1 + r.deco * .1) * (r.equip.sound && x >= 21 ? 1.4 : 1) * .6);
     for (let k = 0; k < Math.min(cap, want); k++) { const it = pickOrder(r); if (!it) { r.rep = Math.max(0, r.rep - .4); break } use(r, it); earned += VT.priceOf(r, it); n++ } }
   if (earned > 0) { AV.txn(earned, r.name + tr(': staff takings', ': caja del personal')); log(r, tr('Staff served ', 'El personal atendió a ') + n + tr(' while you were away', ' mientras no estabas'), earned); r.sold += n; r.today.served += n; VT.stats.staffServed += n } }
 function pickOrder(r) { const M = CATS[r.cat].menu, ks = Object.keys(M).filter(k => can(r, k) && M[k].p > 0 && !(M[k].adult && fam())); return ks.length ? ks[Math.floor(Math.random() * ks.length)] : null }
-const can = (r, k) => { const m = CATS[r.cat].menu[k]; if (!m) return false; if (m.eq && !r.equip[m.eq]) return false; for (const s in m.need) if ((r.sup[s] || 0) < m.need[s]) return false; return true };
+/* hostel rooms: 4 to start (dorm / private alternating), +2 per upgrade; st 'clean' | 'occ' | 'dirty' */
+const roomsN = r => 4 + (r.equip.rooms || 0) * 2;
+function hostelRooms(r) { r.rooms = r.rooms || []; while (r.rooms.length < roomsN(r)) r.rooms.push({ type: r.rooms.length % 2 ? 'private' : 'dorm', st: 'clean' }); return r.rooms }
+VT.rooms = id => hostelRooms(rec(id));
+const can = (r, k) => { if (r.cat === 'hostel') return !!hostelRooms(r).find(q => q.type === k && q.st === 'clean'); const m = CATS[r.cat].menu[k]; if (!m) return false; if (m.eq && !r.equip[m.eq]) return false; for (const s in m.need) if ((r.sup[s] || 0) < m.need[s]) return false; return true };
 const use = (r, k) => { const m = CATS[r.cat].menu[k]; for (const s in m.need) r.sup[s] -= m.need[s] };
 VT.canMake = (id, k) => can(rec(id), k);
 
@@ -160,8 +173,8 @@ function interior(W, id, s, T) {
   const P = LIST[id], r = rec(id), C = CATS[P.cat], x = P.ix, z = 0, w = SIZE.w, d = SIZE.d, x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2, g = s.ig = new THREE.Group(); W.group.add(g);
   if (!W.__vent) { W.__vent = []; const s0 = W.surface; W.surface = (px, pz) => { for (const b of W.__vent) if (px > b[0] - .2 && px < b[1] + .2 && pz > b[2] - .2 && pz < b[3] + .2) return 0; return s0(px, pz) } }
   if (!W.__vent.some(b => b[0] === x0)) W.__vent.push([x0, x1, z0, z1]);
-  AV.snd && AV.snd.zone && !AV.snd.zones.some(q => q.id === 'vent_' + id) && AV.snd.zone({ world: W.id, id: 'vent_' + id, box: [x0, x1, z0, z1], space: P.cat === 'bar' ? (r.equip.sound ? 'club' : 'bar') : P.cat === 'farm' ? 'hall' : 'shop' });
-  const wallC = [[0xf2e6d4, 0xe8c8a0, 0xd8e8d0, 0xf4d8c8], [0x2a1e1a, 0x3a1a2a, 0x1a2a3a, 0x2a2a1a], [0xe8f0e0, 0xd8e8d8, 0xe0f0f4, 0xf0f8e8], [0xd8d8d0, 0xc8d0d8, 0xd8c8b8, 0xe0e0d8]][['cafe', 'bar', 'farm', 'delivery'].indexOf(P.cat)][r.deco], wm = M(wallC, .9);
+  AV.snd && AV.snd.zone && !AV.snd.zones.some(q => q.id === 'vent_' + id) && AV.snd.zone({ world: W.id, id: 'vent_' + id, box: [x0, x1, z0, z1], space: P.cat === 'bar' ? (r.equip.sound ? 'club' : 'bar') : P.cat === 'farm' ? 'hall' : P.cat === 'hostel' ? 'room' : 'shop' });
+  const wallC = [[0xf2e6d4, 0xe8c8a0, 0xd8e8d0, 0xf4d8c8], [0x2a1e1a, 0x3a1a2a, 0x1a2a3a, 0x2a2a1a], [0xe8f0e0, 0xd8e8d8, 0xe0f0f4, 0xf0f8e8], [0xd8d8d0, 0xc8d0d8, 0xd8c8b8, 0xe0e0d8], [0xf0e0c8, 0xe0ecd8, 0xd8e4f0, 0xf4e4d8]][['cafe', 'bar', 'farm', 'delivery', 'hostel'].indexOf(P.cat)][r.deco], wm = M(wallC, .9);
   const wall = (a, b, c, e2) => { const cc = [a, b, c, e2]; W.cols.push(cc); s.cols.push(cc); box(g, wm, (a + b) / 2, 1.8, (c + e2) / 2, b - a, 3.6, e2 - c) };
   wall(x0 - .3, x1 + .3, z0 - .3, z0); wall(x0 - .3, x1 + .3, z1, z1 + .3); wall(x0 - .3, x0, z0, z1); wall(x1, x1 + .3, z0, z1);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), M(P.cat === 'farm' ? 0x6a5a4a : P.cat === 'bar' ? 0x3a2418 : 0x8a6a4a, .8)); floor.rotation.x = -Math.PI / 2; floor.position.set(x, .01, z); g.add(floor);
@@ -180,8 +193,9 @@ function interior(W, id, s, T) {
   if (P.cat === 'cafe' || P.cat === 'bar') counterVenue(W, id, s, T, g, x0, x1, z0, z1);
   if (P.cat === 'farm') farmHall(W, id, s, T, g, x0, x1, z0, z1);
   if (P.cat === 'delivery') depot(W, id, s, T, g, x0, x1, z0, z1);
+  if (P.cat === 'hostel') hostelHall(W, id, s, T, g, x0, x1, z0, z1);
   /* staff: visible people at work */
-  r.staff.forEach((sf, i) => { const pos = sf.role === 'barista' || sf.role === 'bartender' ? [s.counter[0] + (i % 2 ? .8 : -.8), s.counter[1] - 1] : sf.role === 'door' ? [x1 - 2.6, z1 - 1] : sf.role === 'grower' ? [x - 2 + i, z] : sf.role === 'seller' ? [x1 - 2, z0 + 2] : [x0 + 2 + i, z];
+  r.staff.forEach((sf, i) => { const pos = sf.role === 'barista' || sf.role === 'bartender' || sf.role === 'receptionist' ? [s.counter[0] + (i % 2 ? .8 : -.8), s.counter[1] - 1] : sf.role === 'door' ? [x1 - 2.6, z1 - 1] : sf.role === 'grower' ? [x - 2 + i, z] : sf.role === 'seller' ? [x1 - 2, z0 + 2] : [x0 + 2 + i, z];
     const a = actor(300 + i * 17 + id.length); if (!a) return; a.h.position.set(pos[0], 0, pos[1]); a.h.rotation.y = sf.role === 'barista' || sf.role === 'bartender' ? 0 : Math.PI; g.add(a.h); s.staffA = s.staffA || []; s.staffA.push(Object.assign(a, { role: sf.role })) });
   AV.lin && AV.lin(g); crates();
 }
@@ -218,10 +232,11 @@ VT.queue = queue;
 function bubble(txt) { const c = document.createElement('canvas'); c.width = 128; c.height = 128; const x = c.getContext('2d'); x.fillStyle = 'rgba(255,255,255,.92)'; x.beginPath(); x.arc(64, 58, 50, 0, Math.PI * 2); x.fill(); x.beginPath(); x.moveTo(52, 100); x.lineTo(64, 124); x.lineTo(76, 100); x.fill(); x.font = '56px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 64, 60);
   const t = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false })); sp.scale.set(.55, .55, .55); sp.position.y = 2.25; sp.renderOrder = 9; return sp }
 function spawnCustomer(id) {
-  const s = G && G.sites[id], r = rec(id); if (!s || !s.counter) return null; const k = pickOrder(r); if (!k) { if (!s.noStockT || AV.now() > s.noStockT) { s.noStockT = AV.now() + 30; fail(r.name + tr(': nothing on the menu can be made — restock supplies.', ': no se puede preparar nada — repón suministros.')) } return null }
+  const s = G && G.sites[id], r = rec(id); if (!s || !s.counter) return null; const k = pickOrder(r); if (!k) { if (!s.noStockT || AV.now() > s.noStockT) { s.noStockT = AV.now() + 30; fail(r.cat === 'hostel' ? r.name + tr(': no clean room free — guests are turned away. Clean rooms or add rooms.', ': no hay habitación limpia libre — los huéspedes se van. Limpia o amplía.') : r.name + tr(': nothing on the menu can be made — restock supplies.', ': no se puede preparar nada — repón suministros.')) } return null }
   const a = actor(1000 + Math.floor(Math.random() * 900)); if (!a) return null; a.h.position.set(s.in.x, 0, s.in.z); s.ig.add(a.h);
+  const nights = r.cat === 'hostel' ? 1 + Math.floor(Math.random() * 3) : 0;
   const tipsy = CATS[r.cat].menu[k].adult && Math.random() < (r.staff.some(q => q.role === 'door') ? .05 : .18);
-  const c = { id, a, order: k, state: 'in', qi: (custs.filter(q => q.id === id).reduce((m, q) => Math.max(m, q.qi || 0), 0)) + 1, pat: 55, t0: AV.now(), tipsy, b: bubble(CATS[r.cat].menu[k].ic + (tipsy ? '🥴' : '')) };
+  const c = { id, a, order: k, nights, state: 'in', qi: (custs.filter(q => q.id === id).reduce((m, q) => Math.max(m, q.qi || 0), 0)) + 1, pat: 55, t0: AV.now(), tipsy, b: bubble(CATS[r.cat].menu[k].ic + (tipsy ? '🥴' : '')) };
   a.h.add(c.b); custs.push(c); VT.stats.walkins++; r.walkins = (r.walkins || 0) + 1; return c }
 VT.spawnCustomer = spawnCustomer;
 function walkTo(c, x, z, dt) { const h = c.a.h, dx = x - h.position.x, dz = z - h.position.z, d = Math.hypot(dx, dz); if (d < .12) { c.a.A && c.a.A.play && c.a.A.play('Idle'); return true } const sp = Math.min(d, 1.2 * dt); h.position.x += dx / d * sp; h.position.z += dz / d * sp; h.rotation.y = Math.atan2(dx, dz); c.a.A && c.a.A.play && c.a.A.play('Walk'); return false }
@@ -231,7 +246,7 @@ VT.pay = function (id, c, quality) { const r = rec(id), k = c.order, price = VT.
   r.sold++; r.today.served++; VT.stats.served++; r.rep = Math.min(100, r.rep + (price <= b * 1.2 ? .8 : price <= b * 1.6 ? .2 : -1.2) + (quality > .8 ? .3 : 0)); c.state = 'served'; c.b.visible = false; c.paid = tot;
   const s = G.sites[id], free = s.tables && s.tables.find(t => !t.busy && !(r.dirty && r.dirty[t.i])); if (free) { free.busy = c; c.table = free; c.state = 'sit'; c.sitT = 8 + Math.random() * 8 } else c.state = 'out'; AV.save(); return tot };
 /* the serve panel: the front customer's order, your menu, (bar) the pour */
-VT.serve = function (id) { const r = rec(id), q = queue(id); if (!r.open) return fail(tr('The business is closed. Open it in Manage (📋).', 'El negocio está cerrado. Ábrelo en Gestión (📋).')); if (!q.length) return AV.toast(tr('No one is waiting. Customers arrive while you are open.', 'No espera nadie. Los clientes llegan mientras esté abierto.'));
+VT.serve = function (id) { const r = rec(id), q = queue(id); if (!r.open) return fail(tr('The business is closed. Open it in Manage (📋).', 'El negocio está cerrado. Ábrelo en Gestión (📋).')); if (r.cat === 'hostel') return hostelDesk(id); if (!q.length) return AV.toast(tr('No one is waiting. Customers arrive while you are open.', 'No espera nadie. Los clientes llegan mientras esté abierto.'));
   const c = q[0], C = CATS[r.cat], m = C.menu[c.order], wait = Math.round(AV.now() - c.t0), left = Math.max(0, Math.round(c.pat - wait));
   const p = AV.panel('cmp', '<b>' + C.ic + ' ' + esc(r.name) + '</b><div class="note">' + tr('Customer wants: ', 'El cliente quiere: ') + '<b style="font-size:1.3em">' + m.ic + ' ' + say(m.n) + '</b> · ' + tr('patience ', 'paciencia ') + left + 's' + (c.tipsy ? '<br>🥴 ' + tr('They look tipsy already. Responsible service: offer water, or refuse.', 'Ya parece achispado. Servicio responsable: ofrece agua o niégate.') : '') + '</div>' +
     '<div class="grid">' + Object.keys(C.menu).filter(k => !(C.menu[k].adult && fam())).map(k => { const mm = C.menu[k], ok = can(r, k); return '<button data-k="' + k + '"' + (ok ? '' : ' disabled title="' + tr('missing equipment or supplies', 'faltan equipo o suministros') + '"') + '>' + mm.ic + ' ' + say(mm.n) + '<small>' + VT.priceOf(r, k) + '¢' + (ok ? '' : ' · ' + tr('can’t make', 'no hay')) + '</small></button>' }).join('') + '</div>' +
@@ -251,6 +266,42 @@ function pourGame(id, k) { const p = AV.panel('cmp', '<b>🍺 ' + tr('Pour the b
   let lv = 0; const t0 = performance.now(), iv = setInterval(() => { lv = Math.min(1, (performance.now() - t0) / 2600); const el = AV.$('vtLv'); if (el) el.style.height = (lv * 100) + '%'; else clearInterval(iv); if (lv >= 1) stop() }, 30);
   const stop = () => { clearInterval(iv); VT.stats.pours++; const q = Math.max(0, 1 - Math.abs(lv - .77) / .25); VT.lastPour = { lv, q }; AV.toast(q > .7 ? '🍺 ' + tr('Perfect pour!', '¡Caña perfecta!') : q > .3 ? '🍺 ' + tr('Decent pour.', 'Caña decente.') : '🍺 ' + tr('Mostly foam… they pay, but no tip.', 'Casi toda espuma… pagan, sin propina.')); VT.give(id, k, q) };
   AV.$('vtStop').onclick = stop; VT._pourStop = stop; return true }
+
+/* ======================= hostel: check-in desk, rooms, housekeeping ======================= */
+const ROOMN = L('Room ', 'Habitación ');
+function hostelNight(r) {   /* the morning after: breakfast income for each occupied room, then check-outs leave rooms to clean */
+  for (const q of hostelRooms(r)) { if (q.st !== 'occ') continue; if (r.equip.breakfast) { AV.txn(6, r.name + tr(': breakfast', ': desayuno')); log(r, tr('Breakfast for ', 'Desayuno para ') + (q.guest || tr('a guest', 'un huésped')), 6) }
+    if ((q.until || 0) <= AV.S.day) { q.st = 'dirty'; log(r, tr('Check-out, room to clean: ', 'Salida, habitación por limpiar: ') + (q.guest || ''), 0) } } }
+VT.checkin = function (id, i, auto) { const r = rec(id), c = queue(id)[0], R = hostelRooms(r), q = R[i]; if (!c || !q) return false;
+  if (q.st !== 'clean') return fail(tr(say(ROOMN) + (i + 1) + ' is not ready.', say(ROOMN) + (i + 1) + ' no está lista.'));
+  if (q.type !== c.order) { c.pat -= 12; VT.stats.wrong++; r.rep = Math.max(0, r.rep - 1); return fail(tr('They booked a ', 'Reservaron: ') + say(CATS.hostel.menu[c.order].n).toLowerCase()) }
+  const per = VT.priceOf(r, q.type), b = base(r, q.type), tot = per * c.nights; AV.txn(tot, r.name + ': ' + c.nights + tr(' night(s)', ' noche(s)')); log(r, tr('Check-in, room ', 'Entrada, habitación ') + (i + 1) + ' × ' + c.nights + tr(' night(s)', ' noche(s)'), tot);
+  q.st = 'occ'; q.until = AV.S.day + c.nights; q.guest = NAMES[(r.sold + i) % NAMES.length]; r.sold++; r.today.served++; VT.stats.served++; r.rep = Math.min(100, r.rep + (per <= b * 1.2 ? .8 : per <= b * 1.6 ? .2 : -1.2) + (r.equip.lockers ? .3 : 0));
+  c.state = 'room'; c.room = i; c.b.visible = false; snd(auto ? 'ok' : 'cash'); roomVis(id); AV.save(); if (!auto) AV.closePanel('cmp'); return tot };
+VT.cleanRoom = function (id, i, auto) { const r = rec(id), q = hostelRooms(r)[i]; if (!q || q.st !== 'dirty') return false; if ((r.sup.linen || 0) < 1) return fail(tr('No clean linen: buy linen sets in Manage, Supplies.', 'No hay sábanas limpias: cómpralas en Gestión, Suministros.'));
+  r.sup.linen--; q.st = 'clean'; q.guest = null; VT.stats.cleaned++; r.rep = Math.min(100, r.rep + .5); if (!auto) { snd('ok'); AV.toast('🧺 ' + say(ROOMN) + (i + 1) + tr(' is fresh and ready.', ' está limpia y lista.')) } roomVis(id); crates(); AV.save(); return true };
+function hostelDesk(id) { const r = rec(id), q = queue(id); if (!q.length) return AV.toast(tr('No guests at the desk. They arrive while you are open and there are clean rooms.', 'No hay huéspedes en recepción. Llegan si está abierto y hay habitaciones limpias.'));
+  const c = q[0], R = hostelRooms(r), m = CATS.hostel.menu[c.order], left = Math.max(0, Math.round(c.pat - (AV.now() - c.t0))), ST = { clean: tr('ready', 'lista'), occ: tr('occupied', 'ocupada'), dirty: tr('needs cleaning', 'por limpiar') };
+  const p = AV.panel('cmp', '<b>🛏️ ' + esc(r.name) + tr(' · reception', ' · recepción') + '</b><div class="note">' + tr('Guest wants: ', 'El huésped quiere: ') + '<b style="font-size:1.2em">' + m.ic + ' ' + say(m.n) + '</b> · ' + c.nights + tr(' night(s) · ', ' noche(s) · ') + VT.priceOf(r, c.order) * c.nights + '¢ · ' + tr('patience ', 'paciencia ') + left + 's</div><div class="grid">' +
+    R.map((x, i) => '<button data-room="' + i + '"' + (x.st === 'clean' ? '' : ' disabled') + '>' + (x.type === 'dorm' ? '🛏️' : '🚪') + ' ' + say(ROOMN) + (i + 1) + '<small>' + say(CATS.hostel.menu[x.type].n).split(' (')[0] + ' · ' + ST[x.st] + '</small></button>').join('') + '</div><div class="note" id="vtMsg"></div><div class="row"><button data-close>' + tr('Done', 'Listo') + '</button></div>');
+  p.querySelectorAll('[data-room]').forEach(b => b.onclick = () => VT.checkin(id, +b.dataset.room)); return true }
+function hostelHall(W, id, s, T, g, x0, x1, z0, z1) {
+  const r = rec(id), R = hostelRooms(r), n = R.length, cx = (x0 + x1) / 2, cz = z0 + 5.4, rw = (x1 - x0) / n; s.counter = [cx, cz];
+  box(g, M(0x7a5a3a, .5), cx, .55, cz, 3, 1.1, .7); box(g, M(0x2a2a2a, .3), cx, 1.12, cz, 3.2, .05, .8); const cc = [cx - 1.6, cx + 1.6, cz - .4, cz + .4]; W.cols.push(cc); s.cols.push(cc);
+  const bell = new THREE.Mesh(new THREE.SphereGeometry(.07, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), M(0xd8b048, .2, .9)); bell.position.set(cx + .9, 1.15, cz); g.add(bell);
+  if (r.equip.lockers) for (let i = 0; i < 6; i++) box(g, M([0x3a7ad8, 0xe8a030][i % 2], .4, .4), x1 - .4, .5 + (i % 3) * .55, z0 + 4.6 + Math.floor(i / 3) * .6, .5, .5, .55);
+  if (r.equip.breakfast) { box(g, M(0x8a5a3a), x0 + 1.4, .45, z1 - 3.2, 1.6, .9, .7); for (let i = 0; i < 3; i++) box(g, M([0xffc83a, 0xe8302a, 0xf4f0e4][i]), x0 + .9 + i * .5, 1, z1 - 3.2, .3, .2, .3) }
+  s.roomVis = []; for (let i = 0; i < n; i++) { const rx = x0 + rw * (i + .5), rz = z0 + 1.5, q = R[i];
+    if (i > 0) { const pc = [x0 + rw * i - .05, x0 + rw * i + .05, z0, z0 + 3]; box(g, M(0xe8dcc8, .9), x0 + rw * i, 1.3, z0 + 1.5, .1, 2.6, 3); W.cols.push(pc); s.cols.push(pc) }
+    const bedW = q.type === 'private' ? Math.min(1.4, rw - .4) : Math.min(.9, rw - .5); box(g, M(0x5a3a24), rx, .25, rz, bedW, .3, 1.9); if (q.type === 'dorm') { box(g, M(0x5a3a24), rx, 1.35, rz, bedW, .12, 1.9); for (const sx of [-1, 1]) box(g, M(0x3a3a3a, .4, .5), rx + sx * bedW / 2, .8, rz + .9, .05, 1.6, .05) }
+    const neat = box(g, M(0xf4f4f0, .9), rx, .44, rz, bedW * .96, .08, 1.8), messy = new THREE.Group(); for (let k = 0; k < 4; k++) box(messy, M([0xc83a3a, 0x8a6a4a, 0xf4f4f0, 0x3a5ac8][k], .9), (k - 1.5) * bedW * .2, .5 + (k % 2) * .06, (k % 3 - 1) * .4, bedW * .35, .12, .5); messy.position.set(rx, 0, rz); g.add(messy);
+    const cur = box(g, M(0x6a3a8a, .9), rx, 1.25, z0 + 3, rw - .3, 2.5, .05); const cc2 = [rx - bedW / 2 - .05, rx + bedW / 2 + .05, rz - .95, rz + .95]; W.cols.push(cc2); s.cols.push(cc2);
+    s.roomVis.push({ neat, messy, cur, door: [rx, z0 + 3.5] });
+    T({ x: rx, z: z0 + 3.7, r: Math.max(.9, rw * .55), kind: 'shop', show: () => hostelRooms(rec(id))[i] && hostelRooms(rec(id))[i].st === 'dirty', label: () => '🧺 ' + tr('Clean room ', 'Limpiar habitación ') + (i + 1) + tr(' (1 linen set)', ' (1 juego de sábanas)'), fn: () => VT.cleanRoom(id, i) }) }
+  s.supplyAt = [x0 + .8, z1 - 1.2]; T({ x: cx, z: cz + 1.4, r: 2.2, kind: 'shop', label: () => { const qq = queue(id); return '🛎️ ' + (qq.length ? tr('Reception: check in (' + qq.length + ' waiting)', 'Recepción: registrar (' + qq.length + ' esperando)') : tr('Reception, no guests waiting', 'Recepción, nadie esperando')) }, fn: () => VT.serve(id) });
+  roomVis(id) }
+function roomVis(id) { const s = G && G.sites[id], r = rec(id); if (!s || !s.roomVis || !r) return; hostelRooms(r).forEach((q, i) => { const v = s.roomVis[i]; if (!v) return; v.neat.visible = q.st === 'clean'; v.messy.visible = q.st === 'dirty'; v.cur.visible = q.st === 'occ' }) }
+VT.roomVis = roomVis;
 
 /* ======================= farm (virtual cultivation, fictional) ======================= */
 const STAGES = [L('seedling', 'plántula'), L('young plant', 'planta joven'), L('leafy', 'frondosa'), L('flowering', 'en flor'), L('ready to harvest', 'lista para cosechar')];
@@ -328,6 +379,7 @@ AV.frameFns.push(dt => {
   for (let k = custs.length - 1; k >= 0; k--) { const c = custs[k], s = G && G.sites[c.id]; if (!s) { custs.splice(k, 1); continue } c.a.A && c.a.A.update && c.a.A.update(dt);
     if (c.state === 'in' || c.state === 'queue') { const q = queue(c.id), i = c.state === 'queue' ? q.indexOf(c) : q.length, tx = s.counter[0] - 1.2 + i * .1, tz = s.counter[1] + 1 + i * .9; if (walkTo(c, tx, tz, dt)) { if (c.state === 'in') { c.state = 'queue'; c.t0 = AV.now() } c.a.h.rotation.y = Math.PI } if (c.state === 'queue' && AV.now() - c.t0 > c.pat) leave(c, true) }
     else if (c.state === 'sit') { if (walkTo(c, c.table.seat[0], c.table.seat[1], dt)) { c.sitT -= dt; if (c.sitT <= 0) { const r = rec(c.id); r.dirty = r.dirty || []; r.dirty[c.table.i] = 1; c.table.mess.visible = true; c.table.busy = null; c.state = 'out' } } }
+    else if (c.state === 'room') { const rm = s.roomVis && s.roomVis[c.room]; if (!rm || walkTo(c, rm.door[0], rm.door[1], dt)) { c.a.h.parent && c.a.h.parent.remove(c.a.h); custs.splice(k, 1) } }
     else if (c.state === 'out' || c.state === 'served') { if (walkTo(c, s.in.x, s.in.z, dt)) { c.a.h.parent && c.a.h.parent.remove(c.a.h); custs.splice(k, 1) } } }
   if (!G) { if ((simT -= dt) <= 0) { simT = 3; tickAll() } return }
   for (const id in G.sites) { const s = G.sites[id]; if (s.staffA) for (const a of s.staffA) a.A && a.A.update && a.A.update(dt) }
@@ -337,11 +389,11 @@ AV.frameFns.push(dt => {
     if (!here && !staffed) continue; const night = AV.S.time > 21 * 60 || AV.S.time < 3 * 60, rate = P.foot * CATS[r.cat].foot * (r.rep / 50) * (1 + r.deco * .12) * (r.equip.sound && night ? 1.4 : 1) * (r.cat === 'farm' ? (Object.values(r.stock).some(v => v > 0) ? 1 : 0) : 1);
     if (custs.filter(c => c.id === id).length < (r.cat === 'farm' ? 2 : 5) && Math.random() < rate / 60) { if (r.cat === 'farm') standCustomer(id); else spawnCustomer(id) } } }
   /* staff serve when you are not behind the counter */
-  if ((staffT -= dt) <= 0) { staffT = 1; for (const id in G.sites) { const r = rec(id), s = G.sites[id]; if (!s.counter || r.cat === 'farm') continue; const sv = r.staff.filter(q => q.role === 'barista' || q.role === 'bartender').length; if (!sv) continue; const meThere = VT.inside === id && Math.hypot(AV.P.x - s.counter[0], AV.P.z - s.counter[1]) < 3.2; if (meThere) continue;
-    s.sAcc = (s.sAcc || 0) + sv * (r.equip.grinder ? 1.4 : 1); if (s.sAcc < 9) continue; s.sAcc = 0; const c = queue(id)[0]; if (!c) continue; if (c.tipsy && r.staff.some(q => q.role === 'door')) { VT.stats.refused++; leave(c); continue } if (!can(r, c.order)) { leave(c, true); continue } VT.pay(id, c, .7); VT.stats.staffServed++ }
+  if ((staffT -= dt) <= 0) { staffT = 1; for (const id in G.sites) { const r = rec(id), s = G.sites[id]; if (!s.counter || r.cat === 'farm') continue; const sv = r.staff.filter(q => q.role === 'barista' || q.role === 'bartender' || q.role === 'receptionist').length; if (!sv) continue; const meThere = VT.inside === id && Math.hypot(AV.P.x - s.counter[0], AV.P.z - s.counter[1]) < 3.2; if (meThere) continue;
+    s.sAcc = (s.sAcc || 0) + sv * (r.equip.grinder ? 1.4 : 1); if (s.sAcc < 9) continue; s.sAcc = 0; const c = queue(id)[0]; if (!c) continue; if (c.tipsy && r.staff.some(q => q.role === 'door')) { VT.stats.refused++; leave(c); continue } if (!can(r, c.order)) { leave(c, true); continue } if (r.cat === 'hostel') { VT.checkin(id, hostelRooms(r).findIndex(q => q.type === c.order && q.st === 'clean'), true); VT.stats.staffServed++; continue } VT.pay(id, c, .7); VT.stats.staffServed++ }
     r_cleaner() }
 });
-function r_cleaner() { if (!G) return; for (const id in G.sites) { const r = rec(id), s = G.sites[id]; if (!s.tables || !r.staff.some(q => q.role === 'cleaner') || !r.dirty) continue; const i = r.dirty.findIndex(v => v); if (i >= 0 && Math.random() < .08) { r.dirty[i] = 0; s.tables[i].mess.visible = false } } }
+function r_cleaner() { if (!G) return; for (const id in G.sites) { { const r = rec(id); if (r && r.cat === 'hostel' && r.staff.some(q => q.role === 'housekeeper') && Math.random() < .06) { const i = hostelRooms(r).findIndex(q => q.st === 'dirty'); if (i >= 0 && (r.sup.linen || 0) > 0) VT.cleanRoom(id, i, true) } } const r = rec(id), s = G.sites[id]; if (!s.tables || !r.staff.some(q => q.role === 'cleaner') || !r.dirty) continue; const i = r.dirty.findIndex(v => v); if (i >= 0 && Math.random() < .08) { r.dirty[i] = 0; s.tables[i].mess.visible = false } } }
 /* farm stand customers: walk up, buy one item from your stock at your price */
 function standCustomer(id) { const s = G.sites[id], r = rec(id), items = Object.keys(r.stock).filter(k => r.stock[k] > 0 && !((AV.ITEMS[k] || {}).adult && fam())); if (!items.length) return; const it = items[Math.floor(Math.random() * items.length)], a = actor(2000 + Math.floor(Math.random() * 500)); if (!a) return;
   a.h.position.set(s.in.x, 0, s.in.z); s.ig.add(a.h); const c = { id, a, order: it, state: 'stand', t0: AV.now(), qi: 0, b: bubble((AV.ITEMS[it] || {}).ic || '🧺') }; a.h.add(c.b); custs.push(c); VT.stats.walkins++ }

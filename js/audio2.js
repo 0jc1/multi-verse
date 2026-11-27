@@ -36,7 +36,7 @@ function init() {
   venue = C.createGain(); venue.connect(mix);
   verb = C.createConvolver(); verbG = C.createGain(); verbG.gain.value = 0; verb.connect(verbG); verbG.connect(mix); verb.buffer = ir(1.2, 2.5);
   for (const [k, b] of [['sfx', sfx], ['venue', venue], ['voice', voice]]) { const g = C.createGain(); g.gain.value = k === 'venue' ? .6 : .35; b.connect(g); g.connect(verb); verbSend[k] = g }
-  ready = true; vol(); return true;
+  ready = true; vol(); preload(); return true;
 }
 /* procedural impulse response: stereo decaying noise, early reflections, damped highs */
 function ir(sec, decay) { const n = Math.max(1, Math.round(C.sampleRate * sec)), b = C.createBuffer(2, n, C.sampleRate);
@@ -54,8 +54,14 @@ function hookDuck() { const A = AV.audio; if (!A || A.__sd22) return; const sd0 
 
 /* ======================= sound effects (licensed recording if listed, else synth) ======================= */
 const BUF = {};
-fetch('assets/sfx/manifest.json').then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.sounds) return; SND.manifest = j; for (const s of j.sounds) if (s.id && s.file) SND.manifest[s.id] = s }).catch(() => { });
-function loadBuf(id) { const m = SND.manifest[id]; if (!m || BUF[id] !== undefined) return BUF[id]; BUF[id] = null; fetch(m.file).then(r => r.arrayBuffer()).then(a => C.decodeAudioData(a)).then(b => { BUF[id] = b; SND.stats.files++ }).catch(() => { BUF[id] = false }); return null }
+/* recordings: SND.rec[id] = manifest entry ({ files: [...], gain }); every file of an entry is decoded once and one is picked at random each time */
+SND.rec = {}; SND.manifest = {};
+fetch('assets/sfx/manifest.json').then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.sounds) return; SND.manifest = j; for (const s of j.sounds) { if (s.file && !s.files) s.files = [s.file]; if (s.id && s.files && s.files.length) SND.rec[s.id] = s } if (ready) preload() }).catch(() => { });
+function loadBuf(id) { const m = SND.rec[id]; if (!m || BUF[id]) return; BUF[id] = []; for (const f of m.files) fetch(f).then(r => { if (!r.ok) throw 0; return r.arrayBuffer() }).then(a => C.decodeAudioData(a)).then(b => { BUF[id].push(b); SND.stats.files++ }).catch(() => { SND.stats.fileErr = (SND.stats.fileErr || 0) + 1 }) }
+function preload() { for (const id in SND.rec) loadBuf(id) }
+const pick = id => { if (!SND.rec[id]) return null; loadBuf(id); const L = BUF[id]; return L && L.length ? L[Math.floor(Math.random() * L.length)] : null };
+SND.recorded = () => Object.keys(SND.rec).map(id => id + ':' + ((BUF[id] || []).length) + '/' + SND.rec[id].files.length);
+function playBuf(b, d, gain, rate, t) { const s = C.createBufferSource(); s.buffer = b; s.playbackRate.value = rate || 1; const g = C.createGain(); g.gain.value = gain; s.connect(g); g.connect(d); s.start(t || C.currentTime); return s }
 function out(o) { /* destination for a one-shot: a panner when it has a world position, else the sfx bus */
   if (!o || o.x == null) return o && o.bus || sfx; const p = C.createPanner(); p.panningModel = phone() ? 'equalpower' : 'HRTF'; p.distanceModel = 'inverse'; p.refDistance = o.ref || 3; p.rolloffFactor = o.roll || 1.2; p.maxDistance = 200;
   setPos(p, o.x, o.y == null ? 1 : o.y, o.z); p.connect(o.bus || sfx); setTimeout(() => { try { p.disconnect() } catch (e) { } }, 4000); return p }
@@ -90,7 +96,7 @@ const FXS = {
 SND.names = () => Object.keys(FXS);
 SND.fx = function (name, o) {
   if (!ready && !init()) return false; const A = AV.audio; if (A.mute || C.state !== 'running') return false; const t = C.currentTime, d = out(o); SND.stats.fx++; SND.last = name;
-  const b = SND.manifest[name] ? loadBuf(name) : null; if (b) { const s = C.createBufferSource(); s.buffer = b; const g = C.createGain(); g.gain.value = (o && o.gain) || 1; s.connect(g); g.connect(d); s.start(t); return true }
+  const b = pick(name); if (b) { playBuf(b, d, ((o && o.gain) || 1) * (SND.rec[name].gain || 1), .95 + Math.random() * .1, t); SND.stats.fxFile = (SND.stats.fxFile || 0) + 1; return true }
   const f = FXS[name]; if (!f) return false; try { f(t, d, o || {}) } catch (e) { console.warn('sfx', name, e) } return true;
 };
 SND.horn = (x, z, kind) => { SND.stats.horns++; return SND.fx('horn', { x, z, y: 1, kind, ref: 6, roll: 1, len: kind === 'scooter' ? .2 : .35 }) };
@@ -164,7 +170,7 @@ function updPlaces(t) {
     if (!v && PV.length < max + 2) { v = { gen: K.gen, e: SND.emitter({ x: o.p.x, z: o.p.z, gen: GEN[K.gen], gain: 0, max: K.r * 1.3, ref: 5 }) }; PV.push(v) } if (!v || !v.e) continue;
     v.pl = o.p; v.e.x = o.p.x; v.e.z = o.p.z; v.e.max = K.r * 1.3; const night = AV.S.time > 20 * 60 || AV.S.time < 7 * 60; v.e.gain = () => K.gain * (o.p.kind === 'cafe' && night ? .4 : o.p.kind === 'bar' && !night ? .6 : 1) }
   /* clinks + register sounds now and then near cafés and bars */
-  if (Math.random() < .015) { const c = near.find(o => (KIND[o.p.kind] || {}).clink && o.d < 18); if (c) SND.fx(Math.random() < .8 ? 'clink' : 'cash', { x: c.p.x + (Math.random() - .5) * 4, z: c.p.z + (Math.random() - .5) * 4, ref: 3, bus: amb }) } }
+  if (Math.random() < .015) { const c = near.find(o => (KIND[o.p.kind] || {}).clink && o.d < 18); if (c) SND.fx(c.p.kind === 'cafe' && Math.random() < .5 ? 'dishes' : Math.random() < .8 ? 'clink' : 'cash', { x: c.p.x + (Math.random() - .5) * 4, z: c.p.z + (Math.random() - .5) * 4, ref: 3, bus: amb }) } }
 
 /* ======================= traffic voices ======================= */
 const TV = []; const ENG = { car: [42, 1.9, 520, 0], scooter: [95, 6.5, 1500, 14], tuktuk: [70, 5.2, 1100, 9], van: [36, 1.5, 420, 0], bus: [30, 1.2, 380, 0], taxi: [42, 1.9, 520, 0], truck: [28, 1.1, 360, 0] };
@@ -197,7 +203,9 @@ let stepAcc = 0, lastMat = null, lx = null, lz = null;
 function updSteps(dt) {   /* one step per ~0.75 m actually walked (frame-rate independent) */
   const P = AV.P, moved = lx == null ? 0 : Math.hypot(P.x - lx, P.z - lz); lx = P.x; lz = P.z; const sp = Math.hypot(P.vx || 0, P.vz || 0); if (AV.drive || !P.on || sp < .8 || moved > 3 || AV.blocking()) { stepAcc = Math.min(stepAcc, .2); return }
   stepAcc += moved / (sp > 5 ? .95 : .72); if (stepAcc < 1) return; stepAcc = 0; const m = lastMat = SND.stepMat(P.x, P.z), f = STEP[m] || STEP.stone, t = C.currentTime;
-  f(t + Math.random() * .01, sfx, (sp > 5 ? 1.2 : .9) * (.85 + Math.random() * .3)); SND.stats.steps++ }
+  const g = (sp > 5 ? 1.2 : .9) * (.85 + Math.random() * .3), rb = (m === 'stone' || m === 'wood') && pick('step_hard');
+  if (rb) { playBuf(rb, sfx, g * (SND.rec.step_hard.gain || 1), (m === 'wood' ? .86 : 1.02) + Math.random() * .08, t); SND.stats.stepFile = (SND.stats.stepFile || 0) + 1 }   /* recorded steps on hard floors (CC0, Kenney) */
+  else f(t + Math.random() * .01, sfx, g); SND.stats.steps++ }
 /* the older per-world "steps" ambience layer would double our footsteps: silence it while ours run */
 function muteOldSteps() { const L = AV.amb && AV.amb.L && AV.amb.L.steps; if (L && !L.__m) { L.__m = 1; L.def.gain = () => 0 } }
 
@@ -237,6 +245,8 @@ if (AV.amb && AV.amb.start) { const st0 = AV.amb.start; AV.amb.start = function 
 /* level meter for tests and the F3 overlay: RMS of everything audio2 mixes (ambience + effects + venue music) */
 let AN = null, AB = null; SND.meter = () => { if (!ready) return 0; if (!AN) { AN = C.createAnalyser(); AN.fftSize = 1024; mix.connect(AN); AB = new Float32Array(AN.fftSize) } AN.getFloatTimeDomainData(AB); let s = 0; for (const v of AB) s += v * v; return Math.sqrt(s / AB.length) };
 SND.placeList = () => placeList.slice();
+/* every successful shop purchase (AV.shop, v1_systems.js) gets the coin recording */
+if (AV.shop && AV.shop.buy && !AV.shop.__c22) { const b0 = AV.shop.buy; AV.shop.buy = function () { const ok = b0.apply(this, arguments); if (ok) SND.fx('coin'); return ok }; AV.shop.__c22 = 1 }
 SND.off = () => { SND.on = false; for (const e of EM) e.g.gain.value = 0 };
 SND.state = () => ({ ready, space, zone: zoneId, emitters: EM.length, places: PV.filter(v => v.pl).length, traffic: TV.filter(v => v.c).length, venueOcc: vRoute ? vRoute.occ : null, mat: lastMat, stats: SND.stats });
 

@@ -236,6 +236,7 @@ AV.frameFns.push(dt => {
 if (AV.amb && AV.amb.start) { const st0 = AV.amb.start; AV.amb.start = function () { const r = st0.apply(this, arguments); if (r && (ready || init()) && AV.amb.master) { try { AV.amb.master.disconnect(); AV.amb.master.connect(amb) } catch (e) { } } return r } }
 /* level meter for tests and the F3 overlay: RMS of everything audio2 mixes (ambience + effects + venue music) */
 let AN = null, AB = null; SND.meter = () => { if (!ready) return 0; if (!AN) { AN = C.createAnalyser(); AN.fftSize = 1024; mix.connect(AN); AB = new Float32Array(AN.fftSize) } AN.getFloatTimeDomainData(AB); let s = 0; for (const v of AB) s += v * v; return Math.sqrt(s / AB.length) };
+SND.placeList = () => placeList.slice();
 SND.off = () => { SND.on = false; for (const e of EM) e.g.gain.value = 0 };
 SND.state = () => ({ ready, space, zone: zoneId, emitters: EM.length, places: PV.filter(v => v.pl).length, traffic: TV.filter(v => v.c).length, venueOcc: vRoute ? vRoute.occ : null, mat: lastMat, stats: SND.stats });
 

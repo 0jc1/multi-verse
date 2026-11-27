@@ -319,6 +319,6 @@ BK.build = function (ctx) {
     if (H.undergrid.det.visible) { let s = (t * 1.1) % bl, i = 0; while (s > segL[i]) { s -= segL[i]; i++ } const a = botPath[i], b = botPath[i + 1], f = s / segL[i], x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f; BK.bot.position.set(x, (SN.surface(x, z) || 0), z); BK.bot.rotation.y = Math.atan2(b[0] - a[0], b[1] - a[1]);
       const da = t * .4; BK.dog.position.set(83 + Math.cos(da) * 3.5, 0, 182 + Math.sin(da) * 2.5); BK.dog.rotation.y = -da; BK.cat.rotation.y = -1.2 + Math.sin(t * .7) * .3 } });
   BK.shops = shops; BK.fx = { buildings: nB, signs: nSign + shops.length, shops: shops.length, hoods: Object.keys(H).length };
-  return { places: shops.map((s, i) => ({ id: 'bk_' + i, name: L(s.name, s.name), x: s.tx, z: s.tz, yaw: 0 })).concat([{ id: 'bk_arcology', name: L('Kepler Arcology', 'Arcología Kepler'), x: 126, z: 177, yaw: Math.PI }]) };
+  return { places: shops.map((s, i) => ({ id: 'bk_' + i, name: L(s.name, s.name), x: s.tx, z: s.tz, yaw: 0 })).concat([{ id: 'bk_arcology', name: L('Kepler Arcology', 'Arcología Kepler'), x: 128, z: 171.5, yaw: Math.PI }]) };
 };
 })(window.AV);

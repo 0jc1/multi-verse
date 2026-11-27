@@ -33,7 +33,11 @@ const ST = [
   { id: 'terrace', n: L('Terrace Street', 'Calle de las Terrazas'), t: 'lane', w: 8, hood: 'west', p: [[-152, 158], [-122, 165], [-80, 170], [-40, 175]] },
   { id: 'cinpass', n: L('Cinema Passage', 'Pasaje del Cine'), t: 'alley', w: 4.2, hood: 'west', p: [[-41, 175.5], [-6, 176.5]] },
   { id: 'hangar', n: L('Hangar Road', 'Carretera del Hangar'), t: 'road', w: 10, hood: 'industrial', p: [[-120, 105.5], [-127, 140], [-126, 170], [-122, 198]] },
-  { id: 'skylift', n: L('Skylift Passage', 'Pasaje del Ascensor Celeste'), t: 'alley', w: 6, hood: 'sky', p: [[182, 85], [182, 66]] }
+  { id: 'skylift', n: L('Skylift Passage', 'Pasaje del Ascensor Celeste'), t: 'alley', w: 6, hood: 'sky', p: [[182, 85], [182, 66]] },
+  /* 2.1 interconnected-city pass: two streets through the empty deck, each closing a loop (measured: a 120 x 24 m empty band west of the
+     Bazaar, open deck beyond the south end of Hangar Road; Kepler Street already loops to the Greenway through the Temple plaza) */
+  { id: 'nebula', n: L('Nebula Market Street', 'Calle del Mercado Nebulosa'), t: 'lane', w: 8, hood: 'west', v21: 1, p: [[-236, 97], [-160, 97], [-134, 97.5], [-122, 101], [-120, 105.5]] },   /* along the West boulevard, clear of the Astro Inn stall */
+  { id: 'dockside', n: L('Dockside Loop', 'Ronda de los Muelles'), t: 'lane', w: 8, hood: 'industrial', v21: 1, p: [[-122, 198], [-124, 218], [-110, 229], [-84, 230], [-44, 230], [-33, 218], [-30, 203]] }   /* kept north of Club Subterra's footprint (x -80..-28, z 236..274) */
 ];
 /* special walkable pieces (height y) */
 const COURT = { x0: 110, x1: 128, z0: 132, z1: 148, y: 3 };
@@ -70,7 +74,8 @@ SN.districts = [{ id: 'kepler', name: 'Kepler Street', x: 80, z: 140 }, { id: 'u
   { id: 'bioq', name: 'Biotech Quarter', x: 205, z: 178 }, { id: 'souk', name: 'Bazaar lanes', x: -55, z: 56 }, { id: 'west', name: 'West Terraces', x: -92, z: 160 }, { id: 'industrial', name: 'Hangar Road', x: -138, z: 135 },
   { id: 'sky', name: 'Sky District · Skylift', x: 192, z: 36 }, { id: 'arcology', name: 'Kepler Arcology', x: 126, z: 186 }];
 const prevE = AV.onWorldEnter; AV.onWorldEnter = function (W) { if (prevE) prevE(W); if (W && W.id === 'astro9') { W.mapDistricts = (W.mapDistricts || []).filter(d => !SN.districts.some(e => e.id === d.id)).concat(SN.districts);
-  const seen = {}; W.mapStreets = []; for (const g of segs) { if (g.len < 8) continue; const k = g.s.n[0]; if (seen[k] && seen[k].len >= g.len) continue; seen[k] = { len: g.len, x: (g.ax + g.bx) / 2, z: (g.az + g.bz) / 2, a: Math.atan2(g.uz, g.ux), name: k } } W.mapStreets = Object.values(seen) } };
+  const seen = {}; W.mapStreets = []; for (const g of segs) { if (g.len < 8) continue; const k = g.s.n[0]; if (seen[k] && seen[k].len >= g.len) continue; seen[k] = { len: g.len, x: (g.ax + g.bx) / 2, z: (g.az + g.bz) / 2, a: Math.atan2(g.uz, g.ux), name: k } } W.mapStreets = Object.values(seen);
+    W.mapRoads = (W.mapRoads || []).concat(segs.filter(g => g.s.t !== 'pass').map(g => [g.ax, g.az, g.bx, g.bz, g.s.w])) } };   /* 2.1: the streets drawn on the minimap */
 
 /* ---------- textures (world-UV, repeating) ---------- */
 const TX = {}, rnd = s => { let x = s; return () => (x = (x * 16807) % 2147483647) / 2147483647 };
@@ -143,7 +148,7 @@ SN.build = function (ctx) {
       for (const sd of [-1, 1]) { solid.push([BG.box, 0x8a8494, M(g.ax + g.ux * g.len / 2 + nx * sd * aw, .07, g.az + g.uz * g.len / 2 + nz * sd * aw, .22, .1, g.len, 0, ang, 0)]);   /* kerb */
         for (let t = 6; t < g.len - 3; t += 11) metal.push([BG.box, 0x16161c, M(g.ax + g.ux * t + nx * sd * (aw - .25), .045, g.az + g.uz * t + nz * sd * (aw - .25), .35, .02, .8, 0, ang, 0)]) }   /* kerb drains */
       for (let t = 9; t < g.len - 4; t += 23) metal.push([BG.cyl, 0x3a3a40, M(g.ax + g.ux * t + nx * aw * .45, .042, g.az + g.uz * t + nz * aw * .45, .38, .015, .38)]);   /* manholes */
-      for (let t = 4, k = g.i; t < g.len - 2; t += 17, k++) { const sd = k % 2 ? 1 : -1, x = g.ax + g.ux * t + nx * sd * (s.w / 2 - .35), z = g.az + g.uz * t + nz * sd * (s.w / 2 - .35); if (SN.surface(x, z) === null) continue;
+      for (let t = 4, k = g.i; t < g.len - 2; t += 17, k++) { const sd = k % 2 ? 1 : -1, x = g.ax + g.ux * t + nx * sd * (s.w / 2 - .35), z = g.az + g.uz * t + nz * sd * (s.w / 2 - .35); if (SN.surface(x, z) === null) continue; if (s.v21 && AV.astro9mega && AV.astro9mega.surface(x, z) !== null) continue;   /* 2.1 streets: no lamp posts on the existing boulevards / plazas (their own lights + walking lines) */
         metal.push([BG.cyl, 0x2a2a34, M(x, 2.7, z, .08, 5.4, .08)], [BG.box, 0x2a2a34, M(x - nx * sd * .6, 5.35, z - nz * sd * .6, 1.3, .08, .08, 0, ang + Math.PI / 2, 0)]); glow.push([BG.box, s.hood === 'undergrid' ? 0xffb86a : 0xd8f0ff, M(x - nx * sd * 1.1, 5.25, z - nz * sd * 1.1, .5, .06, .22, 0, ang, 0)]); circ(x, z, .16) } }
     else if (s.t === 'alley') { for (let t = 3; t < g.len - 1; t += 4) metal.push([BG.box, 0x101014, M(g.ax + g.ux * t, hOn(g, g.ax + g.ux * t, g.az + g.uz * t, t) + .04, g.az + g.uz * t, .3, .02, .7, 0, ang, 0)]);   /* centre drain grates */
       if (s.id !== 'skylift') for (let t = 2; t < g.len; t += 6) { const y = 6 + r() * 1.5; for (let k = 0; k < 2; k++) { const a = [g.ax + g.ux * t - nx * (g.hw + .4), y, g.az + g.uz * t - nz * (g.hw + .4)], b = [g.ax + g.ux * (t + 2 + k) + nx * (g.hw + .4), y - .6 + k * .3, g.az + g.uz * (t + 2 + k) + nz * (g.hw + .4)]; SN._cables = (SN._cables || []).concat([a, b]) } } }

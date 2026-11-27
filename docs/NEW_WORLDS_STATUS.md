@@ -91,6 +91,23 @@ This needs a clean re-measure when the GPU is free.
   - `suite_connect` (all three cities): 51/51. Barcelona: reach 190/190, second routes 11/11, 0 pockets, 0 dead ends.
 - **Frames (Medium, shared GPU):** arrival 37 fps, Passeig de Gràcia 31, Rambla 41, Gothic 45, Plaça Reial 41, port 53. Draw calls stay between 98 and 189.
 
+### Barcelona districts 2 + 3: Gràcia and the Barceloneta with the beach
+
+- **Gràcia** (`js/barcelona_gracia.js`):
+  - **Getting there:** across the new Diagonal, every Eixample street continues north; L3 gains Diagonal and Fontana stations.
+  - **Squares:** Sol, Vila and Virreina.
+  - **Businesses (7):** including a cinema and a ceramics workshop.
+  - **Festival:** the Festa Major, on Tuesdays.
+- **Barceloneta** (`js/barcelona_barceloneta.js`):
+  - **Getting there:** from the east edge street, the Born lane, a north street and the port road; L3 gains Barceloneta station.
+  - **Streets:** narrow lanes with laundry overhead and Passeig Marítim.
+  - **The beach:** xiringuitos, surf, swimming, loungers and volleyball.
+  - **Businesses:** 4.
+- **Gates (GPU runs now serialised through the shared lock, `tools/tests/gpu_queue.ps1`):**
+  - `suite_barcelona`: 170 checks. The full run had 1 test-side failure: the station count, which is now 6 other stations instead of 3. A re-run of that step passed 22/22.
+  - `suite_connect`: 53/53. Barcelona: reach 406/406, second routes 17/17, 0 pockets, 0 dead ends.
+- **Frames (Medium, GPU not shared — the first clean numbers):** Gràcia 60 fps, beach 59, Barceloneta lanes 60, Passeig de Gràcia 60, Rambla 60, Gothic 60, Plaça Reial 57, port 58.
+
 ## Ledger (failures first)
 
 | World | State | Evidence |

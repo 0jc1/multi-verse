@@ -17,7 +17,7 @@ const TAU = Math.PI * 2, PI = Math.PI;
 const BCN = AV.barcelona = { stats: {} };
 const XMIN = -197, XMAX = 197, ZMIN = -322, ZQ = 372, WY = -1.6;
 const PIER = [36, 44, 372, 394];
-function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN) return null; if (z > ZQ) return x > PIER[0] && x < PIER[1] && z < PIER[3] ? .2 : null; return 0 }
+function surf(x, z) { for (const hk of [BCN.grSurf, BCN.btSurf]) if (hk) { const s2 = hk(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN) return null; if (z > ZQ) return x > PIER[0] && x < PIER[1] && z < PIER[3] ? .2 : null; return 0 }
 BCN.surf = surf; BCN.WY = WY; BCN.ZQ = ZQ;
 
 /* ======================= sign atlas (Catalan shop signs, all fictional businesses) ======================= */
@@ -185,7 +185,7 @@ AV.registerWorld({
     const XS = [[-169, -99], [-85, -15], [15, 85], [99, 169]], ZS = [[-292, -222], [-208, -138], [-124, -54]], EO = { cham: true, h0: 19, hr: 5, shopP: .65, modP: .1 };
     let garden = null; for (let c = 0; c < 4; c++) for (let r = 0; r < 3; r++) { const id = 'x' + c + r, o = Object.assign({}, EO, id === 'x11' ? { core: 'garden' } : {}); const core = blk(id, XS[c][0], XS[c][1], ZS[r][0], ZS[r][1], o); if (id === 'x11') garden = core }
     /* the edges: west + east rows the full height of the city, the north row */
-    row('edW', 'z', -183, -306, 340, 1, 14, { wmin: 9, wmax: 14, h0: 18, hr: 4, shopP: .5 }); row('edE', 'z', 183, -306, 340, -1, 14, { wmin: 9, wmax: 14, h0: 18, hr: 4, shopP: .5 }); row('edN', 'x', -306, XMIN, XMAX, 1, 16, { wmin: 10, wmax: 14, h0: 20, hr: 4, shopP: .4 });
+    const GRn = !!BCN.gracia, BTn = !!BCN.barceloneta; row('edW', 'z', -183, GRn ? -590 : -306, 340, 1, 14, { wmin: 9, wmax: 14, h0: 18, hr: 4, shopP: .5 }); row('edE', 'z', 183, GRn ? -590 : -306, BTn ? 150 : 340, -1, 14, { wmin: 9, wmax: 14, h0: 18, hr: 4, shopP: .5 }); if (!GRn) row('edN', 'x', -306, XMIN, XMAX, 1, 16, { wmin: 10, wmax: 14, h0: 20, hr: 4, shopP: .4 });
     /* south of the Gran Via: two blocks, the department store, the plaça */
     blk('gw', -169, -99, -40, 20, { h0: 19, hr: 4 }); blk('ge', 99, 169, -40, 20, { h0: 19, hr: 4 }); row('gmW', 'z', 60, -40, 20, -1, 25, {});
     /* CIUTAT VELLA - the Raval (west of La Rambla) */
@@ -296,12 +296,17 @@ AV.registerWorld({
     IN.jazz = ITF('jazz', it => { bx2(P, 0x1a1410, it, it.depth - 2.6, it.depth - .4, 0, .5, -3.2, 3.2); bx2(P, 0x101010, it, it.depth - 2.2, it.depth - 1, .5, 1.5, -2.6, -1.2); for (let k = 0; k < 4; k++) bx2(Gl, [0x4ad8ff, 0xff4ab0][k % 2], it, it.depth - 2, it.depth - 1.8, 3, 3.2, -2.6 + k * 1.7, -2.3 + k * 1.7); bx2(P, 0x2a1a12, it, 1.2, 1.9, 0, 1.1, 2, 4); it.cust = it.F(2.6, 3); it.staff = it.F(.8, 3); it.stage = it.F(it.depth - 1.5, 0); it.floor = it.F(3.6, -.6); it.piano = it.F(it.depth - 1.6, -1.9) });
     IN.llibreria = ITF('llibreria', it => { for (let k = 0; k < 3; k++) { const u = 2.4 + k * 2.2; bx2(P, 0x4a2e1c, it, u, u + .5, 0, 2.4, -1, 3.4); for (let j = 0; j < 9; j++) bx2(P, [0x8a2a2a, 0x2a4a6a, 0xe8dcc0, 0x3a6a3a, 0xc8a040][j % 5], it, u - .02, u + .52, .3 + (j % 3) * .7, .75 + (j % 3) * .7, -.8 + (j / 3 | 0) * 1.4, -.3 + (j / 3 | 0) * 1.4) } bx2(P, 0x6a4a2a, it, 1, 1.8, 0, 1, 2.6, 4.2); it.cust = it.F(1.4, 2); it.staff = it.F(1.4, 3.6) });
     IN.moda = ITF('moda', it => { for (let k = 0; k < 4; k++) { bx2(P, 0xc8c8c8, it, 2.2 + k * 1.8, 2.3 + k * 1.8, 0, 1.7, -3.4, 3.4); for (let j = 0; j < 5; j++) bx2(P, [0x1a1a1a, 0xc8281e, 0xf4f0e8, 0x2a5a9a, 0xd8a050][(j + k) % 5], it, 2 + k * 1.8, 2.5 + k * 1.8, .7, 1.6, -3 + j * 1.3, -2.4 + j * 1.3) } bx2(P, 0xf4f4f0, it, 1, 1.8, 0, 1, 3.2, 5.2); it.cust = it.F(1.4, 2.6); it.staff = it.F(1.4, 4.4) });
+    /* ---------- districts in their own modules: Gràcia (barcelona_gracia.js), the Barceloneta + beach (barcelona_barceloneta.js) ---------- */
+    const mainShops = Object.keys(sh).length, EM = { row, blk, fill, box, sign, P, Gl, Gs, sh, SPECIAL, ITF, bx2, IN, tree, lamp, palm, metroE, road, pave };
+    BCN.GR = null; if (BCN.gracia) try { BCN.GR = BCN.gracia(ctx, EM) } catch (e) { console.warn('barcelona gracia', e); BCN.stats.grErr = String(e && e.stack || e).slice(0, 400) }
+    BCN.BT = null; if (BCN.barceloneta) try { BCN.BT = BCN.barceloneta(ctx, EM) } catch (e) { console.warn('barcelona barceloneta', e); BCN.stats.btErr = String(e && e.stack || e).slice(0, 400) }
+    BCN.stats.buildings = nB;
     BCN.interiors = IN;
     /* signs over the named shopfronts */
-    for (const k in sh) { const s = sh[k], d = SIGNS.find(x => x[0] === k); if (!d || SPB[k]) continue; sign(k, s.x + s.out[0] * .06, s.signY || (/granja|tapes|forn|jazz|flamenc|souvenir|samarreta|cafe|cava|paella|bicis/.test(k) ? 3.5 : 4.1), s.z + s.out[1] * .06, Math.min(s.w - .6, 9), Math.min(s.w - .6, 9) * d[2] / d[1], s.yaw); if (!s.hollow) sign(/moda|samarreta|souvenir/.test(k) ? 'w_roba' : /llibreria|disc/.test(k) ? 'w_llibres' : 'w_menjar', s.x - s.out[0] * .05, 1.75, s.z - s.out[1] * .05, s.w - 2.6, 2, s.yaw) }
-    BCN.shops = sh; BCN.stats.shopsPlaced = Object.keys(sh).length;
+    for (const k in sh) { const s = sh[k], d = SIGNS.find(x => x[0] === k); if (!d || SPB[k] || s.ownSign) continue; sign(k, s.x + s.out[0] * .06, s.signY || (/granja|tapes|forn|jazz|flamenc|souvenir|samarreta|cafe|cava|paella|bicis/.test(k) ? 3.5 : 4.1), s.z + s.out[1] * .06, Math.min(s.w - .6, 9), Math.min(s.w - .6, 9) * d[2] / d[1], s.yaw); if (!s.hollow) sign(/moda|samarreta|souvenir/.test(k) ? 'w_roba' : /llibreria|disc/.test(k) ? 'w_llibres' : 'w_menjar', s.x - s.out[0] * .05, 1.75, s.z - s.out[1] * .05, s.w - 2.6, 2, s.yaw) }
+    BCN.shops = sh; BCN.stats.shopsPlaced = mainShops; BCN.stats.allShops = Object.keys(sh).length;
     /* ---------- merge (district regions: the Eixample, the old town) ---------- */
-    const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const REG = (x, z) => z < -40 ? 'ex' : 'cv', RO2 = { region: REG }; BCN.region = null;
+    const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const REG = (x, z) => z < -330 ? 'gr' : x > 183 && z > 140 ? 'bt' : z < -40 ? 'ex' : 'cv', RO2 = { region: REG }; BCN.region = null;
     NW().makeAtlas(SIGNS, SG, 2048, 2560); BCN.chunks = NW().chunked(P, 64, a => K.merge(a), solidM, grp, 'bcn_static', { shadow: true, region: REG });
     if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .3, depthWrite: false }); gm.userData.lin = 1; BCN.chunks.push(...NW().chunked(Gs, 128, a => K.merge(a), gm, grp, 'bcn_glass', { order: 2, region: REG })) }
     const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; BCN.chunks.push(...NW().chunked(Gl, 128, a => K.merge(a), glowM, grp, 'bcn_glow', RO2));
@@ -309,7 +314,7 @@ AV.registerWorld({
     const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .2, roughness: .6, alphaTest: .3 }); signM.userData.lin = 1; BCN.chunks.push(...NW().chunked(Q, 128, a => NW().quadGeo(a, SG.r), signM, grp, 'bcn_signs', RO2)); fest.add(new THREE.Mesh(NW().quadGeo(FQ, SG.r), signM));
     BCN.stats.parts = P.length + Gl.length; BCN.stats.signs = Q.length; BCN.stats.atlasOver = (SG.over || []).length; BCN.stats.atlasBad = (SG.bad || []).length; BCN.stats.atlasUsed = SG.used;
     ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 20.5 || h < 6 ? 1 : h > 19 ? (h - 19) / 1.5 : h < 7.5 ? (7.5 - h) / 1.5 : 0; signM.emissiveIntensity = .2 + .7 * n; glowM.color.setScalar(.35 + .65 * n); BCN.night = n;
-      const r = BCN.noRegion ? 'all' : AV.P.z < -110 ? 'ex' : AV.P.z > 60 ? 'cv' : 'ex+cv'; if (r !== BCN.region) { BCN.region = r; for (const m of BCN.chunks) m.visible = r === 'all' || r.split('+').includes(m.userData.region) } });
+      const p = AV.P, vs = []; if (p.z < -250) vs.push('gr'); if (p.z < 60 && p.z > -420) vs.push('ex'); if (p.z > -110) vs.push('cv'); if (p.x > 60 && p.z > 60) vs.push('bt'); const r = BCN.noRegion ? 'all' : vs.join('+'); if (r !== BCN.region) { BCN.region = r; for (const m of BCN.chunks) m.visible = r === 'all' || vs.includes(m.userData.region) } });
     BCN.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
@@ -322,6 +327,7 @@ AV.registerWorld({
       PLc('raval', 'El Raval (Carrer de l’Hospital)', 'El Raval (calle del Hospital)', -150, 224, PI / 2), PLc('colom', 'Columbus column (Port Vell)', 'Monumento a Colón (Port Vell)', -72, 352, 0), PLc('port', 'Port promenade (Moll)', 'Paseo del puerto (Moll)', 40, 364, PI), PLc('garden', 'Garden courtyard (interior d’illa)', 'Patio-jardín (interior de manzana)', -50, -173, 0), PLc('granvia', 'Gran Via', 'Gran Vía', 120, -47, PI / 2)];
     const NAMES = { casasimi: 'Casa Simi (modernista house)', moda: 'Moda Gràcia', llibreria: 'Llibreria El Drac', vermut: 'Vermuteria Can Pep', pastis: 'Pastisseria La Mona', gelat: 'Gelats Mediterrani', disc: 'Groove Dealers Discos', magatzems: 'Grans Magatzems Simi', granja: 'Granja La Banana', tapes: 'Bar de Tapes El Simi', forn: 'Forn Sant Simi', jazz: 'Sala Simi Jazz Club', flamenc: 'Tablao El Duende (flamenco)', souvenir: 'Records de Barcelona', samarreta: 'La Samarreta', cafe: 'Cafè de la Rambla', cava: 'Xampanyeria Bombolles', paella: 'La Paella del Port', bicis: 'BiciApe (bikes)', palau: 'Palau de la Generalitat', ajunt: 'Ajuntament (city hall)' };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
+    for (const D of [BCN.GR, BCN.BT]) if (D) { for (const r of D.roads) mapRoads.push(r); for (const p of D.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     BCN.names = NAMES;
     if (BCN.life) try { BCN.life(ctx, { T, st, sh, IN, box, STAGE, fest }) } catch (e) { console.warn('barcelona life', e); BCN.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Barcelona', surface: surf, fog: [90, 680], sky: { exp: .95, tint: [0x8ab8e0, 0xf4e0c0, .3, .3], dome: { s1: 0xf8e0c0, s2: 0x7ab0e0, swirl: .01, cloud: .45, glow: .45 } },

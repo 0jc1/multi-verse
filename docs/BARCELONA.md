@@ -37,6 +37,43 @@ Barcelona was built to the 2.2 interconnected standard from the start. The stree
   - moored boats and a pier.
 - **Skyline (scenery):** the basilica's spires to the north-east, Montjuïc and its castle to the south-west.
 
+## District 2: Gràcia (`js/barcelona_gracia.js`)
+
+**Getting there:**
+- **On foot:** every Eixample street crosses the **Diagonal**, a tree-lined avenue that replaced the city's old north row, and continues into Gràcia. Passeig de Gràcia becomes **Gran de Gràcia**, Rambla de Catalunya becomes **Verdi**, and the two edge streets carry on north.
+- **By metro:** L3 gains **Diagonal** and **Fontana** stations.
+
+**Streets and squares:**
+- Two lanes, Travessera de Gràcia, Carrer Gran and a north street.
+- Three squares:
+  - **Plaça del Sol:** café tables by day, a night crowd from 20:00.
+  - **Plaça de la Vila:** the clock tower.
+  - **Plaça de la Virreina:** the church.
+- Houses are low (three or four storeys) in bright stucco.
+
+**Businesses:** Bar del Sol, Cinemes Verdi Simi (films 16:00–24:00), Vintage Gràcia (walk-in), Gra de Cafè (walk-in), Teteria Lluna, Vermuteria La Vila, and the Taller de Ceràmica (walk-in, where you throw a pot and keep the bowl).
+
+**People:** Marc (the cinema's projectionist) and Aina (a ceramicist).
+
+**Festa Major de Gràcia:** every Tuesday from 18:00. Neighbours hang paper decorations over Verdi and a lane, and there's a concert stage in Plaça del Sol (headline 22:00–24:00).
+
+## District 3: the Barceloneta and the beach (`js/barcelona_barceloneta.js`)
+
+**Getting there:**
+- **On foot:** the east edge street, the Born's lane, a new north street, the port road and the promenade all continue into it.
+- **On the sand:** one boardwalk runs from the north street round to the port.
+- **By metro:** L3 gains **Barceloneta** station.
+
+**Streets:** six long, narrow blocks of four-storey houses, with laundry strung across five lanes, plus two cross streets and Passeig Marítim with palms.
+
+**The beach:** parasols and loungers, two xiringuitos, a volleyball net, a lifeguard tower, the sea, and a sail-shaped tower on the skyline.
+
+**Businesses:** Bodega La Ona (walk-in: bombes, sardines), Bar Vermut La Platja, Surf Ape (rent a board, then surf from the shore) and Can Simi del Mar.
+
+**Things to do:** swim, rent a lounger, or play beach volleyball.
+
+**People:** Txell (a surf instructor) and Ramon (a fisherman).
+
 ## What you can do
 
 - **Walk-ins:**
@@ -76,13 +113,16 @@ Barcelona was built to the 2.2 interconnected standard from the start. The stree
 
 ## Performance
 
-- **Size:** about 990 buildings and about 59,000 parts.
-- **Merging:** everything is merged into 64 m chunks in two regions: the Eixample, and the Ciutat Vella. Only the region you are in is drawn; both are drawn near the plaça.
+- **Size:** about 1,790 buildings and about 80,000 parts, including Gràcia and the Barceloneta.
+- **Merging:** everything is merged into 64 m chunks in four regions: Gràcia (`gr`), the Eixample (`ex`), the Ciutat Vella (`cv`) and the Barceloneta (`bt`). Only the regions near you are drawn.
+- **District signs:** Gràcia and the Barceloneta each have their own small sign atlas, shown only near that district.
 - **Signs:** a single 2048 × 2560 atlas.
 
 ## Not built yet (honest)
 
-- **Waterfront:** no beach (Barceloneta) and no Montjuïc to walk up; Montjuïc is scenery.
+- **Montjuïc:** scenery only; you can't walk up it.
+- **Gràcia:** no market hall.
+- **Barceloneta:** surfing and swimming are menu actions, not physics.
 - **Interiors:** the Palau, the Ajuntament and the department store are façades or counters.
-- **Districts:** the Born has only two lanes. Gràcia, Sant Antoni and Poblenou are future districts.
+- **Districts:** the Born has only two lanes. Sant Antoni, Poblenou and Montjuïc are future districts.
 - **Music:** none of Barcelona's own yet. The venues use existing playlists.

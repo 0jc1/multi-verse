@@ -79,7 +79,7 @@ BCN.life = function (ctx, E) {
   /* ---------- walking graph ---------- */
   /* the passatges (where the row walker put them): the garden courtyard through block x11, the four ways into Plaça Reial */
   const PC = BCN.passC || {}, px = (k, d) => (PC[k] || d), gN = px('pas_x11N', [-50])[0], gS = px('pas_x11S', [-42])[0], rN = px('pas_reN', [-3])[0], rS = px('pas_reS', [-3])[0], rW = px('pas_reW', [0, 291])[1], rE = px('pas_reE', [0, 291])[1];
-  const PL = [[[gN, -210.5], [gN, -160], [gS, -160], [gS, -135.5]], [[rN, 254], [rN, 269]], [[rS, 314], [rS, 329]], [[-26.5, rW], [-12, rW]], [[5, rE], [20, rE]]]; BCN.lines = LINES.concat(PL);
+  const PL = [[[gN, -210.5], [gN, -160], [gS, -160], [gS, -135.5]], [[rN, 254], [rN, 269]], [[rS, 314], [rS, 329]], [[-26.5, rW], [-12, rW]], [[5, rE], [20, rE]]]; BCN.lines = LINES.concat(PL, (BCN.GR && BCN.GR.lines) || [], (BCN.BT && BCN.BT.lines) || []);
   const G = AV.nwkit.graph(BCN.lines), nodes = G.nodes, NAV = CY.nav(nodes, G.edges); BCN.nav = { nodes, links: NAV.links }; BCN.stats.navNodes = nodes.length;
   /* ---------- crowds ---------- */
   const crowd = CY.crowd(ctx), V = ['woman', 'man', 'tourist', 'suit', 'woman', 'backpacker', 'man'];
@@ -113,10 +113,11 @@ BCN.life = function (ctx, E) {
   ctx.upd.push(() => { for (const id in named) { const o = named[id], s = slotOf(o.p); o.t.x = o.w.x; o.t.z = o.w.z; if (s === o.slot || !s[1]) continue; o.slot = s; const near = Math.hypot(P().x - o.w.x, P().z - o.w.z) < 70;
       if (near && AV.path) { let pts = null; try { pts = AV.path.route(AV.W, { x: o.w.x, z: o.w.z }, { x: s[1][0], z: s[1][1] }) } catch (e) { } if (pts && pts.length) { o.w.route = pts.map(p2 => [p2[0], p2[1]]).concat([[s[1][0], s[1][1], 1e9, 'idle']]); o.w.ri = 0; o.w.loop = false; o.w.pause = 0; o.w.mode = 'walk'; o.w.base = 'walk'; continue } }
       o.w.x = s[1][0]; o.w.z = s[1][1]; o.w.route = null; o.w.mode = 'idle' } });
+  for (const [D, f, k] of [[BCN.GR, BCN.graciaLife, 'gr'], [BCN.BT, BCN.barcLife, 'bt']]) if (D && f) try { f(ctx, { T, st, crowd, sh, IN, front, staff }) } catch (e) { console.warn('barcelona ' + k + ' life', e); BCN.stats[k + 'LifeErr'] = String(e && e.stack || e).slice(0, 400) }
   crowd.build(); BCN.crowd = crowd;
   /* ---------- traffic ---------- */
   if (CY.traffic) try { const lane = (x0, z0, x1, z1, o) => x0 === x1 ? { pts: [[x0 - o, z0], [x0 - o, z1], [x0 + o, z1], [x0 + o, z0]], off: 0 } : { pts: [[x0, z0 - o], [x1, z0 - o], [x1, z0 + o], [x0, z0 + o]], off: 0 };
-    CY.traffic(ctx, [lane(-180, -47, 180, -47, 1.8), lane(-180, -131, 180, -131, 1.8), lane(-180, -215, 180, -215, 1.8), lane(0, -300, 0, -44, 4.5), lane(92, -300, 92, 30, 1.8), lane(-180, 27, 180, 27, 1.8), lane(110, 30, 110, 345, 3), lane(-194, 347, 194, 347, 2.4)],
+    CY.traffic(ctx, [lane(-180, -47, 180, -47, 1.8), lane(-180, -131, 180, -131, 1.8), lane(-180, -215, 180, -215, 1.8), lane(0, -300, 0, -44, 4.5), lane(92, -300, 92, 30, 1.8), lane(-180, 27, 180, 27, 1.8), lane(110, 30, 110, 345, 3), lane(-194, 347, BCN.BT ? 296 : 194, 347, 2.4)].concat(((BCN.GR && BCN.GR.traffic) || []).map(t => lane(...t))),
       [{ type: 'car', col: 0xf2c230, n: [5, 8, 12][q], speed: 8.5, cols: [0x1a1a1a, 0xf2c230, 0xf4f4f4, 0x2a3a6a, 0x8a1a1a, 0xb8bcc0] }, { type: 'scooter', col: 0x2a2a2a, n: [3, 5, 8][q], speed: 8 }, { type: 'bicycle', col: 0xc8281e, n: [2, 4, 6][q], speed: 4.5 }], { density: () => hour() > 6 && hour() < 24 ? 1 : .4 }); BCN.stats.traffic = true } catch (e) { BCN.stats.trafficErr = String(e).slice(0, 200) }
 
   /* ======================= shops ======================= */
@@ -176,7 +177,7 @@ BCN.life = function (ctx, E) {
   { const s = sh.bicis; if (s) { const p2 = front('bicis', 1.4); BCN.bikeShop = { x: p2[0], z: p2[1], bay: [s.x + s.out[0] * 6 + 4, s.z + s.out[1] * 6] }; T(p2[0], p2[1], 2, () => tr('🚲 BiciApe: buy a bike (or rent one outside)', '🚲 BiciApe: comprar bici (o alquilar una fuera)'), () => BCN.bikePanel(), null, 'shop') } }
 
   /* ======================= transport: Metro L3, the harbour boat ======================= */
-  const STN = { catalunya: L('Catalunya', 'Catalunya'), pdg: L('Passeig de Gràcia', 'Passeig de Gràcia'), liceu: L('Liceu', 'Liceu'), drassanes: L('Drassanes', 'Drassanes') }, M = BCN.metro;
+  const STN = Object.assign({ catalunya: L('Catalunya', 'Catalunya'), pdg: L('Passeig de Gràcia', 'Passeig de Gràcia'), liceu: L('Liceu', 'Liceu'), drassanes: L('Drassanes', 'Drassanes') }, BCN.GR && BCN.GR.stn, BCN.BT && BCN.BT.stn), M = BCN.metro;
   const metroGo = (to) => { if (!AV.txn(-2, 'Metro')) return false; AV.fadeTo(1, 300); setTimeout(() => { const p = P(), d = M[to]; p.x = d[0]; p.z = d[1] + 1.4; p.y = 0; p.vx = p.vz = 0; S.time = (S.time + 5) % 1440; st().metro = (st().metro || 0) + 1; AV.fadeTo(0, 500); AV.toast(tr('🚇 L3, green line. A guitarist plays rumba between stations. ', '🚇 L3, la línea verde. Un guitarrista toca rumba entre estaciones. ') + say(STN[to]) + '.') }, 400); return true };
   BCN.metroGo = metroGo;
   for (const k in M) T(M[k][0], M[k][1] + 1.2, 2.2, () => tr('🚇 Metro L3 (', '🚇 Metro L3 (') + say(STN[k]) + tr('): ride to another station (2)', '): viajar a otra estación (2)'), () => { const pn = AV.panel('cmp', '<b>🚇 Metro L3 · ' + say(STN[k]) + '</b><div class="grid">' + Object.keys(M).filter(j => j !== k).map(j => '<button data-st="' + j + '">' + say(STN[j]) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
@@ -263,7 +264,7 @@ BCN.bikePanel = function () { const G = AV.garage, B = BCN.bikeShop; if (!G || !
 /* ======================= registrations in the shared systems ======================= */
 if (AV.WORLDS_DATA && !AV.WORLDS_DATA.some(w => w.id === 'barcelona')) AV.WORLDS_DATA.push({ id: 'barcelona', name: 'Barcelona', roadmap_no: null, core_identity: 'Present-day Barcelona: the Eixample grid of chamfered blocks and Passeig de Gràcia, Plaça de Catalunya, La Rambla down to the port, the Gothic Quarter lanes and squares (cathedral, Pi, Sant Jaume, Reial), the Raval market hall, Via Laietana and the Born', music_identity: 'Rumba catalana, jazz in Plaça Reial, flamenco, the gralla and drums of La Mercè', status: 'playable', landmarks: ['Plaça de Catalunya', 'Passeig de Gràcia + Casa Simi', 'La Rambla', 'Market hall', 'Cathedral', 'Plaça del Pi', 'Plaça Sant Jaume', 'Plaça Reial', 'Columbus column + Port Vell'], kind: 'apeverse2_new_world' });
 { const AW = AV.ambWorlds; if (AW && AW.presets && AW.G && !AW.presets.barcelona) { const G = AW.G, Z = (re, r) => () => AV.W ? AW.zone(AV.W, re, r) : 0, hr = () => (AV.S.time / 60) % 24, day = () => hr() > 6.5 && hr() < 21;
-  AW.presets.barcelona = () => ({ river: G.river(.4, Z(/port|colom/i, 70)), traffic: G.traffic(.45, () => .3 + Z(/granvia|pdg|laietana|placa|colom/i, 70)() * .5), crowd: G.crowd(.4, () => .25 + Z(/rambla|mercat|placa|reial|santjaume/i, 60)() * .7),
+  AW.presets.barcelona = () => ({ river: G.river(.45, Z(/port|colom|platja|maritim|xiringuito/i, 80)), traffic: G.traffic(.45, () => .3 + Z(/granvia|pdg|laietana|placa|colom/i, 70)() * .5), crowd: G.crowd(.4, () => .25 + Z(/rambla|mercat|placa|reial|santjaume/i, 60)() * .7),
     bells: G.bells(.4, () => .3 + Z(/catedral|pi/i, 110)() * .6), doves: G.doves(.4, () => day() ? .35 + Z(/placa|catedral|santjaume/i, 70)() * .5 : 0), birds: G.birds(.35, () => day() ? .3 + Z(/garden|reial|rambla/i, 80)() * .5 : 0, 2200, 4200), fountain: G.fountain(.3, Z(/placa|reial|garden/i, 40)),
     clinks: G.clinks(.35, Z(/tapes|cafe|granja|cava|reial|vermut/i, 30)), crickets: G.crickets(.2, () => !day() ? .25 + Z(/garden/i, 60)() * .4 : 0), horns: G.horns(.3, () => day() ? .3 : .1, 420) }) } }
 addEventListener('load', () => {

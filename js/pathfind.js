@@ -58,7 +58,8 @@ function graph(N, s, t) { const n = N.nodes.length, g = new Float64Array(n).fill
 /* graph sections are checked against today's collision: blocked nodes snap to free ground, blocked edges (a kiosk, a terrace table
    added after the graph was built) are re-routed on the grid */
 function repair(W, I, mid) { if (!mid) return null; const pts = mid.map(p => snap(W, I, p, 1) || p), out = [pts[0]]; for (let i = 1; i < pts.length; i++) { const a = out[out.length - 1], b = pts[i]; if (los(W, I, a, b, false)) { out.push(b); continue } const g = grid(W, I, a, b, 1, 8000); if (g) out.push(...smooth(W, I, g).slice(1)); else out.push(b); PF.stats.repaired = (PF.stats.repaired || 0) + 1 } return out }
-PF.route = function (W, a, b) { const t0 = performance.now(), I = index(W), A = [a.x, a.z], Bp = [b.x, b.z], d = Math.hypot(Bp[0] - A[0], Bp[1] - A[1]); let out = null, how = 'straight';
+PF.route = function (W, a, b) { if (W.routeGroup && W.routeGroup(a.x, a.z) !== W.routeGroup(b.x, b.z)) { PF.stats.routes++; PF.stats.ms = 0; PF.stats.how = 'other side (no walking route)'; return [[b.x, b.z]] }   /* 2.1: areas split by water (Amsterdam-Noord across the IJ): no walking route exists, so don't search the whole world for one */
+  const t0 = performance.now(), I = index(W), A = [a.x, a.z], Bp = [b.x, b.z], d = Math.hypot(Bp[0] - A[0], Bp[1] - A[1]); let out = null, how = 'straight';
   if (d < 2 || los(W, I, A, Bp, true)) { out = [Bp]; how = 'los' }
   else { const N = W.mapNav, hasG = N && N.nodes && N.nodes.length > 1;
     if (hasG && d > 220) { const s = nodeNear(N, A[0], A[1]), t = nodeNear(N, Bp[0], Bp[1]), mid = repair(W, I, graph(N, s, t)); if (mid) { const h0 = grid(W, I, snap(W, I, A, 1.5) || A, mid[0], 1.5, 20000) || [mid[0]], h1 = grid(W, I, mid[mid.length - 1], snap(W, I, Bp, 1.5) || Bp, 1.5, 20000) || [Bp]; out = smooth(W, I, h0).concat(mid.slice(1), smooth(W, I, h1).slice(1)); how = 'graph+grid' } }

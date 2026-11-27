@@ -1,12 +1,13 @@
-# Amsterdam: three playable districts (Apeverse 2.1)
+# Amsterdam: four playable districts (Apeverse 2.1)
 
-District 1 is the old centre (below). District 2 (the Museum quarter + Vondelpark) and district 3 (Leidseplein nightlife) are described in their own sections further down.
+District 1 is the old centre (below). Districts 2 (the Museum quarter + Vondelpark), 3 (Leidseplein nightlife) and 4 (the IJ ferries + Amsterdam-Noord / NDSM) are described in their own sections further down.
 
 **Code:**
 - `js/world_amsterdam.js`: the city.
 - `js/amsterdam_life.js`: people, shops, rides and King's Day.
 - `js/amsterdam_zuid.js`: district 2 (Museum quarter + Vondelpark), its buildings, signs, paintings and life.
 - `js/amsterdam_leidse.js`: district 3 (Leidseplein nightlife), its square, club, bar alley, signs, tram 2 and life.
+- `js/amsterdam_noord.js`: district 4 (the IJ, the free ferries, Buiksloterweg and the NDSM wharf), its surface, signs, ferries and life.
 
 **Test:** `tools/tests/suite_amsterdam.js` runs the release gate on the real GPU.
 
@@ -193,6 +194,46 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 
 **Save:** new optional fields in `S.ams.lp` only: `band` (wristband expiry), `guest`, `nights`, `dances`, `yara`, `kar`, `chess`, `tips`, `tram2`, `fiets`.
 
+## District 4: the IJ ferries + Amsterdam-Noord (NDSM)
+
+**How you get there:**
+- **The station passage:** walk through a new passage under the middle of Centraal Station to the IJ-zijde quay behind it.
+- **The ferries:** the ferry pier has two berths, and the ferries are free, like the real ones.
+  - **Right berth:** Buiksloterweg, a short hop.
+  - **Left berth:** the NDSM-werf, a longer ride west.
+  - **On the Noord side:** a ferry also runs between Buiksloterweg and NDSM, and each pier has a ferry back to Centraal.
+- **AI ferries:** two of them shuttle the IJ and dock at the piers (visual only; you ride your own).
+- **GPS:** it knows the IJ. A destination on the other side first leads you to the right ferry pier ("⛴ Ferry, then …"), because no walking route crosses the water.
+
+**The IJ:** open water all round Noord, with quay walls, bollards and lamps on the IJ-zijde. In this compressed map, Noord is an island of quays.
+
+**Buiksloterweg:**
+- **Toren Noord:** a dark glass lookout tower with a crown and the swing. Take the lift and the swing over the edge for 12. That is a fade and a description: there is no walkable roof.
+- **Filmmuseum Het Oog:** white, angled planes. It's an exterior, plus a café terrace where you can buy coffee.
+- **The rest:** a row of Noord houses, a map board, bike rental, and a promenade with benches west along the IJ to the wharf (about 150 m).
+
+**The NDSM-werf:**
+- **The NDSM-loods** (walk-in): a rusted shipyard hangar with a 36 m open door.
+  - **By day:** a flea market (10:00-17:00) selling vintage jackets and records, plus stacked container studios, graffiti pieces and a skate ramp.
+  - **Loodsnacht (20:00-24:00):** Stone Ape Band plays live on the stage, the hall fills with a dancing crowd, the band's music plays positionally (the existing Stone Ape Band playlist), and there's a bass by the stage to jam with the band (the existing instrument activity).
+- **The legal graffiti wall:**
+  - spray your own tag in one of 6 styles;
+  - your tag stays on the wall and is saved;
+  - Ilse rewards your first tag with +20 and a signed spray can.
+- **Strandbar De Werf:** sand on the quay, deck chairs, umbrellas, a container bar and string lights.
+- **The Kraanhotel:** a hotel in an old harbour crane. Exterior only.
+- **Food and coffee:** the Noorderbites food truck and the Koffiebranderij De Kraan coffee container.
+- **The plein:** old slipway rails in the concrete.
+
+**People:**
+- **Sven** (ferry deckhand): moves between the three piers over the day.
+- **Ilse** (street artist): at the legal wall, the studios, then the beach bar.
+- **Kofi** (skater and flea-market seller): at the market, the ramp, then the Loodsnacht.
+- **Conversations:** all three have 4-choice conversations with waypoints.
+- **Crowds:** walkers, market shoppers, the gig crowd and the band, beach sitters, and staff.
+
+**Save:** new optional fields in `S.ams.nd` only: `tags` (your tags), `ilse`, `ferry`, `swing`, `skate`, `loods`.
+
 ## Release gate (2.1 launch queue)
 
 | Gate item | Status | Evidence |
@@ -208,7 +249,12 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 | Save/load, tests, screenshots, measured FPS | AUTO-TESTED | sandboxed `loadSave` roundtrip (not a page reload) |
 | District 2: connected, built, shops, museum + trail, park life, jam, tram, save | AUTO-TESTED | 6 extra steps in `suite_amsterdam` (142/142 in total); routes Dam -> museum passage -> Museumplein -> Vondelpark and Jordaan -> park gate; the trail's +30 and poster; the 13:00-19:00 jam |
 | District 3: Leidseplein connected, club (hours, wristband, gate, dance, bar, booth), bar alley, Yara's guest list, tram 2, fietstaxi, save | AUTO-TESTED | 6 extra steps in `suite_amsterdam` (214/214 in total); routes Jordaan/Dam/museum/Vondelpark -> Leidseplein and into the club |
+| District 4: station passage, IJ, free ferries (3 piers), ferry-aware GPS, NDSM market, legal wall + Ilse, Loodsnacht, Toren Noord, save | AUTO-TESTED | 5 extra steps in `suite_amsterdam` (268/268 in total on mains power); rides checked on the water and out on the piers |
 | Mobile, human playtest | **NOT DONE** | |
+
+**District 4, measured on mains power (real GPU, Medium), one sample each:** the IJ quay hit the 60 fps cap with 48 draw calls, the NDSM plein reached 60 fps with 102, and the Loodsnacht in the hangar hit the cap with 163. On the cap, this shows only that there is headroom. An earlier battery run measured 49.6 fps in the hangar and 31-36 fps on Leidseplein at night, so this laptop on battery is noticeably slower.
+
+**GPS across the water:** the pathfinder now knows the IJ splits Amsterdam into two walking areas (`routeGroup`), so a route request across it returns at once instead of searching the whole world (that cost 2.1 s before the fix). The GPS suite pairs places only within one walking area.
 
 **District 3, measured on mains power (real GPU, Medium, at 23:00):** the square 58.8 fps with 201 draw calls (the busiest view: neon, crowds, tram, terraces), the club 60.4 fps with 198, the bar alley 60 fps with 122. One sample each; the club and alley sit at the 60 fps cap, so for those two it shows only that there is headroom on this laptop, not how much.
 
@@ -221,7 +267,13 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 
 ## Not built yet (honest)
 
-- **Districts:** Rembrandtplein, NDSM/Noord (ferry) and the Bloemendaal beach trip are future districts.
+- **Districts:** Rembrandtplein and the Bloemendaal beach trip are future districts.
+- **District 4:**
+  - **Walk-in:** only the NDSM-loods is walk-in. Het Oog, the Kraanhotel and Toren Noord are exteriors; the tower lift is a fade and a description, not a roof you can walk on.
+  - **The IJ:** compressed to about 130 m, and Noord is an island of quays.
+  - **Ferries:** the AI ferries are visual and don't carry passengers.
+  - **Taxis:** not configured for Noord. Taking a taxi to or from Noord across the water is untested.
+  - **Older walking-route callers:** any code that still asks for a walking route across the IJ now gets a straight line back. The GPS waypoint handles this; other callers have not been reviewed.
 - **District 3 interiors:** only Club Nachtegaal is walk-in. The bars, cinema, hotel, theatre and Het Lichthuis are shopfront counters or exteriors. The dance is a menu action, not a player animation.
 - **Terrace sitters:** they use the crowd's existing sitting pose, which sits low, so people at the terrace tables look as if they are kneeling.
 - **District 2 interiors:** only the museum gallery is walk-in. The Klankgebouw and Museum Nu are exteriors, and the brand shops are counters at the shopfront. The plantsoen square and the area east of the museum are light on detail.

@@ -273,6 +273,25 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Amsterdam district 4: the IJ ferries + Amsterdam-Noord / NDSM (apeverse-2-living-worlds branch)
+
+Details in `docs/AMSTERDAM.md`. Code: `js/amsterdam_noord.js`, plus hooks in `world_amsterdam.js` and `amsterdam_life.js`.
+
+- **Getting there:** a passage under Centraal Station leads to the IJ quay. The ferry pier has two berths; the ferries are free and run to Buiksloterweg and the NDSM-werf, and between them. Two AI ferries shuttle the IJ.
+- **GPS:** a destination across the IJ routes you to the right ferry first.
+- **The NDSM-loods** (walk-in): a flea market by day; Stone Ape Band at the Loodsnacht (20:00-24:00), with a jam spot by the stage.
+- **Around the wharf:** the legal graffiti wall keeps your own tag (saved), Ilse gives a reward, and there's a skate ramp, Strandbar De Werf, the Kraanhotel, a food truck and a coffee container.
+- **Buiksloterweg:** Toren Noord (lift + swing), Het Oog (exterior + café), Noord houses and bike rental.
+- **New residents:** Sven, Ilse and Kofi.
+- **Shared-code changes:**
+  - **`surf()`:** asks `AMS.noordSurf` north of the old edge.
+  - **Centraal Station:** gets a walkable middle passage.
+  - **Music:** the chooser adds 'loods'.
+  - **`minimap.setDest`:** wrapped to be ferry-aware in Amsterdam only.
+- **Pathfinder:** `pathfind.js` gains a generic `W.routeGroup` hook: areas split by water return at once instead of a 2 s failing search.
+- **GPS suite:** `suite_gps` pairs places only within one walking area.
+- **Tests:** `suite_amsterdam` 268/268 on mains power; the IJ, the NDSM plein and the Loodsnacht all ran at 60 fps.
+
 ### 2.1 Amsterdam district 3: Leidseplein nightlife (apeverse-2-living-worlds branch)
 
 Details in `docs/AMSTERDAM.md`. Code: `js/amsterdam_leidse.js`, plus hooks in `world_amsterdam.js`, `amsterdam_zuid.js` and `amsterdam_life.js`.

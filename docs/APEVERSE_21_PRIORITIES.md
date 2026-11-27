@@ -40,12 +40,12 @@ Last updated 26 Nov 2026, after the Brand District pilot. **DONE** means built, 
 ## 4. New destinations
 
 - **DONE:**
+  - Amsterdam district 4: the IJ ferries + Noord (station passage, free ferries to Buiksloterweg and the NDSM-werf, ferry-aware GPS, walk-in NDSM-loods with a flea market by day and Stone Ape Band at the Loodsnacht, a legal graffiti wall that keeps your tag, Strandbar De Werf, Kraanhotel, Toren Noord, Het Oog). `suite_amsterdam` 268/268 on mains power.
   - Amsterdam district 3: Leidseplein nightlife (walk-in Club Nachtegaal 22:00-05:00 with wristband, dance floor, bar and DJ booth; the Korte Leidsedwarsstraat bar alley; Stadstheater, Het Lichthuis, Grand Hotel exteriors; giant chess, a street performer, Yara's guest list; tram 2 over the new Leidsebrug; a fietstaxi to the Dam). `suite_amsterdam` 214/214.
   - Amsterdam district 2: the Museum quarter + Vondelpark (museum with a walk-through passage and a gallery trail, Museumplein, Stadhouderskade brand shops, Vondelpark with ponds, ducks and an afternoon lawn jam, tram to Museumplein). `suite_amsterdam` 142/142.
   - Amsterdam first district: Centraal, Damrak, Dam, the Singel and Herengracht, the Jordaan. Release gate auto-tested, 85/85.
 - **NEXT for Amsterdam:**
   - Rembrandtplein.
-  - The NDSM ferry.
   - The Bloemendaal beach trip.
   - More walk-in interiors.
   - A mobile check and a human playtest.

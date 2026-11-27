@@ -21,7 +21,7 @@ const PONDS = [{ id: 'vondel1', e: [-180, 255, 36, 20], y: -.55 }, { id: 'vondel
 const pondAt = (x, z) => PONDS.find(p => p.e ? ((x - p.e[0]) / p.e[2]) ** 2 + ((z - p.e[1]) / p.e[3]) ** 2 < 1 : x > p.r[0] && x < p.r[1] && z > p.r[2] && z < p.r[3]) || null;
 const canalAt = (x, z) => CAN.find(c => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) || null;
 function bridgeY(x, z) { if (z > 131.5 && z < 150.5) for (const [bx, hw, rise] of BRZ) if (Math.abs(x - bx) < hw) { const t = (z - 141) / 9.5; return .05 + rise * (1 - t * t) } for (const [cid, bz] of BR) { const c = CAN.find(q => q.id === cid); if (Math.abs(z - bz) > BW || x < c.x0 - 2.5 || x > c.x1 + 2.5) continue; const cx = (c.x0 + c.x1) / 2, hw = (c.x1 - c.x0) / 2 + 2.5, t = (x - cx) / hw; return .05 + .95 * (1 - t * t) } return null }
-function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX || (z < 80 && x < -262) || (z < 116 && x > 92)) return null; const b = bridgeY(x, z); if (b !== null) return b; if (canalAt(x, z) || pondAt(x, z)) return null; return 0 }
+function surf(x, z) { if (z < ZMIN) return AMS.noordSurf ? AMS.noordSurf(x, z) : null; if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX || (z < 80 && x < -262) || (z < 116 && x > 92)) return null; const b = bridgeY(x, z); if (b !== null) return b; if (canalAt(x, z) || pondAt(x, z)) return null; return 0 }
 AMS.pondPath = p => { const h = new THREE.Path(); if (p.e) h.absellipse(p.e[0], -p.e[1], p.e[2], p.e[3], 0, Math.PI * 2, false); else { h.moveTo(p.r[0], -p.r[3]); h.lineTo(p.r[1], -p.r[3]); h.lineTo(p.r[1], -p.r[2]); h.lineTo(p.r[0], -p.r[2]); h.closePath() } return h };
 AMS.surf = surf; AMS.CAN = CAN; AMS.BR = BR; AMS.BRZ = BRZ; AMS.PONDS = PONDS; AMS.pondAt = pondAt; AMS.WY = WY;
 
@@ -168,9 +168,9 @@ AV.registerWorld({
     for (let x = -46; x < -14; x += 6.2) { house(P, Gl, x + 3.1, 16, Math.PI, 6.2, 12 + rng() * 4, 12, { rng, style: STY[(rng() * STY.length) | 0], col: BRICK[(rng() * BRICK.length) | 0], shop: rng() < .5 }); cols.push([x, x + 6.2, 16, 28]) }
     for (let x = 14; x < 44; x += 6.2) { house(P, Gl, x + 3.1, 16, Math.PI, 6.2, 12 + rng() * 4, 12, { rng, style: STY[(rng() * STY.length) | 0], col: PAINT[(rng() * PAINT.length) | 0], shop: rng() < .5 }); cols.push([x, x + 6.2, 16, 28]) }
     /* ---------- landmarks: Centraal Station, the palace on the Dam, the monument, a Westertoren-like church tower over the Jordaan ---------- */
-    { const brick = 0x8a4434, stone = 0xd8cdb4, slate = 0x3a3e44; box(P, brick, -70, 70, 0, 14, -178, -152); box(P, slate, -71, 71, 14, 18, -179, -151); for (const x of [-22, 22]) { box(P, brick, x - 5, x + 5, 0, 30, -172, -152); box(P, slate, x - 5.4, x + 5.4, 30, 34, -172.4, -151.6); box(P, 0xc8a040, x - 2, x + 2, 24, 28, -151.8, -151.7, 1) }
-      box(P, stone, -12, 12, 0, 12, -153, -151); box(P, 0x101418, -8, 8, 0, 8, -151, -150.9); for (let x = -64; x < 64; x += 5) if (Math.abs(x) > 14 && Math.abs(Math.abs(x) - 22) > 6) { box(P, stone, x, x + 3, 4, 10, -152.1, -151.9); box(Gl, 0x3a4a5a, x + .3, x + 2.7, 4.3, 9.7, -151.9, -151.8, 1) }
-      cols.push([-70, 70, -178, -152]); sign('station', 0, 13, -150.8, 24, 3, 0) }
+    { const brick = 0x8a4434, stone = 0xd8cdb4, slate = 0x3a3e44; box(P, brick, -70, -4, 0, 14, -178, -152); box(P, brick, 4, 70, 0, 14, -178, -152); box(P, brick, -4, 4, 6, 14, -178, -152);   /* a passage under the middle to the IJ side */ box(P, slate, -71, 71, 14, 18, -179, -151); for (const x of [-22, 22]) { box(P, brick, x - 5, x + 5, 0, 30, -172, -152); box(P, slate, x - 5.4, x + 5.4, 30, 34, -172.4, -151.6); box(P, 0xc8a040, x - 2, x + 2, 24, 28, -151.8, -151.7, 1) }
+      box(P, stone, -12, -4, 0, 12, -153, -151); box(P, stone, 4, 12, 0, 12, -153, -151); box(P, stone, -4, 4, 6, 12, -153, -151); box(P, 0x101418, -8, -4, 0, 8, -151, -150.9); box(P, 0x101418, 4, 8, 0, 8, -151, -150.9); for (let x = -64; x < 64; x += 5) if (Math.abs(x) > 14 && Math.abs(Math.abs(x) - 22) > 6) { box(P, stone, x, x + 3, 4, 10, -152.1, -151.9); box(Gl, 0x3a4a5a, x + .3, x + 2.7, 4.3, 9.7, -151.9, -151.8, 1) }
+      cols.push([-70, -4, -178, -152], [4, 70, -178, -152]); sign('station', 0, 13, -150.8, 24, 3, 0) }
     { const stone = 0xd8ccb0, dark = 0x8a8270; box(P, stone, -80, -50, 0, 22, -42, -6); box(P, dark, -80.2, -49.8, 0, 3.4, -42.2, -5.8); box(P, 0xe8e0cc, -80.2, -49.6, 21.4, 22.6, -42.2, -5.8); box(P, 0x5a6a5a, -78, -52, 22.6, 24.5, -40, -8);
       for (let z = -41; z < -6; z += 2.6) box(P, 0xe8e0cc, -49.85, -49.6, 3.4, 21.4, z, z + .5);   /* pilasters */
       for (let y = 5; y < 20; y += 4.6) for (let z = -40; z < -8; z += 2.6) { box(P, 0xf0ead8, -49.8, -49.7, y - .1, y + 2.9, z + .75, z + 2.05); box(P, 0x2a3440, -49.7, -49.6, y, y + 2.8, z + .85, z + 1.95) }
@@ -224,6 +224,8 @@ AV.registerWorld({
     AMS.Z = null; if (AMS.zuid) try { AMS.Z = AMS.zuid(ctx, { T, st, box, sign }) } catch (e) { console.warn('amsterdam zuid', e); AMS.stats.zuidErr = String(e && e.stack || e).slice(0, 300) }
     /* ---------- Leidseplein nightlife (amsterdam_leidse.js) ---------- */
     AMS.LP = null; if (AMS.leidse) try { AMS.LP = AMS.leidse(ctx, { T, st }) } catch (e) { console.warn('amsterdam leidse', e); AMS.stats.leidseErr = String(e && e.stack || e).slice(0, 300) }
+    /* ---------- the IJ, the ferries and Amsterdam-Noord (amsterdam_noord.js) ---------- */
+    AMS.ND = null; if (AMS.noord) try { AMS.ND = AMS.noord(ctx, { T, st }) } catch (e) { console.warn('amsterdam noord', e); AMS.stats.noordErr = String(e && e.stack || e).slice(0, 300) }
     /* ---------- merge everything static ---------- */
     atlas(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const solid = new THREE.Mesh(K.merge(P), solidM); solid.castShadow = solid.receiveShadow = true; solid.name = 'ams_static'; grp.add(solid);
     if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .2, transparent: true, opacity: .25, depthWrite: false }); gm.userData.lin = 1; const gmesh = new THREE.Mesh(K.merge(Gs), gm); gmesh.renderOrder = 2; gmesh.name = 'ams_glass'; grp.add(gmesh) }
@@ -241,11 +243,12 @@ AV.registerWorld({
       PLc('singel', 'Singel bridge', 'Puente del Singel', -110, -60, -Math.PI / 2), PLc('heren', 'Herengracht', 'Herengracht', -149, 10, Math.PI), PLc('jordaan', 'Jordaan lane', 'Calle del Jordaan', -197, -20, Math.PI), PLc('boat', 'Canal boat stop', 'Parada de barcos', -149, -110, Math.PI)];
     for (const [k, en] of [['kraantje', "Café 't Gouden Kraantje"], ['lantaarn', 'Coffeeshop De Blauwe Lantaarn'], ['platen', 'Groove Dealers Platen'], ['fietsen', "Jasper's Fietsen"], ['molen', 'Bakkerij Van der Molen'], ['proeflokaal', 'Monkey Brew Proeflokaal'], ['waterkant', 'De Waterkant (live music)'], ['kaas', 'Kaashandel Jansen']]) { const s = sh[k]; if (s) places.push(PLc(k, en, en, s.x + s.face * 3, s.z, s.face > 0 ? -Math.PI / 2 : Math.PI / 2)) }
     if (AMS.Z) { for (const r of AMS.Z.roads) mapRoads.push(r); for (const p of AMS.Z.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
+    if (AMS.ND) { for (const r of AMS.ND.roads) mapRoads.push(r); for (const p of AMS.ND.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     if (AMS.LP) { for (const r of AMS.LP.roads) mapRoads.push(r); for (const p of AMS.LP.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     AMS.stats.shopsPlaced = Object.keys(sh).length;
     return { name: 'Amsterdam', surface: surf, fog: [80, 420], sky: { exp: .86, tint: [0x7a92a8, 0xc8d0d8, .35, .3], dome: { s1: 0xd8dce2, s2: 0x9ab0c8, swirl: .01, cloud: .75, glow: .3 } },
       arrivals: { default: { x: -22, z: -136, yaw: Math.PI * .88 }, pipe: { x: -24, z: -130, yaw: Math.PI * .88 }, train: { x: -14, z: -146, yaw: Math.PI } }, defaultArrival: 'default',
-      mapRoads, places, mapNav: AMS.nav || null,
+      mapRoads, places, mapNav: AMS.nav || null, routeGroup: (x, z) => z < -260 ? 'noord' : 'main',   /* the IJ separates Noord: you cross it by ferry */
       greet: { human: [['Goedemorgen! Mind the bike lane — it is red for a reason.', '¡Goedemorgen! Cuidado con el carril bici: es rojo por algo.'], ['Dam is that way. Follow the tram rails.', 'Dam está por allí. Sigue los raíles del tranvía.']] },
       chatLines: [['Fietsen everywhere. I counted twelve on one bridge.', 'Bicis por todas partes. Conté doce en un puente.'], ['Koningsdag this Sunday — everything goes orange.', 'Koningsdag este domingo: todo se vuelve naranja.'], ['Best stroopwafels are at the bakery on Damrak.', 'Los mejores stroopwafels, en la panadería de Damrak.']],
       musicProfile: { bpm: 96, root: 48, scale: [0, 2, 3, 5, 7, 10], style: 'amb' } };

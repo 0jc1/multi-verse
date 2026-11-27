@@ -16,7 +16,10 @@ if (-not $browser) { throw 'Chrome or Edge not found' }
 $srvArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$Root\tools\serve.ps1`"", '-Port', $Port, '-NoBrowser'); if ($GameRoot) { $srvArgs += @('-Root', "`"$GameRoot`"") }
 $srv = Start-Process powershell -ArgumentList $srvArgs -PassThru -WindowStyle Hidden
 $prof = Join-Path $env:TEMP ("apeverse_prof_" + [guid]::NewGuid().ToString('N'))
-$dbg = 9333 + (Get-Random -Maximum 500)
+$dbg = 0   # a DevTools port nobody is listening on (a random pick once let two agents' runs drive the same Chrome)
+$busyPorts = @([Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties().GetActiveTcpListeners() | ForEach-Object { $_.Port })
+for ($k = 0; $k -lt 200 -and -not $dbg; $k++) { $p = 9333 + (Get-Random -Maximum 2000); if ($busyPorts -notcontains $p) { $dbg = $p } }
+if (-not $dbg) { throw 'no free DevTools port' }
 $args2 = @("--remote-debugging-port=$dbg", "--user-data-dir=`"$prof`"", '--no-first-run', '--no-default-browser-check', '--autoplay-policy=no-user-gesture-required',
   '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', "--window-size=$W,$H", '--mute-audio', 'about:blank')
 if ($Gpu) { $args2 = $args2 | Where-Object { $_ -ne '--use-angle=swiftshader' -and $_ -ne '--enable-unsafe-swiftshader' }; $args2 = @('--use-angle=d3d11', '--enable-gpu-rasterization') + $args2 }   # -Gpu: render on the real graphics card (FPS measurements)

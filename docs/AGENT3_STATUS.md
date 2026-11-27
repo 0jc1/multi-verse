@@ -20,11 +20,15 @@ All tests are automated: headless Chrome on the real GPU (`-Gpu`), Medium graphi
 | F | Dev cheats + family demo | **Implemented and verified (automated)** | All cheats incl. invalid spawn refused; family rules (adult doors / items / shop rows hidden, welcome map). Family demo start-to-finish not played by a human. |
 | G | More business types + regression | **Partial** | 4 categories (café, bar, farm, courier); hostel, gallery, record store, convenience store not built. Regression (real GPU): suite_bag **39/39**, suite_consume **47/47**, suite_play22 **73/74 + Madrid re-run 9/9** (the failure was test-side), suite_biz22 **95/95**. |
 
+## Performance
+
+FPS with Sound 2.0 on vs off, interleaved at the same spot in Madrid (real GPU, headless, 1536×864, Medium): **15.8 vs 15.3**, so no measurable cost. Absolute FPS is low here because headless capture shares the GPU with the other agents' tests; this is not a measurement on the laptop's own display.
+
 ## Bug ledger
 
 Newest first. Each entry starts with whether it is fixed.
 
-0. **FIXED. 💼 Business app never appeared on the phone.**  loads after ; the app now registers lazily.
+0. **FIXED. The 💼 Business app never appeared on the phone.** `apephone.js` loads after `ventures.js`; the app now registers lazily.
 1. **FIXED. Business teardown crash.** Changing décor or rebuilding with customers inside threw `c.h.parent` (`ventures.js`): customers keep their mesh at `c.a.h`.
 2. **FIXED. Dev-spawned vehicles were invalid records.** They had no `until` field, so the garage filtered them out and parts never applied. They are now created through `AV.veh.rent` and marked as owned, exactly like a dealer purchase.
 3. **FIXED. Workshop buttons did nothing.** Vehicle ids are numbers, while button `data-` values are strings.

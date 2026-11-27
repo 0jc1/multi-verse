@@ -80,14 +80,20 @@ function giantSignTex() {
   return TX.gsign || (TX.gsign = canvasTex(1024, 512, (c, w, h) => {
     const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#f6ead0'); g.addColorStop(1, '#e8d4ac'); c.fillStyle = g; c.fillRect(0, 0, w, h);
     const r = AV.rng(4); for (let i = 0; i < 900; i++) { c.fillStyle = 'rgba(120,90,50,' + (r() * .12).toFixed(2) + ')'; c.fillRect(r() * w, r() * h, 2 + r() * 6, 1 + r() * 3) }
-    c.fillStyle = '#c8306a'; c.fillRect(0, 0, w, 96); c.fillStyle = '#ffffff'; c.font = 'italic bold 62px Georgia'; c.textAlign = 'center'; c.fillText('New SiriSuk', w / 2, 70);
+    c.fillStyle = '#d0307a'; c.fillRect(0, 0, w, 104); c.fillStyle = '#bfe4ff'; c.strokeStyle = '#5a1a3a'; c.lineWidth = 4; c.font = 'bold 64px Georgia'; c.textAlign = 'left'; c.strokeText('New Srisuk', 120, 76); c.fillText('New Srisuk', 120, 76);   /* 2.3: as on the real banner (owner photos) */
+    c.fillStyle = '#ffffff'; c.font = 'bold 50px "Leelawadee UI", Tahoma, sans-serif'; c.textAlign = 'right'; c.fillText('นิวศรีสุข', w - 40, 72); c.textAlign = 'center';
+    if (false)
     c.lineJoin = 'round'; let fs = 168; c.font = 'bold ' + fs + 'px Georgia'; while (c.measureText('GIANT HOSTEL').width > w - 250 && fs > 60) { fs -= 4; c.font = 'bold ' + fs + 'px Georgia' }   /* 2.1: fit inside the board (it used to crop to "ANT HOSTEL") */
-    const gx = (w - 170) / 2 + 10; c.lineWidth = 14; c.strokeStyle = '#5a1010'; c.strokeText('GIANT HOSTEL', gx, 262); c.fillStyle = '#d8281e'; c.fillText('GIANT HOSTEL', gx, 262);
-    c.fillStyle = '#3a2a1a'; c.font = 'italic 64px Georgia'; c.fillText('— Chiang Mai —', w / 2, 380);
-    const lx = w - 90, ly = 300; c.fillStyle = '#2a9a3a'; for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .42; c.save(); c.translate(lx, ly); c.rotate(a + Math.PI / 2); c.beginPath(); c.ellipse(0, -46 + Math.abs(i - 3) * 6, 9, 46 - Math.abs(i - 3) * 8, 0, 0, TAU); c.fill(); c.restore() }
-    c.strokeStyle = '#5a3a1a'; c.lineWidth = 14; c.strokeRect(7, 7, w - 14, h - 14);
+    c.lineWidth = 12; c.strokeStyle = '#2a0a0a'; c.fillStyle = '#d8203a'; c.font = 'bold 200px Georgia'; c.strokeText('GIANT', w / 2 + 40, 300); c.fillText('GIANT', w / 2 + 40, 300); c.font = 'bold 70px Georgia'; c.strokeText('J', 150, 300); c.fillText('J', 150, 300);
+    c.font = 'bold 120px Georgia'; c.lineWidth = 9; c.strokeText('HOSTEL', w / 2 + 40, 410); c.fillText('HOSTEL', w / 2 + 40, 410); c.fillStyle = '#3a1a1a'; c.font = '28px Georgia'; c.fillText('40/3', 80, 160);
+    c.fillStyle = '#7a1a2a'; c.font = '44px "Leelawadee UI", Tahoma, sans-serif'; c.fillText('ไจแอนท์ฮอสเทิล', w / 2 + 40, 476);
+    if (false) {
+    const lx = w - 90, ly = 300; c.fillStyle = '#2a9a3a'; for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (i - 3) * .42; c.save(); c.translate(lx, ly); c.rotate(a + Math.PI / 2); c.beginPath(); c.ellipse(0, -46 + Math.abs(i - 3) * 6, 9, 46 - Math.abs(i - 3) * 8, 0, 0, TAU); c.fill(); c.restore() } }
+    c.strokeStyle = '#d0307a'; c.lineWidth = 12; c.strokeRect(6, 6, w - 12, h - 12);
   }));
 }
+/* 2.3: the Ganesha mural, from the owner's photo of the real wall (assets/tex/giant_ganesha.jpg) */
+function ganeshaTex() { if (TX.gan) return TX.gan; const t = new THREE.TextureLoader().load('assets/tex/giant_ganesha.jpg'); t.encoding = THREE.sRGBEncoding; t.userData = { keep: true }; return TX.gan = t }
 function muralTex() {
   return TX.mural || (TX.mural = canvasTex(512, 512, (c, w, h) => {
     c.fillStyle = '#f4f0ea'; c.fillRect(0, 0, w, h); const r = AV.rng(9);
@@ -133,7 +139,7 @@ function facadeAtlas() {
     c.clearRect(0, 0, FAS, FAS);
     /* ---- horizontal shop signs ---- */
     [['#c8102e', '#ffffff', 'ร้านขายยา', 'PHARMACY · DRUGSTORE'], ['#1d5fa8', '#ffffff', 'ซัก อบ รีด', 'LAUNDRY 40฿ / KG'], ['#f2c230', '#3a1a00', 'ก๋วยเตี๋ยวเรือ', 'BOAT NOODLES'], ['#2a6a3a', '#ffffff', 'นวดแผนไทย', 'THAI MASSAGE · FOOT 250฿'],
-      ['#3a2416', '#f0d8a0', 'COFFEE', 'กาแฟสด · ROASTERY'], ['#f6f4ee', '#c8102e', 'มินิมาร์ท', 'MINI MART · 24 HRS'], ['#8a1a1a', '#ffd84a', 'ห้างทอง', 'GOLD SHOP'], ['#0f3a5a', '#ffffff', 'GUEST HOUSE', 'ROOMS · WIFI · AIRCON'],
+      ['#3a2416', '#f0d8a0', 'COFFEE', 'กาแฟสด · ROASTERY'], ['#f6f4ee', '#1a8a4a', 'ร้านขายยา', 'PHARMACY · ขายยา'], ['#8a1a1a', '#ffd84a', 'ห้างทอง', 'GOLD SHOP'], ['#0f3a5a', '#ffffff', 'GUEST HOUSE', 'ROOMS · WIFI · AIRCON'],
       ['#e86a1a', '#ffffff', 'เช่ารถมอเตอร์ไซค์', 'MOTORBIKE RENT 200฿'], ['#f2eee4', '#2a2a2a', 'TOUR & TRAVEL', 'DOI SUTHEP · DOI INTHANON'], ['#5a2a6a', '#ffffff', 'ร้านเสริมสวย', 'HAIR & NAIL SALON'], ['#1a1a1a', '#e8e8e8', 'TATTOO', 'สักลาย · INK STUDIO'],
       ['#2a5a9a', '#ffffff', 'EXCHANGE', 'แลกเงิน · BEST RATE'], ['#e8dcc0', '#7a3a10', 'ข้าวซอย', 'KHAO SOI · NORTHERN FOOD'], ['#1a6a6a', '#ffffff', 'BOOKS', 'ร้านหนังสือ · USED BOOKS'], ['#b8324a', '#ffffff', 'ร้านอาหาร', 'RESTAURANT · ห้องแอร์']
     ].forEach(([bg, fg, a, b], i) => { const x = (i % 4) * 256, y = (i / 4 | 0) * 64; R['s' + i] = [x, y, 256, 64];
@@ -365,13 +371,17 @@ AV.registerWorld({
     box(hb, MT.shiny, 0x6a6a72, H.x0 - .5, H.x1 + .5, 3.35, 3.45, 47.4, H.z0); for (const x of [H.x0 - .3, 20, H.x1 + .3]) { box(hb, MT.shiny, 0x8a8a8a, x - .08, x + .08, 0, 3.4, 47.6, 47.76); ctx.circles.push([x, 47.7, .15]) }
     { const rb = new THREE.Mesh(BG.box, new THREE.MeshStandardMaterial({ map: rainbowTex(), emissiveMap: rainbowTex(), emissive: 0xffffff, emissiveIntensity: .25, roughness: .6 })); rb.material.userData.lin = 1; rb.position.set(20, 3.25, 47.5); rb.scale.set(H.x1 - H.x0 + 1, .5, .06); grp.add(rb); ctx.upd.push(() => rb.material.emissiveIntensity = .15 + (AV.nightK || 0) * .9) }
     { const sm = new THREE.MeshStandardMaterial({ map: giantSignTex(), emissiveMap: giantSignTex(), emissive: 0xffffff, emissiveIntensity: .1, roughness: .8 }); sm.userData.lin = 1; const sg = new THREE.Mesh(AV.G.pln, sm); sg.position.set(19.5, 6.35, H.z0 - .32); sg.scale.set(10.4, 5.2, 1); sg.rotation.y = Math.PI; grp.add(sg); /* faces the street (north), above the canopy */ box(hb, MT.wood, 0x5a3a1a, 14.1, 24.9, 3.6, 9.1, H.z0 - .28, H.z0 - .18); ctx.upd.push(() => sm.emissiveIntensity = .08 + (AV.nightK || 0) * .55) }
-    { const mm = new THREE.MeshStandardMaterial({ map: muralTex(), roughness: .9 }); mm.userData.lin = 1; const mu = new THREE.Mesh(AV.G.pln, mm); mu.position.set(10.9, 1.75, H.z0 - .14); mu.scale.set(5, 3.3, 1); mu.rotation.y = Math.PI; grp.add(mu) }
+    { const mm = new THREE.MeshStandardMaterial({ map: ganeshaTex(), roughness: .9 }); mm.userData.lin = 1; mm.map.userData.keep = true; const mu = new THREE.Mesh(AV.G.pln, mm); mu.position.set(10.9, 1.95, H.z0 - .14); mu.scale.set(5.4, 3.12, 1); mu.rotation.y = Math.PI; grp.add(mu) }
     { const nm = new THREE.MeshBasicMaterial({ map: leafNeonTex(), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }); nm.userData.lin = 1; const ne = new THREE.Mesh(AV.G.pln, nm); ne.position.set(22.6, 1.9, H.z0 - .16); ne.scale.set(1.6, 1.6, 1); ne.rotation.y = Math.PI; grp.add(ne); ctx.upd.push((dt, t) => nm.opacity = .75 + Math.sin(t * 11) * .03 + (Math.sin(t * .7) > .97 ? -.4 : 0)) }
     /* terrace furniture: ZtonedApe's bench, tables, Dino's cushion corner, plants, gecko */
     const bench = (x, z, ry, w) => { const c = Math.cos(ry), s = Math.sin(ry), P = (u, y, v, su, sy, sv, col) => hb.add(MT.wood, BG.box, col || 0xffffff, M(x + u * c + v * s, y, z - u * s + v * c, su, sy, sv, 0, ry, 0)); P(0, .45, 0, w, .08, .5); P(0, .78, -.24, w, .5, .07); for (const u of [-w / 2 + .15, w / 2 - .15]) P(u, .22, 0, .08, .45, .45, 0x6a4a2a); ctx.circles.push([x, z, Math.min(.6, w / 3)]) };
     bench(13.6, 49.3, Math.PI, 2.2); bench(17.6, 49.3, Math.PI, 2.2);   // backs to the hostel, facing the street
     const table = (x, z, r0) => { hb.add(MT.wood, A.geo('cyl'), 0xffffff, M(x, .72, z, r0, .06, r0)); hb.add(MT.v, A.geo('cyl'), 0x3a3a3a, M(x, .36, z, .05, .72, .05)); ctx.circles.push([x, z, r0 * .8]) };
-    table(10.9, 50.7, .45); table(24, 50.3, .5); bench(24, 49.1, Math.PI, 1.6);   // (door path at x 14.2–16.8 stays clear)
+    const stoneT = (x, z) => { hb.add(MT.v, A.geo('cyl'), 0x5c5c60, M(x, .74, z, .62, .07, .62)); hb.add(MT.v, A.geo('cyl'), 0x48484c, M(x, .37, z, .26, .74, .26)); for (const [dx, dz] of [[.95, 0], [-.95, 0], [0, .95]]) hb.add(MT.v, BG.box, 0x3c3c40, M(x + dx, .25, z + dz, .42, .5, .42)); ctx.circles.push([x, z, .7]) };   /* 2.3: dark stone tables + block stools, as in the photos */
+    stoneT(10.9, 50.9); stoneT(24, 50.6);
+    hb.add(MT.v, BG.box, 0xb0242a, M(15.5, .03, H.z0 - .75, 1.7, .03, 1)); hb.add(MT.v, BG.box, 0x5a5a62, M(13.2, .36, H.z0 - .32, 1.3, .72, .36)); for (let k = 0; k < 6; k++) hb.add(MT.v, BG.box, [0x2a2a2a, 0xe8e0d0, 0x4a3a2a, 0xc83a3a, 0x3a5a8a, 0xd8d0b0][k], M(12.75 + (k % 3) * .36, .48 + Math.floor(k / 3) * .3, H.z0 - .3, .26, .1, .3));
+    { const gm = new THREE.MeshBasicMaterial({ color: 0x38ff6a }); gm.userData.lin = 1; const gs = new THREE.Mesh(BG.box, gm); gs.position.set(25, 3.02, H.z0 - .12); gs.scale.set(13.4, .07, .05); grp.add(gs) }
+    if (false) { table(10.9, 50.7, .45); table(24, 50.3, .5) } bench(24, 49.1, Math.PI, 1.6);   // (door path at x 14.2–16.8 stays clear)
     for (const [x, z] of [[28.5, 49.6], [30.2, 49.6], [29.4, 50.9]]) hb.add(MT.v, A.geo('cyl'), [0xd84a8a, 0x4ac8c8, 0xffd84a][Math.round(x) % 3], M(x, .2, z, .55, .4, .55));   // cushions
     hb.add(MT.v, A.geo('cyl'), 0x3a3a3a, M(29.4, .25, 50.1, .3, .5, .3)); hb.add(MT.v, A.geo('cyl'), 0xe8303a, M(29.4, .52, 50.1, .22, .06, .22)); hb.add(MT.v, A.geo('cyl'), 0xffd84a, M(29.4, .54, 50.1, .14, .06, .14));   // rasta ashtray stand
     for (const [x, z, s] of [[8.6, 48.6, 1], [31.4, 48.5, 1.1], [19.8, 51.2, .8], [33.3, 50.5, .9]]) { hb.add(MT.v, A.geo('cyl'), 0x7a4a2a, M(x, .3, z, .32 * s, .6, .32 * s)); for (let k = 0; k < 9; k++) { const a = k * 2.39, el = .55 + (k % 3) * .25; hb.add(MT.dbl, A.geo('petal'), k % 2 ? 0x3a9a3a : 0x2f8a3a, M(x + Math.cos(a) * .1 * s, .55 * s, z + Math.sin(a) * .1 * s, .16 * s, el * s * 1.6, .07 * s, 0, -a, 0).multiply(M(0, 0, 0, 1, 1, 1, -.55, 0, 0)), .05) } ctx.circles.push([x, z, .4]) }   // leafy potted plants
@@ -520,7 +530,7 @@ AV.registerWorld({
     venue(CHADA, 'n', 0xd8e8c8, null, null, (x0, x1, z0, z1) => { for (const [u, v] of [[3, 4], [8, 4], [3, 8.5], [8, 8.5]]) { table(x0 + u, z0 + v, .55); for (const a of [0, 1.57, 3.14, 4.71]) hb.add(MT.v, A.geo('cyl'), 0x8a5a3a, M(x0 + u + Math.cos(a) * .8, .25, z0 + v + Math.sin(a) * .8, .18, .5, .18)) }
       box(hb, MT.wood, 0xffffff, x0 + .5, x1 - .5, 0, 1.05, z1 - 1.6, z1 - .8); ctx.cols.push([x0 + .5, x1 - .5, z1 - 1.6, z1 - .8]); for (let k = 0; k < 5; k++) box(hb, MT.v, [0xf2d21a, 0xd8201a][k % 2], x0 + 1 + k * 2.2, x0 + 2.4 + k * 2.2, 2.7, 3.2, z0 - .05, z0 - .02, .2);   /* the jay pennant string */
       front(x0, x1, z0, -1, 0x2a7a3a, 0x9a5a3a) });
-    venue(MART, 'n', 0xf4f4f4, '24H MINI MART', '#ff8a3a', (x0, x1, z0, z1) => { for (const z of [51.5, 54.5, 57.5]) { box(hb, MT.v, 0xd8d8d8, -14.5, -5.5, 0, 1.8, z - .3, z + .3); ctx.cols.push([-14.5, -5.5, z - .3, z + .3]); for (let k = 0; k < 12; k++) hb.add(MT.v, BG.box, [0xe83a3a, 0x3a8ad8, 0xffd84a, 0x3ac85a, 0xff8ad8][k % 5], M(-14 + k * .75, 1.0 + (k % 3) * .35, z, .3, .3, .5), .1) } box(hb, MT.v, 0x9ad8ff, -15.6, -14.9, 0, 2, 49, 59, .3) });
+    venue(MART, 'n', 0xf4f4f4, null, '#ff8a3a',   /* 2.3: the generic neon '24H MINI MART' is retired; lw_stores.js mounts the 7-ELEVAPE fascia here */ (x0, x1, z0, z1) => { for (const z of [51.5, 54.5, 57.5]) { box(hb, MT.v, 0xd8d8d8, -14.5, -5.5, 0, 1.8, z - .3, z + .3); ctx.cols.push([-14.5, -5.5, z - .3, z + .3]); for (let k = 0; k < 12; k++) hb.add(MT.v, BG.box, [0xe83a3a, 0x3a8ad8, 0xffd84a, 0x3ac85a, 0xff8ad8][k % 5], M(-14 + k * .75, 1.0 + (k % 3) * .35, z, .3, .3, .5), .1) } box(hb, MT.v, 0x9ad8ff, -15.6, -14.9, 0, 2, 49, 59, .3) });
     /* Rack & Roll Pool Bar (Nuni's mission) */
     venue(POOLBAR, 's', 0x2a1a3a, 'RACK & ROLL Pool Bar', '#ff4ad2', (x0, x1, z0, z1) => { poolTable(hb, 147, -16, 0); poolTable(hb, 155, -16, 0); box(hb, MT.wood, 0x5a3a2a, 143, 145, 0, 1.1, -24.5, -18); ctx.cols.push([143, 145, -24.5, -18]); for (let k = 0; k < 10; k++) hb.add(MT.dbl, A.geo('cyl'), [0x2a7a3a, 0x8a5a1a, 0xd8d8d8][k % 3], M(143.3 + (k % 2) * .4, 1.25, -24 + k * .6, .05, .3, .05), .1); box(hb, MT.v, 0xff4ad2, x0 + .3, x1 - .3, 3.9, 4, z0 + .3, z0 + .45, 1); box(hb, MT.v, 0x2a9a4a, 158.5, 159.6, 1.3, 2.9, -25.5, -25.4, .3); box(hb, MT.v, 0xffd23a, 156.5, 157.8, 1.3, 2.9, -25.5, -25.4, .3) });
     /* ---------- temples ---------- */

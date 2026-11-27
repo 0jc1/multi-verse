@@ -99,7 +99,7 @@ AV.hud = function () {
   $('top').innerHTML = '<b>' + tr('Credits', 'Créditos') + ': ' + S.money + '</b> · ' + (W ? W.name : '') + '<br>' + tr('Day', 'Día') + ' ' + S.day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + '<br>' +
     (AV.careers ? AV.careers.label() : S.job ? tr('Job: café helper', 'Trabajo: ayudante de café') : tr('Unemployed', 'Sin trabajo')) + '<br>' + (S.rentDays > 0 ? tr('Rented: ', 'Alquilado: ') + S.rentDays + tr(' days left', ' días restantes') : tr('No home yet', 'Sin casa'));
 };
-AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T travel map · I inventory · O settings · M mute · R unstuck · F3 FPS · Esc menu/mouse',
+AV.hintText = () => AV.device === 'phone' ? '' : tr('WASD move · Shift run · Space jump · E interact · P Portal Pipe · T city map · G missions · Z phone · I inventory · O settings · M mute · R unstuck · F3 FPS · Esc menu/mouse',
   'WASD mover · Shift correr · Espacio saltar · E interactuar · P Pipa-Portal · T mapa · I inventario · O ajustes · M silencio · R desbloquear · F3 FPS · Esc menú/ratón');
 AV.showHint = function () {
   const el = $('hint'), esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -242,7 +242,8 @@ addEventListener('keydown', e => {
   if (AV.blocking()) return;
   keys[k] = 1;
   if (k === 'KeyE') AV.interact(); else if (k === 'KeyI') AV.toggleInv(); else if (k === 'KeyM') AV.toggleMute(); else if (k === 'KeyR') AV.unstuck();
-  else if (k === 'KeyT') AV.toggleMap(); else if (k === 'KeyO') AV.toggleSettings(); else if (k === 'KeyG') AV.cycleQuality();
+  else if (k === 'KeyT') { if (e.shiftKey || !(AV.minimap && AV.minimap.atlas)) AV.toggleMap(); else AV.minimap.atlas() }   /* 2.3: T = full-screen city map, Shift+T = travel map */
+  else if (k === 'KeyO') AV.toggleSettings(); else if (k === 'F4') { e.preventDefault(); AV.cycleQuality() } else if (k === 'KeyG') { if (AV.mis && AV.mis.journal) AV.mis.journal(); else AV.cycleQuality() }   /* 2.3: G = missions journal, F4 = graphics */
   else if (AV.keymap[k]) AV.keymap[k](e); else if (k === 'Space') e.preventDefault();
 });
 addEventListener('keyup', e => keys[e.code] = 0);

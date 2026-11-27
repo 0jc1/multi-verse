@@ -182,3 +182,64 @@ Tests (one at a time, through the GPU lock):
 ```
 powershell -ExecutionPolicy Bypass -File tools\tests\gpu_queue.ps1 -Owner lw23 -Run "-Suite tools/tests/suite_lw23a.js -Gpu -W 1536 -H 864 -Port 8102 -StepTimeout 900 -Out %TEMP%/lw23_a"
 ```
+
+## Owner requirements added after the first human playtest (2026-11-27). Not implemented yet unless marked.
+
+1. **No generic text signs.** Every important business gets its own signage, branding, materials and storefront, in all worlds.
+2. **7-Eleven-style stores across Thailand** (Chiang Mai, Pai, Koh Tao, Koh Samui):
+   - green / orange / red fascia, a lit logo, glass doors, fridges, stocked shelves, a counter, posters, AC units, staff and customers, scooters parked outside;
+   - functional: buy, then consume.
+   - **Licensing flag:** the real 7-Eleven marks must be cleared before any public or commercial release. The build uses a recognisable parody mark.
+3. **Giant Hostel recreated from the owner's photos:**
+   - the pink and white "New Srisuk / J GIANT HOSTEL" banner with red lettering;
+   - glass and aluminium doors, green lit shop signs, the covered terrace, the Ganesha mural on the side wall;
+   - wooden benches, stone tables, plants, mats and shoe racks;
+   - reception, common room and pool.
+   - The Blues Bar stays opposite, with evening live music.
+4. **Street audio:**
+   - Find and remove the breathing-like noise.
+   - Location-specific spatial ambience: scooters, tuk-tuks, voices, footsteps, cafés, birds, rain, buskers, markets, crowds, nightlife, doors, fridges.
+   - Separate volume sliders for music, ambience, vehicles, crowds and effects.
+5. **At least 40% of the named businesses in each major city really interactive**, with a per-city coverage report.
+6. **T = full-screen city map:**
+   - zoom, pan, filters, legend, missions, shops, homes, bars, clubs, transport, hospitals, events, GPS;
+   - use the illustrated city maps already in the assets (audit them first; report any that are missing);
+   - travel moves to its own control; linked to What's Happening?.
+7. **Two-deck DJ controller:**
+   - jog wheels that really scratch, seek and nudge; waveforms; cues; BPM; pitch; sync; crossfader; 3-band EQ; gain; filters; loops; library;
+   - mix ZtonedApe tracks;
+   - usable in clubs, studios, homes and festivals; tied to gigs, competitions, reputation and income.
+8. **Onboarding:**
+   - character creation, name, starting city, two furnished starter homes in different worlds (bed, storage, wardrobe, music, TV, parking);
+   - starter package: 10 000 ¢, car, bike, scooter (world-appropriate; futuristic on alien worlds), phone, food and drinks, optional basic fictional weapons;
+   - home spawn choice on load; owned homes and vehicles on the phone and maps;
+   - the starter package is optional, and offered once, for old saves;
+   - optional tutorial missions.
+
+## Playtest-fix release (owner feedback 2026-11-27)
+
+- **Breathing noise, root cause found and fixed** (`js/lw_audio.js`):
+  - Sound 2.0's café / bar / market "chatter" was white noise whose volume was swung by 0.37 Hz and 3.1 Hz oscillators, which sounds like breathing. The world ambience crowd, traffic and wind beds did the same.
+  - Chatter is now an irregular murmur of short voice-like grains.
+  - The fake crowd, traffic and hum beds are removed; natural beds (waves, rivers, fountains, cicadas, wind) keep playing without the pumping.
+  - Doppler pass-bys added: scooters and tuk-tuks in Thailand and Vietnam, cars elsewhere, hover craft on Astro-9.
+  - **Settings has new sliders** for ambience, crowds and vehicles.
+  - *Still procedural:* the local CC0 packs contain no street, traffic or crowd recordings. Real recordings need downloading with the owner's OK.
+- **T = full-screen city map** (`js/lw_map.js`):
+  - category filters (missions, places, shops and services, homes, transport, portals, your vehicles), a legend, click-to-GPS, and buttons for 🌀 travel (also Shift+T) and 🔥 What's Happening?;
+  - T or Esc closes it.
+  - **Illustrated guide:** the owner's 16 illustrated maps were audited and copied to `assets/maps/` (local-only). 12 worlds have one, plus extra sheets: the Chiang Mai hostel map, Amsterdam neon, and the España travel map for the Spanish cities.
+    - They are artwork that does not match the playable street layouts, so they are shown as a separate guide page, never under the GPS markers.
+    - **No illustrated map yet:** Tokyo, Barcelona, Madrid (only the España travel map), Astro-9, Jungle Dub, Verdalux, Đà Nẵng, Jerusalem, Judean Desert, Koh Samui Jurassic, Nimbus. Unused files: "Interconnected Maze City" (no matching world), "Canary Islands" (no world).
+- **G = missions journal.** Before this, `core.js` caught G for graphics quality, so the journal shortcut never fired in real play. Graphics cycling moved to F4.
+- **7-ELEVAPE** (`js/lw_stores.js`, a recognisable 7-Eleven-style parody; **real marks must be cleared before any public release**):
+  - walk-in stores with a lit fascia, glass front, fridges, stocked shelves, a counter, Ploy the clerk, posters, an AC unit and parked scooters;
+  - placed off the roads near real places: 5 in Chiang Mai (the Moon Muang minimart building itself is rebranded; its generic neon sign is gone), 3 in Pai, 3 in Koh Tao, 1 in Koh Samui;
+  - the counter menu: toastie (heated), basil rice, ice cream, cola, iced latte, energy shot, water, Thai tea, crisps, snacks, and beer only from 11:00 to 14:00 and 17:00 to 24:00;
+  - your order is rung up, handed over, put in your hand, and eaten bite by bite.
+- **Giant Hostel from the owner's photos:**
+  - the banner as photographed: pink strip "New Srisuk" + นิวศรีสุข, red "J GIANT / HOSTEL", the Thai name, 40/3;
+  - **the real Ganesha mural**, cropped from the owner's photo (`assets/tex/giant_ganesha.jpg`);
+  - dark stone tables with block stools, a red mat, a shoe rack, a green neon line over the shop window.
+  - **Known:** the game's frontage is a mirror image of the real one (mural on the right, shop window on the left). Flipping it means rebuilding the hostel's interior layout; that is the next hostel step.
+- **Test:** `suite_lw23d0` 37/37.

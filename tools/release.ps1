@@ -19,6 +19,10 @@ try {
   Add-Content -Path (Join-Path $base 'release_log.txt') -Value ("{0}  {1} -> {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm'), $prev, $now)
   Write-Host "Released $now (previous $prev) to http://localhost:8101/index.html"
 } finally { Pop-Location }
+# local-only owner art that git does not carry (illustrated city maps): hard-link it into the release folder
+$devMaps = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\maps'
+if (Test-Path $devMaps) { $dst = Join-Path $play 'assets\maps'; New-Item -ItemType Directory -Force $dst | Out-Null
+  Get-ChildItem $devMaps -File | ForEach-Object { $t = Join-Path $dst $_.Name; if (-not (Test-Path $t)) { New-Item -ItemType HardLink -Path $t -Target $_.FullName | Out-Null } } }
 $up = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object LocalPort -eq 8101
 if ($Restart -or -not $up) {
   Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'serve\.ps1.*-Port 8101' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }

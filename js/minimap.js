@@ -146,7 +146,7 @@ document.body.appendChild(ov);
 const big = ov.querySelector('#mmAtlas'), bg = big.getContext('2d'), V = { cx: 0, cz: 0, sc: 1 };
 MM.atlasOpen = () => ov.style.display === 'block';
 const w2s = (x, z) => [big.clientWidth / 2 + (x - V.cx) * V.sc, big.clientHeight / 2 + (z - V.cz) * V.sc], s2w = (px, py) => [V.cx + (px - big.clientWidth / 2) / V.sc, V.cz + (py - big.clientHeight / 2) / V.sc];
-function allMarks() { const W = AV.W, P = AV.P, out = markers().map(m => Object.assign({}, m)); const seenN = new Set(out.map(m => m.name)); for (const p of MM.places()) { const n = tr(p.name[0], p.name[1]); if (!seenN.has(n)) out.push({ x: p.x, z: p.z, kind: 'place', name: n, dim: true }) } return out }
+function allMarks() { const W = AV.W, P = AV.P, out = markers().map(m => Object.assign({}, m)); const seenN = new Set(out.map(m => m.name)); for (const p of MM.places()) { const n = tr(p.name[0], p.name[1]); if (!seenN.has(n)) out.push({ x: p.x, z: p.z, kind: 'place', name: n, dim: true }) } return MM.hide ? out.filter(m => !MM.hide(m)) : out }   /* 2.3: category filters (lw_map.js) */
 MM.fullMarks = allMarks;
 function renderBig() {
   if (!MM.atlasOpen()) return; const B = MM.base, W = AV.W, P = AV.P, dpr = Math.min(2, devicePixelRatio || 1), w = innerWidth, h = innerHeight;

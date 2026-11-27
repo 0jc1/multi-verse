@@ -65,13 +65,13 @@ SF.make = function (ctx, o) {
   box(P, S.frame, -hw, -hw + .32, 0, h + .05, 0, .2); box(P, S.frame, hw - .32, hw, 0, h + .05, 0, .2); box(P, S.frame, -hw - .05, hw + .05, h, h + .24, -.02, .34); box(P, S.frame, -hw, hw, oy1, fy0, 0, .16);
   box(P, S.frame, -hw + .32, hw - .32, fy0 - .02, fy1 + .02, 0, .12); quad(-hw + .45, hw - .45, fy0 + .04, fy1 - .04, .13, [0, 0, 1024, 208]);
   /* openings: door + windows either side (riser, glass, mullions, painted lettering, warm interior glow behind) */
-  const d0 = door - dw / 2, d1 = door + dw / 2, wins = [[-hw + .32, d0 - .12], [d1 + .12, hw - .32]].filter(([a, b]) => b - a > .5);
+  const d0 = door - dw / 2, d1 = door + dw / 2, wins = o.open ? [] : [[-hw + .32, d0 - .12], [d1 + .12, hw - .32]].filter(([a, b]) => b - a > .5);   /* open: a walk-in bar, the whole frontage is the entrance */
   for (const [a, b] of wins) { box(P, S.frame, a, b, 0, .08, 0, .16); quad(a + .02, b - .02, .08, .72, .17, [0, 304, Math.min(512, (b - a) * 160), 64]); box(P, S.frame, a, b, .72, .82, 0, .18);
     Gs.push([BG.box, 0xa8c8d8, M((a + b) / 2, (.82 + oy1) / 2, .05, b - a, oy1 - .82, .03), 0]); box(Gl, S.glow, a + .05, b - .05, .85, oy1 - .05, -.32, -.28, 1);
     const nm = Math.max(1, Math.round((b - a) / 1.3)); for (let k = 1; k < nm; k++) { const u = a + k * (b - a) / nm; box(P, S.frame, u - .04, u + .04, .82, oy1, 0, .1) }
     if (o.decal) quad(a + .1, b - .1, 1.45, 1.95, .08, [0, 208, 1024, 96]) }
-  box(P, S.frame, d0 - .12, d0, 0, oy1, 0, .18); box(P, S.frame, d1, d1 + .12, 0, oy1, 0, .18); box(P, 0x2a1a10, d0, d1, 0, 2.3, -.05, .02); Gs.push([BG.box, 0xa8c8d8, M(door, 1.6, .03, dw - .3, .9, .02), 0]); box(Gl, S.glow, d0 + .15, d1 - .15, 1.2, 2.05, -.2, -.16, 1); box(P, 0xc8a040, d1 - .2, d1 - .14, 1, 1.12, .02, .1);
-  box(P, S.frame, d0, d1, 2.3, oy1, 0, .12);
+  if (!o.open) { box(P, S.frame, d0 - .12, d0, 0, oy1, 0, .18); box(P, S.frame, d1, d1 + .12, 0, oy1, 0, .18); box(P, 0x2a1a10, d0, d1, 0, 2.3, -.05, .02); Gs.push([BG.box, 0xa8c8d8, M(door, 1.6, .03, dw - .3, .9, .02), 0]); box(Gl, S.glow, d0 + .15, d1 - .15, 1.2, 2.05, -.2, -.16, 1); box(P, 0xc8a040, d1 - .2, d1 - .14, 1, 1.12, .02, .1);
+  box(P, S.frame, d0, d1, 2.3, oy1, 0, .12) } else box(Gl, S.glow, -hw + .5, hw - .5, oy1 - .12, oy1 - .06, -.6, -.3, 1);
   /* awning over the windows (striped canvas on a slope, or a straight valance) */
   if (S.awn && o.awning !== false) { const ay = oy1 - .02, n = Math.max(4, Math.round((w - .6) / .45)); if (S.awnKind === 'stripe') { for (let k = 0; k < n; k++) { const u = -hw + .3 + (k + .5) * (w - .6) / n; P.push([BG.box, S.awn[k % 2], M(u, ay - .32, .72, (w - .6) / n, .04, 1.45, -.42), 0]) } for (let k = 0; k < n; k++) { const u = -hw + .3 + (k + .5) * (w - .6) / n; box(P, S.awn[k % 2], u - (w - .6) / n / 2, u + (w - .6) / n / 2, ay - .9, ay - .62, 1.38, 1.42) } }
     else { box(P, S.awn[0], -hw + .2, hw - .2, ay - .1, ay + .06, .15, 1.2); for (let u = -hw + .3; u < hw - .2; u += .3) box(P, S.awn[1], u, u + .22, ay - .34, ay - .1, 1.16, 1.2) } }
@@ -81,7 +81,7 @@ SF.make = function (ctx, o) {
   if (o.lamps !== false) for (const u of [-hw * .55, hw * .55]) { box(P, 0x1a1a1a, u - .02, u + .02, h + .1, h + .14, .2, .7); P.push([BG.cone, 0x1a1a1a, M(u, h + .02, .72, .16, .14, .16), 0]); box(Gl, 0xfff0c0, u - .06, u + .06, h - .07, h - .02, .66, .78, 1) }
   /* planters + chalk menu board, off the door */
   const cs = AV.W ? null : null, circles = ctx.circles, wp = (u, v) => { const p = new THREE.Vector3(u, 0, v).applyMatrix4(base); return [p.x, p.z] };
-  if (o.planters !== false) for (const u of [-hw + .55, hw - .55]) { if (Math.abs(u - door) < dw) continue; P.push([BG.box, S.frame, M(u, .3, .55, .7, .6, .45), 0], [BG.ico, 0x3a7a32, M(u, .78, .55, .5, .4, .32), 0], [BG.ico, 0x4a8a3a, M(u + .15, .92, .5, .3, .3, .25), 0]); const p = wp(u, .55); circles.push([p[0], p[1], .42]) }
+  if (o.planters !== false && !o.open) for (const u of [-hw + .55, hw - .55]) { if (Math.abs(u - door) < dw) continue; P.push([BG.box, S.frame, M(u, .3, .55, .7, .6, .45), 0], [BG.ico, 0x3a7a32, M(u, .78, .55, .5, .4, .32), 0], [BG.ico, 0x4a8a3a, M(u + .15, .92, .5, .3, .3, .25), 0]); const p = wp(u, .55); circles.push([p[0], p[1], .42]) }
   if (o.menu) { const u = door + (door > 0 ? -1.5 : 1.5); P.push([BG.box, 0x5a3a20, M(u, .55, 1.05, .62, 1.1, .05, .2), 0]); Q.push({ menu: true, u, v: 1.1 }); const p = wp(u, 1.05); circles.push([p[0], p[1], .35]) }
   /* collider for the frontage dressing (the building owns its own walls) */
   { const a = wp(-hw, 0), b = wp(hw, .2); if (o.col !== false) for (const u of [-hw + .16, hw - .16]) { const p = wp(u, .1); circles.push([p[0], p[1], .2]) } }

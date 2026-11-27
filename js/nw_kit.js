@@ -37,6 +37,24 @@ NW.chunked = function (items, cell, build, mat, grp, name, o) { o = o || {}; if 
     const k = (o.region ? o.region(x, z) + '|' : '') + (wide ? 'wide' : key(x, z)); let a = B.get(k); if (!a) B.set(k, a = []); a.push(it) }
   const out = []; for (const [k, arr] of B) { if (!arr.length) continue; const g = build(arr); if (!g || !g.attributes.position || !g.attributes.position.count) continue; g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.name = name + '_' + k; if (o.region) m.userData.region = k.split('|')[0]; if (o.shadow) m.castShadow = m.receiveShadow = true; if (o.order) m.renderOrder = o.order; grp.add(m); out.push(m) }
   return out };
+/* graph: a walking graph from street polylines with every crossing a junction BY CONSTRUCTION (2.2 interconnected standard).
+   lines = [[[x, z], ...], ...].  Each pair of segments that cross gets a shared node at the crossing; a line end that stops within
+   o.snap (3.2 m) of another line is tied into it (T-junction).  Segments are then sampled every <= o.step (8 m).  Returns { nodes, edges }. */
+NW.graph = function (lines, o) { o = o || {}; const step = o.step || 8, snapR = o.snap || 3.2, segs = [];
+  lines.forEach((pl, li) => { for (let i = 0; i < pl.length - 1; i++) if (Math.hypot(pl[i + 1][0] - pl[i][0], pl[i + 1][1] - pl[i][1]) > .01) segs.push({ li, i, a: pl[i], b: pl[i + 1], cuts: [0, 1] }) });
+  const X = (p, q, r, s) => { const rx = q[0] - p[0], rz = q[1] - p[1], sx = s[0] - r[0], sz = s[1] - r[1], den = rx * sz - rz * sx; if (Math.abs(den) < 1e-9) return null; const t = ((r[0] - p[0]) * sz - (r[1] - p[1]) * sx) / den, u = ((r[0] - p[0]) * rz - (r[1] - p[1]) * rx) / den; return t > -1e-6 && t < 1 + 1e-6 && u > -1e-6 && u < 1 + 1e-6 ? [Math.min(1, Math.max(0, t)), Math.min(1, Math.max(0, u))] : null };
+  for (let i = 0; i < segs.length; i++) { const A = segs[i]; for (let j = i + 1; j < segs.length; j++) { const B = segs[j]; if (A.li === B.li && Math.abs(A.i - B.i) <= 1) continue;
+    if (Math.max(A.a[0], A.b[0]) < Math.min(B.a[0], B.b[0]) - .01 || Math.max(B.a[0], B.b[0]) < Math.min(A.a[0], A.b[0]) - .01 || Math.max(A.a[1], A.b[1]) < Math.min(B.a[1], B.b[1]) - .01 || Math.max(B.a[1], B.b[1]) < Math.min(A.a[1], A.b[1]) - .01) continue;
+    const r = X(A.a, A.b, B.a, B.b); if (r) { A.cuts.push(r[0]); B.cuts.push(r[1]) } } }
+  const links = []; lines.forEach((pl, li) => { for (const p of [pl[0], pl[pl.length - 1]]) { let best = null; for (const S of segs) { if (S.li === li) continue; const dx = S.b[0] - S.a[0], dz = S.b[1] - S.a[1], L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((p[0] - S.a[0]) * dx + (p[1] - S.a[1]) * dz) / L2)), q = [S.a[0] + dx * t, S.a[1] + dz * t], d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < snapR && (!best || d < best.d)) best = { S, t, q, d } }
+    if (best && best.d > .05) { best.S.cuts.push(best.t); links.push([p, best.q]) } } });
+  const nodes = [], edges = [], grid = new Map(), E = new Set(), key = (x, z) => Math.round(x * 2) + ',' + Math.round(z * 2);
+  const nid = p => { const kx = Math.round(p[0] * 2), kz = Math.round(p[1] * 2); for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const g = grid.get((kx + dx) + ',' + (kz + dz)); if (g) for (const i of g) if (Math.hypot(nodes[i][0] - p[0], nodes[i][1] - p[1]) < .35) return i } nodes.push([p[0], p[1]]); const i = nodes.length - 1, k = key(p[0], p[1]); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); return i };
+  const edge = (i, j) => { if (i === j) return; const k = i < j ? i + '_' + j : j + '_' + i; if (E.has(k)) return; E.add(k); edges.push([i, j]) };
+  for (const S of segs) { const c = [...new Set(S.cuts.map(t => Math.round(t * 1e5) / 1e5))].sort((a, b) => a - b), L = Math.hypot(S.b[0] - S.a[0], S.b[1] - S.a[1]), at = t => [S.a[0] + (S.b[0] - S.a[0]) * t, S.a[1] + (S.b[1] - S.a[1]) * t];
+    let prev = nid(at(c[0])); for (let k = 1; k < c.length; k++) { const n = Math.max(1, Math.ceil(L * (c[k] - c[k - 1]) / step)); for (let m = 1; m <= n; m++) { const id = nid(at(c[k - 1] + (c[k] - c[k - 1]) * m / n)); edge(prev, id); prev = id } } }
+  for (const [p, q] of links) edge(nid(p), nid(q));
+  return { nodes, edges } };
 /* interior: hollow special lot -> side/back walls + front wall with the door gap; returns { F(u, f), bb(u0,u1,f0,f1), door, doorIn, mid, ... }
    u = metres in from the front, f = door-relative position along the row (door at f = -(hw - 1.1)) */
 NW.interior = function (s, cols, box, P, Gl, fitFn) { if (!s || !s.hollow) return null; const depth = s.hollow, f = s.out, a = s.al, PT = (u, v) => [s.x - f[0] * u + a[0] * v, s.z - f[1] * u + a[1] * v];

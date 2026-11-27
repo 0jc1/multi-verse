@@ -21,7 +21,8 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 |---|---|---|
 | Shibuya + Harajuku | reach 91/91, 2nd routes 8/8 | **reach 171/171, 2nd routes 13/13** (more destinations), 5 long collision walks OK |
 | Asakusa | **reach 31/36** (temple to north promenade 547 m) | **reach 66/66, 2nd routes 7/7** |
-| Tokyo street graph | **46 dead ends** | **0** (1 planned terminus: the forest shrine; Shinjuku will continue it) |
+| Tokyo street graph | **46 dead ends** | **0**, and no planned terminus left: the forest shrine now continues into Shinjuku |
+| Shinjuku (district 3) | new | **reach 91/91, 2nd routes 8/8**, 0 pockets |
 | Saint-Germain + Seine | **reach 63/66** | **reach 153/153, 2nd routes 11/11** |
 | Montmartre | **reach 27/28** | **reach 45/45, 2nd routes 6/6** |
 | Paris street graph | **35 dead ends** | **0** (1 planned terminus: the cathedral door) |
@@ -56,6 +57,23 @@ No isolated pockets anywhere, before or after.
 - **Paris triangles:** boulevard 184k → 295k; arrival 666k → 436k.
 
 This needs a clean re-measure when the GPU is free.
+
+### 2.2 follow-up: businesses on the new streets, Shinjuku, a junction check
+
+- **Businesses on the new streets:** Tokyo +12 (Cat Street vintage and coffee, Gādo standing bar, curry, two Nonbei bars, manga, gyōza, tea, okonomiyaki walk-in, capsule toys…) and Paris +7 (Salon Rivoli walk-in, Galerie Jacob walk-in, a wine bar, bistro, papeterie, chocolatier, souvenirs).
+- **Shinjuku** (`js/tokyo_shinjuku.js`), Tokyo district 3. You reach it **on foot**: north from Harajuku through the forest, round the shrine hall, out of a north torii and up the same avenue. You can also take the **Loop Line**, which gains a third station.
+  - **Streets:** Yasukuni-dōri, Kabukichō (Ichibangai, two cross streets, the north street and a west lane), three Golden Gai bar lanes, Omoide Yokochō, the Sanchōme grid and the east-exit plaza.
+  - **Businesses (9):** GIGA APE (walk-in arcade), Don Banana (walk-in discount store), the NEON-BOT robot show, tsukemen, a capsule hotel, three Golden Gai bars, and Omoide yakitori.
+  - **Also:** the batting center and three residents. A short story, Aoi's battery, unlocks a free robot show.
+- **New gate check:** *every crossing is a junction*. Two street lines that cross without a shared node make the GPS walk round the block. This check found two such crossings:
+  - **Paris:** Rue Jacob × Rue Dauphine and × Rue Bonaparte. This was the real cause of a flaky Rivoli → Jacob detour.
+  - **Tokyo:** Cat Street × West-cross 2.
+  Both are fixed. New cities use `AV.nwkit.graph`, which inserts junctions by construction.
+- **Regression:**
+  - `suite_tokyo`: 297 checks. The full run had 2 test-side failures (an ambiguous train label and a clock tolerance), both fixed. A re-run of the affected steps passed 71/71.
+  - `suite_paris`: 203/203.
+  - `suite_connect`: 41/41.
+- **Frames (Medium, shared GPU):** Shinjuku crossing 29.6 fps / 63 calls; Kabukichō 30.8 / 256; Golden Gai 42.8 / 109.
 
 ## Ledger (failures first)
 

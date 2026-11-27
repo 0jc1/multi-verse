@@ -151,6 +151,27 @@ Three animated giant screens on the corner towers show Apeverse brand ads and th
 - The Skytree is scenery: you can't go up.
 - No Asakusa festival yet; the city's festival is still Bon Odori in Shibuya.
 
+## District 3: Shinjuku (tokyo_shinjuku.js)
+
+**Getting there:**
+- **On foot:** north from Harajuku, through the forest shrine (paths round the hall, then the north torii), up the avenue.
+- **By train:** the Loop Line runs Harajuku ↔ Shinjuku.
+
+**Streets:** Yasukuni-dōri crossing, Kabukichō (Ichibangai gate and neon canopy, K1/K2, north street, west lane), Golden Gai (three tiny lanes of two-storey bar huts), Omoide Yokochō along the tracks, the east-exit plaza with the Studio Ape screen, the Mecha-Ape cinema tower, the Sanchōme grid, and the west skyscraper skyline.
+
+**Things to do:**
+- GIGA APE: walk-in, with a crane game and a drum game.
+- Don Banana: walk-in.
+- NEON-BOT robot show, 20:00–24:00.
+- Tsukemen Kaze and Yakitori Kemuri.
+- Golden Gai bars, 19:00–04:00.
+- Capsule Hotel Hachi: sleep until 08:00.
+- Batting center.
+
+**People:** Hiro, Aoi and Takeshi. Aoi's spare-battery story unlocks a free show.
+
+Shinjuku has its own sign atlas, and its building chunks are a separate region (`sj`), drawn only near the district.
+
 ## Release gate
 
 Measured results (pass counts, FPS and draw calls per view) are in `docs/NEW_WORLDS_STATUS.md`.

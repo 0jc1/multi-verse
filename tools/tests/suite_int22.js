@@ -1,5 +1,5 @@
 /* APEVERSE 2.2 INTEGRATION GATE (branch apeverse-2-integration): the four agents' work running together in one build.
-   For every 2.1/2.2 city (Amsterdam, Vienna, Madrid, Tokyo, Paris, Sevilla): it is listed as open in the portal pipe, loads,
+   For every 2.1/2.2 city (Amsterdam, Vienna, Madrid, Tokyo, Paris, Barcelona, Sevilla): it is listed as open in the portal pipe, loads,
    spawns on walkable ground, has an ambience preset, Sound 2.0 answers (footstep material), a car can be rented, driven and handed back,
    a consumable is used step by step (Consumables 2.0), no JS errors. Then: Business Empire + garage parts APIs alive, Business phone app,
    sandboxed save round trip that carries the new-city location + business + vehicle data, the player's real save untouched, travel home.
@@ -12,7 +12,7 @@ window.APE_T = (() => {
   const go = async id => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 240000) };
   const errs = () => (window.__APE_ERRS || []).filter(e => !/api\/mp\//.test(e));
   let e0 = 0; const newErrs = () => { const E = errs(), n = E.slice(e0); e0 = E.length; return n };
-  const CITIES = ['amsterdam', 'vienna', 'madrid', 'tokyo', 'paris', 'sevilla'];
+  const CITIES = ['amsterdam', 'vienna', 'madrid', 'tokyo', 'paris', 'barcelona', 'sevilla'];
 
   step('boot (sandboxed save)', async c => { c('page scripts loaded', await until(() => window.AV && AV.boot && $('bNew') && $('bNew').onclick, 120000));
     $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(1500);
@@ -20,7 +20,7 @@ window.APE_T = (() => {
 
   step('all four branches present in one build', async c => {
     c('living-worlds: Amsterdam + Vienna + Madrid registered', ['amsterdam', 'vienna', 'madrid'].every(id => AV.worldDefs[id]), Object.keys(AV.worldDefs).join(','));
-    c('new-worlds: Tokyo + Paris registered, nw_kit', !!(AV.worldDefs.tokyo && AV.worldDefs.paris && AV.nwkit));
+    c('new-worlds: Tokyo + Paris + Barcelona registered, nw_kit', !!(AV.worldDefs.tokyo && AV.worldDefs.paris && AV.worldDefs.barcelona && AV.nwkit));
     c('global-worlds: Sevilla registered, gw_kit', !!(AV.worldDefs.sevilla && AV.gwkit));
     c('gameplay-audio: Sound 2.0, Consumables 2.0, Business Empire, garage parts, dev cheats', !!(AV.snd && AV.snd.stepMat && AV.cons && AV.cons.step && AV.vent && AV.vent.acquire && AV.garage && AV.garage.part && AV.dev));
     const ids = (AV.WORLDS_DATA || []).map(w => w.id), dup = ids.filter((id, i) => ids.indexOf(id) !== i); c('no duplicate world registrations', !dup.length, dup.join(','));

@@ -111,6 +111,46 @@ Three animated giant screens on the corner towers show Apeverse brand ads and th
 
 **Save:** a new optional `S.tokyo` holding `met`, `q.press`, `train`, `ramen`, `lh` (ticket expiry), `guest`, `gigs`, `dances`, `kar`, `ufo`, `ufoTries`, `puri`, `omikuji`, `prayed`, `ema`, `purified`, `forest`, `sento` and `odori`.
 
+## District 2: Asakusa (tokyo_asakusa.js)
+
+**How you get there:** the Ginza Line, from the entrance on the Haru plaza (2 credits; there is no tunnel to ride). The districts are a subway ride apart, as in the real city, and every street inside Asakusa connects.
+
+**What's there:**
+- **Kaminarimon-dōri** with the **Thunder Gate** and its giant red 雷門 lantern.
+- **Nakamise:** 73 stalls with red-tiled roofs and red lanterns. Six of them sell:
+  - Fumi's hand-grilled senbei, ningyō-yaki, kibi-dango;
+  - souvenirs (fans, maneki-neko, tenugui), melon pan, matcha ice cream.
+  - They open 9:00-19:00. At night painted shutters come down (waves, a festival, Mt Fuji).
+- **The inner gate and the temple precinct:**
+  - the main hall with an offering box; a no-clapping hint;
+  - a five-storey pagoda;
+  - the incense burner, with real smoke you can waft over yourself;
+  - omikuji with honest bad luck: tie it to the rack;
+  - ema plaques, a small shrine (where you do clap), ginkgo trees and stone lanterns.
+- **Denpōin-dōri:** Edo-style wooden shophouses, including **Kimono Rental Hana** (walk-in, 15: rent for the day).
+- **Hoppy Street:** izakaya huts with tables out on the lane, with drinkers in the evening. Hoppy, motsu-nikomi, beer.
+- **Tempura Sumida** on Kaminarimon-dōri (walk-in): tendon, the tempura set.
+- **The Sumida river:** a promenade with cherry trees, a red arched bridge to the east bank, and the **Skytree** across the water (scenery, lit at night).
+- **Rides:**
+  - a **rickshaw** tour to the river and back (3), pulled by Ren;
+  - the **water bus** on the Sumida (6), captained by Daichi.
+- **Named residents:** Ren, Fumi and Daichi, with routines and 4-choice conversations.
+
+**Story, "Fumi's fortune":**
+1. Fumi can't climb to the hall today, so she asks you for an omikuji.
+2. A bad fortune doesn't count.
+3. Bring her a good one: +20 and senbei.
+
+**Save:** `S.tokyo.as` holds `met`, `q.fumi`, `incense`, `prayed`, `omikuji`, `ema`, `shrine`, `gate`, `kimono`, `rick`, `bus` and `ginza`.
+
+**Rendering:** tiles carry a district tag, and only the district you are in is drawn.
+
+**Not built yet:**
+- The main hall and the pagoda are exteriors.
+- Nakamise stalls are counters.
+- The Skytree is scenery: you can't go up.
+- No Asakusa festival yet; the city's festival is still Bon Odori in Shibuya.
+
 ## Release gate
 
 Measured results (pass counts, FPS and draw calls per view) are in `docs/NEW_WORLDS_STATUS.md`.

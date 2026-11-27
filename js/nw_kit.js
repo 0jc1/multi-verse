@@ -33,8 +33,8 @@ NW.rowWalk = function (o) { const { id, ax, front, a0, a1, face, depth, rng, SPE
    Pieces longer than a tile (viaduct decks, quay walls) go to their own "wide" bucket.  Returns the meshes. */
 NW.chunked = function (items, cell, build, mat, grp, name, o) { o = o || {}; if (NW.noChunks) cell = 1e7;   /* debug/A-B: one mesh per layer */ const B = new Map(), key = (x, z) => Math.floor(x / cell) + ',' + Math.floor(z / cell);
   for (const it of items) { let x, z, wide = false; if (Array.isArray(it)) { const e = it[2].elements; x = e[12]; z = e[14]; const sx = Math.hypot(e[0], e[1], e[2]), sz = Math.hypot(e[8], e[9], e[10]); wide = Math.max(sx, sz) > cell * 1.5 } else { x = it.x; z = it.z }
-    const k = wide ? 'wide' : key(x, z); let a = B.get(k); if (!a) B.set(k, a = []); a.push(it) }
-  const out = []; for (const [k, arr] of B) { if (!arr.length) continue; const g = build(arr); if (!g || !g.attributes.position || !g.attributes.position.count) continue; g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.name = name + '_' + k; if (o.shadow) m.castShadow = m.receiveShadow = true; if (o.order) m.renderOrder = o.order; grp.add(m); out.push(m) }
+    const k = (o.region ? o.region(x, z) + '|' : '') + (wide ? 'wide' : key(x, z)); let a = B.get(k); if (!a) B.set(k, a = []); a.push(it) }
+  const out = []; for (const [k, arr] of B) { if (!arr.length) continue; const g = build(arr); if (!g || !g.attributes.position || !g.attributes.position.count) continue; g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.name = name + '_' + k; if (o.region) m.userData.region = k.split('|')[0]; if (o.shadow) m.castShadow = m.receiveShadow = true; if (o.order) m.renderOrder = o.order; grp.add(m); out.push(m) }
   return out };
 /* interior: hollow special lot -> side/back walls + front wall with the door gap; returns { F(u, f), bb(u0,u1,f0,f1), door, doorIn, mid, ... }
    u = metres in from the front, f = door-relative position along the row (door at f = -(hw - 1.1)) */

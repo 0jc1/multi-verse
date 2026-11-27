@@ -63,6 +63,7 @@ TKY.life = function (ctx, E) {
   line([[-14, -36], [-195, -36]]); line([[-14, -124], [-195, -124]]); line([[-93, -38], [-93, -122]]); line([[-77, 12], [-77, 118], [-77, 150]]); line([[-14, 150], [-102, 150]]); line([[-40, 150], [-40, 136]]); line([[-90, 150], [-90, 142]]);
   line([[91.5, 44], [91.5, 160]]); line([[14, 123], [91.5, 123]]);
   line([[14, -476], [50, -476]]); line([[30, -476], [30, -400]]); line([[-14, -432], [-178, -432]]); line([[-13, -478], [0, -484], [13, -476]]); line([[0, -484], [0, -544]]);
+  if (TKY.AS) for (const pl of TKY.AS.nav) line(pl);   /* Asakusa (tokyo_asakusa.js) */
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 3.5 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
   const NAV = CY.nav(nodes, edges); TKY.nav = { nodes, links: NAV.links }; TKY.stats.navNodes = nodes.length;
   /* ---------- crowds ---------- */
@@ -99,6 +100,7 @@ TKY.life = function (ctx, E) {
   ctx.upd.push(() => { for (const id in named) { const o = named[id], s = slotOf(o.p); o.t.x = o.w.x; o.t.z = o.w.z; if (s === o.slot || !s[1]) continue; o.slot = s; const near = Math.hypot(P().x - o.w.x, P().z - o.w.z) < 70;
       if (near && AV.path) { let pts = null; try { pts = AV.path.route(AV.W, { x: o.w.x, z: o.w.z }, { x: s[1][0], z: s[1][1] }) } catch (e) { } if (pts && pts.length) { o.w.route = pts.map(p2 => [p2[0], p2[1]]).concat([[s[1][0], s[1][1], 1e9, 'idle']]); o.w.ri = 0; o.w.loop = false; o.w.pause = 0; o.w.mode = 'walk'; o.w.base = 'walk'; continue } }
       o.w.x = s[1][0]; o.w.z = s[1][1]; o.w.route = null; o.w.mode = 'idle' } });
+  if (TKY.AS && TKY.asakusaLife) try { TKY.asakusaLife(ctx, { T, st, crowd, NAV, nodes, IN, sh, staff, front }) } catch (e) { console.warn('tokyo asakusa life', e); TKY.stats.asLifeErr = String(e && e.stack || e).slice(0, 400) }
   crowd.build(); TKY.crowd = crowd;
 
   /* ======================= the scramble: signals, cars, crossers ======================= */
@@ -161,7 +163,7 @@ TKY.life = function (ctx, E) {
   const trainM = K.floraMat(0, { rough: .4 }); trainM.userData.lin = 1; const ai = [];
   for (const [tx, dir, z0] of [[TKY.TRACK[0], -1, 120], [TKY.TRACK[1], 1, -300]]) { const m = new THREE.Mesh(trainGeo(0x3aa84a), trainM); m.position.set(tx, TKY.DECK + .15, z0); m.rotation.y = dir > 0 ? 0 : PI; ctx.group.add(m); ai.push({ m, dir, z: z0, v: 14, dwell: 0, done: {} }) }
   const STOPS = [-10, -455]; TKY.aiTrains = ai;
-  ctx.upd.push(dt => { if (!here()) return; dt = Math.min(dt || .016, .1); const riding = AV.rides && AV.rides.cur && AV.rides.cur.name === 'Loop Line';
+  ctx.upd.push(dt => { if (!here()) return; dt = Math.min(dt || .016, .1); const riding = AV.rides && AV.rides.cur && AV.rides.cur.V === TKY.TRAIN;
     for (const t of ai) { t.m.visible = !riding; if (t.dwell > 0) { t.dwell -= dt; if (t.dwell <= 0) t.v = 1; continue } const nxt = STOPS.find(s => !t.done[s] && (s - t.z) * t.dir > 0 && Math.abs(s - t.z) < 60); let want = 14; if (nxt != null) { const d = Math.abs(nxt - t.z); want = Math.max(.8, Math.min(14, d * .5)); if (d < .6) { t.done[nxt] = 1; t.dwell = 8; t.v = 0; continue } }
       t.v += Math.max(-4 * dt, Math.min(1.5 * dt, want - t.v)); t.z += t.dir * t.v * dt; if (t.z < -620) { t.z = 250; t.done = {} } if (t.z > 250) { t.z = -620; t.done = {} } t.m.position.z = t.z } });
   const RD = AV.rides, TRAIN = { geo: c => trainGeo(c), col: 0x3aa84a, v: 14, eng: 'electric', water: TKY.DECK + .15, chase: true, chaseFree: true, chaseDist: 22, chaseH: 6, noBlock: true };
@@ -308,9 +310,9 @@ TKY.bikePanel = function () { const G = AV.garage, B = TKY.bikeShop; if (!G || !
 if (AV.WORLDS_DATA && !AV.WORLDS_DATA.some(w => w.id === 'tokyo')) AV.WORLDS_DATA.push({ id: 'tokyo', name: 'Tokyo', roadmap_no: null, core_identity: 'Present-day Shibuya: the scramble crossing under giant screens, Center Gai, lantern-lit yokochō under the railway, an Inari shrine; one stop up the Loop Line to Harajuku and Takeshita Street', music_identity: 'Live-house rock, late DJ sets, jazz-kissa records, taiko and Bon Odori, crossing chirps and train jingles', status: 'playable', landmarks: ['Shibuya Scramble Crossing', 'Haru statue', 'Center Gai', 'Chōchin Yokochō', 'Inari shrine', 'Live House SPACE NEKO', 'Jazz Kissa Kuroneko', 'Harajuku Station', 'Takeshita Street', 'Mori-no-Miya forest shrine'], kind: 'apeverse2_new_world', art_refs: ['Apeverse Tokyo_ Tradition Meets Futurism.png (mood only)'] });
 /* ambience: crossing chirps during the scramble, traffic, crowds, trains, the shrine, taiko on matsuri nights */
 { const AW = AV.ambWorlds; if (AW && AW.presets && AW.G && !AW.presets.tokyo) { const G = AW.G, Z = (re, r) => () => AV.W ? AW.zone(AV.W, re, r) : 0, hr = () => (AV.S.time / 60) % 24, night = () => { const h = hr(); return h >= 19.5 || h < 5.5 };
-  AW.presets.tokyo = () => ({ crowd: G.crowd(.4, () => .25 + Z(/scramble|centergai|haru|takeshita|yokocho/i, 60)() * .7), traffic: G.traffic(.4, () => .3 + Z(/scramble|station|taxi/i, 80)() * .5),
+  AW.presets.tokyo = () => ({ crowd: G.crowd(.4, () => .25 + Z(/scramble|centergai|haru|takeshita|yokocho|nakamise|as_gate|hoppy/i, 60)() * .7), river: G.river(.4, Z(/sumida|as_bridge|waterbus|skyview/i, 50)), traffic: G.traffic(.4, () => .3 + Z(/scramble|station|taxi/i, 80)() * .5),
     chirp: G.birds(.35, () => (TKY.scramble && TKY.scramble.phase && TKY.scramble.phase[0] === 'PED' ? 1 : 0) * Z(/scramble/i, 40)(), 3200, 4200), train: G.tram(.35, () => .2 + Z(/station|harajuku|yokocho/i, 60)() * .6),
-    shrine: G.chimes(.35, Z(/shrine|forest/i, 50)), gong: G.gong(.3, Z(/shrine|forest/i, 40)), crickets: G.crickets(.3, () => night() ? .3 + Z(/shrine|forest/i, 60)() * .6 : 0), birds: G.birds(.3, () => night() ? 0 : Z(/shrine|forest/i, 70)(), 2400, 4600),
+    shrine: G.chimes(.35, Z(/shrine|forest/i, 50)), gong: G.gong(.35, Z(/shrine|forest|as_temple|pagoda/i, 60)), crickets: G.crickets(.3, () => night() ? .3 + Z(/shrine|forest/i, 60)() * .6 : 0), birds: G.birds(.3, () => night() ? 0 : Z(/shrine|forest/i, 70)(), 2400, 4600),
     taiko: G.drums(.55, () => (TKY.stats && TKY.stats.fest ? 1 : 0) * (.2 + Z(/matsuri/i, 80)() * .8), 120), clinks: G.clinks(.3, Z(/yokocho|izakaya|yakitori|oden/i, 30)) }) } }
 addEventListener('load', () => {
   if (AV.transit && AV.transit.CFG && !AV.transit.CFG.tokyo) AV.transit.CFG.tokyo = { taxi: { icon: '🚕', n: L('Taxi', 'Taxi'), base: 7, per: .04, say: L('The rear door swings open by itself. White lace on the seats. “Dochira made?”', 'La puerta trasera se abre sola. Encaje blanco en los asientos. “¿Dochira made?”') }, stands: [['taxi', 0, 0], ['harajuku', -20, 8], ['shrine', 46, 10]], rent: [] };

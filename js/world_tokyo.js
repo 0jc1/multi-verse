@@ -14,7 +14,7 @@ const TAU = Math.PI * 2, PI = Math.PI;
 const TKY = AV.tokyo = { stats: {} };
 const XMIN = -202, XMAX = 120, ZMIN = -562, ZMAX = 190, DECK = 8, TRACK = [104, 110];
 /* walkable: the whole rectangle, except the forest edge north of Harajuku (only the shrine forest itself) and the viaduct strip */
-function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; if (z < -482 && (x < -60 || x > 60)) return null; return 0 }
+function surf(x, z) { if (TKY.asSurf) { const s2 = TKY.asSurf(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; if (z < -482 && (x < -60 || x > 60)) return null; return 0 }
 TKY.surf = surf; TKY.DECK = DECK; TKY.TRACK = TRACK;
 
 /* ======================= sign atlas (Japanese shop signs, all fictional businesses) ======================= */
@@ -209,17 +209,19 @@ AV.registerWorld({
         if (sp) { const sa = sp[2] - sp[3] / 2; if (sa - a >= 3) w = sa - a > (o.wmax || 9) + 3 ? w : sa - a; else w = sp[3] } if (a + w > a1) w = a1 - a; if (w < 3) break; const isSp = sp && w === sp[3];
         const ac = a + w / 2, fx = ax === 'z' ? front : ac, fz = ax === 'z' ? ac : front, h = o.hFix || ((o.h0 || 9) + rng() * (o.hr || 10)), shop = isSp || rng() < (o.shopP == null ? .7 : o.shopP);
         const sty = o.style || ['tile', 'tile', 'glass', 'balcony', 'concrete', 'tile'][(rng() * 6) | 0];
-        if (o.hut) hut(P, Gl, fx, fz, yaw, w, h, depth, rng);
+        if (o.build) o.build(fx, fz, yaw, w, h, depth, { isSp, sp, out, al, a, ac, shop });
+        else if (o.hut) hut(P, Gl, fx, fz, yaw, w, h, depth, rng);
         else tower(P, Gl, Gs, fx, fz, yaw, w, h, depth, { rng, col: o.col || TILE[(rng() * TILE.length) | 0], style: sty, shop, lit: shop && rng() < .75, hollow: isSp && !!sp[4], shopCol: [0x1a1a1a, 0x2a2a2e, 0x3a1a1a, 0x1a2a3a, 0xe8e8e4][(rng() * 5) | 0], gf: o.gf, litP: o.litP });
         const c0 = ax === 'z' ? [Math.min(front, front - face * depth), Math.max(front, front - face * depth), a + .05, a + w - .05] : [a + .05, a + w - .05, Math.min(front, front - face * depth), Math.max(front, front - face * depth)];
         if (!(isSp && sp[4])) cols.push(c0); nB++;
         const sx = fx + out[0] * .24, sz = fz + out[1] * .24;
         if (isSp) { SHOPS[sp[0]] = { k: sp[0], x: fx + out[0] * .2, z: fz + out[1] * .2, yaw, w, face, ax, out, al, h, d: depth, hollow: sp[4] || 0, c: c0, lsx: Math.round(Math.cos(yaw) * al[0] - Math.sin(yaw) * al[1]) } }
+        else if (o.build) { }
         else if (o.hut) { const nk = ['n_sake', 'n_tori', 'n_oden', 'n_ramen'][(rng() * 4) | 0]; sign(nk, fx + out[0] * .12, 2.05, fz + out[1] * .12, w * .62, w * .62 * .6, yaw) }
         else if (shop && o.gen) { sign(o.gen[(rng() * o.gen.length) | 0], sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw) }
         else if (shop && !o.noSign) { const gk = nextGen(); sign(gk, sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw); if (!o.hut) sign(['w_konbini', 'w_fashion', 'w_food'][(rng() * 3) | 0], fx + out[0] * .14, 1.6, fz + out[1] * .14, Math.max(1, w - 2.2), 2.0, yaw) }
-        if (!o.hut && !o.noBlade && h > 9 && rng() < (o.bladeP == null ? .6 : o.bladeP)) { const bk = isSp && BLAD[sp[0]] ? BLAD[sp[0]] : nextBlade(), sd = rng() < .5 ? -1 : 1, bh = Math.min(5.6, h - 6); sign(bk, fx + out[0] * .75 + al[0] * sd * (w / 2 - .45), 5.2 + bh / 2, fz + out[1] * .75 + al[1] * sd * (w / 2 - .45), bh * .21, bh, yaw + PI / 2, true); box(P, 0x2a2a2a, Math.min(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) - .04, Math.max(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) + .04, 5.1 + bh, 5.2 + bh, Math.min(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) - .04, Math.max(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) + .04) }
-        if (!o.hut && h > 16 && rng() < (o.billP == null ? .22 : o.billP)) { const bw = Math.min(w - 1, 9); sign(nextBill(), fx - out[0] * 1.5, h + 1.2 + bw * .19, fz - out[1] * 1.5, bw, bw * .375, yaw); box(P, 0x3a3a3a, fx - out[0] * 1.7 - al[0] * bw / 2 - .05, fx - out[0] * 1.7 + al[0] * bw / 2 + .05, h, h + 1.3, fz - out[1] * 1.7 - al[1] * bw / 2 - .05, fz - out[1] * 1.7 + al[1] * bw / 2 + .05) }
+        if (!o.hut && !o.build && !o.noBlade && h > 9 && rng() < (o.bladeP == null ? .6 : o.bladeP)) { const bk = isSp && BLAD[sp[0]] ? BLAD[sp[0]] : nextBlade(), sd = rng() < .5 ? -1 : 1, bh = Math.min(5.6, h - 6); sign(bk, fx + out[0] * .75 + al[0] * sd * (w / 2 - .45), 5.2 + bh / 2, fz + out[1] * .75 + al[1] * sd * (w / 2 - .45), bh * .21, bh, yaw + PI / 2, true); box(P, 0x2a2a2a, Math.min(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) - .04, Math.max(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) + .04, 5.1 + bh, 5.2 + bh, Math.min(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) - .04, Math.max(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) + .04) }
+        if (!o.hut && !o.build && h > 16 && rng() < (o.billP == null ? .22 : o.billP)) { const bw = Math.min(w - 1, 9); sign(nextBill(), fx - out[0] * 1.5, h + 1.2 + bw * .19, fz - out[1] * 1.5, bw, bw * .375, yaw); box(P, 0x3a3a3a, fx - out[0] * 1.7 - al[0] * bw / 2 - .05, fx - out[0] * 1.7 + al[0] * bw / 2 + .05, h, h + 1.3, fz - out[1] * 1.7 - al[1] * bw / 2 - .05, fz - out[1] * 1.7 + al[1] * bw / 2 + .05) }
         a += w + .02 } }
     /* filler masses that close the inside of a block (roofscape seen over the rows) */
     function fill(x0, x1, z0, z1, h0, hr) { for (let x = x0; x < x1 - .5; x += 22) for (let z = z0; z < z1 - .5; z += 22) { const xa = Math.min(x1, x + 22), za = Math.min(z1, z + 22), h = h0 + rng() * hr; box(P, TILE[(rng() * TILE.length) | 0], x, xa, 0, h, z, za); box(P, 0x8a8a88, x, xa, h, h + .7, z, za);
@@ -379,22 +381,24 @@ AV.registerWorld({
       bx2(P, 0x2a1a12, it, 1.4, 2.2, 0, 1.1, 2.6, 6.3); bx2(Gl, 0x4ad8ff, it, 2.2, 2.26, .2, .9, 2.7, 6.2); bx2(Gl, 0x5a2a9a, it, it.depth - .42, it.depth - .38, 1.2, 3.6, -5.6, 5.6); for (let k = 0; k < 8; k++) bx2(Gl, [0xff4ad2, 0x4ad8ff][k % 2], it, it.depth - .44, it.depth - .4, 1.3 + (k % 4) * .55, 1.5 + (k % 4) * .55, -5 + k * 1.3, -4.4 + k * 1.3); it.cust = it.F(2.9, 4.4); it.staff = it.F(.9, 4.4); it.stage = it.F(it.depth - 1.6, 0); it.floor = it.F(5.2, 0); it.booth = it.F(it.depth - 4.2, 4.6) });
     IN.izakaya = interior('izakaya', it => { bx2(P, 0x6a4a2a, it, 3.8, 4.4, 0, 1.05, -.6, 2.2); bx2(P, 0xd8b890, it, 3.7, 4.5, 1.05, 1.1, -.7, 2.3); for (let k = 0; k < 3; k++) bx2(P, 0x2a1a10, it, 3, 3.4, 0, .7, -.4 + k * .9, -.1 + k * .9); for (let k = 0; k < 6; k++) bx2(P, [0x2a6a3a, 0xe8e0d0, 0x6a1a1a][k % 3], it, 6.3, 6.5, 1.3, 1.9, -1.6 + k * .5, -1.3 + k * .5); it.cust = it.F(2.7, .9); it.staff = it.F(5.3, .9) });
     TKY.interiors = IN;
+    /* ---------- districts in their own modules (tokyo_asakusa.js) ---------- */
+    const shibuyaShops = Object.keys(sh).length; TKY.AS = null; if (TKY.asakusa) try { TKY.AS = TKY.asakusa(ctx, { row, fill, box, sign, P, Gl, Gs, Q, sh, SPECIAL, interior, bx2, IN, T, st, torii, blossom, wires }) } catch (e) { console.warn('tokyo asakusa', e); TKY.stats.asErr = String(e && e.stack || e).slice(0, 400) }
     /* signs over the named shopfronts (+ window displays), noren at the yokochō doors */
-    for (const k in sh) { const s = sh[k], tall = /^(yakitori|oden|izakaya)$/.test(k); sign(k, s.x + s.out[0] * .06, (tall ? 3.3 : 3.65), s.z + s.out[1] * .06, s.w - .4, (s.w - .4) * (SIGNS.find(x => x[0] === k)[2] / SIGNS.find(x => x[0] === k)[1]), s.yaw);
-      if (!s.hollow && !tall) sign(/crepe|taiyaki|kawaii|candy/.test(k) ? 'w_food' : /records|vintage|swag/.test(k) ? 'w_fashion' : 'w_konbini', s.x - s.out[0] * .06, 1.6, s.z - s.out[1] * .06, s.w - 2.2, 2, s.yaw) }
+    for (const k in sh) { const s = sh[k], tall = /^(yakitori|oden|izakaya)$/.test(k); sign(k, s.x + s.out[0] * .06, s.signY || (tall ? 3.3 : 3.65), s.z + s.out[1] * .06, s.w - .4, (s.w - .4) * (SIGNS.find(x => x[0] === k)[2] / SIGNS.find(x => x[0] === k)[1]), s.yaw);
+      if (!s.hollow && !tall && !s.noWin) sign(/crepe|taiyaki|kawaii|candy/.test(k) ? 'w_food' : /records|vintage|swag/.test(k) ? 'w_fashion' : 'w_konbini', s.x - s.out[0] * .06, 1.6, s.z - s.out[1] * .06, s.w - 2.2, 2, s.yaw) }
     if (sh.ramen) sign('menu_ramen', sh.ramen.x + sh.ramen.out[0] * .3 + sh.ramen.al[0] * -2.6, 1.4, sh.ramen.z + sh.ramen.out[1] * .3 + sh.ramen.al[1] * -2.6, .9, .9, sh.ramen.yaw);
     if (sh.livehouse) { const s = sh.livehouse; sign('poster_live', s.x + s.out[0] * .2 + s.al[0] * -4.8, 1.8, s.z + s.out[1] * .2 + s.al[1] * -4.8, 1.2, 1.8, s.yaw) }
     TKY.shops = sh;
     /* ---------- merge everything static ---------- */
-    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const NWK = AV.nwkit, CELL = 64; TKY.chunks = NWK.chunked(P, CELL, a => K.merge(a), solidM, grp, 'tky_static', { shadow: true });
-    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .35, depthWrite: false }); gm.userData.lin = 1; NWK.chunked(Gs, 128, a => K.merge(a), gm, grp, 'tky_glass', { order: 2 }) }
-    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; NWK.chunked(Gl, 128, a => K.merge(a), glowM, grp, 'tky_glow'); TKY.glowM = glowM;
+    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const NWK = AV.nwkit, CELL = 64; const REG = (x) => x > 250 ? 'as' : 'sh', RO = { region: REG }; TKY.region = null; TKY.chunks = NWK.chunked(P, CELL, a => K.merge(a), solidM, grp, 'tky_static', { shadow: true, region: REG });
+    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .35, depthWrite: false }); gm.userData.lin = 1; TKY.chunks.push(...NWK.chunked(Gs, 128, a => K.merge(a), gm, grp, 'tky_glass', { order: 2, region: REG })) }
+    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; TKY.chunks.push(...NWK.chunked(Gl, 128, a => K.merge(a), glowM, grp, 'tky_glow', RO)); TKY.glowM = glowM;
     const flM = new THREE.MeshBasicMaterial({ vertexColors: true }); flM.userData.lin = 1; fest.add(new THREE.Mesh(K.merge(FL), flM));
-    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .35, roughness: .55, alphaTest: .3 }); signM.userData.lin = 1; NWK.chunked(Q, 128, a => quadGeo(a, SG.r), signM, grp, 'tky_signs'); TKY.signM = signM;
+    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .35, roughness: .55, alphaTest: .3 }); signM.userData.lin = 1; TKY.chunks.push(...NWK.chunked(Q, 128, a => quadGeo(a, SG.r), signM, grp, 'tky_signs', RO)); TKY.signM = signM; if (TKY.AS && TKY.asak && TKY.asak.makeShutters) TKY.asak.makeShutters(signM);
     fest.add(new THREE.Mesh(quadGeo(FQ, SG.r), signM));
     TKY.stats.parts = P.length + Gl.length; TKY.stats.signs = Q.length; TKY.stats.atlasOver = (SG.over || []).length; TKY.stats.atlasBad = (SG.bad || []).length; TKY.stats.atlasUsed = SG.used;
     /* night: lit windows dim by day, signs and lanterns brighten at night */
-    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 19 || h < 5 ? 1 : h > 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? (6.5 - h) / 1.5 : 0; signM.emissiveIntensity = .35 + 1.0 * n; glowM.color.setScalar(.4 + .6 * n); TKY.night = n });
+    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 19 || h < 5 ? 1 : h > 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? (6.5 - h) / 1.5 : 0; signM.emissiveIntensity = .35 + 1.0 * n; glowM.color.setScalar(.4 + .6 * n); TKY.night = n; const r = TKY.noRegion ? 'all' : AV.P.x > 250 ? 'as' : 'sh'; if (r !== TKY.region) { TKY.region = r; for (const m of TKY.chunks) m.visible = r === 'all' || m.userData.region === r } });
     TKY.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
@@ -405,7 +409,8 @@ AV.registerWorld({
       PLc('harajuku', 'Harajuku Station', 'Estación de Harajuku', 46, -455, -PI / 2), PLc('takeshita', 'Takeshita Street', 'Calle Takeshita', -80, -432, PI / 2), PLc('forest', 'Forest shrine (Mori-no-Miya)', 'Santuario del bosque (Mori-no-Miya)', 0, -520, 0)];
     const NAMES = { apemart: 'ApeMart Express', ramen: 'Ramen Kaminari', arcade: 'Game Center Banana Zone', crepe: 'Momo Crêpes', karaoke: 'Karaoke Utage', records: 'Groove Dealers Records Shibuya', sushi: 'Kaiten Sushi Yūgure', taiyaki: 'Taiyaki Taiya', kissa: 'Jazz Kissa Kuroneko', sento: 'Sentō Matsu-no-yu', livehouse: 'Live House SPACE NEKO', cycle: 'Sakura Cycle (bikes)', apephone: 'ApePhone Store Tokyo', izakaya: 'Izakaya Chōchin', yakitori: 'Yakitori Torikichi', oden: 'Oden Akari', kawaii: 'Kawaii Crêpe', purikura: 'Purikura Sakura', swag: 'SWAG Tokyo', candy: 'Rainbow Candy Floss', vintage: 'Ura Vintage' };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
-    TKY.names = NAMES; TKY.stats.shopsPlaced = Object.keys(sh).length;
+    if (TKY.AS) { for (const r of TKY.AS.roads) mapRoads.push(r); for (const p of TKY.AS.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
+    TKY.names = NAMES; TKY.stats.shopsPlaced = shibuyaShops; TKY.stats.allShops = Object.keys(sh).length;
     if (TKY.life) try { TKY.life(ctx, { T, st, sh, IN, box, SIG, YG, YATAI, fest }) } catch (e) { console.warn('tokyo life', e); TKY.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Tokyo', surface: surf, fog: [70, 460], sky: { exp: .9, tint: [0x8a7ab8, 0xd8c8e0, .3, .3], dome: { s1: 0xe8d0e8, s2: 0x8aa0d8, swirl: .02, cloud: .6, glow: .4 } },
       arrivals: { default: { x: 30, z: 22, yaw: PI / 2 }, pipe: { x: 26, z: 36, yaw: PI / 2 }, train: { x: 46, z: -10, yaw: PI / 2 } }, defaultArrival: 'default',
@@ -415,6 +420,6 @@ AV.registerWorld({
       musicProfile: { bpm: 92, root: 50, scale: [0, 1, 5, 7, 8], style: 'amb' } };
   }
 });
-function atlasTex() { return makeAtlas(SIGNS, SG, 2048, 3584) }
+function atlasTex() { return makeAtlas(SIGNS, SG, 2048, 4096) }
 TKY.SIGNS = SIGNS; TKY.SG = SG;
 })(window.AV);

@@ -10,7 +10,7 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 
 | World | State | Evidence |
 |---|---|---|
-| **Tokyo** (Shibuya + Harajuku) | **playable, district 1 done, polished** | `suite_tokyo` on the real GPU (Medium), latest full run: **166/167**. The one failure was in the test: talking to Yumi while standing at the record shop, the GPS correctly reports "arrived" and clears the waypoint. The check now records the waypoint request, and that step reran 23/23. Earlier history: 162/166 → test fixes. Phone emulation: `suite_newworlds_mobile`, 25/25 for both worlds. |
+| **Tokyo** (Shibuya + Harajuku + **Asakusa**) | **playable, 2 districts** | `suite_tokyo` on the real GPU (Medium), latest full run with Asakusa: **230/230**. Phone emulation (earlier, before Asakusa): 25/25. Another agent's GPU test ran at the same time, so the frame samples are noisy: arrival 24, scramble 55.2, Center Gai 36.8, Takeshita 59.2, yokochō 48.4, Nakamise 52, precinct 48.4, Sumida 58.8 fps. |
 | **Paris** (Seine + Saint-Germain) | **playable, district 1 done, polished** | `suite_paris` on the real GPU (Medium), latest full run: **130/130**. The earlier real bug (the cathedral collider cut the Île off from the north bridge) is fixed. Phone emulation: 25/25 (shared with Tokyo). |
 | Barcelona, Sevilla, Cádiz, Oaxaca, Rio, Chefchaouen, Medellín, NYC 1926, Ibiza, Galicia | not started | — |
 | Atlantis, LSD-DMT, Somatra, Neon Nexus, Weird Alien, Bio Jungle, Robot World, Volcanic Funk, Quantum Ziggurat, Space Jazz, Mayan Canal Kingdom | not started (registry entries are still `planned`) | — |
@@ -85,4 +85,5 @@ Paris was already near the 60 fps cap in that run, both ways: 54–59 fps old, 5
    - `AV.merch.shops.swag` (only if missing)
 4. **ApeMart rollout:** `brand_district.js` ROLL is a closed constant, so Tokyo has its own walk-in ApeMart Express konbini selling the same brand items. To add Tokyo to the rollout instead, add `tokyo: ['コンビニ', 'jp_onigiri']` to ROLL.
 5. **Save:** only a new optional `S.tokyo`. No existing save fields change.
-6. **Media:** no new media. Playlists used: `stone_ape_band`, `jungle_dub`, `chiang_mai`.
+6. **Districts:** `js/tokyo_asakusa.js` plugs into Tokyo through `TKY.asSurf`, `TKY.asakusa` and `TKY.asakusaLife` (load it after `tokyo_life.js`).
+7. **Media:** no new media. Playlists used: `stone_ape_band`, `jungle_dub`, `chiang_mai`.

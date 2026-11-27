@@ -25,9 +25,10 @@ NW.rowWalk = function (o) { const { id, ax, front, a0, a1, face, depth, rng, SPE
     if (sp) { const sa = sp[2] - sp[3] / 2; if (sa - a >= 3) w = sa - a > (o.wmax || 10) + 3 ? w : sa - a; else w = sp[3] } if (a + w > a1) w = a1 - a; if (w < 3) break; const isSp = !!(sp && w === sp[3]);
     const ac = a + w / 2, fx = ax === 'z' ? front : ac, fz = ax === 'z' ? ac : front;
     const c0 = ax === 'z' ? [Math.min(front, front - face * depth), Math.max(front, front - face * depth), a + .05, a + w - .05] : [a + .05, a + w - .05, Math.min(front, front - face * depth), Math.max(front, front - face * depth)];
-    if (!(isSp && sp[4])) cols.push(c0);
+    const skip = !isSp && !!o.gaps && o.gaps.some(g => a < g[1] && a + w > g[0]);
+    if (!(isSp && sp[4]) && !skip) cols.push(c0);
     if (isSp) SHOPS[sp[0]] = { k: sp[0], x: fx + out[0] * .2, z: fz + out[1] * .2, yaw, w, face, ax, out, al, d: depth, hollow: sp[4] || 0, c: c0, lsx };
-    lot({ fx, fz, yaw, w, a, ac, out, al, isSp, sp: isSp ? sp : null, c0, lsx }); n++; a += w + .02 } return n };
+    lot({ fx, fz, yaw, w, a, ac, out, al, isSp, sp: isSp ? sp : null, c0, lsx, skip }); n++; a += w + .02 } return n };
 /* chunked merge: parts ([geo, hex, matrix, flag]) or sign quads ({x, z, ...}) are bucketed by position into cell x cell tiles and merged per
    tile, so the renderer's frustum culling skips the tiles you can't see (one merged mesh for a whole city is always drawn in full).
    Pieces longer than a tile (viaduct decks, quay walls) go to their own "wide" bucket.  Returns the meshes. */

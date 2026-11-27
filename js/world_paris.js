@@ -14,9 +14,9 @@
 const TAU = Math.PI * 2, PI = Math.PI;
 const PAR = AV.paris = { stats: {} };
 const XMIN = -300, XMAX = 340, ZMIN = -120, ZMAX = 230, WY = -4.5;
-const ISLE = [160, 320, -20, 20];   /* Île: x0, x1, z0, z1 */
+const ISLE = [160, 320, -24, 24];   /* Île: x0, x1, z0, z1 */
 /* bridges: [x0, x1, z0, z1, rise, axis] (deck y = .25 + rise * (1 - t^2), t across the span) */
-const BRIDGES = [[-70, -50, -36, 36, 1.1, 'z'], [56, 64, -36, 36, .7, 'z'], [170, 180, 19, 36, .25, 'z'], [183, 191, -36, -19, .25, 'z']];
+const BRIDGES = [[-70, -50, -36, 36, 1.1, 'z'], [56, 64, -36, 36, .7, 'z'], [170, 180, 23, 36, .25, 'z'], [183, 191, -36, -23, .25, 'z'], [300, 310, 23, 36, .25, 'z']];   /* + the Pont de l'Archevêché at the Île's east end */
 function bridgeY(x, z) { for (const b of BRIDGES) if (x > b[0] && x < b[1] && z > b[2] && z < b[3]) { const c = (b[2] + b[3]) / 2, h = (b[3] - b[2]) / 2, t = (z - c) / h; return .25 + b[4] * (1 - t * t) } return null }
 const inIsle = (x, z) => x > ISLE[0] && x < ISLE[1] && z > ISLE[2] && z < ISLE[3];
 function surf(x, z) { if (PAR.mmSurf) { const s2 = PAR.mmSurf(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; const b = bridgeY(x, z); if (b !== null) return b; if (z > -30 && z < 30 && !inIsle(x, z)) return null; return 0 }
@@ -119,6 +119,7 @@ AV.registerWorld({
     const P = [], Gl = [], Gs = [], Q = [], cols = ctx.cols, circ = ctx.circles;
     const box = (arr, hex, x0, x1, y0, y1, z0, z1) => arr.push([BG.box, hex, K.M((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)), 0]);
     const sign = (k, x, y, z, w, h, ry, dbl) => { Q.push({ k, x, y, z, w, h, ry }); if (dbl) Q.push({ k, x: x - Math.sin(ry) * .03, y, z: z - Math.cos(ry) * .03, w, h, ry: ry + PI }) };
+    const P0 = P, Gl0 = Gl, Gs0 = Gs, sign0 = sign;
     let gi = 0; const nextGen = () => GEN[(gi++ * 5) % GEN.length];
     /* ---------- ground: pale paving, asphalt for the quai + boulevard, cobbles (pavés) on the side streets ---------- */
     const tex = (fn, rep) => { const c = document.createElement('canvas'); c.width = c.height = 256; fn(c.getContext('2d')); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t };
@@ -143,12 +144,12 @@ AV.registerWorld({
     const para = (x0, x1, z0, z1) => { box(P, 0xd8ccb0, x0, x1, 0, 1, z0, z1); box(P, 0xe8dcc4, x0 - .05, x1 + .05, 1, 1.12, z0 - .05, z1 + .05); cols.push([x0, x1, z0, z1]) };
     const gaps = BRIDGES.map(b => [b[0], b[1]]); const segs = (z0, z1, x0, x1) => { let a = x0; for (const [g0, g1] of gaps.slice().sort((p, q2) => p[0] - q2[0])) { if (g1 < x0 || g0 > x1) continue; if (g0 > a) para(a, g0, z0, z1); a = Math.max(a, g1) } if (a < x1) para(a, x1, z0, z1) };
     segs(-31, -30.4, XMIN, XMAX); segs(30.4, 31, XMIN, XMAX);
-    { const b = [ISLE[0], ISLE[1]]; para(b[0], 170, ISLE[3] - .6, ISLE[3]); para(180, b[1], ISLE[3] - .6, ISLE[3]); para(b[0], 183, ISLE[2], ISLE[2] + .6); para(191, b[1], ISLE[2], ISLE[2] + .6); para(b[1] - .6, b[1], ISLE[2], ISLE[3]) }
+    { const b = [ISLE[0], ISLE[1]]; para(b[0], 170, ISLE[3] - .6, ISLE[3]); para(180, 300, ISLE[3] - .6, ISLE[3]); para(310, b[1], ISLE[3] - .6, ISLE[3]); para(b[0], 183, ISLE[2], ISLE[2] + .6); para(191, b[1], ISLE[2], ISLE[2] + .6); para(b[1] - .6, b[1], ISLE[2], ISLE[3]) }
     /* ---------- bridges: the Pont Neuf (stone, arches, round bastions) + the footbridge (iron, timber deck) + the island bridges ---------- */
     const deck = (b, col, thick) => { const [x0, x1, z0, z1, rise] = b, n = 24; for (let i = 0; i < n; i++) { const za = z0 + (z1 - z0) * i / n, zb = z0 + (z1 - z0) * (i + 1) / n, t = ((za + zb) / 2 - (z0 + z1) / 2) / ((z1 - z0) / 2), y = .25 + rise * (1 - t * t); box(P, col, x0, x1, y - thick, y, za, zb + .02); for (const x of [x0, x1 - .5]) box(P, col === 0x8a6a4a ? IRON : 0xd8ccb0, x, x + .5, y, y + 1.1, za, zb + .02) } };
     deck(BRIDGES[0], 0xc8bca0, 1.4); for (const zc of [-18, 0, 18]) { box(P, 0xb8ac90, -71, -49, WY - 1, -.6, zc - 3, zc + 3); P.push([BG.cyl, 0xc8bca0, K.M(-60, WY + 2.5, zc, 3.2, 6, 3.2, PI / 2, 0, 0), 0]) } for (const zc of [-27, -9, 9, 27]) for (const x of [-71.5, -48.5]) P.push([BG.cyl, 0xc8bca0, K.M(x, -.4, zc, 1.8, 1.2, 1.8), 0]);
     deck(BRIDGES[1], 0x8a6a4a, .3); for (let z = -24; z <= 24; z += 12) { box(P, IRON, 56.5, 57, WY - 1, .2, z - .3, z + .3); box(P, IRON, 63, 63.5, WY - 1, .2, z - .3, z + .3); for (let k = 0; k < 6; k++) box(P, IRON, 56, 64, -2.8 + k * .45, -2.7 + k * .45, z - 6 + k * 1.1, z - 5.9 + k * 1.1) }
-    deck(BRIDGES[2], 0xc8bca0, .6); deck(BRIDGES[3], 0xc8bca0, .6);
+    deck(BRIDGES[2], 0xc8bca0, .6); deck(BRIDGES[3], 0xc8bca0, .6); deck(BRIDGES[4], 0xc8bca0, .6);
     PAR.stats.bridges = BRIDGES.length;
     /* bouquinistes: green boxes on the south parapet */
     const BOUQ = []; for (let x = -280; x < 330; x += 9) { if (gaps.some(([g0, g1]) => x > g0 - 6 && x < g1 + 4) || (x > 100 && x < 140) || (x > -54 && x < -28)) continue; const open2 = ((x / 9) | 0) % 3 !== 0; box(P, 0x2a5a3a, x, x + 6, 1.12, 1.9, 30.45, 31.3); if (open2) { box(P, 0x2a5a3a, x, x + 6, 1.9, 2, 30.2, 31.8); box(P, 0x2a5a3a, x, x + 6, 2, 2.9, 31.7, 31.8); for (let k = 0; k < 8; k++) box(P, [0xd8c8a0, 0x8a2a2a, 0x2a4a6a, 0xf4f0e0][k % 4], x + .3 + k * .7, x + .8 + k * .7, 2.05, 2.75, 31.65, 31.68) } BOUQ.push([x + 3, 32.4, open2]) }
@@ -167,7 +168,8 @@ AV.registerWorld({
       ['cave', 'seineW', 82, 10, 12], ['patisserie', 'bvdN', 25, 9], ['swag', 'bvdN', 200, 12], ['tabac', 'bvdN', -30, 7],
       ['boulangerie', 'buciW', 158, 9, 11], ['fromagerie', 'buciE', 160, 9], ['creperie', 'buciE', 176, 6], ['fleuriste', 'buciW', 180, 7], ['velape', 'quaiS', 92, 7]];
     let nB = 0;
-    function row(id, ax, front, a0, a1, face, depth, o) { o = o || {}; nB += NW().rowWalk({ id, ax, front, a0, a1, face, depth, rng, SPECIAL, SHOPS, cols, wmin: o.wmin || 7, wmax: o.wmax || 12, lot: L => {
+    function row(id, ax, front, a0, a1, face, depth, o) { o = o || {}; nB += NW().rowWalk({ id, ax, front, a0, a1, face, depth, rng, SPECIAL, SHOPS, cols, gaps: o.gaps, wmin: o.wmin || 7, wmax: o.wmax || 12, lot: L => {
+      const P = L.skip ? [] : P0, Gl = L.skip ? [] : Gl0, Gs = L.skip ? [] : Gs0, sign = L.skip ? () => { } : sign0;
       const h = (o.h0 || 18.5) + rng() * (o.hr || 3), shop = L.isSp || rng() < (o.shopP == null ? .75 : o.shopP);
       haussmann(P, Gl, Gs, L.fx, L.fz, L.yaw, L.w, h, depth, { rng, col: STONE[(rng() * STONE.length) | 0], shop, lit: shop && rng() < .8, hollow: L.isSp && L.sp[4], shopCol: L.isSp ? SHOPC[(L.ac | 0) & 3] : null, litP: o.litP });
       const sx = L.fx + L.out[0] * .24, sz = L.fz + L.out[1] * .24;
@@ -177,17 +179,27 @@ AV.registerWorld({
         sign(ak, L.fx + L.out[0] * .95, 3.6, L.fz + L.out[1] * .95, aw, .95, L.yaw) } } }) }
     const fill = (x0, x1, z0, z1, h0, hr) => { for (let x = x0; x < x1 - .5; x += 24) for (let z = z0; z < z1 - .5; z += 24) { const xa = Math.min(x1, x + 24), za = Math.min(z1, z + 24), h = h0 + rng() * hr; box(P, STONE[(rng() * STONE.length) | 0], x, xa, 0, h, z, za); box(P, ZINC, x + .5, xa - .5, h, h + 3, z + .5, za - .5) } cols.push([x0, x1, z0, z1]) };
     /* north bank (Rive Droite): one long row facing the river */
-    row('quaiN', 'x', -52, XMIN, -6, 1, 16, { h0: 19, hr: 3, shopP: .6 }); row('quaiN', 'x', -52, 6, XMAX, 1, 16, { h0: 19, hr: 3, shopP: .6 }); fill(XMIN, XMAX, ZMIN, -68, 20, 6); fill(-6, 6, -68, -56, 18, 2);
+    row('quaiN', 'x', -52, XMIN, -6, 1, 16, { h0: 19, hr: 3, shopP: .6, gaps: [[-300, -285], [-67, -53]] }); row('quaiN', 'x', -52, 6, XMAX, 1, 16, { h0: 19, hr: 3, shopP: .6, gaps: [[53, 67], [180, 194], [325, 341]] }); fill(-6, 6, -68, -56, 18, 2);
+    /* Rue de Rivoli (z -100..-88) with arcades on its north side; cross streets to the quai at x -60, 60, 187; edge streets at x -291 and 331 */
+    box(P, ASPH, XMIN, XMAX, 0, .03, -98, -90); for (const z of [-98.1, -89.9]) box(P, 0xb8b0a0, XMIN, XMAX, 0, .15, z - .1, z + .1); for (const [x0, x1] of [[-66, -54], [54, 66], [181, 193], [-296, -286], [326, 336]]) box(P, COB, x0, x1, 0, .025, -88, -52);
+    const RS = { h0: 18, hr: 4, gaps: [[-300, -285], [325, 341]] }; row('rivN', 'x', -100, XMIN, XMAX, 1, 12, RS); for (const [x0, x1] of [[-285, -66], [-54, 54], [66, 181], [193, 325]]) { row('rivS', 'x', -88, x0, x1, -1, 12, { h0: 18, hr: 4 }); fill(x0, x1, -76, -68, 16, 4) } fill(XMIN, XMAX, ZMIN, -112, 20, 4); fill(XMIN, -296, -88, -52, 16, 4); fill(336, XMAX, -88, -52, 16, 4);
+    for (let x = XMIN + 2; x < XMAX; x += 4) { if ((x > -298 && x < -284) || (x > 324 && x < 338)) continue; box(P, 0xd8ccb0, x - .3, x + .3, 0, 4.4, -100.4, -99.8) } box(P, 0xd8ccb0, XMIN, XMAX, 4.4, 4.8, -100.6, -96.4);
     /* south bank: the quai row, the streets, the boulevard */
-    row('quaiS', 'x', 52, XMIN, -66, -1, 14); row('quaiS', 'x', 52, -54, -6, -1, 14); row('quaiS', 'x', 52, 6, 54, -1, 14); row('quaiS', 'x', 52, 66, 96, -1, 14); row('quaiS', 'x', 52, 96, 156, -1, 7); row('quaiS', 'x', 52, 156, XMAX, -1, 14);
-    row('dauW', 'z', -66, 66, 94, 1, 14, { wmin: 6, wmax: 9 }); row('dauE', 'z', -54, 66, 94, -1, 14, { wmin: 6, wmax: 9 }); row('seineW', 'z', -6, 66, 94, 1, 14, { wmin: 6, wmax: 9 }); row('seineE', 'z', 6, 66, 94, -1, 14, { wmin: 6, wmax: 9 });
-    row('bonaW', 'z', 54, 66, 94, 1, 14, { wmin: 6, wmax: 9 }); row('bonaE', 'z', 66, 66, 94, -1, 14, { wmin: 6, wmax: 9 }); row('placeW', 'z', 96, 66, 94, 1, 14, { wmin: 6, wmax: 9 }); row('placeE', 'z', 156, 66, 94, -1, 14, { wmin: 6, wmax: 9 });
-    row('place', 'x', 66, 96, 156, 1, 7, { wmin: 8, wmax: 12 });
-    fill(XMIN, -80, 66, 94, 18, 4); fill(-40, -20, 66, 94, 18, 4); fill(20, 40, 66, 94, 18, 4); fill(80, 82, 66, 94, 18, 4); fill(170, XMAX, 66, 94, 18, 4);
-    row('bvdN', 'x', 108, XMIN, -66, 1, 14); row('bvdN', 'x', 108, -54, -6, 1, 14); row('bvdN', 'x', 108, 6, 54, 1, 14); row('bvdN', 'x', 108, 66, 96, 1, 14); row('bvdN', 'x', 108, 156, XMAX, 1, 14);
-    row('bvdS', 'x', 132, XMIN, -6, -1, 14); row('bvdS', 'x', 132, 6, 90, -1, 14); row('bvdS', 'x', 132, 156, XMAX, -1, 14, { shopP: .5 });
-    row('buciW', 'z', -6, 146, ZMAX, 1, 14, { wmin: 6, wmax: 9, h0: 16 }); row('buciE', 'z', 6, 146, ZMAX, -1, 14, { wmin: 6, wmax: 9, h0: 16 });
-    fill(XMIN, -20, 146, ZMAX, 16, 5); fill(20, 90, 146, ZMAX, 16, 5); fill(90, 96, 140, ZMAX, 14, 4); fill(96, 146, 190, ZMAX, 14, 4); fill(140, 146, 140, 150, 14, 2);
+    row('quaiS', 'x', 52, XMIN, -66, -1, 14, { gaps: [[-300, -285]] }); row('quaiS', 'x', 52, -54, -6, -1, 14); row('quaiS', 'x', 52, 6, 54, -1, 14); row('quaiS', 'x', 52, 66, 96, -1, 14); row('quaiS', 'x', 52, 96, 156, -1, 7, { gaps: [[139, 151]] }); row('quaiS', 'x', 52, 156, XMAX, -1, 14, { gaps: [[325, 341]] });
+    const JG = { wmin: 6, wmax: 9, gaps: [[75, 85]] }; row('dauW', 'z', -66, 66, 94, 1, 14, JG); row('dauE', 'z', -54, 66, 94, -1, 14, JG); row('seineW', 'z', -6, 66, 94, 1, 14, JG); row('seineE', 'z', 6, 66, 94, -1, 14, JG);
+    row('bonaW', 'z', 54, 66, 94, 1, 14, JG); row('bonaE', 'z', 66, 66, 94, -1, 14, JG); row('placeW', 'z', 96, 66, 94, 1, 14, JG); row('placeE', 'z', 156, 66, 94, -1, 14, { wmin: 6, wmax: 9 });
+    row('place', 'x', 66, 96, 156, 1, 7, { wmin: 8, wmax: 12, gaps: [[139, 151]] }); box(P, COB, 140, 150, 0, .025, 46, 66); box(P, 0xd8ccb0, 140, 150, 4.6, 5.2, 52, 66);   /* the passage from the quai into the Place (a covered arcade) */
+    /* Rue Jacob (z 76..84): from the west edge street through the blocks into the Place */
+    row('jacN', 'x', 76, -285, -80, 1, 10, { wmin: 6, wmax: 10 }); row('jacS', 'x', 84, -285, -80, -1, 10, { wmin: 6, wmax: 10 }); box(P, COB, -296, 96, 0, .024, 76, 84);
+    fill(XMIN, -296, 46, 230, 14, 4); fill(-40, -20, 66, 75, 18, 4); fill(-40, -20, 85, 94, 18, 4); fill(20, 40, 66, 75, 18, 4); fill(20, 40, 85, 94, 18, 4); fill(80, 82, 66, 75, 18, 4); fill(80, 82, 85, 94, 18, 4); fill(170, 325, 66, 94, 18, 4); fill(336, XMAX, 46, 146, 14, 4);
+    box(P, COB, -296, -286, 0, .025, 46, 208); box(P, COB, 326, 336, 0, .025, 46, 212);
+    row('bvdN', 'x', 108, XMIN, -66, 1, 14, { gaps: [[-300, -285]] }); row('bvdN', 'x', 108, -54, -6, 1, 14); row('bvdN', 'x', 108, 6, 54, 1, 14); row('bvdN', 'x', 108, 66, 96, 1, 14); row('bvdN', 'x', 108, 156, XMAX, 1, 14, { gaps: [[325, 341]] });
+    row('bvdS', 'x', 132, XMIN, -6, -1, 14, { gaps: [[-300, -285], [-67, -53]] }); row('bvdS', 'x', 132, 6, 90, -1, 14); row('bvdS', 'x', 132, 156, XMAX, -1, 14, { shopP: .5, gaps: [[325, 341]] });
+    row('buciW', 'z', -6, 146, ZMAX, 1, 14, { wmin: 6, wmax: 9, h0: 16, gaps: [[199, 209]] }); row('buciE', 'z', 6, 146, ZMAX, -1, 14, { wmin: 6, wmax: 9, h0: 16, gaps: [[199, 209]] });
+    /* Rue Dauphine continues south (x -66..-54) to Rue de Vaugirard (z 200..208), which runs from the west edge street past Buci into the garden */
+    const VG = { wmin: 6, wmax: 10, h0: 16, hr: 4 }; row('dsW', 'z', -66, 146, 188, 1, 12, VG); row('dsE', 'z', -54, 146, 188, -1, 12, VG); box(P, COB, -66, -54, 0, .025, 126, 200); box(P, COB, -296, 146, 0, .024, 200, 208);
+    for (const [x0, x1, d] of [[-285, -66, 12], [-54, -20, 12], [20, 90, 12], [90, 146, 10]]) { row('vgN', 'x', 200, x0, x1, 1, d, VG); row('vgS', 'x', 208, x0, x1, -1, 12, VG) }
+    fill(-285, -78, 146, 188, 16, 5); fill(-42, -20, 146, 188, 16, 5); fill(20, 90, 146, 188, 16, 5); fill(90, 96, 140, 190, 14, 4); fill(140, 146, 140, 150, 14, 2); fill(-285, 146, 220, ZMAX, 14, 4);
     PAR.stats.buildings = nB;
     /* ---------- landmarks ---------- */
     /* the church: Romanesque nave + square bell tower with a spire (x 96..140, z 134..190) */
@@ -214,7 +226,7 @@ AV.registerWorld({
       for (const y of [58, 116, 200]) for (let k = 0; k < 12; k++) { const a = k / 12 * TAU, r = y === 58 ? 22 : y === 116 ? 12 : 5; Gl.push([BG.box, 0xffd890, K.M(ex + Math.cos(a) * r, y + 1.6, ez + Math.sin(a) * r, .8, .8, .8), 0]) }
       const tm = new THREE.Mesh(K.merge(TP), K.floraMat(0, { rough: .7 })); tm.material.userData.lin = 1; tm.name = 'par_eiffel'; grp.add(tm); PAR.eiffel = tm }
     /* the north corner of the Luxembourg garden (x 146..340, z 150..230): gravel, lawns, the pond with toy boats, green chairs, the palace front */
-    { box(P, 0xd8ccaa, 146, XMAX, 0, .02, 150, ZMAX); box(P, 0x9a8a6a, 156, XMAX, 0, 2.2, 146, 148); for (let x = 157; x < XMAX; x += 3) box(P, IRON, x, x + .08, 2.2, 3.4, 146.9, 147.1); cols.push([156, XMAX, 146, 148.2]);
+    { box(P, 0xd8ccaa, 146, XMAX, 0, .02, 150, ZMAX); box(P, 0x9a8a6a, 156, 325, 0, 2.2, 146, 148); for (let x = 157; x < 325; x += 3) box(P, IRON, x, x + .08, 2.2, 3.4, 146.9, 147.1); cols.push([156, 325, 146, 148.2]);
       box(P, 0x5a8a3a, 170, 230, 0, .05, 160, 190); box(P, 0x5a8a3a, 260, 330, 0, .05, 160, 190); const pc = [245, 196]; P.push([BG.cyl, 0xb8ac90, K.M(pc[0], .4, pc[1], 14, .8, 14), 0]); PAR.pond = pc; circ.push([pc[0], pc[1], 13.4]);
       const pw = new THREE.Mesh(new THREE.CircleGeometry(13.4, 40), wm); pw.rotation.x = -PI / 2; pw.position.set(pc[0], .55, pc[1]); grp.add(pw); P.push([BG.cyl, 0xc8bca0, K.M(pc[0], 2.2, pc[1], 1.2, 3.4, 1.2), 0]);
       box(P, 0xe8dcc0, 170, 330, 0, 18, 216, ZMAX); box(P, ZINC, 170, 330, 18, 22, 218, ZMAX); box(P, 0xe8dcc0, 236, 264, 0, 26, 212, ZMAX); P.push([BG.hem, ZINC, K.M(250, 26, 220, 9, 7, 6), 0]); for (let x = 174; x < 328; x += 6) { box(P, 0x2a3440, x, x + 2, 4, 9, 215.9, 216); box(P, 0x2a3440, x, x + 2, 11, 15, 215.9, 216) } cols.push([170, 330, 212, ZMAX]);
@@ -266,11 +278,11 @@ AV.registerWorld({
     PAR.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
-    const mapRoads = [[XMIN, 41, XMAX, 41, 10], [XMIN, -41, XMAX, -41, 10], [XMIN, 120, XMAX, 120, 12], [-60, -36, -60, 36, 20], [60, -36, 60, 36, 8], [-60, 46, -60, 114, 12], [0, 46, 0, 114, 12], [60, 46, 60, 114, 12], [0, 126, 0, 230, 12], [151, 126, 151, 150, 10], [175, 20, 175, 36, 10], [187, -36, 187, -20, 8]];
+    const mapRoads = [[XMIN, 41, XMAX, 41, 10], [XMIN, -41, XMAX, -41, 10], [XMIN, 120, XMAX, 120, 12], [-60, -36, -60, 36, 20], [60, -36, 60, 36, 8], [-60, 46, -60, 114, 12], [0, 46, 0, 114, 12], [60, 46, 60, 114, 12], [0, 126, 0, 230, 12], [151, 126, 151, 150, 10], [175, 24, 175, 36, 10], [187, -36, 187, -24, 8], [305, 24, 305, 36, 8], [XMIN, -94, XMAX, -94, 12], [-60, -88, -60, -52, 10], [60, -88, 60, -52, 10], [187, -88, 187, -52, 10], [-291, -94, -291, 208, 10], [331, -94, 331, 212, 10], [-291, 80, 96, 80, 8], [-60, 126, -60, 204, 10], [-291, 204, 146, 204, 8]];
     const places = [PLc('pontneuf', 'Pont Neuf', 'Pont Neuf', -60, 0, 0), PLc('passerelle', 'Footbridge (Pont des Singes)', 'Pasarela (Pont des Singes)', 60, 0, 0), PLc('quai', 'Quai (bouquinistes)', 'Muelle (buquinistas)', -20, 33.5, PI / 2), PLc('cathedrale', 'Cathedral (Île)', 'Catedral (Île)', 178, 0, -PI / 2), PLc('isle', 'Île · Glacier', 'Île · Heladería', 172, 8, 0),
       PLc('place', 'Place Saint-Germain (terraces)', 'Plaza Saint-Germain (terrazas)', 126, 86, PI), PLc('eglise', 'Saint-Germain church', 'Iglesia de Saint-Germain', 110, 131, PI), PLc('boulevard', 'Boulevard Saint-Germain', 'Bulevar Saint-Germain', -100, 111, PI / 2), PLc('buci', 'Rue de Buci market', 'Mercado de la Rue de Buci', 0, 180, PI),
       PLc('luxembourg', 'Luxembourg garden', 'Jardín de Luxemburgo', 245, 175, PI), PLc('metro_sg', 'Métro Saint-Germain', 'Metro Saint-Germain', 30, 109, PI), PLc('metro_pn', 'Métro (north bank)', 'Metro (orilla norte)', 0, -47, 0), PLc('bateau', 'Bateaux-Singes pier', 'Embarcadero Bateaux-Singes', 120, 34, PI), PLc('stage', 'Fête de la Musique stage', 'Escenario de la Fête de la Musique', 126, 96, PI),
-      PLc('dauphine', 'Rue Dauphine', 'Rue Dauphine', -60, 80, PI), PLc('ruedeseine', 'Rue de Seine', 'Rue de Seine', 0, 80, PI), PLc('bonaparte', 'Rue Bonaparte', 'Rue Bonaparte', 60, 80, PI)];
+      PLc('dauphine', 'Rue Dauphine', 'Rue Dauphine', -60, 80, PI), PLc('rivoli', 'Rue de Rivoli (arcades)', 'Rue de Rivoli (soportales)', 0, -94, PI / 2), PLc('jacob', 'Rue Jacob', 'Rue Jacob', -180, 80, PI / 2), PLc('vaugirard', 'Rue de Vaugirard', 'Rue de Vaugirard', -120, 204, PI / 2), PLc('passage', 'Passage to the Place', 'Pasaje a la plaza', 145, 58, PI), PLc('ruedeseine', 'Rue de Seine', 'Rue de Seine', 0, 80, PI), PLc('bonaparte', 'Rue Bonaparte', 'Rue Bonaparte', 60, 80, PI)];
     const NAMES = { librairie: 'Librairie La Page Volante', disques: 'Groove Dealers Disques', cafe: 'Café des Singes', brasserie: 'Brasserie Le Zinc', cave: 'Le Caveau des Singes (jazz)', patisserie: 'Macarons Rose-Thé', swag: 'SWAG Paris', tabac: 'Tabac · Presse', boulangerie: 'Au Pain Doré (boulangerie)', fromagerie: 'Fromagerie Mère Lune', creperie: 'Crêperie Ty Ape', fleuriste: 'Les Fleurs de Buci', velape: "Vél'Ape (bikes)" };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
     if (PAR.MM) { for (const r of PAR.MM.roads) mapRoads.push(r); for (const p of PAR.MM.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }

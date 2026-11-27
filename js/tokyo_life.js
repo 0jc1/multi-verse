@@ -58,14 +58,21 @@ TKY.life = function (ctx, E) {
   const front = (k, u) => { const s = sh[k]; return s ? [s.x + s.out[0] * (u || 1.6), s.z + s.out[1] * (u || 1.6)] : null };
   /* ---------- walking graph ---------- */
   const nodes = [], edges = [], line = pts => { let prev = -1; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = [pts[i], pts[i + 1]], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(d / 8)); for (let k = (i ? 1 : 0); k <= n; k++) { nodes.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); const id = nodes.length - 1; if (prev >= 0) edges.push([prev, id]); prev = id } } };
-  line([[-13, -478], [-13, -16]]); line([[-13, 16], [-13, 186]]); line([[13, -396], [13, -16]]); line([[13, 16], [13, 186]]);
-  line([[-195, -11], [-16, -11]]); line([[-195, 11], [-16, 11]]); line([[16, -11], [48, -11]]); line([[16, 11], [48, 11]]); line([[16, 44], [96, 44]]); line([[16, -30], [48, -30]]); line([[28, 20], [28, 44]]);
-  line([[-14, -36], [-195, -36]]); line([[-14, -124], [-195, -124]]); line([[-93, -38], [-93, -122]]); line([[-77, 12], [-77, 118], [-77, 150]]); line([[-14, 150], [-102, 150]]); line([[-40, 150], [-40, 136]]); line([[-90, 150], [-90, 142]]);
-  line([[91.5, 44], [91.5, 160]]); line([[14, 123], [91.5, 123]]);
-  line([[14, -476], [50, -476]]); line([[30, -476], [30, -400]]); line([[-14, -432], [-178, -432]]); line([[-13, -478], [0, -484], [13, -476]]); line([[0, -484], [0, -544]]);
+  line([[-13, -478], [-13, -16]]); line([[-13, 16], [-13, 186]]); line([[13, -476], [13, -16]]); line([[13, 16], [13, 186]]);
+  line([[-192, -11], [-16, -11]]); line([[-192, 11], [-16, 11]]); line([[13, -11], [48, -11]]); line([[13, 11], [48, 11]]); line([[13, 44], [91.5, 44]]); line([[13, -30], [48, -30]]); line([[28, 11], [28, 44]]); line([[48, -58], [48, 44]]); line([[13, -58], [88, -58]]);
+  line([[-14, -36], [-192, -36]]); line([[-14, -124], [-192, -124]]); line([[-93, -36], [-93, -124]]); line([[-77, 11], [-77, 118], [-77, 150]]); line([[-14, 150], [-192, 150]]); line([[-40, 150], [-40, 140], [-90, 140], [-90, 150]]);
+  line([[91.5, 44], [91.5, 160]]); line([[13, 123], [91.5, 123]]); line([[13, 157], [91.5, 157]]);
+  line([[13, -476], [50, -476], [50, -402], [30, -402]]); line([[30, -476], [30, -402]]); line([[30, -402], [88, -402]]); line([[-14, -432], [-192, -432]]); line([[-13, -478], [0, -484], [13, -476]]); line([[0, -484], [0, -544]]);
+  line([[-192, -432], [-192, 150]]); line([[-66, -432], [-66, -36]]); line([[-13, -236], [-192, -236]]); line([[-13, -332], [-192, -332]]); line([[88, -402], [88, -58]]); line([[13, -232], [88, -232]]); line([[13, -328], [88, -328]]);
   if (TKY.AS) for (const pl of TKY.AS.nav) line(pl);   /* Asakusa (tokyo_asakusa.js) */
-  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 3.5 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
-  const NAV = CY.nav(nodes, edges); TKY.nav = { nodes, links: NAV.links }; TKY.stats.navNodes = nodes.length;
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 4.6 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
+  const NAV = CY.nav(nodes, edges);
+  /* the GPS graph = the walking graph + the crossings (zebras at the scramble + mid-block crossings): pedestrians in the crowd wait at the corners instead */
+  { const gN = nodes.slice(), gE = edges.slice(), n0 = gN.length, gl = pts => { let prev = -1; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = [pts[i], pts[i + 1]], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(d / 8)); for (let k = (i ? 1 : 0); k <= n; k++) { gN.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); const id = gN.length - 1; if (prev >= 0) gE.push([prev, id]); prev = id } } };
+    gl([[-13, -16], [13, -16]]); gl([[-13, 16], [13, 16]]); gl([[-16, -11], [-16, 11]]); gl([[16, -11], [16, 11]]); gl([[-16, -11], [-13, -16]]); gl([[-16, 11], [-13, 16]]); gl([[16, -11], [13, -16]]); gl([[16, 11], [13, 16]]);
+    gl([[-13, -236], [13, -232]]); gl([[-13, -332], [13, -328]]); gl([[-13, -470], [13, -470]]); gl([[-13, 123], [13, 123]]); gl([[-13, 150], [13, 150]]); gl([[-13, 184], [13, 184]]); gl([[-13, -478], [13, -476]]);
+    for (let i = n0; i < gN.length; i++) for (let j = 0; j < gN.length; j++) if (i !== j && Math.hypot(gN[i][0] - gN[j][0], gN[i][1] - gN[j][1]) < 4.6) gE.push([i, j]);
+    TKY.nav = { nodes: gN, links: CY.nav(gN, gE).links } } TKY.stats.navNodes = nodes.length;
   /* ---------- crowds ---------- */
   const crowd = CY.crowd(ctx), V = ['suit', 'woman', 'man', 'tourist', 'woman', 'suit', 'backpacker', 'man'];
   for (let i = 0; i < [18, 30, 44][q]; i++) { const n0 = nodes[(rng() * nodes.length) | 0]; crowd.add({ v: V[i % V.length], x: n0[0], z: n0[1], nav: NAV, idleProb: .12 }) }

@@ -12,7 +12,7 @@
 (function (AV) {
 const TAU = Math.PI * 2, PI = Math.PI;
 const TKY = AV.tokyo = { stats: {} };
-const XMIN = -202, XMAX = 120, ZMIN = -562, ZMAX = 190, DECK = 8, TRACK = [104, 110];
+const XMIN = -210, XMAX = 120, ZMIN = -562, ZMAX = 190, DECK = 8, TRACK = [104, 110];
 /* walkable: the whole rectangle, except the forest edge north of Harajuku (only the shrine forest itself) and the viaduct strip */
 function surf(x, z) { if (TKY.asSurf) { const s2 = TKY.asSurf(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; if (z < -482 && (x < -60 || x > 60)) return null; return 0 }
 TKY.surf = surf; TKY.DECK = DECK; TKY.TRACK = TRACK;
@@ -187,7 +187,7 @@ AV.registerWorld({
     for (const s of [1, -1]) for (let k = -8; k <= 8; k++) { const t = k / 8.5, cx = t * 12, cz = s * t * 9.5, a = Math.atan2(s * 9.5, 12); P.push([BG.box, LINE, K.M(cx, .04, cz, .5, .015, 4, 0, -a + PI / 2, 0), 0]) }
     box(P, LINE, 0, 9.5, .03, .045, -15.2, -14.8); box(P, LINE, -9.5, 0, .03, .045, 14.8, 15.2); box(P, LINE, -23.2, -22.8, .03, .045, -7.8, 0); box(P, LINE, 22.8, 23.2, .03, .045, 0, 7.8);
     box(P, 0x9a7a6a, -195, -16, 0, .02, -40, -32); box(P, 0x8a7a72, -96, -90, 0, .02, -120, -40); box(P, 0x7a7670, -195, -16, 0, .02, -128, -120); box(P, 0x8a7a6a, -80, -74, 0, .02, 14, 116); box(P, 0x6a5a4e, 89, 94, 0, .02, 46, 186); box(P, 0x7a7670, 16, 89, 0, .02, 120, 126);   /* lanes */
-    box(P, 0xa89a90, -180, -16, 0, .02, -436, -428);   /* Takeshita */
+    box(P, 0xa89a90, -196, -16, 0, .02, -436, -428);   /* Takeshita */
     /* ---------- the Loop Line viaduct (x 100..114): deck, parapets, rails, pillars; a solid embankment wall (railway arches) ---------- */
     box(P, 0x9a9890, 99, 115, DECK - .8, DECK, ZMIN, ZMAX); for (const x of [99, 114.6]) box(P, 0x8a8880, x, x + .4, DECK, DECK + 1.1, ZMIN, ZMAX);
     for (const tx of TRACK) { box(P, 0x5a5048, tx - 1.3, tx + 1.3, DECK, DECK + .12, ZMIN, ZMAX); for (const s of [-.72, .72]) box(P, 0x9a9aa0, tx + s - .05, tx + s + .05, DECK + .12, DECK + .25, ZMIN, ZMAX) }
@@ -209,47 +209,59 @@ AV.registerWorld({
         if (sp) { const sa = sp[2] - sp[3] / 2; if (sa - a >= 3) w = sa - a > (o.wmax || 9) + 3 ? w : sa - a; else w = sp[3] } if (a + w > a1) w = a1 - a; if (w < 3) break; const isSp = sp && w === sp[3];
         const ac = a + w / 2, fx = ax === 'z' ? front : ac, fz = ax === 'z' ? ac : front, h = o.hFix || ((o.h0 || 9) + rng() * (o.hr || 10)), shop = isSp || rng() < (o.shopP == null ? .7 : o.shopP);
         const sty = o.style || ['tile', 'tile', 'glass', 'balcony', 'concrete', 'tile'][(rng() * 6) | 0];
-        if (o.build) o.build(fx, fz, yaw, w, h, depth, { isSp, sp, out, al, a, ac, shop });
-        else if (o.hut) hut(P, Gl, fx, fz, yaw, w, h, depth, rng);
-        else tower(P, Gl, Gs, fx, fz, yaw, w, h, depth, { rng, col: o.col || TILE[(rng() * TILE.length) | 0], style: sty, shop, lit: shop && rng() < .75, hollow: isSp && !!sp[4], shopCol: [0x1a1a1a, 0x2a2a2e, 0x3a1a1a, 0x1a2a3a, 0xe8e8e4][(rng() * 5) | 0], gf: o.gf, litP: o.litP });
+        const skip = !isSp && !!o.gaps && o.gaps.some(g => a < g[1] && a + w > g[0]), PP = skip ? [] : P, GG = skip ? [] : Gl, GS = skip ? [] : Gs, sg = skip ? () => { } : sign, bxx = skip ? () => { } : box;
+        if (o.build) o.build(fx, fz, yaw, w, h, depth, { isSp, sp, out, al, a, ac, shop, skip });
+        else if (o.hut) hut(PP, GG, fx, fz, yaw, w, h, depth, rng);
+        else tower(PP, GG, GS, fx, fz, yaw, w, h, depth, { rng, col: o.col || TILE[(rng() * TILE.length) | 0], style: sty, shop, lit: shop && rng() < .75, hollow: isSp && !!sp[4], shopCol: [0x1a1a1a, 0x2a2a2e, 0x3a1a1a, 0x1a2a3a, 0xe8e8e4][(rng() * 5) | 0], gf: o.gf, litP: o.litP });
         const c0 = ax === 'z' ? [Math.min(front, front - face * depth), Math.max(front, front - face * depth), a + .05, a + w - .05] : [a + .05, a + w - .05, Math.min(front, front - face * depth), Math.max(front, front - face * depth)];
-        if (!(isSp && sp[4])) cols.push(c0); nB++;
+        if (!(isSp && sp[4]) && !skip) cols.push(c0); nB++;
         const sx = fx + out[0] * .24, sz = fz + out[1] * .24;
         if (isSp) { SHOPS[sp[0]] = { k: sp[0], x: fx + out[0] * .2, z: fz + out[1] * .2, yaw, w, face, ax, out, al, h, d: depth, hollow: sp[4] || 0, c: c0, lsx: Math.round(Math.cos(yaw) * al[0] - Math.sin(yaw) * al[1]) } }
         else if (o.build) { }
-        else if (o.hut) { const nk = ['n_sake', 'n_tori', 'n_oden', 'n_ramen'][(rng() * 4) | 0]; sign(nk, fx + out[0] * .12, 2.05, fz + out[1] * .12, w * .62, w * .62 * .6, yaw) }
-        else if (shop && o.gen) { sign(o.gen[(rng() * o.gen.length) | 0], sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw) }
-        else if (shop && !o.noSign) { const gk = nextGen(); sign(gk, sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw); if (!o.hut) sign(['w_konbini', 'w_fashion', 'w_food'][(rng() * 3) | 0], fx + out[0] * .14, 1.6, fz + out[1] * .14, Math.max(1, w - 2.2), 2.0, yaw) }
-        if (!o.hut && !o.build && !o.noBlade && h > 9 && rng() < (o.bladeP == null ? .6 : o.bladeP)) { const bk = isSp && BLAD[sp[0]] ? BLAD[sp[0]] : nextBlade(), sd = rng() < .5 ? -1 : 1, bh = Math.min(5.6, h - 6); sign(bk, fx + out[0] * .75 + al[0] * sd * (w / 2 - .45), 5.2 + bh / 2, fz + out[1] * .75 + al[1] * sd * (w / 2 - .45), bh * .21, bh, yaw + PI / 2, true); box(P, 0x2a2a2a, Math.min(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) - .04, Math.max(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) + .04, 5.1 + bh, 5.2 + bh, Math.min(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) - .04, Math.max(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) + .04) }
-        if (!o.hut && !o.build && h > 16 && rng() < (o.billP == null ? .22 : o.billP)) { const bw = Math.min(w - 1, 9); sign(nextBill(), fx - out[0] * 1.5, h + 1.2 + bw * .19, fz - out[1] * 1.5, bw, bw * .375, yaw); box(P, 0x3a3a3a, fx - out[0] * 1.7 - al[0] * bw / 2 - .05, fx - out[0] * 1.7 + al[0] * bw / 2 + .05, h, h + 1.3, fz - out[1] * 1.7 - al[1] * bw / 2 - .05, fz - out[1] * 1.7 + al[1] * bw / 2 + .05) }
+        else if (o.hut) { const nk = ['n_sake', 'n_tori', 'n_oden', 'n_ramen'][(rng() * 4) | 0]; sg(nk, fx + out[0] * .12, 2.05, fz + out[1] * .12, w * .62, w * .62 * .6, yaw) }
+        else if (shop && o.gen) { sg(o.gen[(rng() * o.gen.length) | 0], sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw) }
+        else if (shop && !o.noSign) { const gk = nextGen(); sg(gk, sx, (o.gf || 4.2) - .55, sz, w - .5, (w - .5) * .232, yaw); if (!o.hut) sg(['w_konbini', 'w_fashion', 'w_food'][(rng() * 3) | 0], fx + out[0] * .14, 1.6, fz + out[1] * .14, Math.max(1, w - 2.2), 2.0, yaw) }
+        if (!o.hut && !o.build && !o.noBlade && h > 9 && rng() < (o.bladeP == null ? .6 : o.bladeP)) { const bk = isSp && BLAD[sp[0]] ? BLAD[sp[0]] : nextBlade(), sd = rng() < .5 ? -1 : 1, bh = Math.min(5.6, h - 6); sg(bk, fx + out[0] * .75 + al[0] * sd * (w / 2 - .45), 5.2 + bh / 2, fz + out[1] * .75 + al[1] * sd * (w / 2 - .45), bh * .21, bh, yaw + PI / 2, true); bxx(P, 0x2a2a2a, Math.min(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) - .04, Math.max(fx + out[0] * .1 + al[0] * sd * (w / 2 - .45), fx + out[0] * .75 + al[0] * sd * (w / 2 - .45)) + .04, 5.1 + bh, 5.2 + bh, Math.min(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) - .04, Math.max(fz + out[1] * .1 + al[1] * sd * (w / 2 - .45), fz + out[1] * .75 + al[1] * sd * (w / 2 - .45)) + .04) }
+        if (!o.hut && !o.build && h > 16 && rng() < (o.billP == null ? .22 : o.billP)) { const bw = Math.min(w - 1, 9); sg(nextBill(), fx - out[0] * 1.5, h + 1.2 + bw * .19, fz - out[1] * 1.5, bw, bw * .375, yaw); bxx(P, 0x3a3a3a, fx - out[0] * 1.7 - al[0] * bw / 2 - .05, fx - out[0] * 1.7 + al[0] * bw / 2 + .05, h, h + 1.3, fz - out[1] * 1.7 - al[1] * bw / 2 - .05, fz - out[1] * 1.7 + al[1] * bw / 2 + .05) }
         a += w + .02 } }
     /* filler masses that close the inside of a block (roofscape seen over the rows) */
     function fill(x0, x1, z0, z1, h0, hr) { for (let x = x0; x < x1 - .5; x += 22) for (let z = z0; z < z1 - .5; z += 22) { const xa = Math.min(x1, x + 22), za = Math.min(z1, z + 22), h = h0 + rng() * hr; box(P, TILE[(rng() * TILE.length) | 0], x, xa, 0, h, z, za); box(P, 0x8a8a88, x, xa, h, h + .7, z, za);
         if (h > 18 && rng() < .5) { const L1 = rng() < .4; box(L1 ? Gl : P, L1 ? 0xffe2b0 : 0x2a3440, x + 1, xa - 1, h - 3.4, h - 1.2, z - .02, z + .02); box(L1 ? Gl : P, L1 ? 0xd8ecff : 0x2a3440, x + 1, xa - 1, h - 3.4, h - 1.2, za - .02, za + .02) } }
       cols.push([x0, x1, z0, z1]) }
     /* --- Shibuya --- */
-    row('cgS', 'x', -32, -195, -38, -1, 9, { h0: 9, hr: 12 }); row('a2N', 'x', -14, -195, -38, 1, 9, { h0: 12, hr: 16 });   /* block A: Center Gai's south side + the road's north side, back to back */
-    row('cgN', 'x', -40, -195, -96, 1, 12, { h0: 9, hr: 13 }); row('cgN', 'x', -40, -90, -28, 1, 12, { h0: 9, hr: 13 });
+    row('cgS', 'x', -32, -195, -38, -1, 9, { h0: 9, hr: 12, gaps: [[-196, -187]] }); row('a2N', 'x', -14, -195, -38, 1, 9, { h0: 12, hr: 16, gaps: [[-196, -187]] });   /* block A: Center Gai's south side + the road's north side, back to back */
+    row('cgN', 'x', -40, -195, -96, 1, 12, { h0: 9, hr: 13, gaps: [[-196, -187]] }); row('cgN', 'x', -40, -90, -28, 1, 12, { h0: 9, hr: 13, gaps: [[-71, -61]] });
     row('udW', 'z', -96, -108, -52, 1, 12, { h0: 7, hr: 9 }); row('udE', 'z', -90, -108, -52, -1, 12, { h0: 7, hr: 9 });
-    row('bkS', 'x', -120, -195, -96, -1, 12, { h0: 8, hr: 8 }); row('bkS', 'x', -120, -90, -28, -1, 12, { h0: 8, hr: 8 }); row('bkN', 'x', -128, -195, -28, 1, 12, { h0: 8, hr: 10 });
-    fill(-195, -108, -108, -52, 10, 20); fill(-78, -28, -108, -52, 12, 22);
+    row('bkS', 'x', -120, -195, -96, -1, 12, { h0: 8, hr: 8, gaps: [[-196, -187]] }); row('bkS', 'x', -120, -90, -28, -1, 12, { h0: 8, hr: 8, gaps: [[-71, -61]] }); row('bkN', 'x', -128, -195, -28, 1, 12, { h0: 8, hr: 10, gaps: [[-196, -187], [-71, -61]] });
+    fill(-187, -108, -108, -52, 10, 20); fill(-78, -71, -108, -52, 12, 22); fill(-61, -28, -108, -52, 12, 22);
     row('r1W', 'z', -16, -120, -40, 1, 12, { h0: 16, hr: 22, billP: .5 }); row('r1W', 'z', -16, 34, 114, 1, 12, { h0: 14, hr: 20, billP: .5 });
-    row('r2S', 'x', 14, -195, -80, -1, 12, { h0: 10, hr: 16 }); row('r2S', 'x', 14, -74, -40, -1, 12, { h0: 12, hr: 16 });
+    row('r2S', 'x', 14, -195, -80, -1, 12, { h0: 10, hr: 16, gaps: [[-196, -187]] }); row('r2S', 'x', 14, -74, -40, -1, 12, { h0: 12, hr: 16 });
     row('saW', 'z', -80, 26, 114, 1, 12, { h0: 7, hr: 9 }); row('saE', 'z', -74, 26, 114, -1, 12, { h0: 7, hr: 9 });
-    fill(-195, -92, 26, 114, 8, 16); fill(-62, -28, 26, 114, 10, 18);
-    row('r1Es', 'z', 16, 50, 120, -1, 12, { h0: 12, hr: 16 }); row('r1Es', 'z', 16, 126, 186, -1, 12, { h0: 12, hr: 16 });
+    fill(-187, -92, 26, 114, 8, 16); fill(-62, -28, 26, 114, 10, 18);
+    row('r1Es', 'z', 16, 50, 120, -1, 12, { h0: 12, hr: 16 }); row('r1Es', 'z', 16, 126, 186, -1, 12, { h0: 12, hr: 16, gaps: [[153, 161]] });
     row('shN', 'x', 120, 28, 81, 1, 12, { h0: 7, hr: 8, bladeP: .4 }); row('shS', 'x', 126, 28, 81, -1, 12, { h0: 7, hr: 8, bladeP: .4 });
-    fill(28, 81, 50, 108, 10, 18); fill(28, 81, 138, 190, 10, 18);
-    row('yk', 'z', 89, 50, 119, 1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true }); row('yk', 'z', 89, 127, 160, 1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true });
+    fill(28, 81, 50, 108, 10, 18); fill(28, 81, 138, 146, 10, 18); fill(28, 81, 168, 190, 10, 18);
+    /* Nonbei alley (z 154..160): tiny bars from the avenue into the yokochō */
+    row('nbN', 'x', 154, 28, 81, 1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true }); row('nbS', 'x', 160, 28, 81, -1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true }); box(P, 0x6a5a4e, 16, 89, 0, .02, 154, 160); for (let x = 30; x < 88; x += 3) box(Gl, (x / 3 | 0) % 2 ? 0xff5a3a : 0xffa04a, x - .2, x + .2, 3.6, 4.1, 156.8, 157.2);
+    row('yk', 'z', 89, 50, 119, 1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true }); row('yk', 'z', 89, 127, 160, 1, 8, { hut: true, wmin: 3.2, wmax: 4.6, h0: 4.6, hr: 1.4, shopP: 1, noSign: true, gaps: [[153, 161]] });
     row('gd', 'z', 94, 50, 160, -1, 6, { hFix: 4.6, wmin: 4.5, wmax: 6, style: 'concrete', col: 0x7a5a4a, noBlade: true, gf: 4.2, shopP: .85, gen: ['g_bar', 'g_yakiniku', 'g_udon', 'g_tonkatsu', 'g_gyudon'] });
     fill(81, 100, 162, 190, 6, 6);   /* the yokochō ends in a wall at z 162 */
-    fill(-202, -195, -132, 18, 14, 10); fill(-202, -195, 18, 116, 8, 8);   /* the west end of the lanes */
-    box(P, 0xf2c230, -199, -198.6, 0, 1, -8, 8); for (let z = -7; z < 8; z += 2) box(P, 0x1a1a1a, -198.95, -198.55, .3, .7, z, z + 1);   /* road closed barrier */
+    /* the West Lane (x -196..-188): Takeshita -> back street -> Center Gai -> the west road -> the shrine grove; its west side has its own row */
+    row('wl', 'z', -196, -428, 114, 1, 12, { h0: 8, hr: 10, bladeP: .4 }); box(P, 0x8a7e72, -196, -188, 0, .02, -436, 116); fill(-208, -196, -436, -428, 8, 4);
     /* --- between Shibuya and Harajuku, and Harajuku --- */
-    row('r1Wn', 'z', -16, -426, -130, 1, 12, { h0: 12, hr: 20, billP: .4 }); row('r1En', 'z', 16, -398, -130, -1, 14, { h0: 14, hr: 22, billP: .4 });
-    fill(-200, -28, -416, -140, 12, 26); fill(30, 100, -398, -130, 16, 28);
-    row('tkN', 'x', -436, -178, -28, 1, 12, { h0: 6, hr: 7, wmin: 4, wmax: 7, bladeP: .3 }); row('tkS', 'x', -428, -178, -28, -1, 12, { h0: 6, hr: 7, wmin: 4, wmax: 7, bladeP: .3 });
-    row('r1Wh', 'z', -16, -480, -438, 1, 12, { h0: 10, hr: 12 }); fill(-200, -28, -482, -448, 8, 14); fill(-200, -178, -448, -416, 8, 10); fill(52, 100, -440, -398, 10, 12); fill(60, 100, -482, -470, 6, 6);
+    row('r1Wn', 'z', -16, -426, -130, 1, 12, { h0: 12, hr: 20, billP: .4, gaps: [[-241, -231], [-337, -327]] }); row('r1En', 'z', 16, -398, -130, -1, 14, { h0: 14, hr: 22, billP: .4, gaps: [[-237, -227], [-333, -323]] });
+    /* west of the avenue: Cat Street (x -70..-62) + two cross streets (W1 z -240..-232, W2 z -336..-328) to the West Lane */
+    const CS = { h0: 7, hr: 6, wmin: 5, wmax: 8, bladeP: .35, billP: 0, gen: ['g_shoes', 'g_hair', 'g_cafe', 'g_dessert', 'g_100', 'g_camera', 'g_phone'] }, XS = { h0: 9, hr: 12, wmin: 5, wmax: 9, bladeP: .5 };
+    for (const [z0, z1] of [[-416, -348], [-316, -252], [-220, -140]]) { row('catW', 'z', -70, z0, z1, 1, 12, CS); row('catE', 'z', -62, z0, z1, -1, 12, CS); row('wlE', 'z', -188, z0, z1, -1, 12, XS); fill(-176, -82, z0, z1, 12, 22); fill(-50, -28, z0, z1, 12, 22) }
+    for (const [zf, zs] of [[-240, -232], [-336, -328]]) { for (const [x0, x1] of [[-188, -70], [-62, -28]]) { row('xwN', 'x', zf, x0, x1, 1, 12, XS); row('xwS', 'x', zs, x0, x1, -1, 12, XS) } box(P, 0x7a7670, -188, -16, 0, .02, zf, zs) }
+    box(P, 0xa09488, -70, -62, 0, .025, -428, -40);   /* Cat Street paving */
+    /* east of the avenue: the arches lane (x 84..92) along the viaduct, two cross streets (X1 z -236..-228, X2 z -332..-324), a link into the Harajuku plaza (z -406..-398) */
+    row('gdE', 'z', 92, -398, -64, -1, 8, { hFix: 4.6, wmin: 4.5, wmax: 6, style: 'concrete', col: 0x7a5a4a, noBlade: true, gf: 4.2, shopP: .85, gen: ['g_bar', 'g_yakiniku', 'g_udon', 'g_tonkatsu', 'g_gyudon', 'g_curry'] });
+    for (const [z0, z1] of [[-398, -344], [-312, -248], [-216, -132]]) row('leW', 'z', 84, z0, z1, 1, 12, XS);
+    for (const [zf, zs] of [[-236, -228], [-332, -324]]) { row('xeN', 'x', zf, 30, 72, 1, 12, XS); row('xeS', 'x', zs, 30, 72, -1, 12, XS); box(P, 0x7a7670, 16, 84, 0, .02, zf, zs) }
+    fill(30, 72, -398, -344, 14, 22); fill(30, 72, -312, -248, 14, 22); fill(30, 72, -216, -130, 14, 22); box(P, 0x6a5e54, 84, 92, 0, .02, -406, -58); box(P, 0x7a7670, 52, 92, 0, .02, -406, -398);
+    row('tkN', 'x', -436, -178, -28, 1, 12, { h0: 6, hr: 7, wmin: 4, wmax: 7, bladeP: .3 }); row('tkS', 'x', -428, -178, -28, -1, 12, { h0: 6, hr: 7, wmin: 4, wmax: 7, bladeP: .3, gaps: [[-71, -61]] });
+    row('r1Wh', 'z', -16, -480, -438, 1, 12, { h0: 10, hr: 12 }); fill(-208, -28, -482, -448, 8, 14); fill(-208, -178, -448, -436, 8, 10); fill(-188, -178, -428, -416, 8, 6); fill(52, 100, -440, -406, 10, 12); fill(60, 100, -482, -470, 6, 6);
     TKY.stats.buildings = nB;
     /* ---------- landmarks ---------- */
     const glassM = 0x34404c;
@@ -259,8 +271,8 @@ AV.registerWorld({
     /* SW "Moon Tower": a silver drum on the corner (x -40..-16, z 14..34) */
     { P.push([BG.cyl, 0xc8ccd0, K.M(-28, 16, 25, 11, 32, 11), 0]); for (let y = 4; y < 31; y += 3.2) P.push([BG.cyl, y % 2 > 1.2 ? 0x2a3440 : 0x3a4654, K.M(-28, y + 1.1, 25, 11.08, 2, 11.08), 0]); P.push([BG.cyl, 0xffd84a, K.M(-28, 32.6, 25, 9, .8, 9), 0]); box(P, 0x9aa0a6, -40, -16, 0, 4.4, 14, 34); cols.push([-40, -16, 14, 34]) }
     /* NE department store "Maru-Ape" (x 16..100, z -130..-62) */
-    { box(P, 0xe0dcd2, 16, 100, 0, 30, -130, -62); for (let y = 6; y < 29; y += 4) { box(Gl, 0xffe8c8, 17, 99, y, y + 2.4, -61.98, -61.9); box(Gl, 0xffe8c8, 15.9, 16, y, y + 2.4, -129, -63) } box(P, 0x1a1a1e, 24, 52, 10, 26, -61.9, -61.6);
-      P.push([BG.cyl, 0xd8d4ca, K.M(22, 18, -68, 7, 36, 7), 0]); box(P, 0x101012, 30, 44, 0, 4.4, -61.95, -61.9); cols.push([16, 100, -130, -62]); sign('b_sol', 70, 33.6, -64, 22, 8.25, 0); sign('b_zton', 16.4, 33.6, -100, 22, 8.25, -PI / 2) }
+    { box(P, 0xe0dcd2, 16, 82, 0, 30, -130, -62); for (let y = 6; y < 29; y += 4) { box(Gl, 0xffe8c8, 17, 81, y, y + 2.4, -61.98, -61.9); box(Gl, 0xffe8c8, 15.9, 16, y, y + 2.4, -129, -63) } box(P, 0x1a1a1e, 24, 52, 10, 26, -61.9, -61.6);
+      P.push([BG.cyl, 0xd8d4ca, K.M(22, 18, -68, 7, 36, 7), 0]); box(P, 0x101012, 30, 44, 0, 4.4, -61.95, -61.9); cols.push([16, 82, -130, -62]); sign('b_sol', 62, 33.6, -64, 22, 8.25, 0); sign('b_zton', 16.4, 33.6, -100, 22, 8.25, -PI / 2) }
     /* Shibuya station (x 52..100, z -55..40) + island platform on the viaduct */
     { box(P, 0xcfcac0, 52, 100, 0, 7, -55, 40); box(Gl, 0xd8ecff, 52, 52.1, 1, 6.2, -50, 35); for (let z = -50; z < 36; z += 4) box(P, 0x5a5e64, 51.9, 52, 0, 6.6, z, z + .3); box(P, 0x2a2a2e, 51.5, 52, 6.8, 7.4, -55, 40); box(P, 0x101012, 51.8, 51.9, 0, 3.4, -16, -4);
       cols.push([52, 100, -55, 40]); sign('st_shibuya', 51.6, 8.4, -8, 16, 2, -PI / 2); sign('loop', 50.7, 1.6, -18.5, .9, 1.35, -PI / 2);
@@ -320,8 +332,8 @@ AV.registerWorld({
     { box(P, 0x3a1a10, 88.6, 89, 0, 4.2, 47.8, 48.2); box(P, 0x3a1a10, 94, 94.4, 0, 4.2, 47.8, 48.2); box(P, 0x3a1a10, 88.6, 94.4, 4, 4.4, 47.8, 48.2); sign('yokocho', 91.5, 4.9, 48.3, 4.2, .84, PI, true);
       for (let z = 54; z < 158; z += 3) { box(Gl, z % 2 ? 0xff5a2a : 0xffa04a, 91.3, 91.7, 3.6, 4.1, z - .2, z + .2); box(P, 0x1a1a1a, 89, 94, 4.25, 4.28, z - .01, z + .01) } }
     /* ---------- the Inari shrine grove (south of the alleys, x -200..-16, z 116..190) ---------- */
-    { box(P, 0x9a9282, -200, -16, 0, .02, 116, 190); box(P, 0x8a7e6a, -122, -18, 0, .03, 147, 153);   /* gravel + the stone approach */
-      box(P, 0x5a4a3a, -200, -80.5, 0, 1.4, 114, 116.4); box(P, 0x5a4a3a, -73.5, -16, 0, 1.4, 114, 116.4); cols.push([-200, -80.5, 114, 116.4], [-73.5, -16, 114, 116.4]); box(P, 0x5a4a3a, -200, -199, 0, 1.4, 116, 190); cols.push([-202, -199, 116, 190]); box(P, 0x5a4a3a, -200, -16, 0, 1.4, 188.6, 190); cols.push([-200, -16, 188.6, 190]);
+    { box(P, 0x9a9282, -208, -16, 0, .02, 116, 190); box(P, 0x8a7e6a, -122, -18, 0, .03, 147, 153);   /* gravel + the stone approach */
+      box(P, 0x5a4a3a, -208, -196, 0, 1.4, 114, 116.4); box(P, 0x5a4a3a, -188, -80.5, 0, 1.4, 114, 116.4); box(P, 0x5a4a3a, -73.5, -16, 0, 1.4, 114, 116.4); cols.push([-208, -196, 114, 116.4], [-188, -80.5, 114, 116.4], [-73.5, -16, 114, 116.4]); box(P, 0x5a4a3a, -209, -208, 0, 1.4, 116, 190); cols.push([-211, -208, 116, 190]); box(P, 0x5a4a3a, -200, -16, 0, 1.4, 188.6, 190); cols.push([-200, -16, 188.6, 190]);
       torii(-20, 150, 1, PI / 2, 'inari'); for (let k = 0; k < 6; k++) torii(-60 - k * 3.2, 150, .62, PI / 2);   /* a short tunnel of small vermilion torii */
       /* haiden (worship hall) on a stone base */
       box(P, 0xa8a090, -142, -104, 0, 1.2, 136, 164); box(P, 0xe8e0d0, -138, -110, 1.2, 6.5, 140, 160); for (let z = 140; z < 161; z += 3.4) box(P, 0xc8321e, -110.4, -109.6, 1.2, 6.5, z - .3, z + .3); box(P, 0x101010, -110.2, -110.1, 1.4, 5.2, 144, 156);
@@ -402,11 +414,12 @@ AV.registerWorld({
     TKY.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
-    const mapRoads = [[0, -480, 0, 186, 20], [-200, 0, 50, 0, 16], [-16, -36, -195, -36, 8], [-16, -124, -195, -124, 8], [-93, -40, -93, -120, 6], [-77, 14, -77, 116, 6], [16, 123, 89, 123, 6], [91.5, 46, 91.5, 186, 5], [-16, -432, -180, -432, 8], [0, -484, 0, -546, 10]];
+    const mapRoads = [[0, -480, 0, 186, 20], [-200, 0, 50, 0, 16], [-16, -36, -195, -36, 8], [-16, -124, -195, -124, 8], [-93, -40, -93, -120, 6], [-77, 14, -77, 116, 6], [16, 123, 89, 123, 6], [91.5, 46, 91.5, 186, 5], [-16, -432, -192, -432, 8], [0, -484, 0, -546, 10], [-192, -432, -192, 116, 8], [-66, -432, -66, -36, 8], [-16, -236, -192, -236, 8], [-16, -332, -192, -332, 8], [88, -402, 88, -58, 8], [16, -232, 88, -232, 8], [16, -328, 88, -328, 8], [52, -402, 92, -402, 8], [16, 157, 89, 157, 6], [-16, -124, -192, -124, 8], [-16, -36, -192, -36, 8]];
     const places = [PLc('scramble', 'Shibuya Scramble Crossing', 'Cruce de Shibuya', 0, 0, 0), PLc('station', 'Shibuya Station (Loop Line)', 'Estación de Shibuya (Línea Circular)', 46, -10, -PI / 2), PLc('haru', 'Haru statue plaza', 'Plaza de la estatua de Haru', 28, 26, PI / 2),
       PLc('centergai', 'Center Gai', 'Center Gai', -60, -36, PI / 2), PLc('udagawa', 'Udagawa alley', 'Callejón de Udagawa', -93, -80, PI), PLc('backstreet', 'Back street (power lines)', 'Calle trasera', -100, -124, PI / 2), PLc('yokocho', 'Chōchin Yokochō (lantern alley)', 'Chōchin Yokochō (callejón de farolillos)', 91.5, 90, PI),
       PLc('shrine', 'Inari shrine', 'Santuario Inari', -60, 150, PI / 2), PLc('matsuri', 'Matsuri plaza (yagura)', 'Plaza del matsuri (yagura)', 34, -36, 0), PLc('taxi', 'Taxi pool', 'Parada de taxis', 30, -44, 0),
-      PLc('harajuku', 'Harajuku Station', 'Estación de Harajuku', 46, -455, -PI / 2), PLc('takeshita', 'Takeshita Street', 'Calle Takeshita', -80, -432, PI / 2), PLc('forest', 'Forest shrine (Mori-no-Miya)', 'Santuario del bosque (Mori-no-Miya)', 0, -520, 0)];
+      PLc('harajuku', 'Harajuku Station', 'Estación de Harajuku', 46, -455, -PI / 2), PLc('takeshita', 'Takeshita Street', 'Calle Takeshita', -80, -432, PI / 2), PLc('forest', 'Forest shrine (Mori-no-Miya)', 'Santuario del bosque (Mori-no-Miya)', 0, -520, 0),
+      PLc('catstreet', 'Cat Street (Shibuya ↔ Harajuku)', 'Cat Street (Shibuya ↔ Harajuku)', -66, -280, PI), PLc('westlane', 'West Lane', 'Calle Oeste', -192, -180, PI), PLc('arches', 'Arches lane (under the tracks)', 'Callejón de los arcos (bajo las vías)', 88, -280, PI), PLc('nonbei', 'Nonbei alley (tiny bars)', 'Callejón Nonbei (bares diminutos)', 50, 157, PI / 2)];
     const NAMES = { apemart: 'ApeMart Express', ramen: 'Ramen Kaminari', arcade: 'Game Center Banana Zone', crepe: 'Momo Crêpes', karaoke: 'Karaoke Utage', records: 'Groove Dealers Records Shibuya', sushi: 'Kaiten Sushi Yūgure', taiyaki: 'Taiyaki Taiya', kissa: 'Jazz Kissa Kuroneko', sento: 'Sentō Matsu-no-yu', livehouse: 'Live House SPACE NEKO', cycle: 'Sakura Cycle (bikes)', apephone: 'ApePhone Store Tokyo', izakaya: 'Izakaya Chōchin', yakitori: 'Yakitori Torikichi', oden: 'Oden Akari', kawaii: 'Kawaii Crêpe', purikura: 'Purikura Sakura', swag: 'SWAG Tokyo', candy: 'Rainbow Candy Floss', vintage: 'Ura Vintage' };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
     if (TKY.AS) { for (const r of TKY.AS.roads) mapRoads.push(r); for (const p of TKY.AS.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }

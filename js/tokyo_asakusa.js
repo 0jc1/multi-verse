@@ -13,10 +13,10 @@
 const tr = AV.tr, L = (e, s) => [e, s], say = a => tr(a[0], a[1]), TAU = Math.PI * 2, PI = Math.PI;
 const TKY = AV.tokyo; if (!TKY || !TKY.kit) return;
 const AS = { stats: {} }; TKY.asak = AS;
-const RX0 = 380, RX1 = 740, RZ0 = -290, RZ1 = 124, RIV = [620, 700], WYR = -3, BRZ = [52, 64];
+const RX0 = 380, RX1 = 740, RZ0 = -290, RZ1 = 124, RIV = [620, 700], WYR = -3, BRZ = [52, 64], FB = [-206, -200];   /* FB: the second (foot) bridge */
 /* the district's ground: undefined = not Asakusa (Shibuya's surface decides) */
 TKY.asSurf = (x, z) => { if (x < RX0 - 1 || x > RX1 + 1 || z < RZ0 - 1 || z > RZ1 + 1) return undefined; if (x < RX0 || x > RX1 || z < RZ0 || z > RZ1) return null;
-  if (x > RIV[0] && x < RIV[1]) { if (z > BRZ[0] && z < BRZ[1]) { const t = (x - 660) / 40; return .3 + .6 * (1 - t * t) } return null } return 0 };
+  if (x > RIV[0] && x < RIV[1]) { if (z > BRZ[0] && z < BRZ[1]) { const t = (x - 660) / 40; return .3 + .6 * (1 - t * t) } if (z > FB[0] && z < FB[1]) { const t = (x - 660) / 40; return .25 + .45 * (1 - t * t) } return null } return 0 };
 AS.surf = TKY.asSurf; AS.RIV = RIV; AS.WYR = WYR;
 
 /* ======================= signs (added to Tokyo's atlas at load, before the first build) ======================= */
@@ -62,7 +62,8 @@ TKY.asakusa = function (ctx, E) {
   for (const x of [RIV[0] - 1.4, RIV[1]]) box(P, 0x8a8478, x, x + 1.4, WYR - 2, 0, RZ0, RZ1);
   /* river railings (gaps at the bridge + the pier) */
   const rail = (x, z0, z1) => { box(P, 0x5a5e64, x - .05, x + .05, .95, 1.05, z0, z1); for (let z = z0; z < z1; z += 2) box(P, 0x5a5e64, x - .04, x + .04, 0, 1, z, z + .08); cols.push([x - .25, x + .25, z0, z1]) };
-  rail(619.5, RZ0, -26); rail(619.5, -14, 52); rail(619.5, 64, RZ1); rail(700.5, RZ0, 52); rail(700.5, 64, RZ1); rail(739.5, RZ0, RZ1);
+  rail(619.5, RZ0, FB[0]); rail(619.5, FB[1], -26); rail(619.5, -14, 52); rail(619.5, 64, RZ1); rail(700.5, RZ0, FB[0]); rail(700.5, FB[1], 52); rail(700.5, 64, RZ1);
+  for (let i = 0; i < 20; i++) { const x0 = RIV[0] + i * 4, x1 = x0 + 4.02, t = (x0 + 2 - 660) / 40, y = .25 + .45 * (1 - t * t); box(P, 0x6a4a2a, x0, x1, y - .3, y, FB[0], FB[1]); for (const z of [FB[0] + .08, FB[1] - .08]) box(P, 0xc8321e, x0, x1, y + .95, y + 1.05, z - .06, z + .06) } for (const x of [646, 674]) box(P, 0x8a8478, x - .6, x + .6, WYR - 2, .1, FB[0] + .5, FB[1] - .5); rail(739.5, RZ0, RZ1);
   box(P, 0x6a5a48, 620, 628, WYR + .4, WYR + .7, -26, -14); box(P, 0x6a5a48, 618, 620, -.2, 0, -26, -14);   /* water-bus pontoon */
   /* the red bridge (Azuma-bashi style) */
   for (let i = 0; i < 20; i++) { const x0 = RIV[0] + i * 4, x1 = x0 + 4.02, t = (x0 + 2 - 660) / 40, y = .3 + .6 * (1 - t * t); box(P, 0x8a8478, x0, x1, y - .6, y, BRZ[0], BRZ[1]); for (const z of [BRZ[0] + .1, BRZ[1] - .1]) { box(P, 0xc8321e, x0, x1, y + .95, y + 1.1, z - .1, z + .1); if (i % 2 === 0) box(P, 0xc8321e, x0, x0 + .2, y, y + 1.1, z - .1, z + .1) } }
@@ -82,12 +83,15 @@ TKY.asakusa = function (ctx, E) {
   row('nkW', 'z', 494, -144, -60, 1, 6, ST); row('nkW', 'z', 494, -52, -10, 1, 6, ST); row('nkW', 'z', 494, -4, 36, 1, 6, ST);
   row('nkE', 'z', 506, -144, -10, -1, 6, ST); row('nkE', 'z', 506, -4, 36, -1, 6, ST);
   const EDO = { style: 'wood', h0: 7, hr: 3, gf: 4, wmin: 5, wmax: 8, bladeP: .2, billP: 0, col: 0x4a3424, gen: ['g_udon', 'g_tonkatsu', 'g_cafe', 'g_book', 'g_dessert'] };
-  row('dpN', 'x', -10, 400, 488, 1, 10, EDO); row('dpN', 'x', -10, 512, 588, 1, 10, EDO); row('dpS', 'x', -4, 400, 488, -1, 10, EDO); row('dpS', 'x', -4, 512, 588, -1, 10, Object.assign({}, EDO, { col: 0xe8e0d0 }));
-  row('kdN', 'x', 46, 400, 488, 1, 12, { h0: 10, hr: 10, bladeP: .5 }); row('kdN', 'x', 46, 512, 600, 1, 12, { h0: 10, hr: 10, bladeP: .5 }); row('kdS', 'x', 70, 400, 600, -1, 12, { h0: 12, hr: 14, bladeP: .5, billP: .3 });
-  row('hpN', 'x', -60, 400, 488, 1, 8, { hut: true, wmin: 3.6, wmax: 5, h0: 4.6, hr: 1.4, shopP: 1, noSign: true }); row('hpS', 'x', -52, 400, 488, -1, 8, { hut: true, wmin: 3.6, wmax: 5, h0: 4.6, hr: 1.4, shopP: 1, noSign: true });
+  row('dpN', 'x', -10, 400, 488, 1, 10, Object.assign({ gaps: [[399, 411]] }, EDO)); row('dpN', 'x', -10, 512, 588, 1, 10, EDO); row('dpS', 'x', -4, 400, 488, -1, 10, Object.assign({ gaps: [[399, 411]] }, EDO)); row('dpS', 'x', -4, 512, 588, -1, 10, Object.assign({}, EDO, { col: 0xe8e0d0 }));
+  row('kdN', 'x', 46, 400, 488, 1, 12, { h0: 10, hr: 10, bladeP: .5, gaps: [[399, 411]] }); row('kdN', 'x', 46, 512, 600, 1, 12, { h0: 10, hr: 10, bladeP: .5 }); row('kdS', 'x', 70, 400, 600, -1, 12, { h0: 12, hr: 14, bladeP: .5, billP: .3, gaps: [[399, 411], [537, 547]] });
+  row('hpN', 'x', -60, 400, 488, 1, 8, { hut: true, wmin: 3.6, wmax: 5, h0: 4.6, hr: 1.4, shopP: 1, noSign: true, gaps: [[399, 411]] }); row('hpS', 'x', -52, 400, 488, -1, 8, { hut: true, wmin: 3.6, wmax: 5, h0: 4.6, hr: 1.4, shopP: 1, noSign: true, gaps: [[399, 411]] });
   row('rvW', 'z', 600, -144, -10, 1, 12, { h0: 9, hr: 12, bladeP: .3 }); row('rvW', 'z', 600, -4, 34, 1, 12, { h0: 9, hr: 12, bladeP: .3 });
-  fill(RX0, 400, RZ0, RZ1, 14, 10); fill(400, 488, -146, -68, 8, 6); fill(400, 488, -44, -20, 8, 6); fill(400, 488, 6, 34, 10, 6); fill(512, 588, -146, -20, 9, 6); fill(512, 588, 6, 34, 10, 6); fill(400, 600, 82, RZ1, 12, 10);
-  fill(400, 430, RZ0, -146, 10, 8); fill(570, 600, RZ0, -146, 10, 8); fill(430, 570, RZ0, -268, 10, 6); cols.push([600, 740, RZ1 - .6, RZ1 + 1], [600, 740, RZ0 - 1, RZ0 + .6]);
+  fill(RX0, 388, RZ0, RZ1, 14, 10); fill(410, 488, -146, -68, 8, 6); fill(410, 488, -44, -20, 8, 6); fill(410, 488, 6, 34, 10, 6); fill(512, 588, -146, -20, 9, 6); fill(512, 588, 6, 34, 10, 6);
+  /* the west street (x 400..410, z -286..108), the lane behind the temple (z -286..-276), the south lane (z 100..108), the precinct's west + east gates */
+  row('wsW', 'z', 400, -276, 100, 1, 12, { h0: 9, hr: 9, bladeP: .45, gen: ['g_udon', 'g_tonkatsu', 'g_cafe', 'g_book', 'g_drug', 'g_100'] }); box(P, 0x8a8274, 400, 410, 0, .022, -286, 108); box(P, 0x8a8274, 400, 620, 0, .022, -286, -276); box(P, 0x8a8274, 400, 620, 0, .022, 100, 108);
+  row('slN', 'x', 100, 410, 600, 1, 12, { h0: 9, hr: 10, bladeP: .45, gaps: [[537, 547]] }); row('slS', 'x', 108, 410, 600, -1, 12, { h0: 9, hr: 10, bladeP: .45 }); fill(410, 537, 82, 88, 10, 4); fill(547, 600, 82, 88, 10, 4); box(P, 0x8a8274, 538, 546, 0, .022, 70, 100);   /* the alley from Kaminarimon-dori to the south lane */ fill(388, 600, 120, RZ1, 10, 4);
+  row('nlS', 'x', -276, 470, 600, -1, 8, { h0: 7, hr: 6, bladeP: .3 }); fill(410, 430, -276, -206, 10, 8); fill(410, 430, -198, -146, 10, 8); fill(570, 600, -268, -226, 10, 8); fill(570, 600, -218, -146, 10, 8); cols.push([388, 620, RZ0 - 1, RZ0 + 3.6]); box(P, 0x8a8478, 388, 620, 0, 2.2, RZ0, RZ0 + 3.6); cols.push([600, 740, RZ1 - .6, RZ1 + 1], [600, 740, RZ0 - 1, RZ0 + .6]);
   /* ---------- the Thunder Gate (x 489..511, z 38..46) with the giant lantern ---------- */
   const gate = (x, z0, z1, wHalf, lk, h2) => { const red = 0xc8321e, dark = 0x2a2a2e; for (const sx of [-1, 1]) { box(P, red, x + sx * wHalf - .6, x + sx * wHalf + .6, 0, 7, z0, z1); box(P, 0x3a2a24, x + sx * (wHalf - 3.4) - .4, x + sx * (wHalf - 3.4) + .4, 0, 7, z0 + .4, z1 - .4); box(P, 0x1a1210, Math.min(x + sx * wHalf, x + sx * (wHalf - 3.4)), Math.max(x + sx * wHalf, x + sx * (wHalf - 3.4)), .5, 6, z0 + .6, z1 - .6); P.push([BG.sph, sx > 0 ? 0x3a6a8a : 0x8a2a1e, K.M(x + sx * (wHalf - 1.7), 3.2, z1 - .9, .9, 1.9, .7), 0]); cols.push([Math.min(x + sx * wHalf, x + sx * (wHalf - 3.8)) - .6, Math.max(x + sx * wHalf, x + sx * (wHalf - 3.8)) + .6, z0, z1]) }
     box(P, red, x - wHalf - .6, x + wHalf + .6, 7, 8, z0, z1); box(P, dark, x - wHalf - 2.6, x + wHalf + 2.6, 8, 8.7, z0 - 2.2, z1 + 2.2); P.push([BG.box, dark, K.M(x, 9.6, (z0 + z1) / 2, wHalf * 2 + 3, 1.6, z1 - z0 + 2, 0, 0, 0), 0]); box(P, 0x1a1a1e, x - wHalf - 1.6, x + wHalf + 1.6, 10.4, 10.9, (z0 + z1) / 2 - .5, (z0 + z1) / 2 + .5);
@@ -135,14 +139,15 @@ TKY.asakusa = function (ctx, E) {
   ctx.upd.push(() => { if (!AS.shutM) return; const h = (AV.S.time / 60) % 24; AS.shutM.visible = h >= 19 || h < 9 });
   AS.makeShutters = signM => { AS.shutM = new THREE.Mesh(TKY.kit.quadGeo(SQ, TKY.SG.r), signM); AS.shutM.name = 'as_shutters'; grp.add(AS.shutM) };
   /* ---------- map ---------- */
-  const roads = [[RX0, 58, 700, 58, 12], [500, 40, 500, -146, 12], [400, -7, 600, -7, 6], [400, -56, 494, -56, 8], [610, RZ0, 610, RZ1, 8], [720, RZ0, 720, RZ1, 6]];
+  const roads = [[405, -286, 405, 108, 10], [405, -281, 610, -281, 8], [405, 104, 610, 104, 8], [610, -203, 720, -203, 6], [RX0, 58, 700, 58, 12], [500, 40, 500, -146, 12], [400, -7, 600, -7, 6], [400, -56, 494, -56, 8], [610, RZ0, 610, RZ1, 8], [720, RZ0, 720, RZ1, 6]];
   const places = [['as_gate', 'Thunder Gate (Asakusa)', 'Puerta del Trueno (Asakusa)', 500, 50, PI], ['as_nakamise', 'Nakamise shopping street', 'Calle comercial Nakamise', 500, -50, PI], ['as_temple', 'Asakusa temple (main hall)', 'Templo de Asakusa (sala principal)', 500, -210, PI], ['as_pagoda', 'Five-storey pagoda', 'Pagoda de cinco pisos', 456, -195, -PI / 2],
     ['as_hoppy', 'Hoppy Street (izakaya)', 'Calle Hoppy (izakayas)', 440, -56, PI / 2], ['as_denpoin', 'Denpōin-dōri', 'Denpōin-dōri', 550, -7, PI / 2], ['as_sumida', 'Sumida river promenade', 'Paseo del río Sumida', 610, -40, PI], ['as_bridge', 'Red bridge', 'Puente rojo', 660, 58, -PI / 2], ['as_skyview', 'East bank (Skytree view)', 'Orilla este (vista del Skytree)', 720, 0, -PI / 2],
     ['as_station', 'Asakusa (Ginza Line)', 'Asakusa (línea Ginza)', 524, 64, 0], ['as_rickshaw', 'Rickshaw stand', 'Parada de rickshaws', 516, 49, 0], ['as_waterbus', 'Water-bus pier', 'Muelle del autobús acuático', 616, -20, -PI / 2], ['as_shrine', 'Asakusa shrine', 'Santuario de Asakusa', 554, -236, PI]];
   const NM = { tempura: 'Tempura Sumida', kimono: 'Kimono Rental Hana', senbei: 'Fumi’s senbei (Nakamise)', ningyo: 'Ningyō-yaki (Nakamise)', kibi: 'Kibi-dango (Nakamise)', omiyage: 'Souvenirs (Nakamise)', melon: 'Melon pan (Nakamise)', matcha: 'Matcha ice cream (Nakamise)', hoppy1: 'Motsu-nikomi Taishō', hoppy2: 'Izakaya Hoppy-ya' };
   for (const k in NM) { const s = sh[k]; if (s) places.push([k, NM[k], NM[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI]) }
-  const nav = [[[400, 49], [618, 49]], [[400, 67], [618, 67]], [[500, 49], [500, -150], [500, -218]], [[400, -7], [600, -7]], [[400, -56], [500, -56]], [[500, -170], [470, -190], [456, -213], [480, -222], [500, -218], [530, -205], [545, -213], [556, -232]], [[500, -170], [530, -180], [530, -205]],
-    [[610, RZ0 + 4], [610, 49], [610, 67], [610, RZ1 - 4]], [[612, 58], [700, 58], [720, 58]], [[720, RZ0 + 4], [720, RZ1 - 4]]];
+  const nav = [[[405, -281], [405, 104]], [[405, -281], [610, -281]], [[405, 104], [610, 104]], [[542, 67], [542, 104]], [[405, -202], [440, -202], [470, -190]], [[530, -205], [585, -222], [610, -222]], [[456, -281], [458, -230], [470, -190]], [[610, -203], [720, -203]],
+    [[405, 49], [610, 49]], [[405, 67], [610, 67]], [[500, 49], [500, -150], [500, -218]], [[405, -7], [610, -7]], [[405, -56], [500, -56]], [[500, -170], [470, -190], [456, -213], [480, -222], [500, -218], [530, -205], [545, -213], [556, -232]], [[500, -170], [530, -180], [530, -205]],
+    [[610, -281], [610, -203], [610, 49], [610, 67], [610, 104]], [[610, 58], [700, 58], [720, 58]], [[720, -203], [720, 58]], [[545, -213], [556, -232]]];
   AS.stats.shops = Object.keys(NM).filter(k => sh[k]).length; AS.stats.stalls = nStall;
   return { roads, places, nav, AS };
 };

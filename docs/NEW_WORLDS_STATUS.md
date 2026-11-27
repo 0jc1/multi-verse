@@ -6,6 +6,57 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 
 **Merging:** nothing is merged automatically. The integration steps are at the bottom.
 
+## 2.2 Interconnected cities (street network pass)
+
+**Standard:** the owner's "Apeverse Interconnected Maze City Map": dense blocks, main roads plus side streets plus alleys, loops instead of dead ends, several routes between areas, bridges and crossings, and connections at the edges.
+
+**The gate:** `tools/tests/suite_connect.js` runs on the real collision and the real pathfinder. It checks five things:
+- **Reach:** every destination pair, with detour ≤ 2.2× + 40 m.
+- **Second routes:** a 44 m roadblock is dropped across the found route, and a second route must exist (≤ 3.2×).
+- **Street graph:** no unplanned dead ends in the GPS / pedestrian graph.
+- **Pockets:** 60 random free points per area must reach the hub.
+- **Walks:** long walks with player collision must not get stuck.
+
+| Area | Before (baseline audit) | After |
+|---|---|---|
+| Shibuya + Harajuku | reach 91/91, 2nd routes 8/8 | **reach 171/171, 2nd routes 13/13** (more destinations), 5 long collision walks OK |
+| Asakusa | **reach 31/36** (temple to north promenade 547 m) | **reach 66/66, 2nd routes 7/7** |
+| Tokyo street graph | **46 dead ends** | **0** (1 planned terminus: the forest shrine; Shinjuku will continue it) |
+| Saint-Germain + Seine | **reach 63/66** | **reach 153/153, 2nd routes 11/11** |
+| Montmartre | **reach 27/28** | **reach 45/45, 2nd routes 6/6** |
+| Paris street graph | **35 dead ends** | **0** (1 planned terminus: the cathedral door) |
+
+No isolated pockets anywhere, before or after.
+
+**What was built:**
+- **Tokyo:**
+  - the **West Lane** (Takeshita → back street → Center Gai → west road → shrine grove);
+  - **Cat Street** (Center Gai → Takeshita, the real Shibuya–Harajuku back route), with two cross streets to the avenue and the West Lane;
+  - the **arches lane** along the railway from the station to Harajuku, with standing bars under the arches, two cross streets and a link into the Harajuku plaza (the department store narrowed to make room);
+  - **Nonbei alley**: tiny bars from the avenue into the yokochō, which no longer ends in a wall;
+  - **GPS crossings** at the scramble and mid-block (the crowd still waits at the corners).
+- **Asakusa:** a west street the full height of the district, a lane behind the temple, a south lane plus an alley to it, west and east gates into the precinct, and a second footbridge over the Sumida.
+- **Paris:**
+  - edge streets at both ends of the quais and boulevards (north and south banks);
+  - **Rue de Rivoli** with arcades and three cross streets to the north quai;
+  - **Rue Jacob** from the west edge into the Place;
+  - a covered **passage** from the quai into the Place;
+  - **Rue Dauphine** south to **Rue de Vaugirard**, which leads into the Luxembourg garden (now three entrances);
+  - the **Pont de l'Archevêché** to the back of the Île. The Île is widened to ±24 m so the cathedral can be walked round; before, its towers sealed off the back of the island.
+- **Montmartre:** edge streets up both sides of the hill, Rue du Chevalier round the basilica to the vineyard, a lane from the garden's east wall, and Rue Lepic widened to 10 m.
+
+**Method:** new streets are cut with row "gaps". Lots inside a new street are skipped, but they still consume the same random numbers, so every other building, shop, sign and test stays identical. (Montmartre's skipped lots don't, so a few of its random façades changed.) The two cities went from about 730 to about 1,140 buildings.
+
+**Regression:**
+- `suite_tokyo`: 230/230.
+- `suite_paris`: 181/181.
+
+**Performance:** the frame samples fell (Tokyo 20–40 fps, Paris 23–32), but two other agents' headless GPU tests were running at the same time. Draw calls and triangles in the same views barely moved:
+- **Tokyo draw calls:** scramble 388 → 403, Center Gai 125 → 128, Takeshita 62 → 76.
+- **Paris triangles:** boulevard 184k → 295k; arrival 666k → 436k.
+
+This needs a clean re-measure when the GPU is free.
+
 ## Ledger (failures first)
 
 | World | State | Evidence |

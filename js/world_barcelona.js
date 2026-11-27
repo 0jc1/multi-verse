@@ -332,7 +332,7 @@ AV.registerWorld({
     if (BCN.life) try { BCN.life(ctx, { T, st, sh, IN, box, STAGE, fest }) } catch (e) { console.warn('barcelona life', e); BCN.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Barcelona', surface: surf, fog: [90, 680], sky: { exp: .95, tint: [0x8ab8e0, 0xf4e0c0, .3, .3], dome: { s1: 0xf8e0c0, s2: 0x7ab0e0, swirl: .01, cloud: .45, glow: .45 } },
       arrivals: { default: { x: -20, z: 8, yaw: PI }, pipe: { x: -24, z: 8, yaw: PI }, metro: { x: -40, z: 19, yaw: PI } }, defaultArrival: 'default',
-      mapRoads, places, mapNav: BCN.nav || null,
+      mapRoads, places, mapNav: BCN.nav || null, routeGroup: () => 'main',   /* every Barcelona district is walked */
       greet: { human: [['Bon dia! In Barcelona you say bon dia first — then ask.', '¡Bon dia! En Barcelona se dice bon dia primero y luego se pregunta.'], ['The Rambla runs from the plaça down to the sea. Get lost in the Gothic lanes on the left.', 'La Rambla baja de la plaza al mar. Piérdete por las callejuelas góticas de la izquierda.']] },
       chatLines: [['Thursday night is La Mercè: castells in Sant Jaume, the correfoc down Via Laietana.', 'El jueves por la noche es La Mercè: castells en Sant Jaume, el correfoc por Via Laietana.'], ['Xocolata amb xurros at the Granja on Petritxol, then the Plaça del Pi.', 'Chocolate con churros en la Granja de Petritxol y luego la plaza del Pi.'], ['Jazz in Plaça Reial after nine. The palms are lit up.', 'Jazz en la Plaza Real después de las nueve. Las palmeras están iluminadas.']],
       musicProfile: { bpm: 104, root: 50, scale: [0, 1, 4, 5, 7, 8, 10], style: 'amb' } };

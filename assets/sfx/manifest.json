@@ -1,4 +1,173 @@
 {
-  "about": "Apeverse sound-effect recordings (audio2.js). Each entry: id (an AV.snd.fx name, e.g. 'lighter', 'gulp', 'horn', 'door'), file (path from the game root), license (CC0 / CC-BY 4.0 / owner-provided), source URL, author. A listed file replaces the procedural synth for that id; anything missing or failing falls back to the synth. Only add files whose license allows redistribution, and record attribution here.",
-  "sounds": []
+  "about": "Apeverse sound-effect recordings used by js/audio2.js. Each entry: id (an AV.snd.fx name, or 'step_hard' for footsteps on stone/wood), files (one is picked at random each time), gain, license, source, author. A listed file replaces the procedural synth for that id; anything missing or failing falls back to the synth. Only files whose licence allows redistribution; attribution recorded here even where CC0 does not require it.",
+  "packs": [
+    {
+      "dir": "assets/sfx/kenney_rpg",
+      "title": "50 RPG sound effects",
+      "author": "Kenney (kenney.nl)",
+      "license": "CC0 1.0",
+      "source": "https://opengameart.org/content/50-rpg-sound-effects"
+    },
+    {
+      "dir": "assets/sfx/rubberduck_100",
+      "title": "100 CC0 SFX",
+      "author": "rubberduck",
+      "license": "CC0 1.0",
+      "source": "https://opengameart.org/content/100-cc0-sfx"
+    },
+    {
+      "dir": "assets/sfx/rubberduck_bfh",
+      "title": "75 CC0 breaking / falling / hit SFX",
+      "author": "rubberduck",
+      "license": "CC0 1.0",
+      "source": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx"
+    },
+    {
+      "dir": "assets/sfx/artisticdude_rpg",
+      "title": "RPG Sound Pack",
+      "author": "artisticdude",
+      "license": "CC0 1.0",
+      "source": "https://opengameart.org/content/rpg-sound-pack"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "step_hard",
+      "gain": 0.55,
+      "license": "CC0 1.0",
+      "author": "Kenney",
+      "source": "https://opengameart.org/content/50-rpg-sound-effects",
+      "files": [
+        "assets/sfx/kenney_rpg/footstep00.ogg",
+        "assets/sfx/kenney_rpg/footstep01.ogg",
+        "assets/sfx/kenney_rpg/footstep02.ogg",
+        "assets/sfx/kenney_rpg/footstep03.ogg",
+        "assets/sfx/kenney_rpg/footstep04.ogg",
+        "assets/sfx/kenney_rpg/footstep05.ogg",
+        "assets/sfx/kenney_rpg/footstep06.ogg",
+        "assets/sfx/kenney_rpg/footstep07.ogg",
+        "assets/sfx/kenney_rpg/footstep08.ogg",
+        "assets/sfx/kenney_rpg/footstep09.ogg"
+      ]
+    },
+    {
+      "id": "door",
+      "gain": 0.9,
+      "license": "CC0 1.0",
+      "author": "Kenney; rubberduck",
+      "source": "https://opengameart.org/content/50-rpg-sound-effects ; https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/kenney_rpg/doorOpen_1.ogg",
+        "assets/sfx/kenney_rpg/doorOpen_2.ogg",
+        "assets/sfx/rubberduck_100/door_open.ogg"
+      ]
+    },
+    {
+      "id": "coin",
+      "gain": 0.8,
+      "license": "CC0 1.0",
+      "author": "Kenney; artisticdude",
+      "source": "https://opengameart.org/content/50-rpg-sound-effects ; https://opengameart.org/content/rpg-sound-pack",
+      "files": [
+        "assets/sfx/kenney_rpg/handleCoins2.ogg",
+        "assets/sfx/artisticdude_rpg/coin3.wav"
+      ]
+    },
+    {
+      "id": "cash",
+      "gain": 0.8,
+      "license": "CC0 1.0",
+      "author": "Kenney",
+      "source": "https://opengameart.org/content/50-rpg-sound-effects",
+      "files": [
+        "assets/sfx/kenney_rpg/handleCoins.ogg",
+        "assets/sfx/kenney_rpg/handleCoins2.ogg"
+      ]
+    },
+    {
+      "id": "clink",
+      "gain": 0.7,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx ; https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/glass_01.ogg",
+        "assets/sfx/rubberduck_100/glass_02.ogg",
+        "assets/sfx/rubberduck_100/glass_03.ogg",
+        "assets/sfx/rubberduck_100/dishes_01.ogg",
+        "assets/sfx/rubberduck_100/dishes_02.ogg",
+        "assets/sfx/rubberduck_bfh/bfh1_glass_hit_01.ogg",
+        "assets/sfx/rubberduck_bfh/bfh1_glass_hit_02.ogg"
+      ]
+    },
+    {
+      "id": "dishes",
+      "gain": 0.7,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/dishes_01.ogg",
+        "assets/sfx/rubberduck_100/dishes_02.ogg",
+        "assets/sfx/rubberduck_100/dishes_03.ogg",
+        "assets/sfx/rubberduck_100/dishes_04.ogg"
+      ]
+    },
+    {
+      "id": "splash",
+      "gain": 0.8,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/splash_01.ogg",
+        "assets/sfx/rubberduck_100/splash_02.ogg"
+      ]
+    },
+    {
+      "id": "machine",
+      "gain": 0.6,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/machine_01.ogg",
+        "assets/sfx/rubberduck_100/machine_02.ogg",
+        "assets/sfx/rubberduck_100/machine_03.ogg"
+      ]
+    },
+    {
+      "id": "bell",
+      "gain": 0.6,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/bell_01.ogg",
+        "assets/sfx/rubberduck_100/bell_02.ogg"
+      ]
+    },
+    {
+      "id": "bubble",
+      "gain": 0.7,
+      "license": "CC0 1.0",
+      "author": "artisticdude",
+      "source": "https://opengameart.org/content/rpg-sound-pack",
+      "files": [
+        "assets/sfx/artisticdude_rpg/bubble.wav",
+        "assets/sfx/artisticdude_rpg/bubble2.wav"
+      ]
+    },
+    {
+      "id": "ok",
+      "gain": 0.6,
+      "license": "CC0 1.0",
+      "author": "rubberduck",
+      "source": "https://opengameart.org/content/100-cc0-sfx",
+      "files": [
+        "assets/sfx/rubberduck_100/switch_01.ogg"
+      ]
+    }
+  ],
+  "notInPacks": "No CC0 recording was found in these packs for: lighter, inhale, exhale, breath, gulp, fizz, crunch, bite, stub, horn, brake, engines, traffic, crowds, cafe chatter, birds, rain, rivers. Those stay procedural (audio2.js)."
 }

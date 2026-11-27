@@ -62,6 +62,14 @@ const SIGNS = [
   ['a_red', 512, 96, awn('', '#b8202a', '#f4f0e8')], ['a_green', 512, 96, awn('', '#1a5a3a', '#f4f0e8')], ['a_navy', 512, 96, awn('', '#1a2a5a', '#f4f0e8')], ['a_bord', 512, 96, awn('', '#6a1a2a', '#e8c868')],
   ['a_cafe', 512, 96, awn('Café des Singes', '#b8202a', '#b8202a')], ['a_zinc', 512, 96, awn('Le Zinc', '#1a2a1a', '#1a2a1a')], ['a_pain', 512, 96, awn('Au Pain Doré', '#2a3a5a', '#f4f0e8')],
   /* generic ground-floor shops that dress the streets */
+  /* 2.2: businesses on the new streets */
+  ['salon', 640, 128, peint('Salon Rivoli', 'SALON DE THÉ · chocolat chaud · pâtisseries', '#f4ead8', '#6a3a2a', { light: true, subc: '#8a6a3a' })],
+  ['rivsouv', 448, 112, peint('Souvenirs de Paris', 'tour Eiffel · cartes · bérets', '#1a2a5a', '#f4f0e0', { light: true })],
+  ['galerie', 640, 128, peint('Galerie Jacob', 'ART MODERNE · estampes · vernissage jeudi', '#f4f4f0', '#1a1a1a', { light: true, sans: true, font: '300 #px ' })],
+  ['caveavin', 448, 112, peint('Le Bar à Vins Jacob', 'vins nature · fromages', '#3a0f14', '#e8c868')],
+  ['bistro', 448, 112, peint('Bistrot Vaugirard', 'soupe à l’oignon · plat du jour', '#1a2a1e', '#e8c868')],
+  ['papeterie2', 448, 112, peint('Papeterie du Luxembourg', 'carnets · encres · plumes', '#2a3a5a', '#f4f0e0', { light: true })],
+  ['chocolat', 448, 112, peint('Chocolatier Dauphine', 'pralinés · ganaches', '#2a1a12', '#e8c868')],
   ['g_pharma', 448, 104, (g, w, h) => { g.fillStyle = '#f4f4f0'; g.fillRect(0, 0, w, h); g.fillStyle = '#2aa84a'; g.fillRect(20, 30, 46, 14); g.fillRect(36, 14, 14, 46); g.fillStyle = '#1a6a3a'; g.textAlign = 'left'; g.textBaseline = 'middle'; NW().fit(g, 'PHARMACIE', w - 120, 46, '900 #px Arial, sans-serif', h / 2, 90) }],
   ['g_galerie', 448, 104, peint('Galerie Ondine', 'art contemporain', '#f4f4f0', '#1a1a1a', { light: true, sans: true, font: '300 #px ' })],
   ['g_antiq', 448, 104, peint('Antiquités Belle Époque', '', '#2a1a12', '#e8c868')], ['g_mode', 448, 104, peint('Maison Lavande', 'prêt-à-porter', '#e8e0f0', '#4a2a6a', { light: true })],
@@ -164,7 +172,8 @@ AV.registerWorld({
     for (const b of BRIDGES.slice(0, 2)) for (const z of [-20, 0, 20]) for (const x of [b[0] + .4, b[1] - .4]) { const y = bridgeY(x + (x < b[0] + 1 ? .5 : -.5), z); box(P, 0x1a2a22, x - .08, x + .08, y, y + 4, z - .08, z + .08); box(Gl, 0xffe0a0, x - .2, x + .2, y + 3.9, y + 4.4, z - .2, z + .2) }
     /* ---------- building rows ---------- */
     const SHOPS = {};
-    const SPECIAL = [['librairie', 'quaiS', -30, 9, 10], ['disques', 'bonaE', 80, 8], ['cafe', 'place', 126, 12, 6.5], ['brasserie', 'place', 108, 9],
+    const SPECIAL = [['salon', 'rivN', -150, 10, 10], ['rivsouv', 'rivS', 120, 8], ['galerie', 'jacN', -200, 9, 9], ['caveavin', 'jacS', -140, 8], ['bistro', 'vgN', 40, 9], ['papeterie2', 'vgS', -150, 8], ['chocolat', 'dsE', 165, 8],
+      ['librairie', 'quaiS', -30, 9, 10], ['disques', 'bonaE', 80, 8], ['cafe', 'place', 126, 12, 6.5], ['brasserie', 'place', 108, 9],
       ['cave', 'seineW', 82, 10, 12], ['patisserie', 'bvdN', 25, 9], ['swag', 'bvdN', 200, 12], ['tabac', 'bvdN', -30, 7],
       ['boulangerie', 'buciW', 158, 9, 11], ['fromagerie', 'buciE', 160, 9], ['creperie', 'buciE', 176, 6], ['fleuriste', 'buciW', 180, 7], ['velape', 'quaiS', 92, 7]];
     let nB = 0;
@@ -259,6 +268,8 @@ AV.registerWorld({
     IN.cafe = ITF('cafe', it => { bx2(P, 0x8a8e94, it, 4.4, 5.1, 0, 1.1, -.4, 5); bx2(P, 0x6a4a2a, it, 4.3, 5.2, 1.1, 1.16, -.5, 5.1); for (let k = 0; k < 8; k++) bx2(P, [0x2a6a3a, 0xe8c868, 0x6a1a1a][k % 3], it, 6, 6.2, 1.4, 2.2, -.4 + k * .65, -.1 + k * .65); for (const f of [-3.6, -1.6]) { bx2(P, 0xd8d8d0, it, 2.4, 3, .72, .76, f, f + .6); bx2(P, 0xb8202a, it, 3.1, 3.4, 0, .5, f, f + .6) } it.cust = it.F(3.7, 2.2); it.staff = it.F(5.7, 2.2) });
     IN.cave = ITF('cave', it => { bx2(P, 0x6a4a3a, it, .4, it.depth, 3.4, 3.8, -it.hw + .4, it.hw - .4); bx2(P, 0x1a1410, it, it.depth - 3.4, it.depth - .4, 0, .6, -3.6, 3.6); bx2(P, 0x101010, it, it.depth - 2.6, it.depth - 1.2, .6, 1.6, -3, -1.2); for (let k = 0; k < 4; k++) bx2(Gl, [0xff9a3a, 0xff6a4a][k % 2], it, it.depth - 2, it.depth - 1.8, 3, 3.2, -3 + k * 2, -2.7 + k * 2);
       bx2(P, 0x3a2414, it, 1.4, 2.1, 0, 1.1, 2.4, 4.6); for (const f of [-2.4, -.4, 1.6]) bx2(P, 0x2a1a12, it, 4.2, 4.8, .7, .74, f, f + .6); it.cust = it.F(2.6, 3.5); it.staff = it.F(.9, 3.5); it.stage = it.F(it.depth - 1.9, -.2); it.floor = it.F(5.4, 0); it.piano = it.F(it.depth - 1.9, -2.1) });
+    IN.salon = ITF('salon', it => { for (const [u, f] of [[3, -2.4], [3, .6], [5.6, -2.4], [5.6, .6]]) { bx2(P, 0xd8d8d0, it, u, u + 1, .72, .76, f, f + 1); bx2(P, 0x8a6a4a, it, u + .45, u + .55, 0, .72, f + .45, f + .55); bx2(P, 0xc84a6a, it, u - .5, u - .1, 0, .5, f + .3, f + .7) } bx2(P, 0xf4ead8, it, 8, 9, 0, 1.1, -3, 4); bx2(Gl, 0xffe0c0, it, 7.95, 8, .3, 1, -2.8, 3.8); it.cust = it.F(7.3, 1.6); it.staff = it.F(9.4, 1.6) });
+    IN.galerie = ITF('galerie', it => { for (let k = 0; k < 6; k++) { const f = -2.8 + k * 1.3; bx2(P, 0x8a6a3a, it, it.depth - .45, it.depth - .38, 1, 2.6, f, f + 1); bx2(Gl, [0x4a8ad8, 0xd84a6a, 0xf2c230, 0x3aa85a, 0x8a4ad8, 0xff8a3a][k], it, it.depth - .5, it.depth - .46, 1.1, 2.5, f + .08, f + .92) } bx2(P, 0xf4f4f0, it, 1.2, 2.2, 0, 1, 2.4, 3.6); it.cust = it.F(1.7, 1.6); it.staff = it.F(1.7, 4); it.art = it.F(it.depth - 2.2, 0) });
     IN.boulangerie = ITF('boulangerie', it => { bx2(P, 0xe8dcc0, it, 3.4, 4.2, 0, 1.1, -1, 3.4); bx2(Gl, 0xffe0b0, it, 3.38, 3.42, .3, 1, -.9, 3.3); for (let k = 0; k < 10; k++) bx2(P, 0xc8843a, it, it.depth - .9 + (k % 2) * .1, it.depth - .5, .5 + (k >> 1) * .5, .62 + (k >> 1) * .5, -2.5, 3); it.cust = it.F(2.6, 1.2); it.staff = it.F(5.2, 1.2) });
     PAR.interiors = IN;
     /* ---------- districts in their own modules (paris_montmartre.js) ---------- */
@@ -283,7 +294,7 @@ AV.registerWorld({
       PLc('place', 'Place Saint-Germain (terraces)', 'Plaza Saint-Germain (terrazas)', 126, 86, PI), PLc('eglise', 'Saint-Germain church', 'Iglesia de Saint-Germain', 110, 131, PI), PLc('boulevard', 'Boulevard Saint-Germain', 'Bulevar Saint-Germain', -100, 111, PI / 2), PLc('buci', 'Rue de Buci market', 'Mercado de la Rue de Buci', 0, 180, PI),
       PLc('luxembourg', 'Luxembourg garden', 'Jardín de Luxemburgo', 245, 175, PI), PLc('metro_sg', 'Métro Saint-Germain', 'Metro Saint-Germain', 30, 109, PI), PLc('metro_pn', 'Métro (north bank)', 'Metro (orilla norte)', 0, -47, 0), PLc('bateau', 'Bateaux-Singes pier', 'Embarcadero Bateaux-Singes', 120, 34, PI), PLc('stage', 'Fête de la Musique stage', 'Escenario de la Fête de la Musique', 126, 96, PI),
       PLc('dauphine', 'Rue Dauphine', 'Rue Dauphine', -60, 80, PI), PLc('rivoli', 'Rue de Rivoli (arcades)', 'Rue de Rivoli (soportales)', 0, -94, PI / 2), PLc('jacob', 'Rue Jacob', 'Rue Jacob', -180, 80, PI / 2), PLc('vaugirard', 'Rue de Vaugirard', 'Rue de Vaugirard', -120, 204, PI / 2), PLc('passage', 'Passage to the Place', 'Pasaje a la plaza', 145, 58, PI), PLc('ruedeseine', 'Rue de Seine', 'Rue de Seine', 0, 80, PI), PLc('bonaparte', 'Rue Bonaparte', 'Rue Bonaparte', 60, 80, PI)];
-    const NAMES = { librairie: 'Librairie La Page Volante', disques: 'Groove Dealers Disques', cafe: 'Café des Singes', brasserie: 'Brasserie Le Zinc', cave: 'Le Caveau des Singes (jazz)', patisserie: 'Macarons Rose-Thé', swag: 'SWAG Paris', tabac: 'Tabac · Presse', boulangerie: 'Au Pain Doré (boulangerie)', fromagerie: 'Fromagerie Mère Lune', creperie: 'Crêperie Ty Ape', fleuriste: 'Les Fleurs de Buci', velape: "Vél'Ape (bikes)" };
+    const NAMES = { salon: 'Salon Rivoli (salon de thé)', rivsouv: 'Souvenirs de Paris', galerie: 'Galerie Jacob', caveavin: 'Le Bar à Vins Jacob', bistro: 'Bistrot Vaugirard', papeterie2: 'Papeterie du Luxembourg', chocolat: 'Chocolatier Dauphine', librairie: 'Librairie La Page Volante', disques: 'Groove Dealers Disques', cafe: 'Café des Singes', brasserie: 'Brasserie Le Zinc', cave: 'Le Caveau des Singes (jazz)', patisserie: 'Macarons Rose-Thé', swag: 'SWAG Paris', tabac: 'Tabac · Presse', boulangerie: 'Au Pain Doré (boulangerie)', fromagerie: 'Fromagerie Mère Lune', creperie: 'Crêperie Ty Ape', fleuriste: 'Les Fleurs de Buci', velape: "Vél'Ape (bikes)" };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
     if (PAR.MM) { for (const r of PAR.MM.roads) mapRoads.push(r); for (const p of PAR.MM.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     PAR.names = NAMES;

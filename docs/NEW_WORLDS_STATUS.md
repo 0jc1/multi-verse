@@ -21,7 +21,8 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 |---|---|---|
 | Shibuya + Harajuku | reach 91/91, 2nd routes 8/8 | **reach 171/171, 2nd routes 13/13** (more destinations), 5 long collision walks OK |
 | Asakusa | **reach 31/36** (temple to north promenade 547 m) | **reach 66/66, 2nd routes 7/7** |
-| Tokyo street graph | **46 dead ends** | **0** (1 planned terminus: the forest shrine; Shinjuku will continue it) |
+| Tokyo street graph | **46 dead ends** | **0**, and no planned terminus left: the forest shrine now continues into Shinjuku |
+| Shinjuku (district 3) | new | **reach 91/91, 2nd routes 8/8**, 0 pockets |
 | Saint-Germain + Seine | **reach 63/66** | **reach 153/153, 2nd routes 11/11** |
 | Montmartre | **reach 27/28** | **reach 45/45, 2nd routes 6/6** |
 | Paris street graph | **35 dead ends** | **0** (1 planned terminus: the cathedral door) |
@@ -56,6 +57,56 @@ No isolated pockets anywhere, before or after.
 - **Paris triangles:** boulevard 184k → 295k; arrival 666k → 436k.
 
 This needs a clean re-measure when the GPU is free.
+
+### 2.2 follow-up: businesses on the new streets, Shinjuku, a junction check
+
+- **Businesses on the new streets:** Tokyo +12 (Cat Street vintage and coffee, Gādo standing bar, curry, two Nonbei bars, manga, gyōza, tea, okonomiyaki walk-in, capsule toys…) and Paris +7 (Salon Rivoli walk-in, Galerie Jacob walk-in, a wine bar, bistro, papeterie, chocolatier, souvenirs).
+- **Shinjuku** (`js/tokyo_shinjuku.js`), Tokyo district 3. You reach it **on foot**: north from Harajuku through the forest, round the shrine hall, out of a north torii and up the same avenue. You can also take the **Loop Line**, which gains a third station.
+  - **Streets:** Yasukuni-dōri, Kabukichō (Ichibangai, two cross streets, the north street and a west lane), three Golden Gai bar lanes, Omoide Yokochō, the Sanchōme grid and the east-exit plaza.
+  - **Businesses (9):** GIGA APE (walk-in arcade), Don Banana (walk-in discount store), the NEON-BOT robot show, tsukemen, a capsule hotel, three Golden Gai bars, and Omoide yakitori.
+  - **Also:** the batting center and three residents. A short story, Aoi's battery, unlocks a free robot show.
+- **New gate check:** *every crossing is a junction*. Two street lines that cross without a shared node make the GPS walk round the block. This check found two such crossings:
+  - **Paris:** Rue Jacob × Rue Dauphine and × Rue Bonaparte. This was the real cause of a flaky Rivoli → Jacob detour.
+  - **Tokyo:** Cat Street × West-cross 2.
+  Both are fixed. New cities use `AV.nwkit.graph`, which inserts junctions by construction.
+- **Regression:**
+  - `suite_tokyo`: 297 checks. The full run had 2 test-side failures (an ambiguous train label and a clock tolerance), both fixed. A re-run of the affected steps passed 71/71.
+  - `suite_paris`: 203/203.
+  - `suite_connect`: 41/41.
+- **Frames (Medium, shared GPU):** Shinjuku crossing 29.6 fps / 63 calls; Kabukichō 30.8 / 256; Golden Gai 42.8 / 109.
+
+### Barcelona (started to the 2.2 standard), see docs/BARCELONA.md
+
+- **Built:**
+  - the Eixample: 12 chamfered blocks, plus Passeig de Gràcia, Rambla de Catalunya and an open garden courtyard;
+  - Plaça de Catalunya;
+  - La Rambla, with kiosks, living statues and the market hall;
+  - the Gothic Quarter: the cathedral, Plaça del Pi, Plaça Sant Jaume and Plaça Reial;
+  - the Raval, Via Laietana, the Born, and the port with the Columbus column.
+- **Businesses:** 21 named businesses and landmarks (6 walk-ins, including the jazz club) and 4 market stalls.
+- **Transport:** Metro L3, the harbour boat, taxis and bikes.
+- **People and festival:** 5 residents and one story (Jordi's faixa). **La Mercè** runs on Thursday nights, with castells, gegants, the correfoc and a port stage.
+- **Gates:**
+  - `suite_barcelona`: 115 checks. The full run had 1 test-side failure (an ambiguous label), which is fixed; a re-run of the affected steps passed 29/29.
+  - `suite_connect` (all three cities): 51/51. Barcelona: reach 190/190, second routes 11/11, 0 pockets, 0 dead ends.
+- **Frames (Medium, shared GPU):** arrival 37 fps, Passeig de Gràcia 31, Rambla 41, Gothic 45, Plaça Reial 41, port 53. Draw calls stay between 98 and 189.
+
+### Barcelona districts 2 + 3: Gràcia and the Barceloneta with the beach
+
+- **Gràcia** (`js/barcelona_gracia.js`):
+  - **Getting there:** across the new Diagonal, every Eixample street continues north; L3 gains Diagonal and Fontana stations.
+  - **Squares:** Sol, Vila and Virreina.
+  - **Businesses (7):** including a cinema and a ceramics workshop.
+  - **Festival:** the Festa Major, on Tuesdays.
+- **Barceloneta** (`js/barcelona_barceloneta.js`):
+  - **Getting there:** from the east edge street, the Born lane, a north street and the port road; L3 gains Barceloneta station.
+  - **Streets:** narrow lanes with laundry overhead and Passeig Marítim.
+  - **The beach:** xiringuitos, surf, swimming, loungers and volleyball.
+  - **Businesses:** 4.
+- **Gates (GPU runs now serialised through the shared lock, `tools/tests/gpu_queue.ps1`):**
+  - `suite_barcelona`: 170 checks. The full run had 1 test-side failure: the station count, which is now 6 other stations instead of 3. A re-run of that step passed 22/22.
+  - `suite_connect`: 53/53. Barcelona: reach 406/406, second routes 17/17, 0 pockets, 0 dead ends.
+- **Frames (Medium, GPU not shared — the first clean numbers):** Gràcia 60 fps, beach 59, Barceloneta lanes 60, Passeig de Gràcia 60, Rambla 60, Gothic 60, Plaça Reial 57, port 58.
 
 ## Ledger (failures first)
 

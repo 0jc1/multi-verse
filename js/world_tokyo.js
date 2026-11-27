@@ -14,7 +14,7 @@ const TAU = Math.PI * 2, PI = Math.PI;
 const TKY = AV.tokyo = { stats: {} };
 const XMIN = -210, XMAX = 120, ZMIN = -562, ZMAX = 190, DECK = 8, TRACK = [104, 110];
 /* walkable: the whole rectangle, except the forest edge north of Harajuku (only the shrine forest itself) and the viaduct strip */
-function surf(x, z) { if (TKY.asSurf) { const s2 = TKY.asSurf(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; if (z < -482 && (x < -60 || x > 60)) return null; return 0 }
+function surf(x, z) { if (TKY.asSurf) { const s2 = TKY.asSurf(x, z); if (s2 !== undefined) return s2 } if (TKY.sjSurf) { const s3 = TKY.sjSurf(x, z); if (s3 !== undefined) return s3 } if (x < XMIN || x > XMAX || z < (TKY.sjSurf && x >= -60 && x <= 60 ? -606 : ZMIN) || z > ZMAX) return null; if (z < -482 && (x < -60 || x > 60)) return null; return 0 }
 TKY.surf = surf; TKY.DECK = DECK; TKY.TRACK = TRACK;
 
 /* ======================= sign atlas (Japanese shop signs, all fictional businesses) ======================= */
@@ -86,6 +86,19 @@ const SIGNS = [
   ['b_phone', 512, 192, bill('ApePhone 9', 'エイプフォン · 9 lenses, 1 banana', '#1a1a1a', '#5a5a6a', '#ffffff')],
   ['b_groove', 512, 192, bill('GROOVE DEALERS', 'グルーヴ・ディーラーズ · live tour', '#8a1a1a', '#ffb04a', '#ffffff')],
   /* ground-floor shops that dress the streets (not every door is a business you can use) */
+  /* 2.2: businesses on the new streets */
+  ['cat_vintage', 640, 128, fas('古着 キャット', 'CAT VINTAGE · 古着 · 1970s-90s', '#2a2a2a', '#f4d84a', '#f4d84a', { serif: true })],
+  ['cat_coffee', 448, 112, fas('コーヒースタンド 猫', 'NEKO COFFEE STAND', '#f4f0e8', '#3a2a1e', '#c8843a')],
+  ['cat_sneaker', 448, 112, fas('スニーカー 跳', 'HANE SNEAKERS · limited', '#1a1a1a', '#ffffff', '#ff4a2a')],
+  ['gado_bar', 448, 112, fas('立ち飲み ガード', 'STANDING BAR GĀDO', '#3a1a10', '#ffd84a', '#d82a2a', { serif: true })],
+  ['curry', 448, 112, fas('カレー 黄金', 'GOLDEN CURRY · カツカレー', '#f2c230', '#5a2a0a', '#d82a2a')],
+  ['nb_sake', 448, 112, fas('日本酒 ひとくち', 'SAKE BAR HITOKUCHI', '#1a2a4a', '#f4f0e0', '#c8a040', { serif: true })],
+  ['nb_snack', 448, 112, fas('スナック ママ', 'SNACK MAMA · karaoke', '#5a1a3a', '#ffd8f0', '#ff9ad8', { neon: '#ff4ab0' })],
+  ['manga', 448, 112, fas('まんが 古本', 'USED MANGA · 古本屋', '#2a8ad8', '#ffffff', '#ffe14a')],
+  ['gyoza', 448, 112, fas('餃子 てっぺん', 'GYŌZA TEPPEN · 焼き · 水', '#d82a2a', '#ffffff', '#1a1a1a', { serif: true })],
+  ['tea', 448, 112, fas('日本茶 緑', 'NIHONCHA MIDORI · sencha · matcha', '#2a4a2a', '#f4f0e0', '#c8e8a0', { serif: true })],
+  ['okonomi', 640, 128, fas('お好み焼き 鉄板', 'OKONOMIYAKI TEPPAN · grill it yourself', '#1a1a1a', '#ffd84a', '#ff8a2a', { serif: true })],
+  ['gacha', 448, 112, fas('ガチャガチャ', 'CAPSULE TOYS · 100+ machines', '#ff8ad8', '#ffffff', '#4ad8ff', { grad: ['#ff9ad8', '#9ad8ff'] })],
   ['g_drug', 448, 104, fas('ドラッグストア', 'DRUGSTORE · 薬 · cosmetics', '#ffe14a', '#d82a2a', '#d82a2a')],
   ['g_gyudon', 448, 104, fas('牛丼 まつや', 'GYŪDON · 24h', '#f28a1a', '#ffffff', '#1a1a1a')],
   ['g_curry', 448, 104, fas('カレーハウス', 'CURRY HOUSE · 辛さ5段階', '#f2c230', '#5a2a0a', '#5a2a0a')],
@@ -196,7 +209,8 @@ AV.registerWorld({
     cols.push([100, XMAX + 2, ZMIN, ZMAX]);
     /* ---------- building rows ---------- */
     const SHOPS = {};   /* named shop lots: key -> { x, z, yaw, w, face, ax, out:[dx,dz], al:[dx,dz], h, d } */
-    const SPECIAL = [['apemart', 'cgS', -52, 9, 8], ['ramen', 'cgS', -72, 7, 8], ['arcade', 'cgS', -104, 12, 8], ['crepe', 'cgS', -127, 5], ['karaoke', 'cgS', -150, 8],
+    const SPECIAL = [['cat_vintage', 'catE', -380, 9, 10], ['cat_coffee', 'catW', -290, 6], ['cat_sneaker', 'catE', -190, 8], ['gado_bar', 'gdE', -300, 6], ['curry', 'leW', -180, 7], ['nb_sake', 'nbN', 40, 4.4], ['nb_snack', 'nbS', 62, 4.4], ['manga', 'wl', -300, 8], ['gyoza', 'xwN', -120, 7], ['tea', 'xwS', -150, 7], ['okonomi', 'xeN', 50, 9, 9], ['gacha', 'xeS', 45, 8],
+      ['apemart', 'cgS', -52, 9, 8], ['ramen', 'cgS', -72, 7, 8], ['arcade', 'cgS', -104, 12, 8], ['crepe', 'cgS', -127, 5], ['karaoke', 'cgS', -150, 8],
       ['records', 'cgN', -48, 8], ['sushi', 'cgN', -66, 9], ['taiyaki', 'cgN', -118, 5],
       ['kissa', 'udW', -80, 8, 10], ['sento', 'udE', -72, 10], ['livehouse', 'saW', 60, 14, 11], ['cycle', 'saE', 40, 8], ['apephone', 'r1Es', 70, 9],
       ['izakaya', 'yk', 82, 5, 7], ['yakitori', 'gd', 100, 6], ['oden', 'gd', 132, 5],
@@ -350,8 +364,7 @@ AV.registerWorld({
       for (let x = -196; x < -20; x += 9) for (const z of [119, 185]) { if (Math.abs(x + 77) < 6) continue; P.push([BG.cone, 0x24401e, K.M(x + (rng() - .5) * 3, 7, z, 2.2, 14, 2.2), 0]); box(P, 0x3a2a1e, x - .25, x + .25, 0, 2, z - .25, z + .25) } }
     /* the shrine forest north of Harajuku: dense cedars both sides of the approach */
     for (let z = -488; z > -556; z -= 7) for (const x of [-56, -44, -30, -18, 18, 30, 44, 56]) { if (z < -544 && Math.abs(x) < 20) continue; const xx = x + (rng() - .5) * 4; P.push([BG.cone, [0x24401e, 0x2e4a24][(rng() * 2) | 0], K.M(xx, 8, z, 2.6, 16, 2.6), 0]); box(P, 0x3a2a1e, xx - .3, xx + .3, 0, 2.4, z - .3, z + .3); circ.push([xx, z, .5]) }
-    for (let x = -60; x <= 60; x += 6) box(P, 0x2a3a22, x, x + 6, 0, 18, -562, -556);
-    cols.push([-60, -6.5, -562, -556], [6.5, 60, -562, -556]);
+    if (!TKY.shinjuku) { for (let x = -60; x <= 60; x += 6) box(P, 0x2a3a22, x, x + 6, 0, 18, -562, -556); cols.push([-60, -6.5, -562, -556], [6.5, 60, -562, -556]) }
     /* ---------- the matsuri (festival) decorations: built here, shown by tokyo_life on festival nights ---------- */
     const fest = new THREE.Group(); fest.visible = false; grp.add(fest); TKY.festG = fest; const FP = [], FL = [], FQ = [];
     const YG = [34, -28]; /* the yagura stands in the taxi-pool plaza (x 20..48, z -58..-20) */
@@ -391,18 +404,21 @@ AV.registerWorld({
       for (const f of [-3.4, 2.8]) bx2(P, 0x1a1410, it, it.depth - 1.5, it.depth - .8, 0, 2.6, f, f + .8); for (const u of [5.2, 7]) bx2(P, 0x6a2a1a, it, u, u + 1, 0, .55, -2.8, -1.4); it.cust = it.F(2.0, 1.4); it.staff = it.F(3.9, 1.4) });
     IN.livehouse = interior('livehouse', it => { bx2(P, 0x1a1a1e, it, it.depth - 3, it.depth - .4, 0, .9, -6.2, 6.2); for (let k = 0; k < 5; k++) bx2(Gl, [0xff4ad2, 0x4ad8ff, 0xffe14a][k % 3], it, it.depth - 2.6, it.depth - 2.4, 3.6, 3.8, -5 + k * 2.4, -4.6 + k * 2.4); for (const f of [-5.6, 5.2]) bx2(P, 0x101012, it, it.depth - 2.8, it.depth - 2, .9, 2.8, f, f + .8);
       bx2(P, 0x2a1a12, it, 1.4, 2.2, 0, 1.1, 2.6, 6.3); bx2(Gl, 0x4ad8ff, it, 2.2, 2.26, .2, .9, 2.7, 6.2); bx2(Gl, 0x5a2a9a, it, it.depth - .42, it.depth - .38, 1.2, 3.6, -5.6, 5.6); for (let k = 0; k < 8; k++) bx2(Gl, [0xff4ad2, 0x4ad8ff][k % 2], it, it.depth - .44, it.depth - .4, 1.3 + (k % 4) * .55, 1.5 + (k % 4) * .55, -5 + k * 1.3, -4.4 + k * 1.3); it.cust = it.F(2.9, 4.4); it.staff = it.F(.9, 4.4); it.stage = it.F(it.depth - 1.6, 0); it.floor = it.F(5.2, 0); it.booth = it.F(it.depth - 4.2, 4.6) });
+    IN.cat_vintage = interior('cat_vintage', it => { for (let k = 0; k < 10; k++) bx2(P, [0xd82a6a, 0x3a6a8a, 0xf2c230, 0x8a4ad8, 0x2a8a6a, 0xf4f0e4, 0x1a1a1a][k % 7], it, 4 + (k % 2) * 2.6, 4.3 + (k % 2) * 2.6, .4, 1.9, -1.2 + (k >> 1) * .9, -.8 + (k >> 1) * .9); bx2(P, 0x6a4a2a, it, 3.9, 7, 1.9, 2, -1.4, 3.4); bx2(Gl, 0xe8f0ff, it, 8.8, 8.9, .3, 2.4, -3.4, -2.2); bx2(P, 0xd8c8b0, it, 1, 2, 0, 1, 2.2, 3.4); it.cust = it.F(2.5, 2.8); it.staff = it.F(1.5, 3.6) });
+    IN.okonomi = interior('okonomi', it => { for (const f of [-1.2, 2.2]) for (const u of [3, 6]) { bx2(P, 0x2a2a2a, it, u, u + 1.6, 0, .72, f, f + 1.4); bx2(P, 0x6a6a6e, it, u + .1, u + 1.5, .72, .78, f + .1, f + 1.3); bx2(Gl, 0xff8a3a, it, u + .5, u + 1.1, .78, .8, f + .4, f + 1) } bx2(P, 0xe8d8b8, it, 7.8, 8.6, 0, 1.1, -2.4, 3.4); it.cust = it.F(2.2, .5); it.staff = it.F(7.2, .5) });
     IN.izakaya = interior('izakaya', it => { bx2(P, 0x6a4a2a, it, 3.8, 4.4, 0, 1.05, -.6, 2.2); bx2(P, 0xd8b890, it, 3.7, 4.5, 1.05, 1.1, -.7, 2.3); for (let k = 0; k < 3; k++) bx2(P, 0x2a1a10, it, 3, 3.4, 0, .7, -.4 + k * .9, -.1 + k * .9); for (let k = 0; k < 6; k++) bx2(P, [0x2a6a3a, 0xe8e0d0, 0x6a1a1a][k % 3], it, 6.3, 6.5, 1.3, 1.9, -1.6 + k * .5, -1.3 + k * .5); it.cust = it.F(2.7, .9); it.staff = it.F(5.3, .9) });
     TKY.interiors = IN;
     /* ---------- districts in their own modules (tokyo_asakusa.js) ---------- */
     const shibuyaShops = Object.keys(sh).length; TKY.AS = null; if (TKY.asakusa) try { TKY.AS = TKY.asakusa(ctx, { row, fill, box, sign, P, Gl, Gs, Q, sh, SPECIAL, interior, bx2, IN, T, st, torii, blossom, wires }) } catch (e) { console.warn('tokyo asakusa', e); TKY.stats.asErr = String(e && e.stack || e).slice(0, 400) }
+    TKY.SJ = null; if (TKY.shinjuku) try { TKY.SJ = TKY.shinjuku(ctx, { row, fill, box, sign, P, Gl, Gs, Q, sh, SPECIAL, interior, bx2, IN, T, st, torii }) } catch (e) { console.warn('tokyo shinjuku', e); TKY.stats.sjErr = String(e && e.stack || e).slice(0, 400) }
     /* signs over the named shopfronts (+ window displays), noren at the yokochō doors */
-    for (const k in sh) { const s = sh[k], tall = /^(yakitori|oden|izakaya)$/.test(k); sign(k, s.x + s.out[0] * .06, s.signY || (tall ? 3.3 : 3.65), s.z + s.out[1] * .06, s.w - .4, (s.w - .4) * (SIGNS.find(x => x[0] === k)[2] / SIGNS.find(x => x[0] === k)[1]), s.yaw);
+    for (const k in sh) { if (sh[k].ownSign) continue; const s = sh[k], tall = /^(yakitori|oden|izakaya|nb_sake|nb_snack|gado_bar)$/.test(k); sign(k, s.x + s.out[0] * .06, s.signY || (tall ? 3.3 : 3.65), s.z + s.out[1] * .06, s.w - .4, (s.w - .4) * (SIGNS.find(x => x[0] === k)[2] / SIGNS.find(x => x[0] === k)[1]), s.yaw);
       if (!s.hollow && !tall && !s.noWin) sign(/crepe|taiyaki|kawaii|candy/.test(k) ? 'w_food' : /records|vintage|swag/.test(k) ? 'w_fashion' : 'w_konbini', s.x - s.out[0] * .06, 1.6, s.z - s.out[1] * .06, s.w - 2.2, 2, s.yaw) }
     if (sh.ramen) sign('menu_ramen', sh.ramen.x + sh.ramen.out[0] * .3 + sh.ramen.al[0] * -2.6, 1.4, sh.ramen.z + sh.ramen.out[1] * .3 + sh.ramen.al[1] * -2.6, .9, .9, sh.ramen.yaw);
     if (sh.livehouse) { const s = sh.livehouse; sign('poster_live', s.x + s.out[0] * .2 + s.al[0] * -4.8, 1.8, s.z + s.out[1] * .2 + s.al[1] * -4.8, 1.2, 1.8, s.yaw) }
     TKY.shops = sh;
     /* ---------- merge everything static ---------- */
-    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const NWK = AV.nwkit, CELL = 64; const REG = (x) => x > 250 ? 'as' : 'sh', RO = { region: REG }; TKY.region = null; TKY.chunks = NWK.chunked(P, CELL, a => K.merge(a), solidM, grp, 'tky_static', { shadow: true, region: REG });
+    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const NWK = AV.nwkit, CELL = 64; const REG = (x, z) => x > 250 ? 'as' : z < -604 ? 'sj' : 'sh', RO = { region: REG }; TKY.region = null; TKY.chunks = NWK.chunked(P, CELL, a => K.merge(a), solidM, grp, 'tky_static', { shadow: true, region: REG });
     if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .35, depthWrite: false }); gm.userData.lin = 1; TKY.chunks.push(...NWK.chunked(Gs, 128, a => K.merge(a), gm, grp, 'tky_glass', { order: 2, region: REG })) }
     const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; TKY.chunks.push(...NWK.chunked(Gl, 128, a => K.merge(a), glowM, grp, 'tky_glow', RO)); TKY.glowM = glowM;
     const flM = new THREE.MeshBasicMaterial({ vertexColors: true }); flM.userData.lin = 1; fest.add(new THREE.Mesh(K.merge(FL), flM));
@@ -410,7 +426,7 @@ AV.registerWorld({
     fest.add(new THREE.Mesh(quadGeo(FQ, SG.r), signM));
     TKY.stats.parts = P.length + Gl.length; TKY.stats.signs = Q.length; TKY.stats.atlasOver = (SG.over || []).length; TKY.stats.atlasBad = (SG.bad || []).length; TKY.stats.atlasUsed = SG.used;
     /* night: lit windows dim by day, signs and lanterns brighten at night */
-    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 19 || h < 5 ? 1 : h > 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? (6.5 - h) / 1.5 : 0; signM.emissiveIntensity = .35 + 1.0 * n; glowM.color.setScalar(.4 + .6 * n); TKY.night = n; const r = TKY.noRegion ? 'all' : AV.P.x > 250 ? 'as' : 'sh'; if (r !== TKY.region) { TKY.region = r; for (const m of TKY.chunks) m.visible = r === 'all' || m.userData.region === r } });
+    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 19 || h < 5 ? 1 : h > 17.5 ? (h - 17.5) / 1.5 : h < 6.5 ? (6.5 - h) / 1.5 : 0; signM.emissiveIntensity = .35 + 1.0 * n; glowM.color.setScalar(.4 + .6 * n); TKY.night = n; const r = TKY.noRegion ? 'all' : AV.P.x > 250 ? 'as' : AV.P.z < -700 ? 'sj' : AV.P.z < -470 ? 'sh+sj' : 'sh'; if (r !== TKY.region) { TKY.region = r; for (const m of TKY.chunks) m.visible = r === 'all' || r.split('+').includes(m.userData.region) } });
     TKY.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
@@ -420,9 +436,9 @@ AV.registerWorld({
       PLc('shrine', 'Inari shrine', 'Santuario Inari', -60, 150, PI / 2), PLc('matsuri', 'Matsuri plaza (yagura)', 'Plaza del matsuri (yagura)', 34, -36, 0), PLc('taxi', 'Taxi pool', 'Parada de taxis', 30, -44, 0),
       PLc('harajuku', 'Harajuku Station', 'Estación de Harajuku', 46, -455, -PI / 2), PLc('takeshita', 'Takeshita Street', 'Calle Takeshita', -80, -432, PI / 2), PLc('forest', 'Forest shrine (Mori-no-Miya)', 'Santuario del bosque (Mori-no-Miya)', 0, -520, 0),
       PLc('catstreet', 'Cat Street (Shibuya ↔ Harajuku)', 'Cat Street (Shibuya ↔ Harajuku)', -66, -280, PI), PLc('westlane', 'West Lane', 'Calle Oeste', -192, -180, PI), PLc('arches', 'Arches lane (under the tracks)', 'Callejón de los arcos (bajo las vías)', 88, -280, PI), PLc('nonbei', 'Nonbei alley (tiny bars)', 'Callejón Nonbei (bares diminutos)', 50, 157, PI / 2)];
-    const NAMES = { apemart: 'ApeMart Express', ramen: 'Ramen Kaminari', arcade: 'Game Center Banana Zone', crepe: 'Momo Crêpes', karaoke: 'Karaoke Utage', records: 'Groove Dealers Records Shibuya', sushi: 'Kaiten Sushi Yūgure', taiyaki: 'Taiyaki Taiya', kissa: 'Jazz Kissa Kuroneko', sento: 'Sentō Matsu-no-yu', livehouse: 'Live House SPACE NEKO', cycle: 'Sakura Cycle (bikes)', apephone: 'ApePhone Store Tokyo', izakaya: 'Izakaya Chōchin', yakitori: 'Yakitori Torikichi', oden: 'Oden Akari', kawaii: 'Kawaii Crêpe', purikura: 'Purikura Sakura', swag: 'SWAG Tokyo', candy: 'Rainbow Candy Floss', vintage: 'Ura Vintage' };
+    const NAMES = { cat_vintage: 'Cat Vintage (古着)', cat_coffee: 'Neko Coffee Stand', cat_sneaker: 'Hane Sneakers', gado_bar: 'Standing Bar Gādo', curry: 'Golden Curry', nb_sake: 'Sake Bar Hitokuchi', nb_snack: 'Snack Mama (karaoke)', manga: 'Used Manga (古本屋)', gyoza: 'Gyōza Teppen', tea: 'Nihoncha Midori', okonomi: 'Okonomiyaki Teppan', gacha: 'Capsule Toys', apemart: 'ApeMart Express', ramen: 'Ramen Kaminari', arcade: 'Game Center Banana Zone', crepe: 'Momo Crêpes', karaoke: 'Karaoke Utage', records: 'Groove Dealers Records Shibuya', sushi: 'Kaiten Sushi Yūgure', taiyaki: 'Taiyaki Taiya', kissa: 'Jazz Kissa Kuroneko', sento: 'Sentō Matsu-no-yu', livehouse: 'Live House SPACE NEKO', cycle: 'Sakura Cycle (bikes)', apephone: 'ApePhone Store Tokyo', izakaya: 'Izakaya Chōchin', yakitori: 'Yakitori Torikichi', oden: 'Oden Akari', kawaii: 'Kawaii Crêpe', purikura: 'Purikura Sakura', swag: 'SWAG Tokyo', candy: 'Rainbow Candy Floss', vintage: 'Ura Vintage' };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
-    if (TKY.AS) { for (const r of TKY.AS.roads) mapRoads.push(r); for (const p of TKY.AS.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
+    for (const D of [TKY.AS, TKY.SJ]) if (D) { for (const r of D.roads) mapRoads.push(r); for (const p of D.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     TKY.names = NAMES; TKY.stats.shopsPlaced = shibuyaShops; TKY.stats.allShops = Object.keys(sh).length;
     if (TKY.life) try { TKY.life(ctx, { T, st, sh, IN, box, SIG, YG, YATAI, fest }) } catch (e) { console.warn('tokyo life', e); TKY.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Tokyo', surface: surf, fog: [70, 460], sky: { exp: .9, tint: [0x8a7ab8, 0xd8c8e0, .3, .3], dome: { s1: 0xe8d0e8, s2: 0x8aa0d8, swirl: .02, cloud: .6, glow: .4 } },

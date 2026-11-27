@@ -61,7 +61,8 @@ GW.dress = function (ctx, o) {
   if (N.height) for (const l of lots) { const ys = [N.height(l.x, l.z), N.height(l.x + l.nx * l.d, l.z + l.nz * l.d)]; l.y = Math.min(...ys); l.dy = Math.max(...ys) - l.y }
   for (const l of lots) { const sty = Object.assign({ q }, o.styleFor(l)), s = streetOf[l.src], shopP = l.sp ? 1 : (o.shopP ? o.shopP(s, l) : s ? (s.shops != null ? s.shops : s.kind === 'alley' ? .1 : s.kind === 'lane' ? .25 : .35) : .45);
     const isShop = !!l.sp || rng() < shopP, doorX = l.w / 2 - 1.5;
-    const H = GW.medHouse(P, Gl, l, sty, rng, { D, shop: isShop, lit: isShop && rng() < .7, hollow: l.hollow || 0, doorX, glass: Gs, shopCol: [0x2a1e16, 0x1e3a2a, 0x3a1a14, 0x1a1a1a, 0x5a3418, 0x1a2a4a][(rng() * 6) | 0], floors: l.sp ? sty.floors[1] : 0 });
+    const shopCol = [0x2a1e16, 0x1e3a2a, 0x3a1a14, 0x1a1a1a, 0x5a3418, 0x1a2a4a][(rng() * 6) | 0], tower = !l.hollow && o.buildingFor && o.buildingFor(l) === 'tower';
+    const H = tower ? GW.towerHouse(P, Gl, Q, l, Object.assign({ q }, o.towerStyle), rng, { D, shop: isShop, lit: isShop && rng() < .7, shopCol }) : GW.medHouse(P, Gl, l, sty, rng, { D, shop: isShop, lit: isShop && rng() < .7, hollow: l.hollow || 0, doorX, glass: Gs, shopCol, floors: l.sp ? sty.floors[1] : 0 }); l.tower = tower;
     l.H = H; const at = (x, z) => GW.localPt(H.base, x, z), ly = l.y || 0;
     if (isShop) { nShop++; const k = l.sp || o.GEN[(gi++ * 7 + (rng() * 3 | 0)) % o.GEN.length]; l.sign = k; const sw = Math.min(l.w - .8, l.sp ? 5.6 : 4.2), [sx, sz] = at(0, .2); sign(k, sx, 3.3 + ly, sz, sw, sw * (l.sp ? .208 : .219), l.yaw);
       if (!l.hollow) { const wk = l.sp ? spDisplay[k] : (o.WIN[k] || 'w_goods'), [wx, wz] = at(-.4, .17); sign(wk, wx, 1.45 + ly, wz, Math.min(l.w - 2.2, 3.2), 1.9, l.yaw) }
@@ -71,7 +72,7 @@ GW.dress = function (ctx, o) {
   stats.houses = lots.length; stats.shopFronts = nShop; stats.lanterns = nLant;
   /* leftover block land */
   const fill = N.filler({ max: N.height ? 12 : 36 }); let nf = 0; const fy = (x, z) => N.height ? N.height(x, z) : 0;
-  for (const f of fill) { const [x0, x1, z0, z1] = f.r, ys = [fy(x0, z0), fy(x1, z0), fy(x0, z1), fy(x1, z1)], y0 = Math.min(...ys), y1 = Math.max(...ys); if (f.vis) { const h = 6.5 + rng() * 4 + (y1 - y0), wc = o.fillerWall ? o.fillerWall((x0 + x1) / 2, (z0 + z1) / 2) : 0xf4f0e6; box(P, wc, x0, x1, y0 - (N.height ? 2 : 0), y0 + h, z0, z1); box(P, o.fillerCap || 0xb05a30, x0 - .12, x1 + .12, y0 + h, y0 + h + .22, z0 - .12, z1 + .12); box(P, o.fillerBase || 0xe0a830, x0 - .02, x1 + .02, y0 - (N.height ? 2 : 0), y0 + .9, z0 - .02, z1 + .02); nf++; if (o.onFiller) o.onFiller(f.r, h, y0) }
+  for (const f of fill) { if (o.skipFiller && o.skipFiller((f.r[0] + f.r[1]) / 2, (f.r[2] + f.r[3]) / 2)) continue; const [x0, x1, z0, z1] = f.r, ys = [fy(x0, z0), fy(x1, z0), fy(x0, z1), fy(x1, z1)], y0 = Math.min(...ys), y1 = Math.max(...ys); if (f.vis) { const h = 6.5 + rng() * 4 + (y1 - y0), wc = o.fillerWall ? o.fillerWall((x0 + x1) / 2, (z0 + z1) / 2) : 0xf4f0e6; box(P, wc, x0, x1, y0 - (N.height ? 2 : 0), y0 + h, z0, z1); box(P, o.fillerCap || 0xb05a30, x0 - .12, x1 + .12, y0 + h, y0 + h + .22, z0 - .12, z1 + .12); box(P, o.fillerBase || 0xe0a830, x0 - .02, x1 + .02, y0 - (N.height ? 2 : 0), y0 + .9, z0 - .02, z1 + .02); nf++; if (o.onFiller) o.onFiller(f.r, h, y0) }
     else box(P, 0xc8beb0, x0, x1, y0 - (N.height ? 2 : 0), y1 + 8 + ((x0 * 7 + z0 * 3) & 3), z0, z1) }
   stats.filler = fill.length; stats.fillerVis = nf;
   /* walk-ins */
@@ -88,10 +89,23 @@ GW.dress = function (ctx, o) {
     /* the doorway must be walkable end to end (a diagonal door can pinch shut after erosion): widen it until it is */
     for (let k2 = 0; k2 < 3 && !N.lineWalk(it.door[0], it.door[1], it.doorIn[0], it.doorIn[1], .2); k2++) { N.carve(GW.lrect(b, dx - 1.5 - k2 * .2, dx + 1.5 + k2 * .2, -1.6, 1)); stats.doorsWidened = (stats.doorsWidened || 0) + 1 }
     if (!N.lineWalk(it.door[0], it.door[1], it.doorIn[0], it.doorIn[1], .2)) (stats.doorsBlocked = stats.doorsBlocked || []).push(k);
-    if (o.walkIn) o.walkIn(k, it, put, putG, blk) }
+    if (o.walkIn) o.walkIn(k, it, put, putG, blk);
+    if (!N.lineWalk(it.door[0], it.door[1], it.doorIn[0], it.doorIn[1], .2) || (it.counter && !N.snap(it.counter[0], it.counter[1], 1.2))) (stats.doorsBlocked = stats.doorsBlocked || []).push(k) }   /* furniture must leave the doorway and the counter reachable */
   /* ground */
   const tex = o.ground || {}, gT = tex.base || GW.tex.setts(), sT = tex.plaza || GW.tex.slabs(), aT = tex.open || GW.tex.sand();
-  const shapeMesh = (polys, t, y, rough, name) => { if (!polys.length) return null; const parts = polys.map(P2 => { const sh = new THREE.Shape(P2.map(p => new THREE.Vector2(p[0], -p[1]))); const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2); if (N.height) { const pa = g.attributes.position; for (let i = 0; i < pa.count; i++) pa.setY(i, N.height(pa.getX(i), pa.getZ(i))) } return [g, 0xffffff, null, 0] });   /* draped over a slope */ const g = K.merge(parts); g.deleteAttribute('color'); g.deleteAttribute('aGlow'); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, roughness: rough })); m.position.y = y; m.receiveShadow = true; m.material.userData.lin = 1; m.name = name; grp.add(m); return m };
+  /* drape a flat shape over the terrain: triangles are split where the slope bends (a big land polygon's corners alone would cut
+     straight through the hills, and the sea plane showed through a dipping ground) */
+  const drape = g0 => { const g1 = g0.index ? g0.toNonIndexed() : g0, pa = g1.attributes.position, H = N.height, out = [], st = [];
+    for (let i = 0; i < pa.count; i += 3) st.push([pa.getX(i), pa.getZ(i), pa.getX(i + 1), pa.getZ(i + 1), pa.getX(i + 2), pa.getZ(i + 2), 0]);
+    const bent = (ax, az, bx, bz) => Math.abs(H((ax + bx) / 2, (az + bz) / 2) - (H(ax, az) + H(bx, bz)) / 2) > .04 && Math.hypot(bx - ax, bz - az) > 1.5;
+    while (st.length) { const [ax, az, bx, bz, cx, cz, d] = st.pop(); if (d < 12 && (bent(ax, az, bx, bz) || bent(bx, bz, cx, cz) || bent(cx, cz, ax, az) || (Math.max(Math.hypot(bx - ax, bz - az), Math.hypot(cx - bx, cz - bz), Math.hypot(ax - cx, az - cz)) > 6 && Math.abs(H((ax + bx + cx) / 3, (az + bz + cz) / 3) - (H(ax, az) + H(bx, bz) + H(cx, cz)) / 3) > .04))) {
+        const ux = (ax + bx) / 2, uz = (az + bz) / 2, vx = (bx + cx) / 2, vz = (bz + cz) / 2, wx = (cx + ax) / 2, wz = (cz + az) / 2;
+        st.push([ax, az, ux, uz, wx, wz, d + 1], [ux, uz, bx, bz, vx, vz, d + 1], [wx, wz, vx, vz, cx, cz, d + 1], [ux, uz, vx, vz, wx, wz, d + 1]) }
+      else out.push(ax, az, bx, bz, cx, cz) }
+    const n = out.length / 2, pos = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) { const x = out[i * 2], z = out[i * 2 + 1]; pos[i * 3] = x; pos[i * 3 + 1] = H(x, z); pos[i * 3 + 2] = z; uv[i * 2] = x; uv[i * 2 + 1] = -z }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.computeVertexNormals(); stats.drapeTris = (stats.drapeTris || 0) + n / 3; return g };
+  const shapeMesh = (polys, t, y, rough, name) => { if (!polys.length) return null; const parts = polys.map(P2 => { const sh = new THREE.Shape(P2.map(p => new THREE.Vector2(p[0], -p[1]))); let g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2); if (N.height) g = drape(g); return [g, 0xffffff, null, 0] });   /* draped over a slope */ const g = K.merge(parts); g.deleteAttribute('color'); g.deleteAttribute('aGlow'); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, roughness: rough })); m.position.y = y; m.receiveShadow = true; m.material.userData.lin = 1; m.name = name; grp.add(m); return m };
   if (N.lands.length) shapeMesh(N.lands.map(l => l.poly), gT, -.01, .9, o.name + '_ground');
   else { const g = new THREE.PlaneGeometry(N.x1 - N.x0, N.z1 - N.z0); g.rotateX(-Math.PI / 2); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (N.x1 - N.x0), uv.getY(i) * (N.z1 - N.z0)); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: gT, roughness: .9 })); m.position.set((N.x0 + N.x1) / 2, -.01, (N.z0 + N.z1) / 2); m.receiveShadow = true; m.material.userData.lin = 1; m.name = o.name + '_ground'; grp.add(m) }
   if (o.hill) { const [x0, x1, z0, z1] = o.hill, nx2 = Math.ceil((x1 - x0) / 3), nz2 = Math.ceil((z1 - z0) / 3), g = new THREE.PlaneGeometry(x1 - x0, z1 - z0, nx2, nz2); g.rotateX(-Math.PI / 2); const pa = g.attributes.position, uv = g.attributes.uv; for (let i = 0; i < pa.count; i++) { const x = pa.getX(i) + (x0 + x1) / 2, z = pa.getZ(i) + (z0 + z1) / 2; pa.setY(i, N.height(x, z) - .02); uv.setXY(i, x, -z) } g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: o.hillTex || aT, roughness: .95 })); m.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); m.receiveShadow = true; m.material.userData.lin = 1; m.name = o.name + '_hill'; grp.add(m) }
@@ -104,9 +118,10 @@ GW.dress = function (ctx, o) {
     for (const l of N.lands) { const C = l.poly; for (let i = 0; i < C.length; i++) { const a = C[i], b = C[(i + 1) % C.length]; if (o.noQuay && o.noQuay(a, b)) continue; obox(P, o.quayCol || 0xc8b890, a[0], a[1], b[0], b[1], .9, (o.seaY || -2.6) - 1.4, .05); obox(P, 0xe0d4b4, a[0], a[1], b[0], b[1], 1.1, -.05, .3) } } }
   /* trees, palms, lamps */
   const trees = [], palms = [], lamps = [], freeAt = (x, z, m) => N.walk(x, z) && N.walk(x + m, z) && N.walk(x - m, z) && N.walk(x, z + m) && N.walk(x, z - m);
+  const inJunction = (x, z, own) => N.streets.some(s => s !== own && s.pts.some((p, i) => i && GW.segD(x, z, s.pts[i - 1][0], s.pts[i - 1][1], p[0], p[1]) < s.w / 2 + 2.5));   /* never plant a tree in a crossing */
   for (const s of N.streets) { if (!(o.treesOn ? o.treesOn(s) : s.w >= 6.4)) continue; const sp = s.kind === 'avenue' || s.kind === 'promenade' ? 11 : 9, off = s.w / 2 - 1.5;
     for (let i = 0; i + 1 < s.pts.length; i++) { const [a, b] = [s.pts[i], s.pts[i + 1]], L2 = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L2, uz = (b[1] - a[1]) / L2;
-      for (let t = sp / 2; t < L2 - 2; t += sp) for (const sd of s.sides ? s.sides.map(v => -v) : [1, -1]) { const x = a[0] + ux * t - uz * sd * off, z = a[1] + uz * t + ux * sd * off; if (s.toldo) continue; if (freeAt(x, z, 1.4)) ((o.palmsOn && o.palmsOn(s)) ? palms : trees).push([x, z]) } } }
+      for (let t = sp / 2; t < L2 - 2; t += sp) for (const sd of s.sides ? s.sides.map(v => -v) : [1, -1]) { const x = a[0] + ux * t - uz * sd * off, z = a[1] + uz * t + ux * sd * off; if (s.toldo || inJunction(x, z, s)) continue; if (freeAt(x, z, 1.4)) ((o.palmsOn && o.palmsOn(s)) ? palms : trees).push([x, z]) } } }
   for (const p of N.plazas) { if (p.noTrees || p.market) continue; const P2 = p.poly; let cx = 0, cz = 0; for (const v of P2) { cx += v[0]; cz += v[1] } cx /= P2.length; cz /= P2.length; const r = p.r || Math.min(...P2.map(v => Math.hypot(v[0] - cx, v[1] - cz)));
     const n = Math.max(4, Math.round(r * TAU / 9)); for (let i = 0; i < n; i++) { const a = i / n * TAU, x = cx + Math.cos(a) * r * .72, z = cz + Math.sin(a) * r * .72; if (freeAt(x, z, 1.4)) ((o.plazaPalms && o.plazaPalms(p)) ? palms : trees).push([x, z]) } lamps.push([cx + r * .35, cz + r * .35]) }
   for (const pt of o.extraTrees || []) trees.push(pt); for (const pt of o.extraPalms || []) palms.push(pt);
@@ -144,3 +159,28 @@ GW.finish = function (ctx, d, o) {
   F.next = i => { if (i !== id) return on(i); for (let k = 0; k < 29; k++) { const d = AV.S.day + k; if (inWeek(d) && (k > 0 || AV.S.time < 24 * 60)) return d } return null };
   F.guideHtml = () => { const FL = F.LIST[id]; delete F.LIST[id]; let h = ''; try { h = og() } finally { F.LIST[id] = FL } const d = F.next(id), now = F.active(id); return h + '<div class="note"><b>🎪 ' + say(FL.n) + '</b><br>' + (now ? '🔴 ' + tr('ON NOW', 'AHORA') + ' · ' : '') + say(guideLine) + (!now && d != null ? '<br>' + tr('Next: day ', 'Próximo: día ') + d : '') + '</div>' };
   return { inWeek, next: () => F.next(id) } } })(window.AV);
+/* ---------------- tower blocks (Copacabana, New York, modern districts): one body + painted facade bands from the sign atlas ----------------
+   A facade band covers 2 floors x 3 bays, so proportions stay right whatever the height; floor slabs give depth on Medium/High.
+   GW.FACADES: painter list [key, w, h, fn] to add to a world's atlas (art deco, modernist ribbon windows, tiled, brise-soleil...). */
+(function (AV) { const GW = AV.gwkit;
+  const win = (g, x, y, w, h, frame, glass, lit) => { g.fillStyle = frame; g.fillRect(x - 3, y - 3, w + 6, h + 6); g.fillStyle = lit && Math.random() < .3 ? '#ffd9a0' : glass; g.fillRect(x, y, w, h); g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(x, y, w * .45, h) };
+  const band = (wall, frame, glass, style) => (g, w, h) => { g.fillStyle = wall; g.fillRect(0, 0, w, h); const fh = h / 2, bw = w / 3;
+    for (let f = 0; f < 2; f++) for (let b = 0; b < 3; b++) { const x0 = b * bw, y0 = f * fh;
+      if (style === 'ribbon') { win(g, x0 + 4, y0 + fh * .3, bw - 8, fh * .45, frame, glass, 1); g.fillStyle = frame; g.fillRect(x0, y0 + fh * .8, bw, 6) }
+      else if (style === 'deco') { win(g, x0 + bw * .25, y0 + fh * .18, bw * .5, fh * .6, frame, glass, 1); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(x0 + bw * .1, y0, 5, fh); g.fillRect(x0 + bw * .85, y0, 5, fh) }
+      else if (style === 'brise') { win(g, x0 + 6, y0 + fh * .15, bw - 12, fh * .65, frame, glass, 1); g.fillStyle = frame; for (let k = 0; k < 6; k++) g.fillRect(x0 + 6 + k * (bw - 12) / 6, y0 + fh * .15, 3, fh * .65) }
+      else if (style === 'tile') { for (let yy = y0; yy < y0 + fh; yy += 10) for (let xx = x0; xx < x0 + bw; xx += 10) { g.fillStyle = (((xx + yy) / 10) % 2) ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)'; g.fillRect(xx, yy, 10, 10) } win(g, x0 + bw * .2, y0 + fh * .2, bw * .6, fh * .55, frame, glass, 1) }
+      else { win(g, x0 + bw * .22, y0 + fh * .2, bw * .56, fh * .55, frame, glass, 1) }
+      /* balcony rail */ g.fillStyle = 'rgba(30,30,30,.7)'; g.fillRect(x0 + bw * .12, y0 + fh * .72, bw * .76, 3); for (let k = 0; k < 8; k++) g.fillRect(x0 + bw * .12 + k * bw * .76 / 7, y0 + fh * .72, 2, fh * .14) } };
+  GW.FACADES = [['f_0', 256, 256, band('#f4efe6', '#e8e4dc', '#2a3a48', 'deco')], ['f_1', 256, 256, band('#e8d0a8', '#f4f0e6', '#24323e', 'ribbon')], ['f_2', 256, 256, band('#9ac8c0', '#f4f0e6', '#24323e', 'tile')], ['f_3', 256, 256, band('#f2e6c0', '#c8b890', '#2a3440', 'brise')], ['f_4', 256, 256, band('#e8a890', '#f8f4ec', '#2a3440', 'plain')], ['f_5', 256, 256, band('#d8dce4', '#f4f4f4', '#1e2a36', 'ribbon')], ['f_6', 256, 256, band('#f0d878', '#f4f0e6', '#2a3440', 'deco')], ['f_7', 256, 256, band('#b8a898', '#e8e0d0', '#24303a', 'brise')]];
+  GW.towerHouse = function (P, Gl, Q, lot, st, rng, o) { o = o || {}; const BG = AV.kit.BG, base = GW.basis(lot.x, lot.z, lot.yaw, lot.y || 0), put = GW.putter(P, base), putD = GW.putter(o.D || P, base), q = st.q == null ? 2 : st.q, w = lot.w, d = lot.d, fh = st.fh || 3;
+    const nf = st.floors[0] + ((rng() * (st.floors[1] - st.floors[0] + 1)) | 0), h = 4.4 + (nf - 1) * fh, fk = st.facades[(rng() * st.facades.length) | 0], wall = st.walls[(rng() * st.walls.length) | 0];
+    put(BG.box, wall, 0, h / 2 - (lot.dy > .2 ? 1 : 0), -d / 2, w, h + (lot.dy > .2 ? 2 : 0), d);
+    put(BG.box, 0x3a3a3a, 0, h + .5, -d / 2, w - .4, 1, d - .4); put(BG.box, wall, 0, h + .55, -.1, w, 1.1, .25);   /* roof + parapet */
+    if (q > 0 && rng() < .6) put(BG.box, 0x8a8a8a, w * .2, h + 2.2, -d * .55, 2.4, 2.4, 2.4);   /* water tank */
+    const ly = lot.y || 0; for (let f = 1; f < nf; f += 2) { const y = 4.4 + (f - 1) * fh + fh, [x, z] = GW.localPt(base, 0, .07); Q.push({ k: fk, x, y: y + ly, z, w: w - .3, h: Math.min(2, nf - f) * fh, ry: lot.yaw }) }
+    if (q > 0) for (let f = 1; f < nf; f++) putD(BG.box, 0xe8e4dc, 0, 4.4 + (f - 1) * fh + .05, .35, w - .5, .14, .7);   /* balcony slabs */
+    if (o.shop) { put(BG.box, o.shopCol || 0x2a1e16, 0, 1.8, .07, w - .5, 3.6, .1); (o.lit ? GW.putter(Gl, base) : put)(BG.box, o.lit ? 0xffe2b0 : 0x3a3a34, 0, 1.6, .14, w - 1.3, 2.8, .04, o.lit ? 1 : 0) }
+    else { put(BG.box, 0x2a2a2a, 0, 1.6, .08, Math.min(3, w - 1), 3.2, .1); (rng() < .5 ? GW.putter(Gl, base) : put)(BG.box, 0xd8c8a0, 0, 1.6, .14, Math.min(2.6, w - 1.4), 2.8, .04, 1) }   /* lobby */
+    return { base, h, nf } };
+})(window.AV);

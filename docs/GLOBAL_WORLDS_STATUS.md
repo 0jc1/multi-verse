@@ -11,9 +11,11 @@ Never touched: the other agents' worktrees and branches, the stable preview (809
 |---|---|---|
 | **Sevilla** (district 1: Centro, Cathedral + Alcázar, Santa Cruz, Arenal, Triana, Los Remedios + the Feria ground) | **playable, optimised** | 157/157 desktop and 28/28 phone emulation on a quiet GPU; 54–60 fps on Medium, Feria entrance at night 58 fps; offline 14/14. See `docs/SEVILLA.md`. |
 | **Cádiz** (the whole old town on its peninsula + Carnaval) | **playable** | 108/108 on a quiet GPU; 51–60 fps on Medium; offline 13/13. See `docs/CADIZ.md`. |
-| **Oaxaca** (centro histórico, Jalatlaco, Cerro del Fortín, Panteón + Día de Muertos) | **playable, 2 open checks** | 81/83; 46–60 fps; offline 12/12. A walk-in doorway and a small graph island are being traced. See `docs/OAXACA.md`. |
-| **Chefchaouen** (the blue medina on its hillside + Festival Alegría) | **in progress (not in this commit)** | Offline network check 11/11. Its GPU suite has not run yet. |
-| Rio de Janeiro, Chefchaouen, Ibiza, Medellín, northern Spain, New York 1926 | not started | — |
+| **Oaxaca** (centro histórico, Jalatlaco, Cerro del Fortín, Panteón + Día de Muertos) | **playable** | 84/84 on a quiet GPU; 46–60 fps; offline 12/12. The doorway and graph-island checks are fixed. See `docs/OAXACA.md`. |
+| **Chefchaouen** (the blue medina on its hillside + Festival Alegría) | **playable** | 65/65 (queued); 40–56 fps, and the festival is the heaviest at 40; offline 11/11. See `docs/CHEFCHAOUEN.md`. |
+| **Rio de Janeiro** (district 1: Copacabana + Leme + Carnaval de rua) | **playable** | 70/70 (queued); 47–54 fps. See `docs/RIO.md`. Lapa and Santa Teresa are not built. |
+| Ibiza, Medellín, northern Spain, New York 1926 | not started | — |
+| **All five built worlds together** | smoke test | `suite_gw_smoke.js` 33/33; `node tools/tests/gw_load_check.cjs` (offline load of every agent-4 script) all good. |
 | Atlantis, Somatra, Neon Nexus, Dream dimension, Bioluminescent Jungle, Robot World, Volcanic Funk, Space Jazz, Mayan Canal Kingdom, Quantum Ziggurat, Alien Maze X-9 | not started (registry entries untouched, still `planned`) | — |
 
 **Earlier Sevilla work.** The quarantined slice on `codex/agent4-sevilla-20261123` (world id `seville`) was audited, not merged:
@@ -75,7 +77,9 @@ The checks run again in-game after every prop (trees, lamps, kiosks) has been pl
 - **Festivals are seasonal, not weekly:**
   - Sevilla's Feria in the 4th week of every 4-week Apeverse cycle;
   - Cádiz's Carnaval in the 2nd;
-  - Oaxaca's Día de Muertos in the 3rd.
+  - Oaxaca's Día de Muertos in the 3rd;
+  - Chefchaouen's Festival Alegría in the 1st;
+  - Rio's Carnaval de rua in the 2nd, alongside Cádiz.
 
   Each has an in-world "festival mode" panel (Seasonal / On now / Off), saved per world.
 - **`tools/tests/gpu_queue.ps1`:** the shared GPU-test lock (`%TEMP%apeverse_gpu.lock`). It is taken atomically. After taking it, the wrapper still waits for other agents' headless test browsers to finish. Every GPU number in these docs since the Sevilla optimisation comes from a queued run.
@@ -96,7 +100,7 @@ Branch `apeverse-2-global-worlds`. Files added (all new, owned by agent 4):
 - `docs/SEVILLA.md`
 
 **Shared-file changes:**
-- **`index.html`:** script tags right after `js/amsterdam_noord.js`, in this order: `gw_kit`, `gw_city`, `sevilla_plan`, `world_sevilla`, `sevilla_landmarks`, `sevilla_life`, `cadiz_plan`, `world_cadiz`, `cadiz_life`, `oaxaca_plan`, `world_oaxaca`, `oaxaca_life`.
+- **`index.html`:** script tags right after `js/amsterdam_noord.js`, in this order: `gw_kit`, `gw_city`, `sevilla_plan`, `world_sevilla`, `sevilla_landmarks`, `sevilla_life`, `cadiz_plan`, `world_cadiz`, `cadiz_life`, `oaxaca_plan`, `world_oaxaca`, `oaxaca_life`, `chefchaouen_plan`, `world_chefchaouen`, `chefchaouen_life`, `rio_plan`, `world_rio`, `rio_life`.
 - **`js/rides.js`:** one line. Taxi pickup and drop-off legs also require `!(W.noCar && W.noCar(x, z))`, so cars stay out of pedestrian lanes. Worlds without `noCar` behave as before.
 
 **Registration happens at runtime, guarded, following the Amsterdam / Tokyo pattern:**
@@ -108,7 +112,7 @@ Branch `apeverse-2-global-worlds`. Files added (all new, owned by agent 4):
 
 None of these files is edited.
 
-**Agent 3's audio API:** no shared audio API had been published when this was written. Sevilla's sound goes through the existing `AV.ambWorlds` preset registry: positional by place and time of day, plus procedural flamenco guitar, palmas and hooves. Agent 3's engine is not modified. When their API lands, the preset can be re-registered there.
+**Agent 3's audio API:** `AV.snd` (branch `apeverse-2-gameplay-audio`) is now used where present: zone, place, venue, step material. Every call is guarded with `if (AV.snd)`. Originally, no shared audio API had been published. Sevilla's sound goes through the existing `AV.ambWorlds` preset registry: positional by place and time of day, plus procedural flamenco guitar, palmas and hooves. Agent 3's engine is not modified. When their API lands, the preset can be re-registered there.
 
 **Merging with agent 2's branch** (`apeverse-2-new-worlds`): the only file both branches touch is `index.html`, where both add script tags after the Amsterdam block. Keep both blocks. File names don't collide: agent 2's kit is `nw_kit.js`, this one is `gw_kit.js`.
 

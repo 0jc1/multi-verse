@@ -12,7 +12,7 @@ window.APE_T = (() => {
   const go = async id => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 240000) };
   const errs = () => (window.__APE_ERRS || []).filter(e => !/api\/mp\//.test(e));
   let e0 = 0; const newErrs = () => { const E = errs(), n = E.slice(e0); e0 = E.length; return n };
-  const CITIES = ['amsterdam', 'vienna', 'madrid', 'tokyo', 'paris', 'barcelona', 'sevilla', 'cadiz', 'oaxaca'];
+  const CITIES = ['amsterdam', 'vienna', 'madrid', 'tokyo', 'paris', 'barcelona', 'sevilla', 'cadiz', 'oaxaca', 'chefchaouen', 'rio'];
 
   step('boot (sandboxed save)', async c => { c('page scripts loaded', await until(() => window.AV && AV.boot && $('bNew') && $('bNew').onclick, 120000));
     $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(1500);
@@ -21,7 +21,7 @@ window.APE_T = (() => {
   step('all four branches present in one build', async c => {
     c('living-worlds: Amsterdam + Vienna + Madrid registered', ['amsterdam', 'vienna', 'madrid'].every(id => AV.worldDefs[id]), Object.keys(AV.worldDefs).join(','));
     c('new-worlds: Tokyo + Paris + Barcelona registered, nw_kit', !!(AV.worldDefs.tokyo && AV.worldDefs.paris && AV.worldDefs.barcelona && AV.nwkit));
-    c('global-worlds: Sevilla + Cádiz + Oaxaca registered, gw_kit', !!(AV.worldDefs.sevilla && AV.worldDefs.cadiz && AV.worldDefs.oaxaca && AV.gwkit));
+    c('global-worlds: Sevilla + Cádiz + Oaxaca + Chefchaouen + Rio registered, gw_kit', !!(AV.worldDefs.sevilla && AV.worldDefs.cadiz && AV.worldDefs.oaxaca && AV.worldDefs.chefchaouen && AV.worldDefs.rio && AV.gwkit));
     c('gameplay-audio: Sound 2.0, Consumables 2.0, Business Empire, garage parts, dev cheats', !!(AV.snd && AV.snd.stepMat && AV.cons && AV.cons.step && AV.vent && AV.vent.acquire && AV.garage && AV.garage.part && AV.dev));
     const ids = (AV.WORLDS_DATA || []).map(w => w.id), dup = ids.filter((id, i) => ids.indexOf(id) !== i); c('no duplicate world registrations', !dup.length, dup.join(','));
     const AMB = CITIES.filter(id => id !== 'madrid');   /* Madrid starts its own ambience in world_madrid.js (by design, see ambience_worlds.js) */

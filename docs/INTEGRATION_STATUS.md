@@ -12,13 +12,13 @@ Nothing was merged into `main`. The four agents' worktrees, their uncommitted wo
 
 | Item | Where | Status |
 |---|---|---|
-| Oaxaca: one small walking-graph island; the chocolate shop door doesn't let you in | agent 4 (`dd1feef`) | Open on agent 4's own branch too (81/83 there and here). Agent 4 is tracing it. `suite_gw_smoke` flags the same island. |
+| GPS in Rio: 725 ms (limit 400) | agent 4, `world_rio.js` / `pathfind.js` | New with Rio (round 7). The route is found, it's just slow. |
 | GPS in Astro-9 takes 1.1–1.3 s for trips under 220 m | agent 1, `pathfind.js` | Already failing before integration (agent 1 reported it). Fix needs a shared `pathfind.js` change. |
-| GPS in Koh Samui Jurassic: 506 ms (limit 400) | none of the 2.2 work touches it | Passed on agent 1's branch. Not confirmed whether it's CPU load from other agents or merge overhead. |
+| GPS in Astro-9: 601 ms in round 7 | agent 1 | Same issue as the row above. Koh Samui now passes (the earlier 506 ms was CPU load from other agents). |
 | Amsterdam: Yara's "get me a kroket" waypoint vanishes immediately | agent 1, `amsterdam_leidse.js` / `minimap.js` | Real minor bug, not caused by the merge. The snack wall is 8.8 m from Yara, and the minimap clears any waypoint under 12 m away as "arrived". Reported to agent 1. |
 | Consumables: `AV.bag.busy()` is false for 350 ms between auto-bites | agent 3, `consume.js` | Not visible in play. Agent 3 has a fix planned after the playtest. The city suites work around it test-side. |
 | GPS across subway-only districts (Shibuya→Asakusa, Saint-Germain→Montmartre) | agent 2 | Route groups were added in `295a755` and are merged; the GPS no longer tries to walk between them. Optional follow-up (agent 1 + 2): `W.routeVia` so the GPS points you to the subway entrance. |
-| Not in this build | — | Agent 4's Chefchaouen (in progress, uncommitted). No businesses in the new cities yet (businesses exist in Chiang Mai, Madrid, Pai, Astro-9). Sound 2.0 has 35 CC0 recordings; the rest is procedural. |
+| Not in this build | — | No businesses in the new cities yet (businesses exist in Chiang Mai, Madrid, Pai, Astro-9). Sound 2.0 has 35 CC0 recordings; the rest is procedural. |
 
 ## What went in (all four branches at their pushed tips)
 
@@ -26,10 +26,10 @@ Nothing was merged into `main`. The four agents' worktrees, their uncommitted wo
 |---|---|---|
 | `apeverse-2-living-worlds` (base) | `d923a22` | Amsterdam (4 districts), Chiang Mai / NPC / storefront / Madrid corrections, **Vienna full rebuild**, **Astro-9 interconnected city** + `walk_graph.js` |
 | `apeverse-2-new-worlds` | `295a755` | **Tokyo** (Shibuya + Harajuku, Asakusa, Shinjuku), **Paris** (Seine + Saint-Germain, Montmartre), **Barcelona** (Eixample, Rambla, Gòtic, Raval, Born, port, Gràcia, Barceloneta), businesses on the new streets, GPS route groups |
-| `apeverse-2-global-worlds` | `dd1feef` | `gw_kit` + `gw_city`, **Sevilla** (optimised, Feria de Abril), **Cádiz** (Carnaval), **Oaxaca** (Día de Muertos) |
+| `apeverse-2-global-worlds` | `09fe3e2` | `gw_kit` + `gw_city` (slope-aware ground drape), **Sevilla** (optimised, Feria de Abril), **Cádiz** (Carnaval), **Oaxaca** (Día de Muertos, island + door fixed), **Chefchaouen**, **Rio** (Copacabana + Leme) |
 | `apeverse-2-gameplay-audio` | `8828716` | Consumables 2.0, Sound 2.0 (+35 CC0 recordings), Business Empire (café, bar, farm, courier, **hostel**), cultivation, garage parts, dev cheats, family demo, atomic GPU-lock script |
 
-There are 20 registered worlds, all listed as open in the portal pipe.
+There are 22 registered worlds, all listed as open in the portal pipe.
 
 ## Conflicts and integration fixes
 
@@ -53,7 +53,25 @@ There are 20 registered worlds, all listed as open in the portal pipe.
   - a sandboxed save round trip in Sevilla;
   - that the player's real save is untouched.
 
-## Test results (each suite's last run, and the commit it ran on)
+## Rounds 6–7 (2026-11-27/28): current build `aa6ea96`
+
+`aa6ea96` has the same files as `f84b2ae`: the round-7 merge of `09fe3e2` resolved to the integration side. All of these ran on that tree:
+
+| Suite | Result |
+|---|---|
+| int22 (now with Chefchaouen + Rio) | **161/161** |
+| integration (22 worlds) | **208/208** |
+| sevilla (full rerun after a 28.3 fps Feria miss) | **157/157** |
+| cadiz | **109/109** |
+| oaxaca | **84/84** (island + door fixed) |
+| chefchaouen | **65/65** |
+| rio | **70/70** |
+| gw_smoke | **33/33** |
+| gps | 140/142 (Astro-9 601 ms, Rio 725 ms) |
+
+Since round 5, only global-worlds files changed (`gw_city.js` plus the new cities), so the round-5 results for Tokyo, Paris, Barcelona and connect still stand.
+
+## Earlier test results (each suite's last run, and the commit it ran on)
 
 | Suite | Result | Commit |
 |---|---|---|

@@ -9,7 +9,7 @@
 (function (AV) {
 let VA_CAFE = null;
 const tr = AV.tr, TAU = AV.TAU, K = AV.kit, A = AV.arch, CY = AV.city, MD = AV.media;
-const XMIN = -190, XMAX = 190, ZMIN = -150, ZMAX = 150, CX = 0, CZ = -15, RING = 62, WY = -.35;
+const XMIN = -260, XMAX = 260, ZMIN = -215, ZMAX = 215, CX = 0, CZ = -15, RING = 62, WY = -.35;   /* 2.1 full rebuild: the city grows outward (was 380 x 300 m); every landmark keeps its place */
 const season = () => (AV.S.vienna && AV.S.vienna.season) || 'summer';
 const DAN0 = [30, -160], DD = [.894, .447], DN = [.447, -.894];
 const danS = (x, z) => (x - DAN0[0]) * DN[0] + (z - DAN0[1]) * DN[1], danP = t => [DAN0[0] + DD[0] * t, DAN0[1] + DD[1] * t];
@@ -77,7 +77,7 @@ AV.registerWorld({
        ends in empty white sky; the fog turns them blue-grey (aerial perspective). One merged mesh, no collisions, no shadows. */
     { let s0 = 777; const rr = () => (s0 = (s0 * 16807) % 2147483647) / 2147483647, out = (x, z) => x < XMIN - 14 || x > XMAX + 14 || z < ZMIN - 14 || z > ZMAX + 14, BG = K.BG, P2 = [], HIP = new THREE.ConeGeometry(.7071, 1, 4).rotateY(Math.PI / 4);   /* hipped roof over a unit square */
       const N = [220, 420, 560][q], RC = win ? [0xeef0f4, 0xe2e6ec] : [0x8a5a48, 0x5a6a72, 0x6a7a72, 0x7a6058], WC = win ? [0xd8d4cc, 0xccc8c0] : [0xd8cdb8, 0xc8c0b0, 0xe0d4b8, 0xb8b4ac, 0xd0c4a8];
-      for (let i = 0, t = 0; i < N && t < N * 8; t++) { const a = rr() * TAU, d = 215 + Math.pow(rr(), 1.4) * 270, x = CX + Math.cos(a) * d * 1.2, z = CZ + Math.sin(a) * d; if (!out(x, z)) continue; i++;
+      for (let i = 0, t = 0; i < N && t < N * 8; t++) { const a = rr() * TAU, d = 262 + Math.pow(rr(), 1.4) * 270, x = CX + Math.cos(a) * d * 1.2, z = CZ + Math.sin(a) * d; if (!out(x, z)) continue; i++;
         const w = 10 + rr() * 16, dp = 10 + rr() * 14, h = 8 + rr() * 15, ry = Math.round(rr() * 4) * Math.PI / 2 + (rr() - .5) * .4;
         P2.push([BG.box, WC[i % WC.length], K.M(x, h / 2, z, w, h, dp, 0, ry, 0)], [HIP, RC[i % RC.length], K.M(x, h + 1.75, z, w * 1.02, 3.5, dp * 1.02, 0, ry, 0)]);
         if (i % 23 === 7) P2.push([BG.box, 0xd0c8b8, K.M(x + 8, 15, z, 4.5, 30, 4.5)], [BG.cone, win ? 0xe8ecf0 : 0x4a6a5a, K.M(x + 8, 35, z, 3, 10, 3)]) }   /* parish church spires */
@@ -88,7 +88,7 @@ AV.registerWorld({
       const smt = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }); smt.userData.lin = 1; const sk = new THREE.Mesh(K.merge(SK), smt); sk.name = 'v_skirt'; grp.add(sk);
       AV.viennaBackdrop = { parts: P2.length, tris: bk.geometry.index ? bk.geometry.index.count / 3 : bk.geometry.attributes.position.count / 3 } }
     const wopt = { deep: 0x1a4a6a, shallow: 0x4a9ab8, sky: 0xb8d8f0, iri: .15, opacity: .9 };
-    { const dc = danP(120), dm = K.waterPlane(ctx, new THREE.PlaneGeometry(420, 36), WY, wopt); dm.position.x = dc[0]; dm.position.z = dc[1]; dm.rotation.order = 'YXZ'; dm.rotation.y = -Math.atan2(DD[1], DD[0]) }   /* YXZ: yaw in world space, the plane stays flat */
+    { const dc = danP(80), dm = K.waterPlane(ctx, new THREE.PlaneGeometry(480, 36), WY, wopt); dm.position.x = dc[0]; dm.position.z = dc[1]; dm.rotation.order = 'YXZ'; dm.rotation.y = -Math.atan2(DD[1], DD[0]) }   /* YXZ: yaw in world space, the plane stays flat */
     for (let i = 1; i < CANAL.length; i++) { const a = CANAL[i - 1], b = CANAL[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]), m = K.waterPlane(ctx, new THREE.PlaneGeometry(l + 8, 8.6), WY, wopt); m.position.x = (a[0] + b[0]) / 2; m.position.z = (a[1] + b[1]) / 2; m.rotation.order = 'YXZ'; m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]);
       for (const s of [-1, 1]) { const nx = -(b[1] - a[1]) / l * 4.25 * s, nz = (b[0] - a[0]) / l * 4.25 * s; box(B.misc, MT.stone, 0xb8b0a0, (a[0] + b[0]) / 2 + nx, -.5, (a[1] + b[1]) / 2 + nz, l, 1.2, .5, -Math.atan2(b[1] - a[1], b[0] - a[0])) } }
     for (const p of PONDS) { const m = K.waterPlane(ctx, new THREE.CircleGeometry(p.r + .6, 40), WY, wopt); m.position.x = p.x; m.position.z = p.z; B.misc.add(MT.stone, new THREE.TorusGeometry(p.r, .3, 5, 40), 0xc8c0b0, K.M(p.x, .05, p.z, 1, 1, .6, Math.PI / 2, 0, 0)) }
@@ -102,7 +102,7 @@ AV.registerWorld({
       B.roofs.add(MT.v, PRISM, ROOFC[(Math.abs(x * 7 + z * 3) | 0) % ROOFC.length], K.M(x, h, z, dep + .6, 3.2, len + .6, 0, ry + Math.PI / 2, 0));
       const c = Math.cos(ry), s = Math.sin(ry); for (const sd of [-1, 1]) box(B.glow, MT.v, [0xffd890, 0xffb860, 0xfff0c8][(Math.abs(x + z) | 0) % 3], x + s * sd * (dep / 2 + .02), 1.5, z + c * sd * (dep / 2 + .02), len * .8, 1.6, .05, ry, .55) };
     const STEP = 30, HALF = 11.5, cityCols = [], sites = [], VAk = AV.viennaArch ? AV.viennaArch.make(ctx, q, { winter: win }) : null, cafePeople = [];
-    for (let gx = XMIN + 16; gx < XMAX - 10; gx += STEP) for (let gz = ZMIN + 16; gz < ZMAX - 10; gz += STEP) {
+    for (let gx = -190 + 16; gx < 190 - 10; gx += STEP) for (let gz = -150 + 16; gz < 150 - 10; gz += STEP) {   /* the old bounds: same random draws as before, so everything placed after keeps its place */
       const x = gx + (rng() - .5) * 2, z = gz + (rng() - .5) * 2; let ok = true;
       for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) { const px = x + dx * (HALF + 2), pz = z + dz * (HALF + 2); if (waterAt(px, pz) || canalD(px, pz) < 7 || Math.abs(danS(px, pz)) < 21 || roadD(px, pz) < 2 || reserved(px, pz, 2) || H(px, pz) > .2) ok = false } if (!ok) continue;
       const inner = Math.hypot(x - CX, z - CZ) < RING, hh = inner ? 16 + rng() * 6 : 13 + rng() * 6, col = PAL[(rng() * PAL.length) | 0], d = 7.5;   /* same random draws, same order as before: everything else in Vienna stays where it was */
@@ -111,7 +111,7 @@ AV.registerWorld({
        The 7a grid above still draws its random numbers (so trees / people / everything later stays where it was) but is only built
        if the city module is missing. */
     let VCITY = null;
-    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, canalD, danS, H, RING, CX, CZ, kaffeehaus, RADIALS, bounds: [XMIN, XMAX, ZMIN, ZMAX], stopAngles: [30, 120, 210, 300].map(d => { const nT = [40, 56, 72][q], k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5); return (k + .5) * TAU / nT }) }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])) }
+    if (AV.viennaCity && VAk) { VCITY = AV.viennaCity.build({ ctx, q, win, waterAt, roadD, reserved, land: LAND, canal: CANAL, danP, DN, bridges: [[.5, 1], [.55, 2], [.5, 3], [.35, 4]].map(([f, i]) => { const a = CANAL[i - 1], b = CANAL[i], x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f, l = Math.hypot(b[0] - a[0], b[1] - a[1]), nx = -(b[1] - a[1]) / l * 7.5, nz = (b[0] - a[0]) / l * 7.5; return [[x - nx, z - nz], [x + nx, z + nz]] }).concat([80, 150].map(t => { const p = danP(t); return [[p[0] - DN[0] * 21, p[1] - DN[1] * 21], [p[0] + DN[0] * 21, p[1] + DN[1] * 21]] })), canalD, danS, H, RING, CX, CZ, kaffeehaus, RADIALS, bounds: [XMIN, XMAX, ZMIN, ZMAX], stopAngles: [30, 120, 210, 300].map(d => { const nT = [40, 56, 72][q], k = Math.round((d * Math.PI / 180) / (TAU / nT) - .5); return (k + .5) * TAU / nT }) }); VCITY.blocks.forEach(b => cityCols.push([b.cx, b.cz])); if (AV.viennaShops) try { AV.viennaShops.place(ctx, VCITY) } catch (e) { console.warn('vienna shops', e); AV.viennaShops.err = String(e && e.stack || e).slice(0, 300) } }   /* 2.1: the neighbourhood businesses */
     else {
     /* (7a fallback) one block just outside the Ring gets a real Viennese Kaffeehaus on its south ground floor */
     let cafe = null; if (VAk) { let best = 1e9; for (const st of sites) { const dd = Math.hypot(st.x - CX, st.z - CZ), sc = Math.abs(dd - (RING + 24)); if (dd > RING + 10 && dd < RING + 50 && roadD(st.x, st.z + HALF + 3) > 1 && !waterAt(st.x, st.z + HALF + 4) && sc < best) { best = sc; cafe = st } } }
@@ -382,10 +382,11 @@ AV.registerWorld({
       kioskNear: { x: 160, z: 116 }, arrivals: { default: { x: -4, z: 30, yaw: 0 }, ape_gate: { x: 160, z: 116, yaw: Math.PI * .75 }, pipe: { x: -4, z: 28, yaw: 0 },   /* 2.1: you arrive at the south end of Kärntner Straße, looking up it to the cathedral */ here: here || { x: 160, z: 116, yaw: Math.PI * .75 } }, defaultArrival: 'default',
       mapDistricts: VCITY ? VCITY.districts : null, floraOK: (x, z) => !(AV.viennaCity && AV.viennaCity.nearBlock && AV.viennaCity.nearBlock(x, z, 9)),   /* M1: no flower beds on the streets between blocks */
       noDecor: (x, z) => !!(AV.viennaCity && AV.viennaCity.noDecor && AV.viennaCity.noDecor(x, z)),   /* 7b: neighbourhood labels on the map */
-      mapRoads: ringPts.map((p, i) => { const n = ringPts[(i + 1) % ringPts.length]; return [p[0], p[1], n[0], n[1], 9] }),   /* V1.1: the Ringstraße on the minimap */
+      mapRoads: ringPts.map((p, i) => { const n = ringPts[(i + 1) % ringPts.length]; return [p[0], p[1], n[0], n[1], 9] }).concat(AV.viennaCity && AV.viennaCity.plan ? AV.viennaCity.plan.roads : []),   /* V1.1: the Ringstraße on the minimap; 2.1: + the planned streets */
+      mapNav: AV.viennaCity && AV.viennaCity.plan ? AV.viennaCity.plan.nav : null,   /* 2.1: the walking network (GPS + pathfinder) */
       places: [['steph', 'Stephansplatz', 'Stephansplatz', -34, -12], ['bars', 'Waxy’s · Lukas · Dons', 'Waxy’s · Lukas · Dons', 34, -38], ['wurst', 'Würstel Stand', 'Würstelstand', 30, 9], ['flex', 'Flex (Donaukanal)', 'Flex (Donaukanal)', -40, -6], ['nasch', 'Naschmarkt', 'Naschmarkt', -50, 72], ['karl', 'Karlsplatz', 'Karlsplatz', 14, 84],
         ['stadt', 'Stadtpark', 'Stadtpark', 70, 40], ['prater', 'Prater · Riesenrad', 'Prater · Noria', 118, -6], ['xmas', 'Christmas market', 'Mercado navideño', 152, 36], ['belv', 'Belvedere', 'Belvedere', 90, 96], ['schon', 'Schönbrunn', 'Schönbrunn', -100, 90], ['memory', 'Memory Zone', 'Zona de Recuerdos', 6, 116],
-        ['vis', 'VIS school (22nd)', 'Colegio VIS (distrito 22)', 172, -108], ['island', 'Donauinsel beach', 'Playa de la Donauinsel', dp[0], dp[1]], ['kahl', 'Kahlenberg viewpoint', 'Mirador del Kahlenberg', -148, -118]].map(([id, en, es, x, z]) => ({ id, name: [en, es], x, z, yaw: 0 })),
+        ['vis', 'VIS school (22nd)', 'Colegio VIS (distrito 22)', 172, -108], ['island', 'Donauinsel beach', 'Playa de la Donauinsel', dp[0], dp[1]], ['kahl', 'Kahlenberg viewpoint', 'Mirador del Kahlenberg', -148, -118]].map(([id, en, es, x, z]) => ({ id, name: [en, es], x, z, yaw: 0 })).concat(AV.viennaShops ? AV.viennaShops.places : []),
       chatLines: [['Remember when we burned party CDs every Friday?', '¿Te acuerdas de cuando grabábamos CDs para las fiestas cada viernes?'], ['MSN at 8, Flex at midnight, Würstel at 4. Legendary.', 'MSN a las 8, Flex a medianoche, Würstel a las 4. Legendario.'],
         ['The U6 at 4 a.m. has seen things.', 'La U6 a las 4 de la mañana ha visto cosas.'], ['Euro 2008 fan zone was right here. The noise!', 'La fan zone de la Euro 2008 estaba aquí mismo. ¡Qué ruido!'], ['My flip phone still has your number saved as “DONT ANSWER”.', 'Mi móvil de tapa aún tiene tu número guardado como “NO CONTESTAR”.'],
         ['Badeschiff in July, Christmas punch in December. That was the year.', 'Badeschiff en julio, ponche de Navidad en diciembre. Ese fue el año.'], ['The Riesenrad goes so slowly you can finish a whole conversation.', 'La Noria va tan despacio que te da tiempo a terminar una conversación entera.']],

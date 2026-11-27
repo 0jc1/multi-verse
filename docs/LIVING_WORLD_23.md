@@ -243,3 +243,48 @@ powershell -ExecutionPolicy Bypass -File tools\tests\gpu_queue.ps1 -Owner lw23 -
   - dark stone tables with block stools, a red mat, a shoe rack, a green neon line over the shop window.
   - **Known:** the game's frontage is a mirror image of the real one (mural on the right, shop window on the left). Flipping it means rebuilding the hostel's interior layout; that is the next hostel step.
 - **Test:** `suite_lw23d0` 37/37.
+
+## Milestone D: businesses you can use, real serving, legality, recorded ambience
+
+**Coverage rule (`AV.LW.bizCoverage`, `js/lw_venues.js`):**
+- **Businesses counted:** named places whose name says business, registered storefronts, 2.3 stores, individually placed signs that name a business, and named shop counters, merged within 6 m. Repeated filler facade textures (the same shophouse sign tiles on many buildings) are not counted.
+- **Interactive** means a working service within 9 m: buy, order, rent, play, work, browse, a ticket, or a staff character.
+
+| City | Before D | After D (businesses interactive / total) |
+|---|---|---|
+| Ape Town | 50% | 83% (15/18) |
+| Chiang Mai | 60% | 85% (17/20) |
+| Pai | 100% | 100% (14/14) |
+| Koh Tao | 50% | 90% (9/10) |
+| Đà Nẵng | 15% | 69% (9/13) |
+| Vienna | 27% | 73% (19/26) |
+| Jerusalem | 33% | 78% (7/9) |
+| Madrid | 50% | 80% (16/20) |
+| Amsterdam | 33% | 73–75% (37–38/51) |
+| Tokyo | 27% | 76–79% (25–26/33) |
+| Paris | 40% | 76% (19/25) |
+| Barcelona | 19% | 75% (12/16) |
+| Sevilla | 25% | 70% (14/20) |
+| Cádiz | 36% | 91% (10/11) |
+| Oaxaca | 50% | 80% (8/10) |
+| Chefchaouen | 40% | 90% (9/10) |
+| Rio | 11–33% | 89% (8/9) |
+| Astro-9 | 51% | 83% (44/53) |
+
+**The venue kit:**
+- Businesses that only had a sign get a service counter with a menu for their kind: café, bar, restaurant, street food / market, bakery, dessert, pharmacy, records, shop, gallery (a ticket: vibe and reputation), hostel (a 2-hour nap), coffeeshop / dispensary.
+- **Each city has its own dishes, street food, coffee and sweets**: 20 worlds × 4 items, e.g. Madrid's bocadillo de calamares and churros, Vienna's Schnitzel and Melange, Tokyo's ramen and takoyaki, Oaxaca's tlayuda and chocolate.
+- An order is rung up, prepared (with a message: the shot is pulled, the kitchen fires up), **served into your hand**, then eaten or drunk bit by bit.
+
+**Legality (fictional game rules):**
+- Cannabis is sold over the counter only in Amsterdam, Chiang Mai, Pai, Koh Tao, Ape Town and Jungle Dub.
+- Elsewhere, a place called a coffeeshop serves coffee and cake.
+
+**Recorded ambience (`js/lw_soundscape.js`):** 17 public-domain recordings from Wikimedia Commons, licence checked per file through the Commons API. Credits: `assets/sfx/cc0_commons/CREDITS.md`.
+- **Street:** a city street bed crossfaded from random offsets, in city worlds and outdoors only, quieter at night.
+- **Places:** markets, cafés and restaurants, bars (at night), squares, beaches and parks play their recording through a positional panner at the place's real position. The nearest four play at once.
+- **Vehicles:** recorded mopeds, motorbikes and a car pass by with stereo sweep and pitch glide; mostly mopeds in Thailand.
+- **Not downloaded yet:** the flea-market and party recordings (Commons rate limit). Markets and bars use the crowd and conversation recordings instead.
+- Also downloaded for later milestones: applause (concerts), lion-dance percussion (festivals), a police siren (police).
+
+**Test:** `suite_lw23d` 66/67 on the first run. The one failure was a real bug (pass-bys bypassed the recording hook), now fixed; the rerun passed 20/20.

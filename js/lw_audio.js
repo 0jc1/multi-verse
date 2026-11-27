@@ -46,7 +46,7 @@ function passBy(kind) { const A = AV.audio; if (!A || !A.ctx || A.mute || !A.ok)
 LW.passBy = passBy;
 AV.frameFns.push(() => { if (!AV.running || !AV.W || NATURE[AV.W.id]) return; const now = AV.now(); if (now < nextPass) return; const h = AV.S.time / 60, busy = h > 7 && h < 23 ? 1 : .3;
   nextPass = now + (5 + Math.random() * 12) / busy; if (AV.home && AV.home.inside) return; const id = AV.W.id;
-  passBy(id === 'astro9' ? 'hover' : THAI[id] ? (Math.random() < .3 ? 'tuktuk' : 'scooter') : (Math.random() < .25 ? 'scooter' : 'car')) });
+  LW.passBy(id === 'astro9' ? 'hover' : THAI[id] ? (Math.random() < .3 ? 'tuktuk' : 'scooter') : (Math.random() < .25 ? 'scooter' : 'car')) });
 /* ---------- 4. volume sliders ---------- */
 addEventListener('load', () => { const t0 = AV.toggleSettings; if (!t0) return; AV.toggleSettings = function () { t0.apply(this, arguments); const p = document.getElementById('set'); if (!p || p.style.display !== 'block' || p.querySelector('#lwMix')) return; const S = AV.S.set, close = p.querySelector('[data-close]'), d = document.createElement('div'); d.id = 'lwMix';
   const row = (k, n) => '<label style="display:block">' + n + ' <input type="range" min="0" max="1" step=".05" data-mix="' + k + '" value="' + (S[k] == null ? 1 : S[k]) + '"></label>';

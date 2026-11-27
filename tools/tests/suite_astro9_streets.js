@@ -19,7 +19,7 @@ window.APE_T = (() => {
   const path = (c, name, pts) => { const miss = []; for (let k = 1; k < pts.length; k++) if (!reach(pts[k - 1], pts[k])) miss.push(pts[k - 1] + ' > ' + pts[k]); c(name, !miss.length, miss.join(' | ')) };
   step('boot', async c => { $('gq').value = 'Medium'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 30000)); await sleep(1500); AV.save = () => { };
     AV.travel('astro9'); c('Astro-9', await until(() => AV.W && AV.W.id === 'astro9' && $('fade').style.opacity === '0', 150000)); c('no world error', !$('err').textContent, $('err').textContent) });
-  step('every new street walkable end to end', async c => { const S = AV.astro9streets; c('network built', !!S && S.fx && S.fx.streets === 17, JSON.stringify(S && S.fx));
+  step('every new street walkable end to end', async c => { const S = AV.astro9streets; c('network built', !!S && S.fx && S.fx.streets === 19 /* 17 + Nebula Market Street + Dockside Loop (2.1) */, JSON.stringify(S && S.fx));
     for (const s of S.ST) route(c, 'street ' + s.id + ' (' + s.n[0] + ')', s.p) });
   step('complete loops (leave by one street, come back by another)', async c => {
     route(c, 'loop A: Neon > Kepler > Ring Lane > Coil St > Neon', [[150, 103.5], [100, 103.5], [88, 103.5], [88, 104], [90, 130], [96, 160], [98.7, 168], [120, 166], [142, 162], [138, 148], [146, 134], [156, 120], [156, 106], [156, 103.5], [150, 103.5]]);

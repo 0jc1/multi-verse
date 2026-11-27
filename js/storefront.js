@@ -22,13 +22,18 @@ const STY = {   /* palette + materials per style */
   shisha: { wall: 0x2a1438, frame: 0x14081c, fascia: '#1a0c24', ink: '#f2c860', ink2: '#e0a8ff', acc: '#9a4aff', riser: 'stone', awn: [0x4a1a6a, 0x2a0a3a], awnKind: 'valance', glow: 0xff9a5a, font: '700 #px Georgia, serif', blade: 'lantern', gold: true },
   heuriger: { wall: 0xf0e0b0, frame: 0x4a3a1a, fascia: '#3a5a1a', ink: '#f4e8c0', ink2: '#d8e8a0', acc: '#8ab83a', riser: 'wood', awn: null, glow: 0xffd8a0, font: 'italic 700 #px Georgia, serif', blade: 'iron' },
   blues: { wall: 0x14182a, frame: 0x0a0c14, fascia: '#0c0d14', ink: '#9ac8ff', ink2: '#ff7ad8', acc: '#3a8aff', riser: 'wood', awn: null, glow: 0x6a8aff, font: '900 #px "Arial Black", Impact, sans-serif', blade: 'disc', neon: true },
+  swag: { wall: 0x2a1438, frame: 0x14081c, fascia: '#5a2a8a', ink: '#f4ead0', ink2: '#ff9ad8', acc: '#ff5ab0', riser: 'stone', awn: null, glow: 0xff8ad8, font: '900 #px "Arial Black", Impact, sans-serif', blade: 'disc', neon: true },
+  apephone: { wall: 0x14101e, frame: 0x0a0812, fascia: '#14101e', ink: '#f2c230', ink2: '#c8b8f0', acc: '#f2c230', riser: 'stone', awn: null, glow: 0xe8e0ff, font: '700 #px Arial, sans-serif', blade: 'disc' },
+  apotheke: { wall: 0xf4f0e8, frame: 0x3a2a1a, fascia: '#f4f0e8', ink: '#a81a1a', ink2: '#5a4a3a', acc: '#a81a1a', riser: 'stone', awn: null, glow: 0xfff8e8, font: '700 #px Georgia, serif', blade: 'disc' },
+  eissalon: { wall: 0xf4e0e8, frame: 0x5a2a3a, fascia: '#f4c8d8', ink: '#5a2a3a', ink2: '#8a4a6a', acc: '#d83a6a', riser: 'stone', awn: [0xf47aa8, 0xf4f0e6], awnKind: 'stripe', glow: 0xfff0f4, font: 'italic 900 #px Georgia, serif', blade: 'disc' },
+  trafik: { wall: 0xe0d8c8, frame: 0x1a1a1a, fascia: '#1a1a1a', ink: '#e8c040', ink2: '#f4f0e6', acc: '#d82a1a', riser: 'stone', awn: null, glow: 0xffe8b0, font: '800 #px Arial, sans-serif', blade: 'disc' },
   cafe: { wall: 0xe8e0d0, frame: 0x2a2420, fascia: '#2a2420', ink: '#f4ead0', ink2: '#e8c890', acc: '#c8843a', riser: 'wood', awn: [0x2a2420, 0x2a2420], awnKind: 'valance', glow: 0xffd8a0, font: 'italic 700 #px Georgia, serif', blade: 'disc' }
 };
 const fit = (g, t, w, px, fam, y, x) => { let n = px; do { g.font = fam.replace('#', n); n -= 2 } while (g.measureText(t).width > w && n > 9); g.fillText(t, x, y) };
 /* one canvas per storefront: fascia (0..1024 x 0..208), window lettering (0..1024 x 208..304), riser strip (0..512 x 304..368),
    blade (512..768 x 304..512, square), menu board (768..1024 x 304..512) */
 function paint(o, S) {
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const g = c.getContext('2d'); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const sc = o.res || 1, c = document.createElement('canvas'); c.width = 1024 * sc; c.height = 512 * sc; const g = c.getContext('2d'); g.scale(sc, sc); g.textAlign = 'center'; g.textBaseline = 'middle';   /* res: .5 for small neighbourhood shops (paint + upload 4x cheaper) */
   /* fascia */
   g.fillStyle = S.fascia; g.fillRect(0, 0, 1024, 208); const gr = g.createLinearGradient(0, 0, 0, 208); gr.addColorStop(0, 'rgba(255,255,255,.10)'); gr.addColorStop(1, 'rgba(0,0,0,.25)'); g.fillStyle = gr; g.fillRect(0, 0, 1024, 208);
   g.strokeStyle = S.gold ? '#c89a3a' : S.ink2; g.lineWidth = 6; g.strokeRect(14, 14, 996, 180); g.lineWidth = 2; g.strokeRect(26, 26, 972, 156);

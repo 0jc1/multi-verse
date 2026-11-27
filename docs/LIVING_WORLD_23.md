@@ -3,7 +3,9 @@
 - **Branch:** `apeverse-2.3-living-world`, cut from the consolidated 2.2 build `7d046e3`.
 - **Worktree:** `Downloads\ape multiverse 1\apeverse-livingworld-wt`.
 - **Dev server:** http://localhost:8102/index.html. Start it with `tools\serve.ps1 -Port 8102 -NoBrowser`.
-- **Fallback:** the 2.2 build stays untouched on branch `apeverse-2-integration` (served on 8101).
+- **Play (latest validated build):** **http://localhost:8101/index.html**. It is served from the release folder `apeverse-play-wt`; `toolselease.ps1 -Commit <sha>` promotes a commit, and `release_log.txt` records each release. Your saves live in the browser's storage for this address, so releases never touch them.
+- **Development + tests:** 8102 (this worktree). Tests use sandboxed save keys in their own headless browser profile.
+- **Fallback:** the 2.2 build is untouched on branch `apeverse-2-integration`, served on **http://localhost:8103/index.html**.
 
 Nothing has been merged into `main`. One agent (this one) develops 2.3.
 
@@ -15,7 +17,7 @@ Nothing has been merged into `main`. One agent (this one) develops 2.3.
 |---|---|
 | GPS in Astro-9: the first routes after arrival take 0.5–1.6 s | **Open.** The routes are asked for in the first seconds, before Astro-9's walking graph is built (it is built a few milliseconds per frame), so they use the fine grid. Finishing the build in one go would freeze the game for longer, so it stays open. |
 | GPS speed checks are noisy | Pai (161 / 408 ms) and Koh Samui (234 / 473 ms) took the same route method in two runs, but different times. The code path for those worlds did not change; this is load on the laptop. Treat single GPS timing failures there as noise. |
-| Missions per world are 4 (first pass), not the 10+ the brief asks for in major cities | Milestone B, second pass: deeper chains, random encounters, interconnected storylines. |
+| Major cities have 9–11 missions each (5 of them repeatable board jobs) | More city-specific chains and random encounters come in the business, festival and minigame milestones. |
 | Nimbus has no 2.3 missions | It did not load in the world probe (it is not registered or has no named places). To check. |
 | Ape Town penthouse door | Not verified. The door finder found no building near the plaza, so it was moved to the Crystal Garden / Brand District. To be checked in the next probe. |
 | Character creation, vehicle theft, police, health / hospital, business expansion | Not started (Milestones C–E). |
@@ -98,6 +100,47 @@ The engine gained place-based steps and `spot` steps (an interaction that appear
 - the courier hand-over appears at the destination and pays.
 
 The Astro-9 observatory stop (on a raised platform) was swapped for the Glow Gardens.
+
+## Milestone C: mission density + reward loops
+
+`js/lw_content_c.js`:
+- **📌 Job board** next to the arrival point of all 22 worlds, with a ❗ on the map. It offers five jobs that pick fresh real places every time:
+  - 🚕 **Fares across town:** two passengers, a timed drop-off, pay by distance (up to 420).
+  - 🎉 **Flyer the party:** three spots.
+  - 📦 **Hot food rush:** collect, then a timed delivery; faster delivery means a bigger tip.
+  - 🎸 **Street gig:** play, and stay with your crowd for 20 seconds; tips vary.
+  - ⭐ **Local hero:** finish 6 missions in that world for 600 ¢ and +10 reputation, and jobs there **pay 20% more from then on**.
+- **🔥 Daily hustle streak:** every 3rd mission you finish in an in-game day pays +150.
+- Jobs are daily-repeatable. In total there are **201 missions**; every world has at least 9, Ape Town 11 and Chiang Mai 10.
+- Engine: steps can now use positions chosen fresh for each run.
+
+**🔥 What's Happening? (new ApePhone app, `js/lw_happening.js`):**
+- One live feed from the game's own systems: your active missions, missions and jobs on offer (here and in other worlds), festivals, Stone Ape Band sets, open billiards tables, business opportunities, properties for sale, and **invitations from friends** (characters whose affinity with you is high).
+- Tabs: **Now · Later today · Coming days**. Each row sets a **GPS route** (same world) or **travels you there** (other world).
+- The badge counts what is happening near you.
+
+**Fixed in passing:** `garage.js` had a second GPS arrival check with an 8 m radius, the same family of bug as the kroket waypoint. It now honours the short-waypoint radius.
+
+**Test:** `suite_lw23c`, **164/164** with the app step. First run 151/153; both failures were test-side and fixed. It plays every job type through its real interactions in 6 worlds, including walking away from the gig, which stops progress. It also checks the hero perk (flyers pay 132 instead of 110 afterwards) and the streak.
+
+## Roadmap update (owner's priorities, 2026-11-27)
+
+- **D:** business expansion and consumables.
+  - Bar, café and food counters hand you a drink or meal you can hold and consume.
+  - Many more enterable shops.
+  - Legality by location: lots of coffeeshops / dispensaries in Amsterdam and Thailand, and none sold openly elsewhere.
+  - A 7-Eleven-style parody convenience store in Thailand.
+- **E:** money, progression, apartments, business ownership groundwork. Includes the bank view: income, expenses, assets.
+- **F:** character creation (male / female, name, look, outfit, hair), barbers, clothing.
+- **G:** stealing bikes and vehicles, police with 1–5 wanted stars, chases, hospital respawn.
+- **H:** Ape Town redesign as a full funky city, with many brands; NPCs wear the brands sold in the world; **Bamb**, the original smoking-alien street artist, with murals; galleries and museums.
+- **I:** minigames and competitions: billiards tournaments, arcade and snake-style games, wagers.
+- **J:** conversations and polish.
+- **Crowds and festivals** (built into D, H and I rather than separate):
+  - Dynamic NPC density by place, time, weather and event, using instanced or simplified distant crowds for the Iris Xe laptop.
+  - Festivals that transform neighbourhoods: closures, stalls, stages, merchandise, competitions, jobs, dialogue. The Chiang Mai lantern festival gets packed streets.
+  - An event calendar with festival travel mode.
+  - Original festivals for Ape Town, Astro-9 and Jungle Dub with the owner's music, brands and Bamb.
 
 ## Coverage report (2.3 missions only; decorative or placeholder interactions are not counted)
 

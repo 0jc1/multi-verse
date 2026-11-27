@@ -69,7 +69,7 @@ const placeXZ = id => { const W = AV.W; if (!W) return null; const p = (W.places
 M.placeXZ = placeXZ;
 function spotXZ(s) { if (s.p) { const q = placeXZ(s.p); if (q) { const sp = AV.safeSpot ? AV.safeSpot(AV.W, q[0] + (s.dx || 0), q[1] + (s.dz || 0)) : q; return sp } } return s.x != null ? [s.x, s.z] : null }
 M.spotXZ = spotXZ;
-function where(s, a) { if (!s) return null; const w = AV.W; if ((s.k === 'go' || s.k === 'spot') && (s.p || s.k === 'spot')) { if (!s._xz || s._xzW !== AV.W) { s._xz = spotXZ(s); s._xzW = AV.W } return s._xz ? { x: s._xz[0], z: s._xz[1] } : null } if (typeof s.at === 'function') { const r = s.at(a && a.mv); return r ? { x: r[0], z: r[1] } : null } if (s.at && typeof s.at === 'string') { const n = AV.npc && AV.npc.find(s.at); return n ? { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y } : null }
+function where(s, a) { if (!s) return null; const w = AV.W; if (s.xz) { const r = s.xz(a && a.mv); return r ? { x: r[0], z: r[1] } : null }   /* 2.3 C: positions chosen per run (stored in mv) */ if ((s.k === 'go' || s.k === 'spot') && (s.p || s.k === 'spot')) { if (!s._xz || s._xzW !== AV.W) { s._xz = spotXZ(s); s._xzW = AV.W } return s._xz ? { x: s._xz[0], z: s._xz[1] } : null } if (typeof s.at === 'function') { const r = s.at(a && a.mv); return r ? { x: r[0], z: r[1] } : null } if (s.at && typeof s.at === 'string') { const n = AV.npc && AV.npc.find(s.at); return n ? { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y } : null }
   if (s.k === 'talk') { const n = AV.npc && AV.npc.find(s.npc); if (n) return { x: n.g.position.x, z: n.g.position.z, y: n.g.position.y }; if (s.at) return { x: s.at[0], z: s.at[1] }; return null }
   if (s.k === 'go') return { x: s.x, z: s.z }; if (s.at) return { x: s.at[0], z: s.at[1] }; return null }
 M.where = id => { const a = st().a[id]; const s = M.cur(id); if (!s || (s.w && AV.W && s.w !== AV.W.id)) return null; return where(s, a) };
@@ -78,7 +78,7 @@ AV.frameFns.push(() => { if (!AV.running || !AV.W) return; const t = AV.now(); i
   for (const id of Object.keys(m.a)) { const a = m.a[id], s = M.cur(id); if (!s) { finish(id); continue }
     if (s.time && t - a.ts > s.time) { M.fail(id, L('Out of time.', 'Se acabó el tiempo.')); continue }
     const inW = !s.w || s.w === AV.W.id; let ok = false;
-    if (s.k === 'go') { const q = s.p ? where(s, a) : { x: s.x, z: s.z }; ok = inW && !!q && Math.hypot(P.x - q.x, P.z - q.z) < (s.r || 3) }
+    if (s.k === 'go') { const q = (s.p || s.xz) ? where(s, a) : { x: s.x, z: s.z }; ok = inW && !!q && Math.hypot(P.x - q.x, P.z - q.z) < (s.r || 3) }
     else if (s.k === 'have') ok = bagN(s.item) >= (s.n || 1);
     else if (s.k === 'use') ok = consDone(s.item) > a.base.cons || (!(AV.cons && AV.cons.spec && AV.cons.spec(s.item)) && bagN(s.item) < a.base.have && !(AV.bag && AV.bag.busy && AV.bag.busy()));
     else if (s.k === 'test') ok = inW && !!s.fn(S, a.mv);
@@ -109,7 +109,7 @@ M.offer = function (id) { const d = M.defs[id]; if (!d || !M.available(id)) retu
 /* ---------- markers: "!" over people with work, "◆" over the tracked objective; minimap icons ---------- */
 const live = new Map();
 function want() { const out = [], W = AV.W, m = st(); if (!W) return out;
-  for (const d of M.list(W.id)) { if (!M.available(d.id)) continue; if (typeof d.giver === 'string') { const n = AV.npc && AV.npc.find(d.giver); if (n) out.push({ key: 'g:' + d.giver, kind: 'give', x: n.g.position.x, y: n.g.position.y + (n.g.userData.lwH || 3.7), z: n.g.position.z }) } else if (d.giver) out.push({ key: 'g:' + d.id, kind: 'give', x: d.giver.x, y: (W.surface(d.giver.x, d.giver.z) || 0) + 2.6, z: d.giver.z }) }
+  for (const d of M.list(W.id)) { if (!M.available(d.id)) continue; if (typeof d.giver === 'string') { const n = AV.npc && AV.npc.find(d.giver); if (n) out.push({ key: 'g:' + d.giver, kind: 'give', x: n.g.position.x, y: n.g.position.y + (n.g.userData.lwH || 3.7), z: n.g.position.z }) } else if (d.giver && d.giver.x != null) out.push({ key: 'g:' + Math.round(d.giver.x) + ',' + Math.round(d.giver.z), kind: 'give', x: d.giver.x, y: (W.surface(d.giver.x, d.giver.z) || 0) + 2.6, z: d.giver.z }) }
   const tid = m.track && m.a[m.track] ? m.track : null; if (tid) { const p = M.where(tid); if (p) out.push({ key: 'o:' + tid, kind: 'obj', x: p.x, y: (p.y != null ? p.y + 4.2 : (W.surface(p.x, p.z) || 0) + 2.8), z: p.z }) }
   return out }
 let wk = 0;

@@ -155,7 +155,7 @@ const ARROWS = ['⬆', '↗', '➡', '↘', '⬇', '↙', '⬅', '↖'];
 let gT = 0; AV.frameFns.push(() => { const MM = AV.minimap, d = MM && MM.dest; if (!d || !d.path || !AV.W || d.w !== AV.W) { if (bar.style.display !== 'none') bar.style.display = 'none'; G.stats.gps = null; return }
   if ((gT = AV.now()) - (G._gT || 0) < .25) return; G._gT = gT; const P = AV.P, pts = [[P.x, P.z]].concat(d.path);
   let rem = 0; for (let i = 1; i < pts.length; i++) rem += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-  if (Math.hypot(d.x - P.x, d.z - P.z) < 8) { bar.style.display = 'none'; AV.toast('📍 ' + tr('Arrived: ', 'Llegaste: ') + (d.name || '')); MM.dest = null; G.stats.gps = { arrived: true }; return }
+  if (Math.hypot(d.x - P.x, d.z - P.z) < Math.min(8, d.arr || 8)) { bar.style.display = 'none'; AV.toast('📍 ' + tr('Arrived: ', 'Llegaste: ') + (d.name || '')); MM.dest = null; G.stats.gps = { arrived: true }; return }
   let nxt = null; for (const p of d.path) if (Math.hypot(p[0] - P.x, p[1] - P.z) > 7) { nxt = p; break } if (!nxt) nxt = [d.x, d.z];
   const want = Math.atan2(-(nxt[0] - P.x), -(nxt[1] - P.z)), rel = Math.atan2(Math.sin(want - P.yaw), Math.cos(want - P.yaw)), ix = ((Math.round(-rel / (Math.PI / 4)) % 8) + 8) % 8;
   bar.textContent = ARROWS[ix] + '  ' + (rem > 1000 ? (rem / 1000).toFixed(1) + ' km' : Math.round(rem / 10) * 10 + ' m') + '  ·  ' + (d.name || tr('Waypoint', 'Destino')); bar.style.display = 'block'; G.stats.gps = { arrow: ARROWS[ix], m: Math.round(rem), via: d.path.length } });

@@ -1,0 +1,10 @@
+/* diagnostic: why do 2.3 interior counters fail LW.enclosed? ray hit distances per direction */
+window.APE_T = (() => {
+  const steps = [], step = (name, fn) => steps.push({ name, fn }), sleep = ms => new Promise(r => setTimeout(r, ms)), $ = id => document.getElementById(id);
+  const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(150) } return false };
+  step('boot', async c => { c('scripts', await until(() => window.AV && AV.boot && $('bNew').onclick, 120000)); AV.saveKey = 'apeverse_test_probe'; $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(1500); AV.save = () => { } });
+  step('madrid', async c => { AV.travel('madrid'); await until(() => AV.W && AV.W.id === 'madrid' && $('fade').style.opacity === '0', 240000); await until(() => AV.LW.interiorStats.madrid, 15000); const W = AV.W;
+    for (const b of AV.LW.interiors.list.slice(0, 4)) { const [x, z] = b.counter, out = {}; for (const [k, dx, dz] of [['+x', 1, 0], ['-x', -1, 0], ['+z', 0, 1], ['-z', 0, -1]]) { let hit = null; for (let t = .6; t <= 7; t += .3) { const px = x + dx * t, pz = z + dz * t; if (W.surface(px, pz) === null) { hit = 'void@' + t.toFixed(1); break } if (W.cols.some(cc => px > cc[0] && px < cc[1] && pz > cc[2] && pz < cc[3])) { hit = 'col@' + t.toFixed(1); break } } out[k] = hit }
+      c(b.name + ' (' + b.kind + ')', true, JSON.stringify({ counter: [x, z].map(v => +v.toFixed(1)), center: [b.x, b.z].map(v => +v.toFixed(1)), ry: b.g.rotation.y.toFixed(2), out, ncols: W.cols.length })) } });
+  return { names() { return steps.map(s => s.name) }, async exec(i) { const s = steps[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: null } } };
+})();

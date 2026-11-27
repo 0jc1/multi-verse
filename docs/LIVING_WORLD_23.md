@@ -328,3 +328,46 @@ powershell -ExecutionPolicy Bypass -File tools\tests\gpu_queue.ps1 -Owner lw23 -
   - basic fictional weapons (they come with the police milestone);
   - barbers and clothing shops charging for look changes (customization milestone);
   - the ape body reads fairly human from behind (same pipeline as the existing ape NPCs).
+
+## Milestone D2: physically enterable businesses (owner: the 40% rule means walk-in interiors)
+
+**`js/lw_interiors.js`:**
+- Businesses without an interior get a real walk-in building on a free, flat lot near them, off the roads, facing their street.
+- Each has the business's own painted fascia, a glass front with a door gap, collision walls and a glowing ceiling panel.
+- **Themed interiors:** café / bakery / dessert (espresso counter, pastry case, tables and chairs), bar / coffeeshop (long bar, stools, bottle wall, neon), restaurant / food hall (laid tables, kitchen pass, produce crates), gallery (white cube, framed works incl. a **Bamb** smoking alien), hostel lobby, pharmacy (green cross), shop / records (wall shelves, gondola, LP crates).
+- **The service counter moves inside;** the entrance counter of that business is retired.
+- About 4 draw calls per building; hidden beyond 70 m.
+- A second, more tolerant lot search (gentle slopes, wider radius) for hilly cities like Oaxaca.
+
+**Coverage measure (`pctEnter`):** a business counts as enterable only if its service point is physically enclosed, with walls or blocked ground on 3 or more sides within 7 m, sampled every 0.1 m.
+- The 2.3 interiors, the 7-ELEVAPE stores and the older walk-in shops (Cádiz, Sevilla, Giant Hostel…) qualify; entrance counters do not.
+- **Bug found while testing:** at 0.3 m steps the rays jumped over 0.2 m walls. Fixed with 0.1 m steps.
+
+| City | Enterable before D2 | After D2 |
+|---|---|---|
+| Madrid | 0–5% | 50% (10/20) |
+| Amsterdam | 8–10% | 50–51% (26/51) |
+| Tokyo | 15% | 55–58% |
+| Vienna | 0% | 50% (13/26) |
+| Oaxaca | 0% | 40% (4/10) |
+| Chiang Mai | 10–42% | 65–68% |
+| Rio | 0% | 56–67% |
+| Barcelona | 0% | 69–75% |
+| Ape Town | 22% | 61% |
+| Pai | 46% | 54% |
+| Koh Tao | 20% | 90% |
+| Đà Nẵng | 0% | 100% |
+| Jerusalem | 0% | 67% |
+| Paris | 8% | 48% |
+| Sevilla | 25% | 85% |
+| Cádiz | 18% | 64% |
+| Chefchaouen | 70% | 70% |
+| Astro-9 | 17% | 58% |
+
+**Test:** `suite_lw23d2` 55/55. In 8 cities it checks:
+- at least 40% enterable;
+- a walking route from the street, through the door, to the counter, with no point inside a wall;
+- the counter is enclosed;
+- an order placed inside is served.
+
+**Known:** the interiors are clean but plain (flat colours, box furniture). Textures, props and staff come in the Ape Town / brands pass.

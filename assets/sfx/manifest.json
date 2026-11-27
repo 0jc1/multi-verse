@@ -1,0 +1,4 @@
+{
+  "about": "Apeverse sound-effect recordings (audio2.js). Each entry: id (an AV.snd.fx name, e.g. 'lighter', 'gulp', 'horn', 'door'), file (path from the game root), license (CC0 / CC-BY 4.0 / owner-provided), source URL, author. A listed file replaces the procedural synth for that id; anything missing or failing falls back to the synth. Only add files whose license allows redistribution, and record attribution here.",
+  "sounds": []
+}

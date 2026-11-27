@@ -97,3 +97,78 @@ Turning the visuals off doesn't make you sober.
 - **Animation:** eating at a table plays no hand animation; the dish fades after about 2 s. The backpack's eating animations are unchanged.
 - **Tabs and tips:** no bill splitting or tipping.
 - **NPC diners:** no NPC orders or diners at the tables. The M11 tapas invitation doesn't seat you together automatically.
+
+# 2.2 (Agent 3): Consumables 2.0, step by step (`js/consume.js`)
+
+## The bug the owner reported
+
+At the Giant Hostel, a bought pre-roll vanished after one drag.
+
+**Cause:** `bag.js` played one 2.4 s animation, then removed the whole item.
+
+**Fix:** every non-reusable drink, food, smoke and alien item is now used in **steps**. Each press of U (or the backpack button) is one step.
+
+| Kind | Steps | What you see and hear |
+|---|---|---|
+| Pre-roll (8 drags; mini 4, Jungle Dub 10) | light up, then drag after drag | A lighter with a flame (first time, or after it goes out); the ember appears. On each inhale the ember glows brighter and smoke curls from the tip (crackle sound). Then you lower your hand and exhale a soft cloud. The joint gets shorter and grows ash. Between drags it smoulders with a thin wisp. On the last drag it is stubbed out. |
+| Pipe | 3 hits per bowl; packing the bowl uses one herb pouch | Same, with a short lighter flick |
+| Nargila | 10 puffs | Bubbling |
+| Drinks (beer 6, cocktails 5, coffee 2–4, cola 4, water 3) | sips | Glass tilts, gulp sounds; the liquid level drops; the can fizzes on the first sip; a clink when it's empty. Coffee steams. |
+| Food (2–5 bites) | bites | Crunch or bite sounds; the food gets smaller |
+| Alien | breaths or bites | Coloured breath |
+
+**Partly used items persist.** A half-smoked joint stays in the backpack. Its card shows "open: 4/8 drags left", and it is saved in `S.cons.open`.
+
+**Putting a lit joint away puts it out.** Left alone, it goes out after about 2.5 minutes. "Relight" brings it back.
+
+**Finish it** (backpack button, or `AV.bag.finish(id)`) plays the remaining steps one after another.
+
+**Effects build gradually.** Each step adds 1/n of the item's dose to one effect session (`AV.fx.dose`), so a beer in 6 sips counts as one drink for the stacking rule. The Banana Bliss gummy (fictional) kicks in about 45 s after you eat it.
+
+## Effects: each one feels different (`effects.js`)
+
+**Cannabis:**
+- warmer, gently sepia-toned colours with only a slight hue drift
+- softer sound (the existing low-pass)
+- a slower, relaxed walk (up to −12 %)
+
+**Alcohol:**
+- the existing sway, stagger and blur
+- slightly slower walking
+
+**Fictional psychedelics:**
+- the hue drift
+- a new soft geometric overlay: a slowly turning mandala at ≤30 % opacity, soft-light blend, opacity rate-limited to 0.06/s
+- with reduced motion it is frozen and weaker; it is off with "no intoxication visuals"
+
+**Alien items:**
+- **float** (Astro-9 float fruit): gravity ×0.4 and jumps ×1.5, so you jump about 4 m
+- **dash** (Nimbus zephyr pod): up to +45 % speed
+- **glow** (moon-berries)
+
+These are gameplay, so they work with the visuals turned off. None of them apply while driving.
+
+**Rules that still hold:**
+- the photosensitivity guard
+- raw-dose impairment and no impaired driving
+- reduced motion
+- no flashing
+- X / Clear effects
+
+## New items and where to buy them
+
+| Item | Price | Where |
+|---|---|---|
+| Mini pre-roll | 30 | Giant Hostel shelf 2; Pai Herb Corner (18); Dub Yard stall |
+| Jungle Dub pre-roll | 75 | La Nube; Dub Yard stall (Jungle Dub) |
+| Banana Bliss gummy (fictional) | 30–35 | Giant Hostel, La Nube, Pai, Sairee |
+| Mojito / Ape Sunset | 55 / 60 | Giant Hostel shelf 2; Ape Sunset also at Sairee (45); mojito at the Finca cart |
+| Espresso / latte | 15 / 18 | Giant Hostel, Finca cart, Nimbus kiosk, ranger hut, Café Nargila |
+| Ape Cola | 8 | Most carts and the hostel |
+| Kaleido tea (fictional psychedelic) | 40 | Orbit Fruit Cart (Astro-9); Vela's basket (Verdalux) |
+| Float fruit | 25 | Orbit Fruit Cart, Astro-9 |
+| Zephyr pod | 25 | Zephyr Pod Kiosk, Nimbus |
+| Moon-berries | 15 | Vela's basket, Verdalux |
+| Strawberries | — | Grown on the Pai farm |
+
+All of these are fictional game items with no real-world guidance. Adult items carry `adult: true`, and Family Demo mode hides them.

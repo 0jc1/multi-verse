@@ -1,0 +1,75 @@
+/* APEVERSE 2.2 (Agent 3) - Milestones A + B end to end: Giant Hostel purchase through the real shop UI, a pre-roll smoked drag by
+   drag (lighting, ember, inhale / exhale smoke, gradual effect, partial item saved, relight, stub-out), cocktails sipped, snacks bitten,
+   alien float fruit from a real cart, psychedelic overlay safeguards, then Sound 2.0 (footsteps, acoustic spaces, venue music through
+   walls, traffic voices + horn, mixer, signal level) and FPS with audio2 on / off.
+   run_tests.ps1 -Suite tools/tests/suite_play22.js -Gpu -W 1536 -H 864 -Port 8731 -StepTimeout 900 */
+window.APE_T = (() => {
+  const steps = [], step = (name, fn, o) => steps.push(Object.assign({ name, fn }, o || {}));
+  const sleep = ms => new Promise(r => setTimeout(r, ms)), $ = id => document.getElementById(id);
+  const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(80) } return false };
+  const settled = () => AV.W && $('fade').style.opacity === '0';
+  const go = async id => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 180000) };
+  const lab = t => typeof t.label === 'function' ? t.label() : String(t.label), tgt = re => AV.W.T.find(t => (!t.show || t.show()) && re.test(lab(t)));
+  const place = (x, z, yaw) => { const W = AV.W; AV.P.x = x; AV.P.z = z; AV.P.y = W.surface(x, z) || 0; AV.P.vx = AV.P.vy = AV.P.vz = 0; if (yaw != null) AV.P.yaw = yaw; AV.P.pitch = 0 };
+  const C = id => (AV.S.items || {})[id] || 0, O = id => AV.S.cons && AV.S.cons.open[id], seg = () => { const H = AV.bag.held(); return H.item };
+  const closeAll = () => { let n = 0; while (AV.modals && AV.modals.length && n++ < 10) AV.closeTop() };
+  const fps = async ms => { let n = 0, on = true; const f = () => { n++; if (on) requestAnimationFrame(f) }; requestAnimationFrame(f); await sleep(ms); on = false; return n / (ms / 1000) };
+  const R = window.__p22 = {};
+
+  step('boot (sandboxed save)', async c => { c('page scripts loaded', await until(() => window.AV && AV.boot && $('bNew') && $('bNew').onclick, 120000)); $('gq').value = 'Medium'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(2000);
+    window.__realSave = window.__realSave || AV.save; AV.save = () => { }; AV.S.money = 400; AV.S.time = 15 * 60; c('audio2 ready', await until(() => AV.snd.state().ready, 8000), JSON.stringify(AV.snd.state())) });
+
+  step('Giant Hostel: buy a pre-roll + a mojito through the shop UI', async c => {
+    c('Chiang Mai', await go('chiang_mai')); await sleep(1500); place(27.5, 55.2, Math.PI); await sleep(300); const T = tgt(/Shop counter/); c('shop counter interaction', !!T); T.fn(); await sleep(300);
+    const m0 = AV.S.money, b = $('cmp').querySelector('[data-i="pre"]'); c('pre-roll button', !!b); b.click(); await sleep(200); c('pre-roll bought (−60)', C('pre') === 1 && AV.S.money === m0 - 60, AV.S.money);
+    const x = $('cmp').querySelector('[data-i2="mojito"]'); c('second shelf: mojito, espresso, cola, mini pre-roll, gummy', !!x && !!$('cmp').querySelector('[data-i2="espresso"]') && !!$('cmp').querySelector('[data-i2="gummy"]')); x.click(); await sleep(200); c('mojito bought (−55)', C('mojito') === 1 && AV.S.money === m0 - 115);
+    $('cmp').querySelector('[data-i="snack"]').click(); await sleep(200);
+    const keep = AV.S.money; AV.S.money = 5; $('cmp').querySelector('[data-i2="ape_sunset"]').click(); await sleep(200); c('a failed purchase says why', /60 credits and you have 5|60 créditos y tienes 5/.test($('toast').textContent) && !C('ape_sunset'), $('toast').textContent); AV.S.money = keep; closeAll() }, { shot: 'p22_shop' });
+
+  step('backpack: pre-roll card offers Light up + Finish it', async c => { place(25, 49.5, Math.PI); AV.toggleInv(); await sleep(200); const card = [...$('inv').querySelectorAll('.bitem')].find(e => e.querySelector('[data-u="pre"]'));
+    c('Light up button', !!card && /Light up/.test(card.textContent), card && card.textContent); c('Finish it button', !!card && !!card.querySelector('[data-fin="pre"]')); card.querySelector('[data-e="pre"]').click(); await sleep(200); AV.closePanel && AV.closePanel('inv'); c('held in first person', AV.bag.held().id === 'pre' && !!seg()) });
+
+  step('light up: lighter + flame, ember appears', async c => { AV.keymap.KeyU(); await sleep(900); const H = AV.bag.held(), li = H.VM.children.find(o => o.getObjectByName && o.getObjectByName('flame'));
+    c('a step is running', AV.cons.busy()); c('lighter visible with a flame', !!li && li.visible, li && li.visible); R.fx0 = AV.fx.raw('smoke') }, { shot: 'p22_light' });
+  step('first drag: inhale makes the ember glow + smoke from the tip', async c => { const em = () => seg().getObjectByName('ember'); await until(() => em().material.emissiveIntensity > 1.8, 6000);
+    c("ember glows bright on the inhale", em().material.emissiveIntensity > 1.8, em().material.emissiveIntensity.toFixed(2)); c('smoke particles', AV.cons.particles() > 0, AV.cons.particles()); c('inhale sound played', AV.snd.stats.fx >= 2, AV.snd.last) }, { shot: 'p22_inhale' });
+  step('exhale cloud, then the pre-roll is still in the backpack', async c => { await until(() => AV.cons.particles() >= 6, 5000); c('exhale cloud', AV.cons.particles() >= 6, AV.cons.particles()); R.shotP = AV.cons.particles() }, { shot: 'p22_exhale' });
+  step('one drag ≠ whole joint (the reported bug)', async c => { await until(() => !AV.cons.busy(), 8000);
+    c('still have the pre-roll', C('pre') === 1, C('pre')); c('7/8 drags left, lit', O('pre') && O('pre').left === 7 && O('pre').lit, JSON.stringify(O('pre'))); c('card shows the open pre-roll', (AV.bag.partialLabel('pre') || '').includes('7/8'));
+    c('the joint is shorter', seg().getObjectByName('body').scale.x < 1, seg().getObjectByName('body').scale.x.toFixed(2)) });
+  step('three more drags: the effect builds gradually', async c => { const lv = [AV.fx.raw('smoke')]; for (let i = 0; i < 3; i++) { AV.keymap.KeyU(); await until(() => !AV.cons.busy(), 10000); await sleep(1500); lv.push(AV.fx.raw('smoke')) }
+    R.smokeLv = lv; c('4/8 left', O('pre').left === 4, O('pre').left); c('dose rises drag by drag', lv[3] > lv[1] && lv[1] > lv[0], lv.map(v => v.toFixed(3)).join(' → ')); c('still subtle (one session, no jump)', lv[3] < .45, lv[3].toFixed(3));
+    c('warm look: sepia in the filter', /sepia/.test($('c').style.filter) || AV.S.set.noIntox, $('c').style.filter); c('relaxed walk (speed ×' + (AV.speedMul || 1).toFixed(2) + ')', AV.speedMul < 1) }, { shot: 'p22_four_drags' });
+  step('put it away: it goes out and stays half-smoked (saved)', async c => { AV.bag.equip(null); await sleep(200); c('put out', O('pre') && !O('pre').lit && /put it out|Lo apagas/.test($('toast').textContent), $('toast').textContent);
+    const K = 'apeverse_test_p22', real = localStorage.getItem('apeverse_v09'); AV.saveKey = K; AV._bakFor = null; localStorage.removeItem(K); window.__realSave(); const raw = JSON.parse(localStorage.getItem(K) || '{}'), s = raw.s || raw;
+    c('partial joint persisted in the save', s.cons && s.cons.open && s.cons.open.pre && s.cons.open.pre.left === 4 && s.items.pre === 1, JSON.stringify(s.cons)); c("player's real save untouched", localStorage.getItem('apeverse_v09') === real) });
+  step('relight + finish it: stubbed out at the end', async c => { AV.bag.equip('pre'); await sleep(200); AV.toggleInv(); await sleep(150); const b = $('inv').querySelector('[data-u="pre"]'); c('button now says Relight', /Relight/.test(b.textContent), b.textContent); AV.closePanel('inv');
+    AV.bag.finish('pre'); c('smoked to the end automatically', await until(() => C('pre') === 0, 90000), JSON.stringify(O('pre'))); c('finished message', /stub it out|apagas en el cenicero/.test($('toast').textContent), $('toast').textContent); c('no open record left', !O('pre')); c('impaired (no driving)', AV.fx.impaired()) }, { shot: 'p22_stub' });
+
+  step('mojito: sip by sip, the glass empties, one drink', async c => { AV.bag.equip('mojito'); await sleep(200); const liq = () => seg().getObjectByName('liquid'), full = liq().scale.y; AV.keymap.KeyU(); await until(() => !AV.cons.busy(), 6000);
+    c('1 sip: still have it, level dropped', C('mojito') === 1 && liq().scale.y < full, (liq().scale.y / full).toFixed(2)); const n0 = AV.fx.list.filter(e => e.type === 'drink').length; AV.bag.finish('mojito'); c('emptied in sips', await until(() => C('mojito') === 0, 40000));
+    c('counted as ONE drink session', AV.fx.list.filter(e => e.type === 'drink').length === 1, n0 + ' / ' + AV.fx.list.filter(e => e.type === 'drink').length); c('gulp sounds', AV.snd.stats.fx > 20, AV.snd.stats.fx) });
+  step('snack: bites shrink it', async c => { AV.bag.equip('snack'); await sleep(150); const s0 = seg().scale.x; AV.keymap.KeyU(); await until(() => !AV.cons.busy(), 6000); c('smaller after a bite', seg().scale.x < s0 && C('snack') === 1, seg().scale.x.toFixed(2)); AV.bag.finish('snack'); c('eaten', await until(() => C('snack') === 0, 20000)); AV.keymap.KeyX() });
+
+  step('Astro-9 float fruit from a real cart: lighter gravity, higher jumps', async c => { c('Astro-9', await go('astro9')); await sleep(1500); const T = tgt(/Orbit Fruit Cart/); c('fruit cart in the world', !!T); place(T.x + 1.2, T.z + 1.2); await sleep(200); T.fn(); await sleep(200);
+    const b = $('cmp').querySelector('[data-buy="float_fruit"]'); c('float fruit on sale', !!b); b.click(); await sleep(300); c('bought', C('float_fruit') === 1); closeAll(); AV.bag.finish('float_fruit'); c('eaten', await until(() => C('float_fruit') === 0, 20000));
+    c('float takes hold', await until(() => AV.gravMul < .8 && AV.jumpMul > 1.15, 30000), AV.gravMul && AV.gravMul.toFixed(2) + ' / ' + (AV.jumpMul || 1).toFixed(2)); const y0 = AV.P.y; AV.keys.Space = true; await sleep(450); AV.keys.Space = false; let hi = 0; for (let i = 0; i < 40; i++) { await sleep(80); hi = Math.max(hi, AV.P.y - y0) } R.jump = hi; c('a much higher jump (normal ≈1.1 m)', hi > 1.5, hi.toFixed(2) + ' m') }, { shot: 'p22_float' });
+  step('kaleido tea: gentle geometric overlay, safeguards', async c => { AV.keymap.KeyX(); AV.bag.add('kaleido_tea', 1, true); AV.bag.finish('kaleido_tea'); await until(() => C('kaleido_tea') === 0, 30000); c('overlay fades in', await until(() => AV.fx.kal().o > .05, 40000), AV.fx.kal().o.toFixed(3));
+    let mx = 0, prev = AV.fx.kal().o; for (let i = 0; i < 20; i++) { await sleep(100); const o = AV.fx.kal().o; mx = Math.max(mx, Math.abs(o - prev)); prev = o } c('opacity changes slowly (no flash)', mx < .02, mx.toFixed(4)); R.kal = AV.fx.kal().o;
+    AV.S.set.noIntox = true; await sleep(400); c('"no intoxication visuals" hides it', await until(() => !AV.fx.kal().on, 30000)); AV.S.set.noIntox = false }, { shot: 'p22_kaleido' });
+
+  step('Sound 2.0: footsteps by surface', async c => { AV.keymap.KeyX(); c('Chiang Mai', await go('chiang_mai')); await sleep(1500); place(0, 44, Math.PI / 2); const s0 = AV.snd.stats.steps; AV.keys.KeyW = true; await sleep(2500); AV.keys.KeyW = false;
+    c('footsteps while walking', AV.snd.stats.steps - s0 >= 3, AV.snd.stats.steps - s0); c('street = stone', AV.snd.state().mat === 'stone', AV.snd.state().mat); place(20, 70); AV.keys.KeyW = true; await sleep(1200); AV.keys.KeyW = false; c('indoors = wood', AV.snd.state().mat === 'wood', AV.snd.state().mat) });
+  step('acoustic spaces: hostel room, Big Blues bar, street', async c => { place(20, 70); await sleep(800); c('Giant Hostel = room', AV.snd.state().space === 'room', AV.snd.state().space); place(17, 31); await sleep(800); c('Big Blues = bar', AV.snd.state().space === 'bar', AV.snd.state().space); place(17, 45); await sleep(800); c('the street = outdoor', AV.snd.state().space === 'outdoor', AV.snd.state().space) });
+  step('venue music: the live set at Big Blues, heard across the street', async c => { const T = AV.audio.track; place(20, 66); await sleep(600); c('one positional track; from the hostel it plays at Big Blues', T.active && T.pos && Math.abs(T.pos.z - 31.5) < 1, T.key + ' ' + JSON.stringify(T.pos));
+    c('re-routed through occlusion', !!AV.snd.stats.venueRouted); place(20, 66); await sleep(1500); const inH = AV.snd.state().venueOcc; place(17, 44); await sleep(1500); const st = AV.snd.state().venueOcc; place(17, 32); await sleep(1500); const inB = AV.snd.state().venueOcc;
+    R.venue = [inH, st, inB]; c('muffled from inside the hostel (walls)', inH >= 1, inH); c('clearer on the street / inside the bar', inB === 0 && st <= inH, st + ' / ' + inB); AV.snd.meter(); await sleep(600); let mx = 0; for (let i = 0; i < 6; i++) { mx = Math.max(mx, AV.snd.meter()); await sleep(150) } R.rms = mx; c('a real signal is mixed (RMS)', mx > .002, mx.toFixed(4)) }, { shot: 'p22_blues' });
+  step('Madrid: traffic engines + spatial horn', async c => { c('Madrid', await go('madrid')); await sleep(4000); c('engine voices on the nearest cars', await until(() => AV.snd.state().traffic >= 1, 30000), JSON.stringify(AV.snd.state())); const h0 = AV.snd.stats.horns; AV.snd.horn(AV.P.x + 8, AV.P.z, 'car'); c('horn plays', AV.snd.stats.horns === h0 + 1);
+    await sleep(500); const pl = AV.snd.placeList().find(p => p.x < 1500 && /cafe|bar|market/.test(p.kind)); R.placeKinds = AV.snd.placeList().map(p => p.kind).join(','); c('a café / bar place classified from W.places', !!pl, R.placeKinds); if (pl) place(pl.x, pl.z); c('place ambience (cafés / bars / markets)', await until(() => AV.snd.state().places >= 1, 20000), AV.snd.state().places) });
+  step('mixer: ambience + voices sliders in Settings', async c => { AV.toggleSettings(); await sleep(200); c('sliders', !!$('sVa') && !!$('sVv')); $('sVa').value = .2; $('sVa').oninput({ target: $('sVa') }); c('ambience volume saved', AV.S.set.va === .2); $('sVa').value = .8; $('sVa').oninput({ target: $('sVa') }); AV.toggleSettings() });
+  step('performance: FPS with Sound 2.0 on vs off (same spot, interleaved)', async c => { const r = []; for (let i = 0; i < 2; i++) { AV.snd.on = true; await sleep(800); r.push(['on', await fps(4000)]); AV.snd.on = false; await sleep(800); r.push(['off', await fps(4000)]) } AV.snd.on = true;
+    const on = (r[0][1] + r[2][1]) / 2, off = (r[1][1] + r[3][1]) / 2; R.fps = { on, off }; c('FPS on ' + on.toFixed(1) + ' / off ' + off.toFixed(1), on > off * .85, JSON.stringify(r.map(x => x[0] + ' ' + x[1].toFixed(1)))) });
+  step('no JS errors', async c => c('clean', !$('err').textContent, $('err').textContent));
+  let active = steps;
+  return { names() { active = steps; return steps.map(s => s.name) }, async exec(i) { const s = active[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };
+})();

@@ -338,16 +338,16 @@ function update(dt) {
     /* V1.0 Living Playground: while riding a vehicle (vehicles.js) AV.drive turns throttle + steering into the velocity; no jumping */
     if (AV.drive) dv = AV.drive(dt, Math.max(-1, Math.min(1, f)), Math.max(-1, Math.min(1, s)), run);
     else { ax = -sn * f + cs * s; az = -cs * f - sn * s; const l = Math.hypot(ax, az); if (l > 1) { ax /= l; az /= l }
-      P.yaw += ((keys.ArrowLeft ? 1 : 0) - (keys.ArrowRight ? 1 : 0)) * 2 * dt; if ((keys.Space || T.jump) && P.on) { P.vy = W.gravityAt && W.gravityAt(P.x, P.z) === 0 ? 2.6 : 7; P.on = false } }
+      P.yaw += ((keys.ArrowLeft ? 1 : 0) - (keys.ArrowRight ? 1 : 0)) * 2 * dt; if ((keys.Space || T.jump) && P.on) { P.vy = W.gravityAt && W.gravityAt(P.x, P.z) === 0 ? 2.6 : 7 * (AV.jumpMul || 1); P.on = false } }
   }
   /* V0.9.7: TRUE zero gravity where a world returns gravityAt 0 (Club Graviton): you float; Space/Jump rises, C/Sink goes down, gentle drag */
   const zeroG = !!(W.gravityAt && W.gravityAt(P.x, P.z) === 0);
   if (zeroG && !AV.blocking()) { const up = (keys.Space || T.jump ? 1 : 0) - (keys.KeyC || keys.ControlLeft || T.sink ? 1 : 0); P.vy += up * 6 * dt; P.vy *= 1 - Math.min(1, .45 * dt) }
   if (zeroG !== AV.inZeroG) { AV.inZeroG = zeroG; const zb = $('tZ'); if (zb) zb.style.display = zeroG && AV.device === 'phone' ? 'block' : 'none'; if (zeroG) AV.toast(tr('ZERO GRAVITY! Jump to float · Space / Jump rises · C / Sink goes down', '¡GRAVEDAD CERO! Salta para flotar · Espacio / Saltar sube · C / Bajar baja')) }
   /* V0.9.4: speedMul (Chiang Mai scooter) */
-  if (dv) { P.vx = dv[0]; P.vz = dv[1] } else { const sp = (run ? 7.5 : 4) * (W.speedMul ? W.speedMul() : 1), k = Math.min(1, (P.on ? 14 : 3) * dt); P.vx += (ax * sp - P.vx) * k; P.vz += (az * sp - P.vz) * k }
+  if (dv) { P.vx = dv[0]; P.vz = dv[1] } else { const sp = (run ? 7.5 : 4) * (W.speedMul ? W.speedMul() : 1) * (AV.speedMul || 1),   /* 2.2: AV.speedMul / gravMul / jumpMul: item effects (effects.js) */ k = Math.min(1, (P.on ? 14 : 3) * dt); P.vx += (ax * sp - P.vx) * k; P.vz += (az * sp - P.vz) * k }
   const gs = W.gravityAt ? W.gravityAt(P.x, P.z) : 1; AV.gravityScale += (gs - AV.gravityScale) * Math.min(1, 3 * dt); if (zeroG) AV.gravityScale = 0;
-  P.vy -= 22 * AV.gravityScale * dt;
+  P.vy -= 22 * AV.gravityScale * (AV.gravMul || 1) * dt;
   /* move per axis so walls and cliffs slide instead of sticking */
   for (const ax2 of [0, 1]) {
     const ox = P.x, oz = P.z; if (ax2 === 0) P.x += P.vx * dt; else P.z += P.vz * dt;

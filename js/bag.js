@@ -20,6 +20,7 @@ const mesh = (g, m, x, y, z, sx, sy, sz, rx, ry, rz) => { const o = new THREE.Me
 const SPH = new THREE.SphereGeometry(1, 14, 10), CYL = new THREE.CylinderGeometry(1, 1, 1, 14), BOX = new THREE.BoxGeometry(1, 1, 1), HEM = new THREE.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), OCT = new THREE.OctahedronGeometry(1, 0), ICO = new THREE.IcosahedronGeometry(1, 1), TOR = new THREE.TorusGeometry(1, .18, 8, 20);
 function model(id) {
   const d = D(id), g = new THREE.Group(), c = d.col, add = o => { g.add(o); return o };
+  if (BAG.ext && BAG.ext[d.model]) return BAG.ext[d.model](d, id, { mat, mesh, SPH, CYL, BOX, HEM, OCT, ICO, TOR });   /* 2.2: richer models from js/consume.js */
   switch (d.model) {
     case 'bottle': add(mesh(CYL, mat(c, { roughness: .15, metalness: .2, transparent: true, opacity: .85 }), 0, 0, 0, .045, .2, .045)); add(mesh(CYL, mat(c, { roughness: .15 }), 0, .14, 0, .018, .08, .018)); add(mesh(CYL, mat(0xf0e8c8), 0, -.01, 0, .046, .06, .046)); break;
     case 'cup': add(mesh(new THREE.CylinderGeometry(1, .8, 1, 14), mat(0xf4f4f4, { transparent: true, opacity: .6 }), 0, 0, 0, .055, .15, .055)); add(mesh(CYL, mat(c), 0, -.01, 0, .048, .12, .048)); add(mesh(CYL, mat(0xff4ad2), .015, .11, 0, .006, .14, .006, 0, 0, .2)); break;
@@ -74,6 +75,7 @@ BAG.use = function (id) {
   const S = st(), d = D(id); if (!BAG.count(id)) return AV.toast(tr('You don’t have that.', 'No tienes eso.')); if (anim) return;
   if (d.use === 'smoke' && AV.W && AV.W.id === 'chiang_mai' && AV.P.x > 8 && AV.P.x < 32 && AV.P.z > 52 && AV.P.z < 88) return AV.toast(tr('Mutt: “Terrace only! Not inside, not in the rooms.”', 'Mutt: “¡Solo en la terraza! Ni dentro ni en las habitaciones.”'));
   if (d.use === 'smoke' && AV.W && AV.W.noSmoke && AV.W.noSmoke(AV.P.x, AV.P.z)) return AV.toast(tr('Not here — this is a holy place. Please respect it.', 'Aquí no: es un lugar sagrado. Respétalo, por favor.'));
+  if (BAG.session && BAG.session(id)) return;   /* 2.2 (js/consume.js): multi-drag / sip / bite sessions with partial items */
   if (d.needs && !BAG.count(d.needs)) return AV.toast(tr('Empty. You need a ' + nm(d.needs) + '.', 'Vacía. Necesitas: ' + nm(d.needs) + '.'));
   if (S.bag.eq !== id) BAG.equip(id); closeIfOpen();
   const dur = d.use === 'play' ? 2.6 : d.use === 'look' ? 2.2 : d.use === 'wear' ? 1.2 : 2.4; anim = { id, d, t: 0, t0: AV.now(), dur, done: false, notes: 0 };
@@ -99,6 +101,7 @@ AV.frameFns.push((dt, t) => {
     else { x = lerp(x, 0, up); y = lerp(y, -.2, up); z = lerp(z, -.45, up); if (vmItem) vmItem.rotation.y = a.t * 2; if (d.use === 'alien' && Math.floor(a.t * 4) > a.notes && a.t < 1.8) { a.notes = Math.floor(a.t * 4); AV.audio && AV.audio.blip([523, 659, 784, 988, 1175, 784, 659][a.notes % 7], .5, 'sine', .07) } }
     if (a.t >= a.dur) { anim = null; finish(a); if (vmItem) { vmItem.scale.setScalar(1); vmItem.rotation.set(0, 0, 0) } }
   }
+  if (BAG.pose) { const o = BAG.pose(dt, t, x, y, z); if (o) { x = o[0]; y = o[1]; z = o[2]; rx = o[3]; rz = o[4] } }   /* 2.2: session animation (js/consume.js) */
   VM.position.set(x, y, z); VM.rotation.set(rx, .3, rz);
   for (let i = puffs.length - 1; i >= 0; i--) { const p = puffs[i]; if (p.delay > 0) { p.delay -= dt; continue } p.life -= dt; p.m.visible = true; p.m.position.y += dt * .08; p.m.position.z -= dt * .25; p.m.position.x += Math.sin(p.life * 4 + i) * dt * .03; p.m.scale.setScalar(.03 + (1.8 - p.life) * .12); p.m.material.opacity = Math.max(0, p.life / 1.8 * .45); if (p.life <= 0) { AV.cam.remove(p.m); p.m.material.dispose(); puffs.splice(i, 1) } }
 });
@@ -132,8 +135,8 @@ function render() {
   const S = st(), Sset = AV.S.set; if (Sset.fxInt == null) Sset.fxInt = .7; if (Sset.fxDur == null) Sset.fxDur = 1;
   const ids = Object.keys(S.items).filter(k => S.items[k] > 0).sort((a, b) => (D(a).cat > D(b).cat ? 1 : -1));
   const card = id => { const d = D(id), v = VERB[d.use] || VERB.look, eq = S.bag.eq === id;
-    return '<div class="bitem' + (eq ? ' eq' : '') + '"><div class="bic">' + d.ic + '</div><div class="bnm">' + nm(id) + ' <b>×' + S.items[id] + '</b><small>' + tr(d.cat, { drink: 'bebida', food: 'comida', smoke: 'fumar', alien: 'alienígena', instrument: 'instrumento', souvenir: 'recuerdo', misc: 'varios' }[d.cat] || d.cat) + (d.keep ? tr(' · reusable', ' · reutilizable') : '') + '</small></div>' +
-      '<div class="bbt"><button data-u="' + id + '">' + tr(v[0], v[1]) + '</button><button data-e="' + id + '">' + (eq ? tr('Put away', 'Guardar') : tr('Hold', 'Sostener')) + '</button><button data-d="' + id + '">' + tr('Drop', 'Soltar') + '</button></div></div>' };
+    return '<div class="bitem' + (eq ? ' eq' : '') + '"><div class="bic">' + d.ic + '</div><div class="bnm">' + nm(id) + ' <b>×' + S.items[id] + '</b><small>' + tr(d.cat, { drink: 'bebida', food: 'comida', smoke: 'fumar', alien: 'alienígena', instrument: 'instrumento', souvenir: 'recuerdo', misc: 'varios' }[d.cat] || d.cat) + (d.keep ? tr(' · reusable', ' · reutilizable') : '') + (BAG.partialLabel ? BAG.partialLabel(id) : '') + '</small></div>' +
+      '<div class="bbt"><button data-u="' + id + '">' + (BAG.verb ? BAG.verb(id, v) : tr(v[0], v[1])) + '</button>' + (BAG.finishBtn ? BAG.finishBtn(id) : '') + '<button data-e="' + id + '">' + (eq ? tr('Put away', 'Guardar') : tr('Hold', 'Sostener')) + '</button><button data-d="' + id + '">' + tr('Drop', 'Soltar') + '</button></div></div>' };
   const fxl = AV.fx.active(), FXN = { drink: tr('tipsy', 'achispado'), smoke: tr('stoned', 'colocado'), psy: tr('psychedelic', 'psicodélico'), buzz: tr('buzzing', 'acelerado'), glow: tr('alien glow', 'brillo alienígena') };
   const html = '<b>' + tr('Backpack', 'Mochila') + '</b> · ' + tr('Credits', 'Créditos') + ': ' + S.money + (S.bag.eq ? ' · ' + tr('holding ', 'en la mano: ') + D(S.bag.eq).ic + ' ' + nm(S.bag.eq) + ' (U)' : '') +
     '<div class="bgrid">' + (ids.map(card).join('') || '<div class="note">' + tr('Empty. Buy things in shops, or pick up glowing items you find on every planet.', 'Vacía. Compra cosas en las tiendas o recoge los objetos brillantes que encuentres en cada planeta.') + '</div>') + '</div>' +
@@ -144,11 +147,11 @@ function render() {
     '<details><summary>' + tr('Transactions', 'Transacciones') + '</summary>' + S.log.slice(0, 12).map(l => '<div>' + tr('Day', 'Día') + ' ' + l.d + ' · ' + l.t + ' · ' + (l.a > 0 ? '+' : '') + l.a + '</div>').join('') + '</details>' +
     '<div class="row"><button data-close>' + tr('Close', 'Cerrar') + '</button><button id="expSave">' + tr('Export save', 'Exportar partida') + '</button></div>';
   const p = $('inv'); if (p.style.display === 'block') { p.innerHTML = html; p.querySelectorAll('[data-close]').forEach(b => b.onclick = () => AV.closePanel('inv')) } else AV.panel('inv', html);
-  p.querySelectorAll('[data-u]').forEach(b => b.onclick = () => BAG.use(b.dataset.u)); p.querySelectorAll('[data-e]').forEach(b => b.onclick = () => BAG.equip(st().bag.eq === b.dataset.e ? null : b.dataset.e)); p.querySelectorAll('[data-d]').forEach(b => b.onclick = () => BAG.drop(b.dataset.d));
+  p.querySelectorAll('[data-u]').forEach(b => b.onclick = () => BAG.use(b.dataset.u)); p.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => BAG.finish && BAG.finish(b.dataset.fin)); p.querySelectorAll('[data-e]').forEach(b => b.onclick = () => BAG.equip(st().bag.eq === b.dataset.e ? null : b.dataset.e)); p.querySelectorAll('[data-d]').forEach(b => b.onclick = () => BAG.drop(b.dataset.d));
   $('fxI').oninput = e => { Sset.fxInt = +e.target.value }; $('fxD').oninput = e => { Sset.fxDur = +e.target.value; $('fxDv').textContent = Sset.fxDur + '×' }; $('fxR').onchange = e => { Sset.reduce = e.target.checked; AV.save() }; $('fxX').onclick = () => { AV.fx.reset(); render() };
   $('expSave').onclick = () => { const b = new Blob([AV.exportSave()], { type: 'application/json' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'apeverse_save.json'; a.click() };
 }
-BAG.open = render; BAG.busy = () => !!anim;
+BAG.open = render; BAG.busy = () => !!anim || !!(BAG.sessBusy && BAG.sessBusy()); BAG.refresh = refresh;
 AV.toggleInv = function () { if ($('inv').style.display === 'block') return AV.closePanel('inv'); render() };
 AV.keymap.KeyU = () => { const id = st().bag.eq; if (id) BAG.use(id); else AV.toast(tr('You are not holding anything. Open the backpack (I) and choose Hold.', 'No sostienes nada. Abre la mochila (I) y elige Sostener.')) };
 { const b = $('tU'); if (b) b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); AV.keymap.KeyU() }) }

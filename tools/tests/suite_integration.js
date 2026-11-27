@@ -24,7 +24,7 @@ window.APE_T = (() => {
     const playable = (AV.WORLDS_DATA || []).filter(w => w.status === 'playable').map(w => w.id); c('every "playable" world in data/worlds has code', playable.every(id => AV.isPlayable(id)), playable.filter(id => !AV.isPlayable(id)).join(', ') || 'all');
     AV.toggleMap(); await sleep(600); const t = $('map').textContent; c('travel map opens', $('map').style.display !== 'none' && t.length > 50); AV.closeTop(); });
   const ids = () => Object.keys(AV.worldDefs);
-  for (let k = 0; k < 20; k++) step('world #' + (k + 1), async c => { const id = ids()[k]; if (!id) { c('(no more worlds)', true); return } c(id + ' loads', await (async () => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 180000) })(), AV.W && AV.W.id);
+  for (let k = 0; k < 30; k++) step('world #' + (k + 1), async c => { const id = ids()[k]; if (!id) { c('(no more worlds)', true); return } c(id + ' loads', await (async () => { AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 180000) })(), AV.W && AV.W.id);
     await sleep(1500); c(id + ': no JS error', !$('err').textContent, $('err').textContent.slice(0, 300)); const P = AV.P; c(id + ': ground under you', AV.W.surface(P.x, P.z) !== null);
     const x0 = P.x, z0 = P.z; AV.keys.KeyW = 1; await until(() => Math.hypot(P.x - x0, P.z - z0) > .6, 30000); AV.keys.KeyW = 0; c(id + ': walking works', Math.hypot(P.x - x0, P.z - z0) > .3, Math.hypot(P.x - x0, P.z - z0).toFixed(2) + ' m');
     c(id + ': interactions', AV.W.T.length > 0, AV.W.T.length + ' targets'); const mm = AV.minimap; if (mm) { await until(() => mm.base && mm.base.W === AV.W, 60000); try { mm._buildNow() } catch (e) { } c(id + ': map built', !!(mm.base && mm.base.done)) }

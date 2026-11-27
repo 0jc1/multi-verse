@@ -21,7 +21,7 @@ window.APE_T = (() => {
     const p = tgt(/Pick up .*Glowing mushroom/); c('glowing pickups on Ape Town', !!p); if (!p) return; place(p.x, p.z); await until(() => AV.nearTarget() === p, 5000); p.fn(); c('picked up into the backpack', C('magic_mushroom') === 1);
     c('picked item disappears from the world', !AV.W.T.includes(p));
     AV.bag.equip('magic_mushroom'); await sleep(300); c('held in first-person view', AV.cam.children.some(o => o.visible && o.children.length >= 2));
-    AV.keymap.KeyU(); c('eat animation starts and item is consumed at the end', await until(() => C('magic_mushroom') === 0, 60000));
+    AV.keymap.KeyU(); await until(() => !AV.bag.busy(), 20000); c('2.2: one bite does not eat it all', C('magic_mushroom') === 1); AV.bag.finish('magic_mushroom'); c('eat animation starts and item is consumed at the end', await until(() => C('magic_mushroom') === 0, 60000));
     const l0 = AV.fx.level('psy'); await sleep(6000); const l1 = AV.fx.level('psy'); c('effect ramps in gradually (not instant)', l1 > l0 && l1 > .05, l0.toFixed(2) + ' → ' + l1.toFixed(2));
     c('visible filter on the 3D view', /hue-rotate/.test($('c').style.filter), $('c').style.filter); c('vignette fades in', +$('fxv').style.opacity > .02, $('fxv').style.opacity);
     c('effect lasts minutes', AV.fx.active().some(e => e.type === 'psy' && e.left > 120), JSON.stringify(AV.fx.active()));
@@ -32,7 +32,7 @@ window.APE_T = (() => {
   }, { shot: 'bag_mushroom' });
 
   step('drink + drop + persistence', async c => {
-    closeAll(); AV.bag.use('water'); c('drinking a bottle of water', await until(() => C('water') === 0, 60000));
+    closeAll(); AV.bag.finish('water'); c('drinking a bottle of water (sip by sip)', await until(() => C('water') === 0, 60000));
     place(0, 90, 0); AV.bag.drop('coconut'); await sleep(300); const t = tgt(/Pick up .*coconut/i); c('dropped item lies in the world', !!t && C('coconut') === 0);
     c('drop saved for this world', (AV.S.drops.ape_town || []).some(d => d.id === 'coconut'));
     await travel('jungle_dub'); c('backpack works on Jungle Dub (pickups there)', !!tgt(/Pick up/)); await travel('ape_town'); await sleep(800);
@@ -51,10 +51,10 @@ window.APE_T = (() => {
     place(27.5, 54.4, Math.PI); AV.cm.shopPanel(); await sleep(200); for (const id of ['beer', 'pre', 'pipe', 'herb']) $('cmp').querySelector('[data-i="' + id + '"]').click(); AV.closePanel('cmp');
     c('hostel shop sells into the backpack', C('beer') === 1 && C('pre') === 1 && C('pipe') === 1 && C('herb') === 1);
     AV.bag.use('pre'); await sleep(300); c('no smoking inside the hostel (Mutt’s rule)', C('pre') === 1 && /Terrace only|Solo en la terraza/.test($('toast').textContent) && !AV.bag.busy(), $('toast').textContent);
-    place(25, 49.5, 0); AV.bag.use('pre'); c('smoking on the terrace works', await until(() => C('pre') === 0, 60000)); await sleep(5000); c('smoke effect builds up', AV.fx.level('smoke') > .05, AV.fx.level('smoke').toFixed(2));
+    place(25, 49.5, 0); AV.bag.finish('pre'); c('smoking on the terrace works (drag by drag, to the end)', await until(() => C('pre') === 0, 60000)); await sleep(5000); c('smoke effect builds up', AV.fx.level('smoke') > .05, AV.fx.level('smoke').toFixed(2));
     await until(() => !AV.bag.busy(), 60000); AV.bag.use('pipe'); await until(() => C('herb') === 0, 60000); c('the pipe uses a herb pouch and is kept', C('pipe') === 1 && C('herb') === 0);
-    await until(() => !AV.bag.busy(), 60000); AV.bag.use('pipe'); await sleep(300); c('empty pipe refuses without herb', /Empty|Vacía/.test($('toast').textContent), $('toast').textContent);
-    await until(() => !AV.bag.busy(), 60000); AV.bag.use('beer'); await until(() => C('beer') === 0, 8000); await sleep(4000); c('beer makes you tipsy (gradually)', AV.fx.level('drink') > .03, AV.fx.level('drink').toFixed(2)); AV.fx.reset();
+    await until(() => !AV.bag.busy(), 60000); AV.bag.finish('pipe'); await until(() => !AV.bag.busy() && AV.S.cons.open.pipe.left === 0, 60000); AV.bag.use('pipe'); await sleep(300); c('empty pipe refuses without herb', /Empty|Vacía/.test($('toast').textContent), $('toast').textContent);
+    await until(() => !AV.bag.busy(), 60000); AV.bag.finish('beer'); await until(() => C('beer') === 0, 40000); await sleep(4000); c('beer makes you tipsy (gradually)', AV.fx.level('drink') > .03, AV.fx.level('drink').toFixed(2)); AV.fx.reset();
   }, { shot: 'bag_chiang_mai' });
 
   /* phone */

@@ -19,7 +19,7 @@ const ISLE = [160, 320, -20, 20];   /* Île: x0, x1, z0, z1 */
 const BRIDGES = [[-70, -50, -36, 36, 1.1, 'z'], [56, 64, -36, 36, .7, 'z'], [170, 180, 19, 36, .25, 'z'], [183, 191, -36, -19, .25, 'z']];
 function bridgeY(x, z) { for (const b of BRIDGES) if (x > b[0] && x < b[1] && z > b[2] && z < b[3]) { const c = (b[2] + b[3]) / 2, h = (b[3] - b[2]) / 2, t = (z - c) / h; return .25 + b[4] * (1 - t * t) } return null }
 const inIsle = (x, z) => x > ISLE[0] && x < ISLE[1] && z > ISLE[2] && z < ISLE[3];
-function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; const b = bridgeY(x, z); if (b !== null) return b; if (z > -30 && z < 30 && !inIsle(x, z)) return null; return 0 }
+function surf(x, z) { if (PAR.mmSurf) { const s2 = PAR.mmSurf(x, z); if (s2 !== undefined) return s2 } if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX) return null; const b = bridgeY(x, z); if (b !== null) return b; if (z > -30 && z < 30 && !inIsle(x, z)) return null; return 0 }
 PAR.surf = surf; PAR.WY = WY; PAR.ISLE = ISLE; PAR.BRIDGES = BRIDGES;
 
 /* ======================= sign atlas (French shop signs, all fictional businesses) ======================= */
@@ -71,19 +71,20 @@ const SIGNS = [
   ['g_parfum', 448, 104, peint('Parfums de Paris', '', '#f4e8e0', '#8a4a5a', { light: true })], ['g_epicerie', 448, 104, peint('Épicerie Fine Olive', 'thés · confitures', '#3a5a2a', '#f4f0e0', { light: true })]
 ];
 const GEN = SIGNS.filter(s => /^g_/.test(s[0])).map(s => s[0]), AWN = ['a_red', 'a_green', 'a_navy', 'a_bord'];
-function atlasTex() { return NW().makeAtlas(SIGNS, SG, 2048, 2048) }
+function atlasTex() { return NW().makeAtlas(SIGNS, SG, 2048, 3072) }
 
 /* ======================= Haussmann kit ======================= */
 const STONE = [0xe8dcc0, 0xe0d4b6, 0xeee4cc, 0xd8cbac, 0xe4d8bc, 0xf0e6d0], DOORS = [0x1a3a2a, 0x1a2a4a, 0x3a1a1a, 0x2a2a2a, 0x1a3a3a], SHOPC = [0x1a2a1e, 0x1a1a1a, 0x2a1a3a, 0x3a1418, 0x1a2a4a, 0x2a3a5a];
 const IRON = 0x1a1a1c, ZINC = 0x6a7078;
 function haussmann(P, Gl, Gs, fx, fz, yaw, w, h, d, o) { const K = AV.kit, BG = K.BG, rng = o.rng, col = o.col;
-  const base = new THREE.Matrix4().makeRotationY(yaw).premultiply(new THREE.Matrix4().makeTranslation(fx, 0, fz));
+  const base = new THREE.Matrix4().makeRotationY(yaw).premultiply(new THREE.Matrix4().makeTranslation(fx, o.y || 0, fz)), VIL = !!o.village;
   const put = (arr, geo, hex, x, y, z, sx, sy, sz, rx) => { const m = K.M(x, y, z, sx, sy, sz, rx || 0, 0, 0); m.premultiply(base); arr.push([geo, hex, m, 0]) };
   const gf = 4.6, fl = 3.15, nwin = Math.max(2, Math.round((w - .6) / 2.3)), ww = 1.15, wh = 2.15, litP = o.litP == null ? .3 : o.litP, warm = () => rng() < .7 ? 0xffd8a0 : 0xfff0d0;
   if (o.hollow) { const t = .3; put(P, BG.box, col, 0, (gf + h) / 2, -d / 2, w, h - gf, d); put(P, BG.box, col, 0, gf / 2, -d + t / 2, w, gf, t); for (const sx of [-1, 1]) put(P, BG.box, col, sx * (w / 2 - t / 2), gf / 2, -d / 2, t, gf, d);
     const dv = w / 2 - 1.1, sc = o.shopCol || 0x1a2a1e; put(P, BG.box, sc, 0, gf - .45, .06, w, .9, .16); put(P, BG.box, sc, -w / 2 + .2, (gf - .9) / 2, .06, .4, gf - .9, .16); put(P, BG.box, sc, dv - .85, (gf - .9) / 2, .06, .3, gf - .9, .16); put(P, BG.box, sc, w / 2 - .15, (gf - .9) / 2, .06, .3, gf - .9, .16);
     const gx0 = -w / 2 + .4, gx1 = dv - 1; put(Gs, BG.box, 0xa8c8d8, (gx0 + gx1) / 2, 1.85, .07, gx1 - gx0, 2.7, .04); put(P, BG.box, sc, (gx0 + gx1) / 2, .3, .07, gx1 - gx0, .6, .14) }
   else put(P, BG.box, col, 0, h / 2, -d / 2, w, h, d);
+  if (o.y) put(P, BG.box, 0xb8ac90, 0, -3, -d / 2, w, 6.02, d);   /* stone plinth into the slope */
   /* ground floor: rustication grooves + shopfront or carriage door */
   for (let y = 1.1; y < gf - .2; y += .8) put(P, BG.box, 0xc8bca0, 0, y, .02, w, .05, .05);
   if (o.hollow) { }
@@ -93,14 +94,15 @@ function haussmann(P, Gl, Gs, fx, fz, yaw, w, h, d, o) { const K = AV.kit, BG = 
   put(P, BG.box, 0xd4c8a8, 0, gf, .25, w + .1, .3, .5);   /* cornice over the shops */
   /* the étages */
   const nf = Math.max(3, Math.floor((h - gf - .6) / fl));
-  for (let f = 0; f < nf; f++) { const y = gf + .5 + f * fl, cont = f === 1 || f === nf - 1;
+  for (let f = 0; f < nf; f++) { const y = gf + .5 + f * fl, cont = !VIL && (f === 1 || f === nf - 1);
     if (cont) { put(P, BG.box, 0xd8ccb0, 0, y - .08, .35, w - .1, .16, .7); put(P, BG.box, IRON, 0, y + .5, .68, w - .2, .8, .04); put(P, BG.box, IRON, 0, y + .14, .68, w - .2, .06, .05); for (let k = 0; k < Math.floor(w / 1.2); k++) put(P, BG.box, IRON, -w / 2 + .5 + k * 1.2, y + .5, .68, .04, .8, .04) }
     for (let i = 0; i < nwin; i++) { const x = (i - (nwin - 1) / 2) * ((w - .6) / nwin), L1 = rng() < litP;
       put(P, BG.box, 0xf0e8d4, x, y + wh / 2 + .1, .03, ww + .3, wh + .3, .08); put(L1 ? Gl : P, BG.box, L1 ? warm() : 0x2a3440, x, y + wh / 2 + .1, .08, ww, wh, .04);
-      if (!cont && f < nf - 1) put(P, BG.box, IRON, x, y + .45, .3, ww + .3, .7, .03);
+      if (VIL) { for (const s of [-1, 1]) put(P, BG.box, [0x3a6a4a, 0x2a4a6a, 0x8a3a2a][(i + f) % 3], x + s * (ww / 2 + .32), y + wh / 2 + .1, .07, .5, wh, .04) } else if (!cont && f < nf - 1) put(P, BG.box, IRON, x, y + .45, .3, ww + .3, .7, .03);
       if (f === 0) put(P, BG.box, 0xd8ccb0, x, y + wh + .45, .08, ww + .5, .22, .2) } }
   /* main cornice + mansard roof (zinc slope, dormers, chimneys) */
   put(P, BG.box, 0xd8ccb0, 0, h + .1, .2, w + .15, .35, .6);
+  if (VIL) { put(P, BG.box, 0x8a4a3a, 0, h + 1.2, -.9, w + .2, 2.6, .25, -.7); put(P, BG.box, 0x8a4a3a, 0, h + 1.9, -d / 2 - .4, w + .2, .25, d - 1.6); put(P, BG.box, 0xd8c8b0, w * .25, h + 2.6, -d / 2, .7, 1.6, .7); put(P, BG.box, 0x9a8e74, 0, .02, -d / 2, w, .04, d); return base }
   put(P, BG.box, ZINC, 0, h + 2.2, -.9, w, 4.6, .25, -.42); put(P, BG.box, ZINC, 0, h + 4.25, -d / 2 - .6, w, .2, d - 2.2);
   for (let i = 0; i < nwin; i += (nwin > 3 ? 1 : 1)) { const x = (i - (nwin - 1) / 2) * ((w - .6) / nwin); if (i % 2) continue; put(P, BG.box, 0xe8e0d0, x, h + 1.4, -.45, 1.15, 1.7, 1.1); put(rng() < litP ? Gl : P, BG.box, rng() < .5 ? warm() : 0x2a3440, x, h + 1.35, .1, .7, 1.1, .04); put(P, BG.box, ZINC, x, h + 2.35, -.4, 1.35, .25, 1.3) }
   for (const sx of [-1, 1]) { put(P, BG.box, 0xc8a888, sx * (w / 2 - .4), h + 5.2, -d / 2, .6, 2, 1.6); for (let k = 0; k < 3; k++) put(P, BG.cyl, 0xc86a3a, sx * (w / 2 - .4), h + 6.4, -d / 2 - .5 + k * .5, .1, .5, .1) }
@@ -247,18 +249,20 @@ AV.registerWorld({
       bx2(P, 0x3a2414, it, 1.4, 2.1, 0, 1.1, 2.4, 4.6); for (const f of [-2.4, -.4, 1.6]) bx2(P, 0x2a1a12, it, 4.2, 4.8, .7, .74, f, f + .6); it.cust = it.F(2.6, 3.5); it.staff = it.F(.9, 3.5); it.stage = it.F(it.depth - 1.9, -.2); it.floor = it.F(5.4, 0); it.piano = it.F(it.depth - 1.9, -2.1) });
     IN.boulangerie = ITF('boulangerie', it => { bx2(P, 0xe8dcc0, it, 3.4, 4.2, 0, 1.1, -1, 3.4); bx2(Gl, 0xffe0b0, it, 3.38, 3.42, .3, 1, -.9, 3.3); for (let k = 0; k < 10; k++) bx2(P, 0xc8843a, it, it.depth - .9 + (k % 2) * .1, it.depth - .5, .5 + (k >> 1) * .5, .62 + (k >> 1) * .5, -2.5, 3); it.cust = it.F(2.6, 1.2); it.staff = it.F(5.2, 1.2) });
     PAR.interiors = IN;
+    /* ---------- districts in their own modules (paris_montmartre.js) ---------- */
+    const sgShops = Object.keys(sh).length; PAR.MM = null; if (PAR.montmartre) try { PAR.MM = PAR.montmartre(ctx, { box, sign, P, Gl, Gs, Q, sh, SPECIAL, ITF, bx2, IN, guimard }) } catch (e) { console.warn('paris montmartre', e); PAR.stats.mmErr = String(e && e.stack || e).slice(0, 400) }
     /* signs over the named shopfronts */
-    for (const k in sh) { const s = sh[k], d = SIGNS.find(x => x[0] === k); sign(k, s.x + s.out[0] * .06, 4.15, s.z + s.out[1] * .06, s.w - .6, (s.w - .6) * d[2] / d[1], s.yaw); if (!s.hollow) sign(/fromagerie/.test(k) ? 'w_fromage' : /patisserie|creperie/.test(k) ? 'w_macaron' : /disques|swag/.test(k) ? 'w_mode' : /tabac|fleuriste|velape/.test(k) ? 'w_livres' : 'w_pain', s.x - s.out[0] * .05, 1.85, s.z - s.out[1] * .05, s.w - 2.4, 2.2, s.yaw) }
+    for (const k in sh) { const s = sh[k], d = SIGNS.find(x => x[0] === k); sign(k, s.x + s.out[0] * .06, s.signY || 4.15, s.z + s.out[1] * .06, s.w - .6, (s.w - .6) * d[2] / d[1], s.yaw); if (!s.hollow && !s.noWin) sign(/fromagerie/.test(k) ? 'w_fromage' : /patisserie|creperie/.test(k) ? 'w_macaron' : /disques|swag/.test(k) ? 'w_mode' : /tabac|fleuriste|velape/.test(k) ? 'w_livres' : 'w_pain', s.x - s.out[0] * .05, 1.85, s.z - s.out[1] * .05, s.w - 2.4, 2.2, s.yaw) }
     if (sh.cafe) { const s = sh.cafe; sign('menu', s.x + s.out[0] * 1.4 + s.al[0] * 4, 1, s.z + s.out[1] * 1.4 + s.al[1] * 4, .7, .93, s.yaw) }
-    PAR.shops = sh; PAR.stats.shopsPlaced = Object.keys(sh).length;
+    PAR.shops = sh; PAR.stats.shopsPlaced = sgShops; PAR.stats.allShops = Object.keys(sh).length;
     /* ---------- merge ---------- */
-    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const CELL = 64; PAR.chunks = NW().chunked(P, CELL, a => K.merge(a), solidM, grp, 'par_static', { shadow: true });
-    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .3, depthWrite: false }); gm.userData.lin = 1; NW().chunked(Gs, 128, a => K.merge(a), gm, grp, 'par_glass', { order: 2 }) }
-    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; NW().chunked(Gl, 128, a => K.merge(a), glowM, grp, 'par_glow'); PAR.glowM = glowM;
+    atlasTex(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const CELL = 64, REG = (x, z) => z < -300 ? 'mm' : 'sg', RO = { region: REG }; PAR.region = null; PAR.chunks = NW().chunked(P, CELL, a => K.merge(a), solidM, grp, 'par_static', { shadow: true, region: REG });
+    if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .3, transparent: true, opacity: .3, depthWrite: false }); gm.userData.lin = 1; PAR.chunks.push(...NW().chunked(Gs, 128, a => K.merge(a), gm, grp, 'par_glass', { order: 2, region: REG })) }
+    const glowM = new THREE.MeshBasicMaterial({ vertexColors: true }); glowM.userData.lin = 1; PAR.chunks.push(...NW().chunked(Gl, 128, a => K.merge(a), glowM, grp, 'par_glow', RO)); PAR.glowM = glowM;
     const flM = new THREE.MeshBasicMaterial({ vertexColors: true }); flM.userData.lin = 1; fest.add(new THREE.Mesh(K.merge(FL), flM));
-    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .2, roughness: .6, alphaTest: .3 }); signM.userData.lin = 1; NW().chunked(Q, 128, a => NW().quadGeo(a, SG.r), signM, grp, 'par_signs'); PAR.signM = signM; fest.add(new THREE.Mesh(NW().quadGeo(FQ, SG.r), signM));
+    const signM = new THREE.MeshStandardMaterial({ map: SG.tex, emissiveMap: SG.tex, emissive: 0xffffff, emissiveIntensity: .2, roughness: .6, alphaTest: .3 }); signM.userData.lin = 1; PAR.chunks.push(...NW().chunked(Q, 128, a => NW().quadGeo(a, SG.r), signM, grp, 'par_signs', RO)); PAR.signM = signM; fest.add(new THREE.Mesh(NW().quadGeo(FQ, SG.r), signM));
     PAR.stats.parts = P.length + Gl.length; PAR.stats.signs = Q.length; PAR.stats.atlasOver = (SG.over || []).length; PAR.stats.atlasBad = (SG.bad || []).length; PAR.stats.atlasUsed = SG.used;
-    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 20 || h < 5.5 ? 1 : h > 18.5 ? (h - 18.5) / 1.5 : h < 7 ? (7 - h) / 1.5 : 0; signM.emissiveIntensity = .2 + .7 * n; glowM.color.setScalar(.35 + .65 * n); PAR.night = n });
+    ctx.upd.push(() => { const h = (S.time / 60) % 24, n = h > 20 || h < 5.5 ? 1 : h > 18.5 ? (h - 18.5) / 1.5 : h < 7 ? (7 - h) / 1.5 : 0; signM.emissiveIntensity = .2 + .7 * n; glowM.color.setScalar(.35 + .65 * n); PAR.night = n; const r = AV.P.z < -300 ? 'mm' : 'sg'; if (r !== PAR.region) { PAR.region = r; for (const m of PAR.chunks) m.visible = m.userData.region === r; if (PAR.mm && PAR.mm.terrain) PAR.mm.terrain.visible = r === 'mm'; if (PAR.eiffel) PAR.eiffel.visible = r === 'sg' } });
     PAR.ctx = ctx;
     /* ---------- map ---------- */
     const PLc = (id, en, es, x, z, yaw) => ({ id, name: [en, es], x, z, yaw });
@@ -269,6 +273,7 @@ AV.registerWorld({
       PLc('dauphine', 'Rue Dauphine', 'Rue Dauphine', -60, 80, PI), PLc('ruedeseine', 'Rue de Seine', 'Rue de Seine', 0, 80, PI), PLc('bonaparte', 'Rue Bonaparte', 'Rue Bonaparte', 60, 80, PI)];
     const NAMES = { librairie: 'Librairie La Page Volante', disques: 'Groove Dealers Disques', cafe: 'Café des Singes', brasserie: 'Brasserie Le Zinc', cave: 'Le Caveau des Singes (jazz)', patisserie: 'Macarons Rose-Thé', swag: 'SWAG Paris', tabac: 'Tabac · Presse', boulangerie: 'Au Pain Doré (boulangerie)', fromagerie: 'Fromagerie Mère Lune', creperie: 'Crêperie Ty Ape', fleuriste: 'Les Fleurs de Buci', velape: "Vél'Ape (bikes)" };
     for (const k in NAMES) { const s = sh[k]; if (s) places.push(PLc(k, NAMES[k], NAMES[k], s.x + s.out[0] * 3, s.z + s.out[1] * 3, Math.atan2(s.out[0], s.out[1]) + PI)) }
+    if (PAR.MM) { for (const r of PAR.MM.roads) mapRoads.push(r); for (const p of PAR.MM.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     PAR.names = NAMES;
     if (PAR.life) try { PAR.life(ctx, { T, st, sh, IN, box, TERR, STAGE, BOUQ, fest }) } catch (e) { console.warn('paris life', e); PAR.stats.lifeErr = String(e && e.stack || e).slice(0, 400) }
     return { name: 'Paris', surface: surf, fog: [90, 720], sky: { exp: .9, tint: [0x9aa8c0, 0xe8dcd0, .3, .3], dome: { s1: 0xf0dcd0, s2: 0x9ab4d8, swirl: .01, cloud: .7, glow: .35 } },
@@ -279,5 +284,5 @@ AV.registerWorld({
       musicProfile: { bpm: 100, root: 52, scale: [0, 2, 4, 5, 7, 9, 11], style: 'amb' } };
   }
 });
-PAR.SIGNS = SIGNS; PAR.SG = SG;
+PAR.SIGNS = SIGNS; PAR.SG = SG; PAR.haussmann = haussmann;
 })(window.AV);

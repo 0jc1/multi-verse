@@ -50,6 +50,7 @@ PAR.life = function (ctx, E) {
   line([[-60, 49], [-60, 111]]); line([[0, 49], [0, 111]]); line([[60, 49], [60, 111]]); line([[-290, 111], [330, 111]]); line([[-290, 129], [330, 129]]); line([[100, 70], [152, 70], [152, 104], [100, 104], [100, 70]]); line([[126, 70], [126, 104]]);
   line([[0, 129], [0, 226]]); line([[151, 129], [151, 160], [200, 175], [245, 180]]); line([[151, 160], [320, 160]]); line([[230, 196], [260, 196]]);
   for (const x of [-60, 0, 60]) { line([[x, 33.5], [x, 49]]); line([[x, 111], [x, 129]]) } line([[-60, -33.5], [-60, -49]]); line([[0, -33.5], [0, -49]]); line([[60, -33.5], [60, -49]]);
+  if (PAR.MM) for (const pl of PAR.MM.nav) line(pl);   /* Montmartre (paris_montmartre.js) */
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 3.5 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
   const NAV = CY.nav(nodes, edges); PAR.nav = { nodes, links: NAV.links }; PAR.stats.navNodes = nodes.length;
   /* ---------- crowds ---------- */
@@ -83,6 +84,7 @@ PAR.life = function (ctx, E) {
   ctx.upd.push(() => { for (const id in named) { const o = named[id], s = slotOf(o.p); o.t.x = o.w.x; o.t.z = o.w.z; if (s === o.slot || !s[1]) continue; o.slot = s; const near = Math.hypot(P().x - o.w.x, P().z - o.w.z) < 70;
       if (near && AV.path) { let pts = null; try { pts = AV.path.route(AV.W, { x: o.w.x, z: o.w.z }, { x: s[1][0], z: s[1][1] }) } catch (e) { } if (pts && pts.length) { o.w.route = pts.map(p2 => [p2[0], p2[1]]).concat([[s[1][0], s[1][1], 1e9, 'idle']]); o.w.ri = 0; o.w.loop = false; o.w.pause = 0; o.w.mode = 'walk'; o.w.base = 'walk'; continue } }
       o.w.x = s[1][0]; o.w.z = s[1][1]; o.w.route = null; o.w.mode = 'idle' } });
+  if (PAR.MM && PAR.montmartreLife) try { PAR.montmartreLife(ctx, { T, st, crowd, sh, front, staff }) } catch (e) { console.warn('paris montmartre life', e); PAR.stats.mmLifeErr = String(e && e.stack || e).slice(0, 400) }
   crowd.build(); PAR.crowd = crowd;
   /* ---------- traffic on the quais + the boulevard (shared city traffic) ---------- */
   if (CY.traffic) try { CY.traffic(ctx, [{ pts: [[-296, 38.6], [336, 38.6], [336, 43.4], [-296, 43.4]], off: 0 }, { pts: [[-296, -38.6], [336, -38.6], [336, -43.4], [-296, -43.4]], off: 0 }, { pts: [[-296, 117.4], [336, 117.4], [336, 122.6], [-296, 122.6]], off: 0 }],
@@ -142,8 +144,8 @@ PAR.life = function (ctx, E) {
   PAR.cruise = () => { if (!RD || RD.cur) return false; if (!AV.txn(-12, 'River cruise')) return false; const pts = [[118, 24], [40, 24], [-60, 24], [-200, 22], [-270, 12], [-270, -12], [-200, -23], [-60, -24], [60, -24], [160, -25], [250, -25], [326, -25], [334, 0], [326, 25], [250, 25], [190, 25], [130, 25]];
     const ok = RD.start({ pts, veh: BOAT, out: [122, 33.5], name: 'Seine', price: 12, icon: '⛴', title: tr('River cruise on the Seine', 'Crucero por el Sena') }); if (ok) { st().boat = (st().boat || 0) + 1; AV.toast(tr('⛴ Hugo: “Bienvenue à bord ! Heads up for the Pont Neuf.”', '⛴ Hugo: “¡Bienvenue à bord! Atentos al Pont Neuf.”')) } else AV.txn(12, 'Cruise refund'); return ok };
   T(122, 33.4, 2.4, () => tr('⛴ Bateaux-Singes: river cruise round the Île (12)', '⛴ Bateaux-Singes: crucero alrededor de la Île (12)'), () => PAR.cruise(), null, 'boat');
-  { const g = new THREE.Mesh(boatGeo(0x1a3a6a), K.floraMat(0, { rough: .6 })); g.material.userData.lin = 1; g.position.set(118, PAR.WY - .05, 25.6); g.rotation.y = PI / 2; ctx.group.add(g); PAR.moored = g; ctx.upd.push(() => { g.visible = !(RD && RD.cur && RD.cur.name === 'Seine') }) }
-  const metroGo = (from, to, name) => { if (!AV.txn(-2, 'Métro')) return; AV.fadeTo(1, 300); setTimeout(() => { const p = P(); p.x = to[0]; p.z = to[1]; p.y = 0; p.vx = p.vz = 0; S.time = (S.time + 6) % 1440; st().metro = (st().metro || 0) + 1; AV.fadeTo(0, 500); AV.toast(tr('🚇 Line 4, two stops, an accordion player in the carriage. ', '🚇 Línea 4, dos paradas, un acordeonista en el vagón. ') + name) }, 400) };
+  { const g = new THREE.Mesh(boatGeo(0x1a3a6a), K.floraMat(0, { rough: .6 })); g.material.userData.lin = 1; g.position.set(118, PAR.WY - .05, 25.6); g.rotation.y = PI / 2; ctx.group.add(g); PAR.moored = g; ctx.upd.push(() => { g.visible = !(RD && RD.cur && RD.cur.V === BOAT) }) }
+  const metroGo = (from, to, name, line) => { if (!AV.txn(-2, 'Métro')) return; AV.fadeTo(1, 300); setTimeout(() => { const p = P(); p.x = to[0]; p.z = to[1]; p.y = (AV.W.surface(to[0], to[1]) || 0); p.vx = p.vz = 0; S.time = (S.time + (line === 12 ? 14 : 6)) % 1440; st().metro = (st().metro || 0) + 1; AV.fadeTo(0, 500); AV.toast((line === 12 ? tr('🚇 Line 12, a change at Concorde, then the deepest station in Paris. ', '🚇 Línea 12, transbordo en Concorde y luego la estación más profunda de París. ') : tr('🚇 Line 4, two stops, an accordion player in the carriage. ', '🚇 Línea 4, dos paradas, un acordeonista en el vagón. ')) + name) }, 400) };
   PAR.metroGo = metroGo;
   T(30, 108.6, 2, () => tr('🚇 Métro to the north bank (2)', '🚇 Metro a la orilla norte (2)'), () => metroGo([30, 109], [3, -47], tr('North bank.', 'Orilla norte.')), null, 'train');
   T(0, -46.6, 2, () => tr('🚇 Métro to Saint-Germain (2)', '🚇 Metro a Saint-Germain (2)'), () => metroGo([0, -47], [33, 109], 'Saint-Germain-des-Prés.'), null, 'train');
@@ -159,10 +161,10 @@ PAR.life = function (ctx, E) {
   /* ======================= music: Fête stage > cave ======================= */
   let music0 = null, musicWho = null;
   ctx.upd.push(() => { const Wc = AV.W; if (!Wc || Wc.id !== 'paris') return; const p = P(), cv = IN.cave, nearCave = cv && Math.hypot(p.x - cv.mid[0], p.z - cv.mid[1]) < 40;
-    const want = headOn() && Math.hypot(p.x - SX, p.z - SZ) < 120 ? 'stage' : festOn() && Math.hypot(p.x - 3.5, p.z - 170) < 30 ? 'busker' : nearCave && caveOpen() ? 'cave' : null;
-    if (want !== musicWho) { if (music0 === null) music0 = Wc.music || false;
-      if (want === 'stage') Wc.music = { playlist: 'stone_ape_band', pos: { x: SX, y: 2, z: SZ }, bed: .15 }; else if (want === 'busker') Wc.music = { playlist: 'chiang_mai', pos: { x: 3.5, y: 1.5, z: 170 }, bed: .05 }; else if (want === 'cave') Wc.music = { playlist: 'stone_ape_band', pos: { x: cv.stage[0], y: 1.5, z: cv.stage[1] }, bed: .03 }; else { Wc.music = music0 || undefined; music0 = null }
-      musicWho = want; PAR.stats.music = want; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
+    const want = headOn() && Math.hypot(p.x - SX, p.z - SZ) < 120 ? 'stage' : festOn() && Math.hypot(p.x - 3.5, p.z - 170) < 30 ? 'busker' : nearCave && caveOpen() ? 'cave' : null; const ext = !want && PAR.mmWant ? PAR.mmWant() : null, wantK = ext ? 'mm_' + ext.key : want;
+    if (wantK !== musicWho) { if (music0 === null) music0 = Wc.music || false;
+      if (ext) Wc.music = ext.music; else if (want === 'stage') Wc.music = { playlist: 'stone_ape_band', pos: { x: SX, y: 2, z: SZ }, bed: .15 }; else if (want === 'busker') Wc.music = { playlist: 'chiang_mai', pos: { x: 3.5, y: 1.5, z: 170 }, bed: .05 }; else if (want === 'cave') Wc.music = { playlist: 'stone_ape_band', pos: { x: cv.stage[0], y: 1.5, z: cv.stage[1] }, bed: .03 }; else { Wc.music = music0 || undefined; music0 = null }
+      musicWho = wantK; PAR.stats.music = wantK; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
   ctx.leave.push(() => { musicWho = null; music0 = null });
   /* ======================= the portal ======================= */
   T(-48, 33.6, 2.4, () => tr('Apeverse Portal: travel to another world', 'Portal Apeverse: viajar a otro mundo'), () => { const ws = Object.keys(AV.worldDefs).filter(id => id !== 'paris' && (!AV.worldMeta(id) || AV.worldMeta(id).status !== 'planned'));

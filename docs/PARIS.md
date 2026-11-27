@@ -91,6 +91,46 @@ powershell -ExecutionPolicy Bypass -File tools\tests\run_tests.ps1 -Suite tools\
 
 **Save:** a new optional `S.paris` holding `met`, `q.poster`, `boat`, `metro`, `cave`, `guest`, `gigs`, `dances`, `portrait`, `sail`, `fete` and `nd`.
 
+## District 2: Montmartre (paris_montmartre.js)
+
+**How you get there:** métro line 12, from the Saint-Germain entrance to Abbesses on the Boulevard de Clichy (2 credits; there is no tunnel to ride).
+
+**A real hill:** the ground is a terrain mesh rising 44 m to the summit.
+- **Buildings:** they sit on stone plinths into the slope.
+- **Pedestrians:** they follow the ground (tested: 28 walkers, none off the surface).
+- **Walking:** you climb it on foot.
+
+**What's there:**
+- **Boulevard de Clichy:** flat, with a tree-lined median, Haussmann rows, Pigalle neon, Brasserie Le Clichy and Guitares Pigalle.
+- **Le Moulin Violet:** a cabaret front with marquee bulbs and a windmill whose sails turn.
+  - **The revue:** 21:00-01:00, 20 credits (or Théo's guest list). 50 minutes pass, and you get a programme.
+  - **Music:** cabaret music near the door at night.
+- **Rue de Steinkerque:** Souvenirs de Montmartre (berets, postcards, snow globes) and Beaux-Arts Pinceau (paints, sketchbooks).
+- **The garden on the slope:** lawns, trees, and the long staircase with handrails. The **funicular** beside it runs both ways (2) and climbs visibly.
+- **The summit:**
+  - the **terrace** with the view over Paris;
+  - the **white basilica**: domes, campanile, portico, two bronze riders. Light a candle (1).
+- **Place du Tertre:** village houses with coloured shutters, painters at easels, café tables under red umbrellas.
+  - **La Bohème des Singes:** crêpes, vin chaud, chocolat.
+  - **Margot:** paints your portrait (12).
+- **Rue Lepic:** winds back down to the boulevard.
+- **The vineyard** and **Au Lapin Sage** (a pink cabaret cottage): chansons 21:00-02:00, with music near it.
+- **Named residents:** Margot (painter), Théo (Moulin doorman) and Rosalie (chanson singer), with routines and 4-choice conversations. Théo puts you on the guest list once you know Margot and Rosalie.
+
+**Story, "Margot's violet":**
+1. Margot is out of cobalt violet.
+2. Buy a tube at Beaux-Arts Pinceau.
+3. Bring it to her: +20, and a free portrait.
+
+**Save:** `S.paris.mm` holds `met`, `q.violet`, `funi`, `candle`, `view`, `portrait`, `freePortrait`, `revue` and `guest`.
+
+**Rendering:** tiles carry a district tag. Only the district you are in is drawn; the Eiffel Tower shows in Saint-Germain only.
+
+**Not built yet:**
+- The revue and the chansons are a fade plus a toast, not a staged show.
+- The basilica and the cabarets have no walk-in interiors.
+- Montmartre's side streets are closed by village blocks.
+
 ## Not built yet (honest)
 
 - **Interiors:** four walk-ins only. The other businesses are counters at the shopfront, and the church and cathedral are exteriors.

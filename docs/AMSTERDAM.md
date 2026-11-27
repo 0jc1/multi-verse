@@ -1,11 +1,12 @@
-# Amsterdam: two playable districts (Apeverse 2.1)
+# Amsterdam: three playable districts (Apeverse 2.1)
 
-District 1 is the old centre (below). District 2, the Museum quarter + Vondelpark, is described in its own section further down.
+District 1 is the old centre (below). District 2 (the Museum quarter + Vondelpark) and district 3 (Leidseplein nightlife) are described in their own sections further down.
 
 **Code:**
 - `js/world_amsterdam.js`: the city.
 - `js/amsterdam_life.js`: people, shops, rides and King's Day.
 - `js/amsterdam_zuid.js`: district 2 (Museum quarter + Vondelpark), its buildings, signs, paintings and life.
+- `js/amsterdam_leidse.js`: district 3 (Leidseplein nightlife), its square, club, bar alley, signs, tram 2 and life.
 
 **Test:** `tools/tests/suite_amsterdam.js` runs the release gate on the real GPU.
 
@@ -125,6 +126,73 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 
 **Save:** new optional fields in `S.ams.z` only: `tk` (ticket day), `trail`, `seen` and `ducks`.
 
+## District 3: Leidseplein nightlife
+
+**Where it is:** on the north bank of the Singelgracht, west of the Vijzelstraat. The square was the empty block south of the Jordaan; the world grows a little west for the bar alley (the edge beyond the alley stays closed).
+
+**How you get there:**
+- **Walk:** down the Jordaan lane (it now runs straight into the square), or along the Weteringschans quay.
+- **Tram 2:** from a new stop on the Stadhouderskade by the museum, west along the Stadhouderskade and over the new **Leidsebrug** to a terminus in the middle of the square. An AI tram runs the same line.
+- **Fietstaxi (pedicab):** between the square and the Dam, both ways (8).
+- **Leidsebrug:** also a walking route to the Vondelpark.
+- **Taxi:** a stand on the square.
+
+**Leidseplein (the square):**
+- **Layout:** stone paving, plane trees, lamps, benches and bike racks, plus a map board at the quay.
+- **Things to do:**
+  - **giant street chess:** play a game against the regulars; your record is kept;
+  - **Joris's pitch:** juggling by day and a fire show after 20:30; tip him.
+- **North side:**
+  - **Grand Hotel De Leidse Hof:** jugendstil, with a corner tower and a terrace. Exterior only.
+  - **Club Nachtegaal.**
+  - **Bioscoop Lumen:** marquee with tonight's films; popcorn at the counter.
+  - **Café De Zon:** terrace.
+- **East side:** the **Stadstheater**, with an arcade you can walk through, posters ("Hamlet", tonight 20:00) and a stepped gable. Exterior only.
+
+**Club Nachtegaal** (walk-in):
+- **Hours:** open 22:00-05:00. By day the door is shut and Bram turns you away.
+- **Getting in:** a wristband costs 12 at the door and is valid until 05:00. Yara's guest list gets you in free. Without a wristband, Bram sends you back out.
+- **Inside:**
+  - a lit dance floor that flashes on the beat, a mirror ball, sweeping light beams and an LED wall;
+  - a crowd that dances while the club is open;
+  - a bar selling water, cola, 0.0 beer, mocktails and pils;
+  - the **DJ booth**: the existing two-deck mixer, with your own tracks.
+- **Music:** the club's music plays positionally (an existing playlist).
+
+**Korte Leidsedwarsstraat (the bar alley, west of the square):**
+- **The street:** projecting signs on iron brackets, string lights across it, terraces and people outside the bars at night.
+- **Businesses:**
+  - **Café Het Hoekje:** bruin café;
+  - **Bar Vuurvlieg:** cocktails and mocktails;
+  - **Pizzeria Da Gino;**
+  - **Karaokebar De Zingende Aap:** sing one at night; your best score is kept;
+  - **Shoarma De Nachtuil:** open till 05:00;
+  - **Snackwand Kroket & Co:** kroket and frikandel from the wall;
+  - **The Flying Dutchman:** pub;
+  - **Hostel De Fietsbel:** full tonight.
+- **Het Lichthuis:** a concert hall in an old church, with a rose window. It closes off the end of the alley. Exterior only, with a poster.
+
+**Leidsebosje:** a grove of trees and benches between the theatre and the Vijzelstraat; it was empty paving before.
+
+**People:**
+- **Bram** (doorman): Jordaan in the morning, the Café De Zon terrace at lunch, the snack wall at 18:00, the club door from 21:30.
+- **Yara** (DJ): record digging at Groove Dealers Platen in the afternoon, Het Hoekje at 19:00, the booth from 22:30.
+- **Joris** (street performer): his pitch from 11:00, Vuurvlieg at 18:30, the fire show from 20:30.
+- **Yara's errand:** she is starving before her set. Bring her a kroket from the wall: you get +10 and you are on her guest list that night.
+- **Getting home:** Bram's 4th answer covers it: tram 2 or the fietstaxi, and no riding after a drink.
+- **Crowds:**
+  - night walkers;
+  - terrace sitters;
+  - the club queue (22:20-02:30);
+  - dancers;
+  - drinkers outside the bars;
+  - a ring watching Joris;
+  - staff at the counters.
+
+**Sound:** the club uses an existing playlist (Jungle Dub). There is no new audio.
+
+**Save:** new optional fields in `S.ams.lp` only: `band` (wristband expiry), `guest`, `nights`, `dances`, `yara`, `kar`, `chess`, `tips`, `tram2`, `fiets`.
+
 ## Release gate (2.1 launch queue)
 
 | Gate item | Status | Evidence |
@@ -139,7 +207,10 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 | Named NPCs with routines | AUTO-TESTED | 5 residents, schedules (Fenna to the venue at 21:00) |
 | Save/load, tests, screenshots, measured FPS | AUTO-TESTED | sandboxed `loadSave` roundtrip (not a page reload) |
 | District 2: connected, built, shops, museum + trail, park life, jam, tram, save | AUTO-TESTED | 6 extra steps in `suite_amsterdam` (142/142 in total); routes Dam -> museum passage -> Museumplein -> Vondelpark and Jordaan -> park gate; the trail's +30 and poster; the 13:00-19:00 jam |
+| District 3: Leidseplein connected, club (hours, wristband, gate, dance, bar, booth), bar alley, Yara's guest list, tram 2, fietstaxi, save | AUTO-TESTED | 6 extra steps in `suite_amsterdam` (214/214 in total); routes Jordaan/Dam/museum/Vondelpark -> Leidseplein and into the club |
 | Mobile, human playtest | **NOT DONE** | |
+
+**District 3, measured on mains power (real GPU, Medium, at 23:00):** the square 58.8 fps with 201 draw calls (the busiest view: neon, crowds, tram, terraces), the club 60.4 fps with 198, the bar alley 60 fps with 122. One sample each; the club and alley sit at the 60 fps cap, so for those two it shows only that there is headroom on this laptop, not how much.
 
 **District 2, measured on mains power (real GPU, Medium):** museum front, Museumplein and Vondelpark all hit the 60 fps cap. Draw calls were 83, 95 and 57; the Damrak and the Jordaan stayed at the 60 fps cap with 112 and 99 draw calls. This is a capped measurement, so it shows only that there is headroom on this laptop, not how much.
 
@@ -150,7 +221,9 @@ The rest of the row is set dressing: Hotel De Singelgracht and generic shops (je
 
 ## Not built yet (honest)
 
-- **Districts:** Leidseplein/Rembrandtplein, NDSM/Noord (ferry) and the Bloemendaal beach trip are future districts.
+- **Districts:** Rembrandtplein, NDSM/Noord (ferry) and the Bloemendaal beach trip are future districts.
+- **District 3 interiors:** only Club Nachtegaal is walk-in. The bars, cinema, hotel, theatre and Het Lichthuis are shopfront counters or exteriors. The dance is a menu action, not a player animation.
+- **Terrace sitters:** they use the crowd's existing sitting pose, which sits low, so people at the terrace tables look as if they are kneeling.
 - **District 2 interiors:** only the museum gallery is walk-in. The Klankgebouw and Museum Nu are exteriors, and the brand shops are counters at the shopfront. The plantsoen square and the area east of the museum are light on detail.
 - **Gallery lighting:** the hall has no dedicated light, so its side walls read dark. The paintings are lit by their own material.
 - **Interiors (district 1):** only the three walk-in shops have them. Other shopfronts are counters or set dressing.

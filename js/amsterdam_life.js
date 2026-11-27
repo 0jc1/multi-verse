@@ -35,6 +35,7 @@ AMS.life = function (ctx, E) {
   for (const x of [-10, 10]) line([[x, -144], [x, 70]]); for (const x of [-99, -121, -149, -171, -197]) line([[x, -130], [x, 60]]);
   line([[-10, -60], [-200, -60]]); line([[-10, 10], [-200, 10]]); line([[-40, -140], [40, -140]]); line([[-40, -30], [40, -30]]); line([[-40, -10], [40, -10]]); line([[-99, 45], [-121, 45]]); line([[-149, 45], [-171, 45]]); line([[-99, -100], [-121, -100]]);
   if (AMS.Z) for (const pl of AMS.Z.nav) line(pl);   /* the Museum quarter + Vondelpark */
+  if (AMS.LP) for (const pl of AMS.LP.nav) line(pl);   /* Leidseplein */
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (Math.hypot(nodes[i][0] - nodes[j][0], nodes[i][1] - nodes[j][1]) < 3.5 && !edges.some(e => (e[0] === i && e[1] === j))) edges.push([i, j]);
   const NAV = CY.nav(nodes, edges); AMS.nav = { nodes, links: NAV.links }; AMS.stats.navNodes = nodes.length;
   /* ---------- crowds: pedestrians, King's Day crowd (orange), staff ---------- */
@@ -67,6 +68,7 @@ AMS.life = function (ctx, E) {
   if (CY.traffic) { try { CY.traffic(ctx, [{ pts: [[-1.6, -140], [-1.6, AMS.Z ? 163.5 : 80], [1.6, AMS.Z ? 163.5 : 80], [1.6, -140]], off: 0 }], [{ type: 'tram', col: 0xf4f4f4, n: [1, 2, 2][q], speed: 6 }], { density: () => 1 });
       CY.traffic(ctx, [{ pts: [[-7.3, -140], [-7.3, -46], [7.3, -46], [7.3, -140]], off: 0 }, { pts: [[-98, -58], [-98, 8], [-11, 8], [-11, -58]], off: 0 }], [{ type: 'bicycle', col: 0x1a1a1a, n: [4, 7, 10][q], speed: 4.5 }, { type: 'bicycle', col: 0x2a4a8a, n: [2, 4, 6][q], speed: 4 }], { density: () => hour() > 6 && hour() < 23 ? 1 : .4 }) } catch (e) { console.warn('ams traffic', e) } }
   if (AMS.Z && AMS.zuidLife) try { AMS.zuidLife(ctx, { T, st, crowd, NAV, nodes }) } catch (e) { console.warn('amsterdam zuid life', e); AMS.stats.zuidLifeErr = String(e && e.stack || e).slice(0, 300) }
+  if (AMS.LP && AMS.leidseLife) try { AMS.leidseLife(ctx, { T, st, crowd, NAV, nodes }) } catch (e) { console.warn('amsterdam leidse life', e); AMS.stats.lpLifeErr = String(e && e.stack || e).slice(0, 300) }
   crowd.build();
   /* ---------- shops ---------- */
   const shop = (k, u, V2, label, gate) => { const s = sh[k]; if (!s) return; const x = s.x + s.face * (u || 1.4), z = s.z; Object.assign(V2, { x, z, reach: 5 }); T(x, z, 2.2, () => tr(label[0], label[1]), () => gate ? gate(V2) : AV.shop.open(V2), null, 'shop') };
@@ -110,8 +112,8 @@ AMS.life = function (ctx, E) {
   /* ---------- King's Day: decorations, orange crowd, vrijmarkt, DJ boat music ---------- */
   const stallT = E.STALLS.map(([x, z], i) => T(x, z, 1.8, () => tr('🟠 Vrijmarkt stall: secondhand bargains', '🟠 Puesto del vrijmarkt: gangas de segunda mano'), () => AV.shop.open({ id: 'ams_vrij' + i, name: L('Vrijmarkt', 'Vrijmarkt'), greet: L('“Everything must go! Alles moet weg!”', '“¡Todo debe irse! ¡Alles moet weg!”'), items: [['nl_kroon', 5], ['nl_stroopwafel', 3], ['postcard', 2], ['tee', 15]].filter(([id]) => AV.ITEMS[id]), x, z, reach: 4 }), () => festOn(), 'shop'));
   ctx.upd.push(() => { const on = festOn(), h = hour(); E.fest.visible = on; orange.forEach(w => w.vis = on); AMS.stats.fest = on;
-    const want = on && h >= 12 ? 'dj' : (h >= 20 || h < 1) ? 'venue' : (AMS.jamWant && AMS.jamWant()) ? 'jam' : null; const Wc = AV.W; if (!Wc || Wc.id !== 'amsterdam') return;
-    if (want !== musicWho) { if (music0 === null) music0 = Wc.music || false; if (want === 'dj') Wc.music = { playlist: 'jungle_dub', pos: { x: -110, y: 1, z: -30 }, bed: .2 }; else if (want === 'venue' && venue) Wc.music = { playlist: 'stone_ape_band', pos: { x: venue[0], y: 2, z: venue[1] }, bed: .08 }; else if (want === 'jam' && AMS.jamPos) Wc.music = { playlist: 'chiang_mai', pos: AMS.jamPos, bed: .1 }; else { Wc.music = music0 || undefined; music0 = null } musicWho = want; AMS.stats.music = want; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
+    const want = on && h >= 12 ? 'dj' : (AMS.clubWant && AMS.clubWant()) ? 'club' : (h >= 20 || h < 1) ? 'venue' : (AMS.jamWant && AMS.jamWant()) ? 'jam' : null; const Wc = AV.W; if (!Wc || Wc.id !== 'amsterdam') return;
+    if (want !== musicWho) { if (music0 === null) music0 = Wc.music || false; if (want === 'dj') Wc.music = { playlist: 'jungle_dub', pos: { x: -110, y: 1, z: -30 }, bed: .2 }; else if (want === 'venue' && venue) Wc.music = { playlist: 'stone_ape_band', pos: { x: venue[0], y: 2, z: venue[1] }, bed: .08 }; else if (want === 'club' && AMS.clubPos) Wc.music = { playlist: 'jungle_dub', pos: AMS.clubPos, bed: .12 }; else if (want === 'jam' && AMS.jamPos) Wc.music = { playlist: 'chiang_mai', pos: AMS.jamPos, bed: .1 }; else { Wc.music = music0 || undefined; music0 = null } musicWho = want; AMS.stats.music = want; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
   ctx.leave.push(() => { musicWho = null; music0 = null });
   /* ---------- conversations (4 choices, each can do something) ---------- */
   const TK = AV.talk; function talk(id) { const o = named[id]; if (!o || !TK) return; const s = st(); s.met[id] = (s.met[id] || 0) + 1; const q2 = s.q = s.q || {};

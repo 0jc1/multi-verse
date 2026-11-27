@@ -273,6 +273,28 @@ Full board: `docs/APEVERSE_21_STATUS.md`.
 - **FPS:** gains are small and within run variance.
 - **Tests:** suite_bake 30/30.
 
+### 2.1 Amsterdam district 3: Leidseplein nightlife (apeverse-2-living-worlds branch)
+
+Details in `docs/AMSTERDAM.md`. Code: `js/amsterdam_leidse.js`, plus hooks in `world_amsterdam.js`, `amsterdam_zuid.js` and `amsterdam_life.js`.
+
+- **Getting there:**
+  - The Jordaan lane runs into the square.
+  - Tram 2 runs from the museum stop over the new Leidsebrug.
+  - A fietstaxi runs to and from the Dam.
+  - A taxi stand on the square.
+- **The square:** a tram terminus, terraces, giant chess, and Joris's juggling and fire show.
+  - **North side:** Grand Hotel De Leidse Hof, Bioscoop Lumen and Café De Zon.
+  - **East side:** the Stadstheater (exterior).
+- **Club Nachtegaal** (walk-in, 22:00-05:00): a wristband (12) or Yara's guest list; Bram turns you away without one. Inside: a lit dance floor, beams, a bar and the existing DJ booth.
+- **The bar alley:** 8 fictional businesses, including the kroket wall and karaoke, with projecting signs and string lights. Het Lichthuis (exterior) closes off its end.
+- **New residents:** Bram, Yara and Joris. Yara's kroket errand puts you on her guest list.
+- **Shared-code changes:**
+  - **World edge:** the world grows west only beside the alley; the rest of the edge is unchanged.
+  - **`BRZ`:** gains the Leidsebrug.
+  - **Weteringschans row:** gets a gap for the square.
+  - **Music:** the music chooser plays the club's music near the open club.
+- **Tests:** `suite_amsterdam` 214/214 on mains power.
+
 ### 2.1 Amsterdam district 2: the Museum quarter + Vondelpark (apeverse-2-living-worlds branch)
 
 Details in `docs/AMSTERDAM.md`. Code: `js/amsterdam_zuid.js`, plus hooks in `world_amsterdam.js` and `amsterdam_life.js`.

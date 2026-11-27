@@ -15,13 +15,13 @@ const XMIN = -342, XMAX = 122, ZMIN = -190, ZMAX = 352, WY = -1.4;
 const CAN = [{ id: 'singel', x0: -118, x1: -102, z0: -135, z1: 65 }, { id: 'heren', x0: -168, x1: -152, z0: -135, z1: 65 }, { id: 'basin', x0: 14, x1: 34, z0: -112, z1: -62 }, { id: 'buiten', x0: -340, x1: 120, z0: 134, z1: 148 }];
 const BR = [['singel', -100], ['singel', -60], ['singel', 10], ['singel', 45], ['heren', -60], ['heren', 10], ['heren', 45]], BW = 4.2;   /* half width of a bridge */
 /* bridges over the Singelgracht run north-south: [x, half width, rise] (the tram/road bridge is wide and nearly flat) */
-const BRZ = [[0, 9, .35], [-110, 3.6, .95], [70, 3.6, .95]];
+const BRZ = [[0, 9, .35], [-110, 3.6, .95], [70, 3.6, .95], [-224, 7, .35]];   /* + the Leidsebrug (tram 2) */
 /* ponds and pools (Vondelpark lakes, the Museumplein pool): ellipses [cx, cz, rx, rz] or rects [x0, x1, z0, z1]; y = water level */
 const PONDS = [{ id: 'vondel1', e: [-180, 255, 36, 20], y: -.55 }, { id: 'vondel2', e: [-255, 215, 22, 14], y: -.55 }, { id: 'vondel3', e: [-120, 290, 14, 10], y: -.55 }, { id: 'plein', r: [-9, 9, 222, 270], y: -.3 }];
 const pondAt = (x, z) => PONDS.find(p => p.e ? ((x - p.e[0]) / p.e[2]) ** 2 + ((z - p.e[1]) / p.e[3]) ** 2 < 1 : x > p.r[0] && x < p.r[1] && z > p.r[2] && z < p.r[3]) || null;
 const canalAt = (x, z) => CAN.find(c => x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) || null;
 function bridgeY(x, z) { if (z > 131.5 && z < 150.5) for (const [bx, hw, rise] of BRZ) if (Math.abs(x - bx) < hw) { const t = (z - 141) / 9.5; return .05 + rise * (1 - t * t) } for (const [cid, bz] of BR) { const c = CAN.find(q => q.id === cid); if (Math.abs(z - bz) > BW || x < c.x0 - 2.5 || x > c.x1 + 2.5) continue; const cx = (c.x0 + c.x1) / 2, hw = (c.x1 - c.x0) / 2 + 2.5, t = (x - cx) / hw; return .05 + .95 * (1 - t * t) } return null }
-function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX || (z < 116 && (x < -262 || x > 92))) return null; const b = bridgeY(x, z); if (b !== null) return b; if (canalAt(x, z) || pondAt(x, z)) return null; return 0 }
+function surf(x, z) { if (x < XMIN || x > XMAX || z < ZMIN || z > ZMAX || (z < 80 && x < -262) || (z < 116 && x > 92)) return null; const b = bridgeY(x, z); if (b !== null) return b; if (canalAt(x, z) || pondAt(x, z)) return null; return 0 }
 AMS.pondPath = p => { const h = new THREE.Path(); if (p.e) h.absellipse(p.e[0], -p.e[1], p.e[2], p.e[3], 0, Math.PI * 2, false); else { h.moveTo(p.r[0], -p.r[3]); h.lineTo(p.r[1], -p.r[3]); h.lineTo(p.r[1], -p.r[2]); h.lineTo(p.r[0], -p.r[2]); h.closePath() } return h };
 AMS.surf = surf; AMS.CAN = CAN; AMS.BR = BR; AMS.BRZ = BRZ; AMS.PONDS = PONDS; AMS.pondAt = pondAt; AMS.WY = WY;
 
@@ -122,7 +122,7 @@ AV.registerWorld({
     /* ---------- ground: klinkers (brick pavers), quays, Damrak carriageway, red bike lanes, Dam square, Stationsplein ---------- */
     const klink = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.fillStyle = '#6a4a3e'; g.fillRect(0, 0, 256, 256); for (let y = 0; y < 256; y += 16) for (let x = -16; x < 256; x += 32) { const ox = (y / 16) % 2 ? 16 : 0, v = 90 + Math.random() * 40; g.fillStyle = 'rgb(' + (v + 40 | 0) + ',' + (v * .62 | 0) + ',' + (v * .5 | 0) + ')'; g.fillRect(x + ox + 1, y + 1, 30, 14) } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(.45, .45); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t })();
     /* the paved ground has holes where the canals are (UVs in metres: one paver tile every ~2.2 m) */
-    { const sh2 = new THREE.Shape([[XMIN, ZMAX], [XMAX, ZMAX], [XMAX, 116], [92, 116], [92, ZMIN], [-262, ZMIN], [-262, 116], [XMIN, 116]].map(p => new THREE.Vector2(p[0], -p[1])));
+    { const sh2 = new THREE.Shape([[XMIN, ZMAX], [XMAX, ZMAX], [XMAX, 116], [92, 116], [92, ZMIN], [-262, ZMIN], [-262, 80], [XMIN, 80]].map(p => new THREE.Vector2(p[0], -p[1])));
       for (const c of CAN) sh2.holes.push(new THREE.Path([new THREE.Vector2(c.x0, -c.z1), new THREE.Vector2(c.x0, -c.z0), new THREE.Vector2(c.x1, -c.z0), new THREE.Vector2(c.x1, -c.z1)]));
       for (const p of PONDS) sh2.holes.push(AMS.pondPath(p));
       const g = new THREE.ShapeGeometry(sh2); g.rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: klink, roughness: .85 })); m.position.y = -.01; m.receiveShadow = true; m.material.userData.lin = 1; grp.add(m) }
@@ -222,6 +222,8 @@ AV.registerWorld({
     const festMesh = new THREE.Mesh(K.merge(FP), K.floraMat(0, { rough: .7 })); festMesh.material.userData.lin = 1; fest.add(festMesh);
     /* ---------- the Museum quarter + Vondelpark (amsterdam_zuid.js) ---------- */
     AMS.Z = null; if (AMS.zuid) try { AMS.Z = AMS.zuid(ctx, { T, st, box, sign }) } catch (e) { console.warn('amsterdam zuid', e); AMS.stats.zuidErr = String(e && e.stack || e).slice(0, 300) }
+    /* ---------- Leidseplein nightlife (amsterdam_leidse.js) ---------- */
+    AMS.LP = null; if (AMS.leidse) try { AMS.LP = AMS.leidse(ctx, { T, st }) } catch (e) { console.warn('amsterdam leidse', e); AMS.stats.leidseErr = String(e && e.stack || e).slice(0, 300) }
     /* ---------- merge everything static ---------- */
     atlas(); const solidM = K.floraMat(0, { rough: .82 }); solidM.userData.lin = 1; const solid = new THREE.Mesh(K.merge(P), solidM); solid.castShadow = solid.receiveShadow = true; solid.name = 'ams_static'; grp.add(solid);
     if (Gs.length) { const gm = new THREE.MeshStandardMaterial({ color: 0xa8c8d8, roughness: .05, metalness: .2, transparent: true, opacity: .25, depthWrite: false }); gm.userData.lin = 1; const gmesh = new THREE.Mesh(K.merge(Gs), gm); gmesh.renderOrder = 2; gmesh.name = 'ams_glass'; grp.add(gmesh) }
@@ -239,6 +241,7 @@ AV.registerWorld({
       PLc('singel', 'Singel bridge', 'Puente del Singel', -110, -60, -Math.PI / 2), PLc('heren', 'Herengracht', 'Herengracht', -149, 10, Math.PI), PLc('jordaan', 'Jordaan lane', 'Calle del Jordaan', -197, -20, Math.PI), PLc('boat', 'Canal boat stop', 'Parada de barcos', -149, -110, Math.PI)];
     for (const [k, en] of [['kraantje', "Café 't Gouden Kraantje"], ['lantaarn', 'Coffeeshop De Blauwe Lantaarn'], ['platen', 'Groove Dealers Platen'], ['fietsen', "Jasper's Fietsen"], ['molen', 'Bakkerij Van der Molen'], ['proeflokaal', 'Monkey Brew Proeflokaal'], ['waterkant', 'De Waterkant (live music)'], ['kaas', 'Kaashandel Jansen']]) { const s = sh[k]; if (s) places.push(PLc(k, en, en, s.x + s.face * 3, s.z, s.face > 0 ? -Math.PI / 2 : Math.PI / 2)) }
     if (AMS.Z) { for (const r of AMS.Z.roads) mapRoads.push(r); for (const p of AMS.Z.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
+    if (AMS.LP) { for (const r of AMS.LP.roads) mapRoads.push(r); for (const p of AMS.LP.places) places.push(PLc(p[0], p[1], p[2], p[3], p[4], p[5])) }
     AMS.stats.shopsPlaced = Object.keys(sh).length;
     return { name: 'Amsterdam', surface: surf, fog: [80, 420], sky: { exp: .86, tint: [0x7a92a8, 0xc8d0d8, .35, .3], dome: { s1: 0xd8dce2, s2: 0x9ab0c8, swirl: .01, cloud: .75, glow: .3 } },
       arrivals: { default: { x: -22, z: -136, yaw: Math.PI * .88 }, pipe: { x: -24, z: -130, yaw: Math.PI * .88 }, train: { x: -14, z: -146, yaw: Math.PI } }, defaultArrival: 'default',

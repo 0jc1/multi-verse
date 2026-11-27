@@ -127,11 +127,11 @@ AMS.zuid = function (ctx, E) {
 
   /* =================== 1. Weteringschans (north bank) + Vijzelstraat lamps, Stadhouderskade (south bank) =================== */
   chunk('kade');
-  rowX('weteringW', 128, -330, -27, 1, 11, [[-116, -104], [-60, -52]], [], { back: true });
+  rowX('weteringW', 128, -330, -27, 1, 11, [[-262, -160], [-116, -104], [-60, -52]], [], { back: true });
   rowX('weteringE', 128, 27, 116, 1, 11, [[64, 76]], [], { back: true });
   for (let z = 88; z < 128; z += 16) for (const x of [-10.6, 10.6]) lamp(x, z);
-  for (let x = -326; x < 118; x += 14) { if (Math.abs(x) < 12 || Math.abs(x + 110) < 6 || Math.abs(x - 70) < 6) continue; tree(x, 132.6, 8 + rng() * 2, 'elm'); if (Math.round(x / 14) % 2 === 0) lamp(x + 7, 132.9) }
-  for (let x = -330; x < 118; x += 2.6) { if (Math.abs(x) < 10 || Math.abs(x + 110) < 4.4 || Math.abs(x - 70) < 4.4) continue; for (const z of [149.4]) { box(0x5a2218, x - .09, x + .09, 0, .95, z - .09, z + .09); box(0xf4f0e8, x - .1, x + .1, .7, .74, z - .1, z + .1); ctx.circles.push([x, z, .12]) } }
+  for (let x = -326; x < 118; x += 14) { if (Math.abs(x) < 12 || Math.abs(x + 110) < 6 || Math.abs(x - 70) < 6 || Math.abs(x + 224) < 10) continue; tree(x, 132.6, 8 + rng() * 2, 'elm'); if (Math.round(x / 14) % 2 === 0) lamp(x + 7, 132.9) }
+  for (let x = -330; x < 118; x += 2.6) { if (Math.abs(x) < 10 || Math.abs(x + 110) < 4.4 || Math.abs(x - 70) < 4.4 || Math.abs(x + 224) < 7.8) continue; for (const z of [149.4]) { box(0x5a2218, x - .09, x + .09, 0, .95, z - .09, z + .09); box(0xf4f0e8, x - .1, x + .1, .7, .74, z - .1, z + .1); ctx.circles.push([x, z, .12]) } }
   { lawn([[-80, 72], [-32, 72], [-32, 112], [-80, 112]]); ribbon([[-84, 70], [-28, 114]], 3.4, 0xcbb994, .06); ribbon([[-84, 114], [-28, 70]], 3.4, 0xcbb994, .06); for (const [x, z] of [[-74, 78], [-38, 78], [-74, 106], [-38, 106], [-56, 80], [-56, 104], [-68, 92], [-44, 92]]) tree(x, z, 12 + rng() * 3, rng() < .5 ? 'chestnut' : 'plane'); for (const [x, z, y] of [[-60, 88, .8], [-52, 96, -2.35], [-52, 88, 2.35], [-60, 96, -.8]]) bench(x, z, y); lamp(-56, 92.6, 4.4);
     out.nav.push([[-84, 70], [-28, 114]], [[-84, 114], [-28, 70]]); out.spots.plantsoen = [-56, 92] }
   /* Stadhouderskade: asphalt, kerbs, red bike lane; Van Baerlestraat runs south along the park */

@@ -62,12 +62,12 @@ SEV.life = function (ctx, E) {
   /* ---------- crowds ---------- */
   const crowd = CY.crowd(ctx), V = ['woman', 'man', 'tourist', 'woman', 'man', 'backpacker', 'woman', 'man'];
   const nodes = G.nodes, rnode = () => nodes[(rng() * nodes.length) | 0];
-  for (let i = 0; i < [22, 40, 60][q]; i++) { const n0 = rnode(); crowd.add({ v: V[i % V.length], x: n0[0], z: n0[1], nav: NAV, idleProb: .22 }) }
+  for (let i = 0; i < [18, 34, 60][q]; i++) { const n0 = rnode(); crowd.add({ v: V[i % V.length], x: n0[0], z: n0[1], nav: NAV, idleProb: .22 }) }
   /* families: a parent + child walking close (child = smaller via a second actor that follows) */
   for (let i = 0; i < [2, 4, 6][q]; i++) { const n0 = rnode(), p = crowd.add({ v: i % 2 ? 'woman' : 'man', x: n0[0], z: n0[1], nav: NAV, idleProb: .3 }); crowd.add({ v: 'tourist', x: n0[0] + .8, z: n0[1], mode: 'follow', lead: () => ({ x: p.x + .8, z: p.z + .4, yaw: p.yaw }), cols: { skin: p.cols ? p.cols.skin : 0xd8a070, hair: 0x2a1a10, shirt: [0xf2c230, 0x3aa8d8, 0xe85a8a][i % 3], pants: 0x2a3a5a } }) }
   /* terrace tables (veladores) outside bars: café regulars sitting */
   const TER = [['casafermin', 4], ['orilla', 5], ['taberna', 4], ['abaceria', 3], ['freiduria', 3], ['heladeria', 2]], sitters = [];
-  for (const [k, n] of TER) { const l = SH[k]; if (!l) continue; for (let i = 0; i < n; i++) { const u = -l.w / 2 + 1 + (i % 3) * 1.8, v = 2.2 + ((i / 3) | 0) * 1.7, [x, z] = GW.localPt(l.H.base, u, v); if (!N.walk(x, z)) continue;
+  for (const [k, n] of TER) { const l = SH[k]; if (!l) continue; for (let i = 0; i < n; i++) { const u = -l.w / 2 + 1 + (i % 3) * 1.8, v = 2.2 + ((i / 3) | 0) * 1.7, [x, z] = GW.localPt(l.H.base, u, v); if (!N.walk(x, z) || (l.hollow && Math.abs(u - (l.w / 2 - 1.5)) < 1.8)) continue;   /* keep the walk-in's door clear */
       const tb = new THREE.Group(); const tm = AV.std(0xe8e4da, .6), cm = AV.std(0x2a1a10, .7); const t1 = new THREE.Mesh(AV.G.box, tm); t1.scale.set(.7, .05, .7); t1.position.y = .74; tb.add(t1); const t2 = new THREE.Mesh(AV.G.box, cm); t2.scale.set(.06, .74, .06); t2.position.y = .37; tb.add(t2); tb.position.set(x, 0, z); ctx.group.add(tb); ctx.circles.push([x, z, .4]);
       if (rng() < .75) sitters.push(crowd.add({ v: V[(i + k.length) % V.length], x: x + .55, z, yaw: Math.PI / 2, mode: 'sit', idleProb: 0 })) } }
   SEV.stats.sitters = sitters.length;
@@ -81,8 +81,8 @@ SEV.life = function (ctx, E) {
   /* the Feria crowd: flamenca dresses, short jackets; dancing pairs inside the casetas */
   const feriaC = [], dancers = [], CAS = LM.casetas || [];
   const flam = [0xc8143a, 0xf2d23a, 0x2a8ad8, 0x2a9a5a, 0xf2f0ea, 0xe85a9a, 0x1a1a1a];
-  for (let i = 0; i < [16, 30, 44][q]; i++) { const fz = [262, 300, 338][i % 3], x = -440 + rng() * 136; feriaC.push(crowd.add({ v: i % 3 ? 'woman' : 'man', x, z: fz + (rng() - .5) * 6, nav: NAV, idleProb: .45, cols: i % 3 ? { skin: [0xf0c8a8, 0xd8a070, 0xc89068][i % 3], hair: 0x1a1a1a, shirt: flam[i % flam.length], pants: flam[i % flam.length] } : { skin: 0xd8a070, hair: 0x2a1a10, shirt: 0x1a1a1a, pants: 0x3a3a3a } })) }
-  for (let i = 0; i < Math.min(CAS.length, [6, 12, 18][q]); i++) { const c = CAS[(i * 7) % CAS.length]; for (const sx of [-.6, .6]) dancers.push(crowd.add({ v: sx < 0 ? 'woman' : 'man', x: c.x + sx, z: c.z, yaw: sx < 0 ? Math.PI / 2 : -Math.PI / 2, mode: 'dance', cols: sx < 0 ? { skin: 0xd8a070, hair: 0x1a1a1a, shirt: flam[i % flam.length], pants: flam[i % flam.length] } : { skin: 0xc89068, hair: 0x1a1a1a, shirt: 0xf2f0ea, pants: 0x2a2a2a } })) }
+  for (let i = 0; i < [12, 22, 44][q]; i++) { const fz = [262, 300, 338][i % 3], x = -440 + rng() * 136; feriaC.push(crowd.add({ v: i % 3 ? 'woman' : 'man', x, z: fz + (rng() - .5) * 6, nav: NAV, idleProb: .45, cols: i % 3 ? { skin: [0xf0c8a8, 0xd8a070, 0xc89068][i % 3], hair: 0x1a1a1a, shirt: flam[i % flam.length], pants: flam[i % flam.length] } : { skin: 0xd8a070, hair: 0x2a1a10, shirt: 0x1a1a1a, pants: 0x3a3a3a } })) }
+  for (let i = 0; i < Math.min(CAS.length, [4, 8, 18][q]); i++) { const c = CAS[(i * 7) % CAS.length]; for (const sx of [-.6, .6]) dancers.push(crowd.add({ v: sx < 0 ? 'woman' : 'man', x: c.x + sx, z: c.z, yaw: sx < 0 ? Math.PI / 2 : -Math.PI / 2, mode: 'dance', cols: sx < 0 ? { skin: 0xd8a070, hair: 0x1a1a1a, shirt: flam[i % flam.length], pants: flam[i % flam.length] } : { skin: 0xc89068, hair: 0x1a1a1a, shirt: 0xf2f0ea, pants: 0x2a2a2a } })) }
   const named = {};
   /* ---------- named residents ---------- */
   const at = (k, u) => front(k, u), inS = (k, u, v) => IN[k] ? IN[k].at(u || 0, v || -2) : null;
@@ -171,6 +171,11 @@ SEV.life = function (ctx, E) {
     const t = performance.now() / 1000; if (on) { if (LM.wheel) LM.wheel.rotation.z = t * .12; if (LM.tiovivo) LM.tiovivo.rotation.y = t * .5; if (SEV.festGlowM) SEV.festGlowM.color.setScalar(.75 + .25 * Math.sin(t * 2)) }
     const h = hour(); busker.vis = h >= 11 && h < 20; if (dancer) { dancer.mode = showOn() ? 'dance' : 'idle' } if (tocaor) tocaor.vis = showOn() || (h >= 20 && h < 24) });
   for (const w of feriaC) w.vis = false; for (const w of dancers) w.vis = false;
+  const FE = AV.fest, applyMode = () => { const m = st().feriaMode || 'auto'; if (FE && FE.force) FE.force('feria_abril', m === 'on' ? true : m === 'off' ? false : null) }; applyMode(); SEV.applyFeriaMode = applyMode;
+  const feriaPanel = () => { const s = st(), m = s.feriaMode || 'auto', d = SEV.feriaSeason ? SEV.feriaSeason.next() : null; const pn = AV.panel('cmp', '<b>🎪 Feria de Abril</b><div class="note">' + (festOn() ? tr('The Feria is ON: casetas, farolillos, the portada, the funfair.', 'La Feria está EN MARCHA: casetas, farolillos, la portada, la feria de atracciones.') : tr('The fairground is quiet. ', 'El recinto está tranquilo. ') + (d != null ? tr('Next April week: day ', 'Próxima semana de abril: día ') + d : '')) + '</div><div class="row">' + [['auto', L('Seasonal (April week)', 'Por temporada (semana de abril)')], ['on', L('On now', 'Encender ya')], ['off', L('Off', 'Apagada')]].map(([k, l]) => '<button data-fm="' + k + '"' + (k === m ? ' style="outline:2px solid #e8a820"' : '') + '>' + say(l) + '</button>').join('') + '</div><button data-close>' + tr('Close', 'Cerrar') + '</button>');
+    pn.querySelectorAll('[data-fm]').forEach(b => b.onclick = () => { s.feriaMode = b.dataset.fm; applyMode(); AV.closePanel('cmp'); AV.toast(b.dataset.fm === 'on' ? tr('🎪 ¡Se enciende la Feria! The portada lights up.', '🎪 ¡Se enciende la Feria! La portada se ilumina.') : b.dataset.fm === 'off' ? tr('The Feria is off until you switch it on again.', 'La Feria queda apagada hasta que la vuelvas a encender.') : tr('The Feria follows the calendar: the April week.', 'La Feria sigue el calendario: la semana de abril.')) }) };
+  SEV.feriaPanel = feriaPanel;
+  for (const [x, z] of [[-380, 252], [-250, 226], [-56, -176]]) { const sp = N.snap(x, z, 5); if (sp) T(sp[0], sp[1], 2.4, () => tr('🎪 Feria de Abril: festival mode', '🎪 Feria de Abril: modo festival'), feriaPanel, null, 'fest') }
   lifePlaces.push({ id: 'feria_portada', name: ['Feria: the portada', 'Feria: la portada'], x: -373, z: 252, yaw: Math.PI }, { id: 'calle_infierno', name: ['Feria: Calle del Infierno (funfair)', 'Feria: Calle del Infierno'], x: -380, z: 340, yaw: 0 });
   /* ---------- conversations (4 choices each; two missions) ---------- */
   const TK = AV.talk; function talk(id) { const o = named[id]; if (!o || !TK) return; const s = st(); s.met[id] = (s.met[id] || 0) + 1; const q2 = s.q = s.q || {};
@@ -211,10 +216,24 @@ SEV.life = function (ctx, E) {
   ctx.upd.push(() => { const Wc = AV.W; if (!Wc || Wc.id !== 'sevilla') return; const want = festOn() && hour() >= 12 || festOn() && hour() < 4 ? 'feria' : null;
     if (want !== musicWho) { if (music0 === null) music0 = Wc.music || false; if (want === 'feria') Wc.music = { playlist: 'stone_ape_band', pos: { x: -373, y: 3, z: 300 }, bed: .06 }; else { Wc.music = music0 || undefined; music0 = null } musicWho = want; SEV.stats.music = want; AV.audio && AV.audio.setWorld && AV.audio.setWorld(Wc) } });
   ctx.leave.push(() => { musicWho = null; music0 = null; festWas = null });
+  /* agent 3 audio2 (AV.snd, branch apeverse-2-gameplay-audio): rooms, places, the tablao venue, footsteps by ground; no-op until merged */
+  if (AV.snd) try { const bb = it => { const ps = [it.at(-it.w / 2, 0), it.at(it.w / 2, 0), it.at(-it.w / 2, -it.hd), it.at(it.w / 2, -it.hd)]; return [Math.min(...ps.map(p => p[0])), Math.max(...ps.map(p => p[0])), Math.min(...ps.map(p => p[1])), Math.max(...ps.map(p => p[1]))] };
+    for (const [k, sp] of [['casafermin', 'bar'], ['solea', 'club'], ['ceramica', 'shop'], ['volantes', 'shop']]) if (IN[k]) AV.snd.zone({ world: 'sevilla', id: 'sev_' + k, box: bb(IN[k]), space: sp });
+    if (IN.solea) AV.snd.venue('sevilla', { pos: { x: IN.solea.stage[0], y: 1.5, z: IN.solea.stage[1] }, bed: .15, area: bb(IN.solea) });
+    for (const k of ['orilla', 'taberna', 'abaceria', 'freiduria']) { const p2 = front(k, 2); if (p2) AV.snd.place({ world: 'sevilla', x: p2[0], z: p2[1], kind: 'bar' }) }
+    for (const s2 of LM.market || []) AV.snd.place({ world: 'sevilla', x: s2.x, z: s2.z, kind: 'market' }); for (const f of LM.fountains || []) AV.snd.place({ world: 'sevilla', x: f[0], z: f[1], kind: 'fountain' });
+    SEV.stats.snd = true } catch (e) { SEV.stats.sndErr = String(e).slice(0, 200) }
 };
 /* ---------- calendar, transit, registry, ambience (run once the shared systems exist) ---------- */
 addEventListener('load', () => {
-  const F = AV.fest; if (F && F.LIST && !F.LIST.feria_abril) F.LIST.feria_abril = { w: 'sevilla', where: L('Sevilla: the Real de la Feria (Los Remedios)', 'Sevilla: el Real de la Feria (Los Remedios)'), wd: 3, h: 12, len: 16 * 60, n: L('Feria de Abril', 'Feria de Abril'), head: { h: 22, len: 120, n: L('Sevillanas in the casetas under the lit portada', 'Sevillanas en las casetas bajo la portada encendida') } };
+  const F = AV.fest; if (F && F.LIST && !F.LIST.feria_abril) { F.LIST.feria_abril = { w: 'sevilla', where: L('Sevilla: the Real de la Feria (Los Remedios)', 'Sevilla: el Real de la Feria (Los Remedios)'), wd: -1, h: 12, len: 16 * 60, n: L('Feria de Abril', 'Feria de Abril'), head: { h: 22, len: 120, n: L('Sevillanas in the casetas under the lit portada', 'Sevillanas en las casetas bajo la portada encendida') }, season: true };
+    /* SEASONAL, not weekly: the April week = every 4th week of the Apeverse calendar (days 21-27, 49-55, ...), 12:00-04:00 each day of it;
+       or switched on/off by hand at the fairground gate / Plaza Nueva (S.sev.feriaMode = auto | on | off, applied through AV.fest.force) */
+    const inWeek = d => Math.floor(d / 7) % 4 === 3, oa = F.activeAt, on = F.next, og = F.guideHtml;
+    F.activeAt = (id, a) => { if (id !== 'feria_abril' || F.forced[id] != null) return oa(id, a); const d = Math.floor(a / 1440), t = a - d * 1440; return (inWeek(d) && t >= 720) || (inWeek(d - 1) && t < 240) };
+    F.next = id => { if (id !== 'feria_abril') return on(id); for (let k = 0; k < 29; k++) { const d = AV.S.day + k; if (inWeek(d) && (k > 0 || AV.S.time < 24 * 60)) return d } return null };
+    SEV.feriaSeason = { inWeek, next: () => F.next('feria_abril') };
+    F.guideHtml = () => { const FL = F.LIST.feria_abril; delete F.LIST.feria_abril; let h = ''; try { h = og() } finally { F.LIST.feria_abril = FL } const d = F.next('feria_abril'), now = F.active('feria_abril'); return h + '<div class="note"><b>🎪 ' + say(FL.n) + '</b><br>' + (now ? '🔴 ' + tr('ON NOW', 'AHORA') + ' · ' : '') + tr('The April week: every 4th week of the Apeverse calendar, 12:00–04:00 · Sevilla, Real de la Feria · or switch it on at the fairground gate', 'La semana de abril: cada 4ª semana del calendario Apeverse, 12:00–04:00 · Sevilla, Real de la Feria · o enciéndela en la puerta del recinto') + (!now && d != null ? '<br>' + tr('Next: day ', 'Próxima: día ') + d : '') + '</div>' } }
   if (AV.transit && AV.transit.CFG && !AV.transit.CFG.sevilla) AV.transit.CFG.sevilla = { taxi: { icon: '🚕', n: L('Taxi', 'Taxi'), base: 4, per: .005, say: L('A white taxi with the yellow stripe pulls up. “¿Dónde vamos, jefe?”', 'Un taxi blanco con la franja amarilla para. “¿Dónde vamos, jefe?”') }, stands: [['plaza_nueva', 10, 18], ['puerta_jerez', 0, -14], ['plaza_cuba', 10, 0]], rent: [] };
   if (AV.rides && AV.rides.VEH && !AV.rides.VEH.sevilla) AV.rides.VEH.sevilla = { vb: 'car', col: 0xf4f4f4, v: 9, eng: 'petrol' };
   if (AV.garage && AV.garage.ALLOW && !AV.garage.ALLOW.sevilla) AV.garage.ALLOW.sevilla = ['bicycle', 'escooter', 'scooter'];

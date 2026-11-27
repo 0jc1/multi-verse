@@ -9,8 +9,11 @@ Never touched: the other agents' worktrees and branches, the stable preview (809
 
 | World | State | Evidence |
 |---|---|---|
-| **Sevilla** (district 1: Centro, Cathedral + Alcázar, Santa Cruz, Arenal, Triana, Los Remedios + the Feria ground) | **playable, 1 connected district** | See `docs/SEVILLA.md` (test results, frame samples, screenshots, limitations). |
-| Cádiz, Oaxaca, Rio de Janeiro, Chefchaouen, Ibiza, Medellín, northern Spain, New York 1926 | not started | — |
+| **Sevilla** (district 1: Centro, Cathedral + Alcázar, Santa Cruz, Arenal, Triana, Los Remedios + the Feria ground) | **playable, optimised** | 157/157 desktop and 28/28 phone emulation on a quiet GPU; 54–60 fps on Medium, Feria entrance at night 58 fps; offline 14/14. See `docs/SEVILLA.md`. |
+| **Cádiz** (the whole old town on its peninsula + Carnaval) | **playable** | 108/108 on a quiet GPU; 51–60 fps on Medium; offline 13/13. See `docs/CADIZ.md`. |
+| **Oaxaca** (centro histórico, Jalatlaco, Cerro del Fortín, Panteón + Día de Muertos) | **playable, 2 open checks** | 81/83; 46–60 fps; offline 12/12. A walk-in doorway and a small graph island are being traced. See `docs/OAXACA.md`. |
+| **Chefchaouen** (the blue medina on its hillside + Festival Alegría) | **in progress (not in this commit)** | Offline network check 11/11. Its GPU suite has not run yet. |
+| Rio de Janeiro, Chefchaouen, Ibiza, Medellín, northern Spain, New York 1926 | not started | — |
 | Atlantis, Somatra, Neon Nexus, Dream dimension, Bioluminescent Jungle, Robot World, Volcanic Funk, Space Jazz, Mayan Canal Kingdom, Quantum Ziggurat, Alien Maze X-9 | not started (registry entries untouched, still `planned`) | — |
 
 **Earlier Sevilla work.** The quarantined slice on `codex/agent4-sevilla-20261123` (world id `seville`) was audited, not merged:
@@ -54,6 +57,29 @@ The new world id is `sevilla`. Do not merge the old branch alongside it.
 
 The checks run again in-game after every prop (trees, lamps, kiosks) has been placed. The result is exposed as `AV.sevilla.rep`, and the test suite asserts it.
 
+## Kit additions since Sevilla
+
+- **`js/gw_city.js` (the city dresser):**
+  - `GW.dress`: houses, shopfronts, signs, window displays, awnings, lanterns, plaques, special businesses, walk-ins with a door and a tiled, beamed interior, filler walls, ground, the sea and quay walls, trees, palms, lamps, hills.
+  - `GW.finish`: chunked merging, distance LOD for house detail and signs, nothing drawn beyond the fog, night lighting.
+  - `GW.seasonal`: seasonal festivals, with a manual switch.
+  - `GW.paint`: sign painters.
+  - Cádiz and Oaxaca are built entirely on it; Sevilla predates it.
+- **`js/gw_kit.js`:**
+  - land masks (coastlines);
+  - car masks (`W.noCar`);
+  - hidden-dead-end detection (a street drawn across a landmark);
+  - slope-aware houses with foundations;
+  - flat ground quads;
+  - `N.setCode` for festival structures that become solid only while the festival runs.
+- **Festivals are seasonal, not weekly:**
+  - Sevilla's Feria in the 4th week of every 4-week Apeverse cycle;
+  - Cádiz's Carnaval in the 2nd;
+  - Oaxaca's Día de Muertos in the 3rd.
+
+  Each has an in-world "festival mode" panel (Seasonal / On now / Off), saved per world.
+- **`tools/tests/gpu_queue.ps1`:** the shared GPU-test lock (`%TEMP%apeverse_gpu.lock`). It is taken atomically. After taking it, the wrapper still waits for other agents' headless test browsers to finish. Every GPU number in these docs since the Sevilla optimisation comes from a queued run.
+
 ## Integration (nothing is merged automatically)
 
 Branch `apeverse-2-global-worlds`. Files added (all new, owned by agent 4):
@@ -69,12 +95,9 @@ Branch `apeverse-2-global-worlds`. Files added (all new, owned by agent 4):
 - `docs/GLOBAL_WORLDS_STATUS.md`
 - `docs/SEVILLA.md`
 
-**The only shared-file change:** 5 `<script>` tags in `index.html`, right after `js/amsterdam_noord.js`, in this order:
-1. `gw_kit`
-2. `sevilla_plan`
-3. `world_sevilla`
-4. `sevilla_landmarks`
-5. `sevilla_life`
+**Shared-file changes:**
+- **`index.html`:** script tags right after `js/amsterdam_noord.js`, in this order: `gw_kit`, `gw_city`, `sevilla_plan`, `world_sevilla`, `sevilla_landmarks`, `sevilla_life`, `cadiz_plan`, `world_cadiz`, `cadiz_life`, `oaxaca_plan`, `world_oaxaca`, `oaxaca_life`.
+- **`js/rides.js`:** one line. Taxi pickup and drop-off legs also require `!(W.noCar && W.noCar(x, z))`, so cars stay out of pedestrian lanes. Worlds without `noCar` behave as before.
 
 **Registration happens at runtime, guarded, following the Amsterdam / Tokyo pattern:**
 - `AV.registerWorld('sevilla')`;

@@ -130,14 +130,14 @@ SEV.landmarks = function (ctx, E) {
       for (const sx of [-1, 1]) FP.push([BG.box, 0x6a4a2a, M(xc + sx * (cs / 4 + .7), .55, fz - f * .2, cs / 2 - 1.4, 1.1, .1), 0]);
       FP.push([BG.box, 0x5a3a20, M(xc, .55, zB - f * 1.2, cs - 1.6, 1.1, .8), 0], [BG.box, 0xe8e0d0, M(xc, 1.12, zB - f * 1.2, cs - 1.4, .05, 1), 0]);
       for (let k = 0; k < 3; k++) { const tz = fz + f * (3 + k * 2.4); FP.push([BG.box, 0xf2f0ea, M(xc - 1.6, .75, tz, 1, .05, 1), 0], [BG.box, 0xf2f0ea, M(xc + 1.6, .75, tz, 1, .05, 1), 0]) }
-      for (let k = 0; k < 5; k++) FG.push([BG.ico, [0xfff6d8, 0xffd060, 0xff6a4a][k % 3], M(x + cs * (k + .5) / 5, 3.2, zc, .22, .26, .22), 1]);
+      for (let k = 0; k < 5; k++) FG.push([BG.oct, [0xfff6d8, 0xffd060, 0xff6a4a][k % 3], M(x + cs * (k + .5) / 5, 3.2, zc, .22, .26, .22), 1]);
       FQ.push({ k: 'cs' + (ci % CASETAS_N), x: xc, y: 3.75, z: fz - f * .06, w: 3.4, h: .85, ry: f > 0 ? Math.PI : 0 });
       const walls = [GW.rectPoly(x, x + .25, Math.min(fz, zB), Math.max(fz, zB)), GW.rectPoly(x + cs - .25, x + cs, Math.min(fz, zB), Math.max(fz, zB)), GW.rectPoly(x, x + cs, zB - (f > 0 ? 0 : .25), zB + (f > 0 ? .25 : 0)), GW.rectPoly(x + .25, xc - 1.3, fz - .15, fz + .15), GW.rectPoly(xc + 1.3, x + cs - .25, fz - .15, fz + .15), GW.rectPoly(xc - (cs - 1.6) / 2, xc + (cs - 1.6) / 2, Math.min(zB - f * .8, zB - f * 1.6), Math.max(zB - f * .8, zB - f * 1.6))];
       casetas.push({ x: xc, z: zc, front: [xc, fz - f * 1.2], bar: [xc, zB - f * 2.4], staff: [xc, zB - f * .6], f, walls, name: (SEV.CASETAS || [])[ci % CASETAS_N] || 'Caseta' }); ci++ }
     /* farolillos: paper lanterns strung over every calle of the Real */
     const fl = [0xfff6ea, 0xc8143a, 0x2a7a3a, 0xfff6ea, 0xe8a820];
-    for (const zc of [262, 300, 338]) for (const dz of [-3.6, 0, 3.6]) { for (let x = -444; x < -302; x += 2.1) { const y = 5.6 - .5 * Math.sin(((x + 444) % 12.6) / 12.6 * Math.PI); FG.push([BG.ico, fl[((x / 2.1) | 0) % 5 < 0 ? 0 : Math.abs((x / 2.1) | 0) % 5], M(x, y, zc + dz, .28, .34, .28), 1]) } FP.push([BG.box, 0x2a2a2a, M(-373, 5.9, zc + dz, 142, .03, .03), 0]) }
-    for (let z = 250; z < 350; z += 2.1) for (const dx of [-3, 0, 3]) FG.push([BG.ico, fl[Math.abs((z / 2.1) | 0) % 5], M(-373 + dx, 5.8 - .4 * Math.sin(((z - 250) % 12.6) / 12.6 * Math.PI), z, .28, .34, .28), 1]);
+    for (const zc of [262, 300, 338]) for (const dz of [-3.6, 0, 3.6]) { for (let x = -444; x < -302; x += 2.1) { const y = 5.6 - .5 * Math.sin(((x + 444) % 12.6) / 12.6 * Math.PI); FG.push([BG.oct, fl[((x / 2.1) | 0) % 5 < 0 ? 0 : Math.abs((x / 2.1) | 0) % 5], M(x, y, zc + dz, .28, .34, .28), 1]) } FP.push([BG.box, 0x2a2a2a, M(-373, 5.9, zc + dz, 142, .03, .03), 0]) }
+    for (let z = 250; z < 350; z += 2.1) for (const dx of [-3, 0, 3]) FG.push([BG.oct, fl[Math.abs((z / 2.1) | 0) % 5], M(-373 + dx, 5.8 - .4 * Math.sin(((z - 250) % 12.6) / 12.6 * Math.PI), z, .28, .34, .28), 1]);
     for (let x = -440; x < -300; x += 14) for (const z of [256, 344]) { FP.push([BG.box, 0x2a2a2a, M(x, 3, z, .14, 6, .14), 0]) }
     /* the portada (lit gateway) at the top of Calle Asunción */
     FQ.push({ k: 'portada', x: -373, y: 15.5, z: 246.2, w: 36, h: 31.5, ry: Math.PI }, { k: 'portada', x: -373, y: 15.5, z: 246.3, w: 36, h: 31.5, ry: 0 });

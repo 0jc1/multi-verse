@@ -22,6 +22,7 @@ console.log('streets ' + N.streets.length + ' · plazas ' + N.plazas.length + ' 
 gate('one connected walking graph', rep.components === 1, rep.components + ' components, main ' + (rep.mainFrac * 100).toFixed(1) + '%' + (rep.islands.length ? ' islands ' + JSON.stringify(rep.islands.slice(0, 6)) : ''));
 gate('walkable ground reachable from the arrival', rep.reachFrac > .985, (rep.reachFrac * 100).toFixed(2) + '% of ' + rep.walkM2 + ' m2' + (rep.pockets.length ? ' pockets ' + JSON.stringify(rep.pockets.slice(0, 8)) : ''));
 gate('no accidental dead ends', rep.deadEnds.length === 0, rep.deadEnds.length ? JSON.stringify(rep.deadEnds) : 'intentional callejones: ' + JSON.stringify(rep.culs));
+gate('no street silently cut by a landmark', rep.splits.length === 0, rep.splits.length ? JSON.stringify(rep.splits) : '');
 gate('no invisible walls (walkable ground at the map edge)', rep.edgeCells === 0, rep.edgeCells + ' cells');
 /* routes: BFS shortest path on the graph between landmark pairs; and a SECOND route avoiding the first route's middle edges (loops) */
 const near = (x, z) => N.nearNode(x, z);

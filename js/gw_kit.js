@@ -23,6 +23,7 @@ GW.rng = seed => { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s >>>
 const circPoly = (cx, cz, r, n) => { const p = []; n = n || 20; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p.push([cx + Math.cos(a) * r, cz + Math.sin(a) * r]) } return p };
 GW.circPoly = circPoly;
 GW.rectPoly = (x0, x1, z0, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+GW.segPoly = (a, b, w) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), px = -(b[1] - a[1]) / L * w / 2, pz = (b[0] - a[0]) / L * w / 2; return [[a[0] + px, a[1] + pz], [b[0] + px, b[1] + pz], [b[0] - px, b[1] - pz], [a[0] - px, a[1] - pz]] };   /* a w-wide strip from a to b */
 /* oriented rectangle: centre of the front edge (fx, fz), unit along (ax, az), unit "in" (into the building) (nx, nz), width w, depth d */
 GW.oRect = (fx, fz, ax, az, nx, nz, w, d, u0, v0) => { u0 = u0 || 0; v0 = v0 || 0; const hw = w / 2; return [[fx - ax * hw + nx * u0, fz - az * hw + nz * u0], [fx + ax * hw + nx * u0, fz + az * hw + nz * u0], [fx + ax * hw + nx * d, fz + az * hw + nz * d], [fx - ax * hw + nx * d, fz - az * hw + nz * d]] };
 const segD = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz; let t = l2 ? ((px - ax) * dx + (pz - az) * dz) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t; return Math.hypot(px - ax - dx * t, pz - az - dz * t) };
@@ -31,7 +32,7 @@ GW.inPoly = inPoly; GW.segD = segD;
 
 /* ======================= the network ======================= */
 GW.Net = function (o) {
-  const N = { x0: o.x0, x1: o.x1, z0: o.z0, z1: o.z1, c: o.cell || .5, streets: [], plazas: [], opens: [], waters: [], solids: [], bridges: [], carves: [], blocks: [], height: o.height || null, built: false };
+  const N = { x0: o.x0, x1: o.x1, z0: o.z0, z1: o.z1, c: o.cell || .5, streets: [], plazas: [], opens: [], waters: [], solids: [], bridges: [], carves: [], blocks: [], lands: [], height: o.height || null, built: false };
   const c = N.c, nx = N.nx = Math.ceil((N.x1 - N.x0) / c), nz = N.nz = Math.ceil((N.z1 - N.z0) / c);
   const R = N.R = new Uint8Array(nx * nz), Wk = N.Wk = new Uint8Array(nx * nz), CL = N.CL = new Int32Array(nx * nz);   /* code, walk mask, lot claim (lot id + 1) */
   const ix = x => Math.floor((x - N.x0) / c), iz = z => Math.floor((z - N.z0) / c);
@@ -45,15 +46,16 @@ GW.Net = function (o) {
   N.open = (id, poly, oo) => { const p = Object.assign({ id, poly }, oo || {}); N.opens.push(p); return p };
   N.water = (id, poly, wo) => { const p = Object.assign({ id, poly }, wo || {}); N.waters.push(p); return p };
   N.solid = (id, poly, so) => { const p = Object.assign({ id, poly }, so || {}); N.solids.push(p); return p };
+  N.land = (id, poly, lo) => { const p = Object.assign({ id, poly }, lo || {}); N.lands.push(p); return p };   /* coastline: everything outside every land polygon is sea */
   N.bridge = (id, a, b, w, rise, bo) => { const p = Object.assign({ id, pts: [a, b], w, rise: rise || 1, kind: 'bridge' }, bo || {}); N.bridges.push(p); return p };
   /* ---- painting ---- */
-  function paintPoly(P, code) { let zmin = 1e9, zmax = -1e9; for (const p of P) { zmin = Math.min(zmin, p[1]); zmax = Math.max(zmax, p[1]) }
+  function paintPoly(P, code, A) { A = A || R; let zmin = 1e9, zmax = -1e9; for (const p of P) { zmin = Math.min(zmin, p[1]); zmax = Math.max(zmax, p[1]) }
     for (let j = Math.max(0, iz(zmin)); j <= Math.min(nz - 1, iz(zmax)); j++) { const z = N.z0 + (j + .5) * c, xs = [];
       for (let i = 0, k = P.length - 1; i < P.length; k = i++) { const a = P[i], b = P[k]; if ((a[1] > z) !== (b[1] > z)) xs.push((b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) }
-      xs.sort((a, b) => a - b); for (let q = 0; q + 1 < xs.length; q += 2) { const i0 = Math.max(0, Math.ceil((xs[q] - N.x0) / c - .5)), i1 = Math.min(nx - 1, Math.floor((xs[q + 1] - N.x0) / c - .5)); for (let i = i0; i <= i1; i++) R[j * nx + i] = code } } }
-  function paintCapsule(pts, r, code) { for (let s = 0; s + 1 < pts.length; s++) { const a = pts[s], b = pts[s + 1];
+      xs.sort((a, b) => a - b); for (let q = 0; q + 1 < xs.length; q += 2) { const i0 = Math.max(0, Math.ceil((xs[q] - N.x0) / c - .5)), i1 = Math.min(nx - 1, Math.floor((xs[q + 1] - N.x0) / c - .5)); for (let i = i0; i <= i1; i++) A[j * nx + i] = code } } }
+  function paintCapsule(pts, r, code, A) { A = A || R; for (let s = 0; s + 1 < pts.length; s++) { const a = pts[s], b = pts[s + 1];
       const i0 = Math.max(0, ix(Math.min(a[0], b[0]) - r)), i1 = Math.min(nx - 1, ix(Math.max(a[0], b[0]) + r)), j0 = Math.max(0, iz(Math.min(a[1], b[1]) - r)), j1 = Math.min(nz - 1, iz(Math.max(a[1], b[1]) + r));
-      for (let j = j0; j <= j1; j++) { const z = N.z0 + (j + .5) * c; for (let i = i0; i <= i1; i++) { const x = N.x0 + (i + .5) * c; if (segD(x, z, a[0], a[1], b[0], b[1]) <= r) R[j * nx + i] = code } } } }
+      for (let j = j0; j <= j1; j++) { const z = N.z0 + (j + .5) * c; for (let i = i0; i <= i1; i++) { const x = N.x0 + (i + .5) * c; if (segD(x, z, a[0], a[1], b[0], b[1]) <= r) A[j * nx + i] = code } } } }
   N.paintPoly = paintPoly; N.paintCapsule = paintCapsule;
   /* erode: walkable = walkable code and every 8-neighbour walkable code (half a metre from any wall) */
   function erode(i0, i1, j0, j1) { i0 = Math.max(0, i0); j0 = Math.max(0, j0); i1 = Math.min(nx - 1, i1); j1 = Math.min(nz - 1, j1);
@@ -65,17 +67,21 @@ GW.Net = function (o) {
     for (const s of N.streets) paintCapsule(s.pts, s.w / 2, C_ST);
     for (const p of N.solids) paintPoly(p.poly, C_SOL);
     for (const p of N.waters) paintPoly(p.poly, C_WAT);
+    if (N.lands.length) { const Mk = new Uint8Array(nx * nz); for (const p of N.lands) paintPoly(p.poly, 1, Mk); for (let k = 0; k < nx * nz; k++) if (!Mk[k]) R[k] = C_WAT }
     for (const b of N.bridges) paintCapsule(b.pts, b.w / 2, C_BRG);
+    /* car mask: where a car may go (streets/plazas/bridges marked car) — taxis and traffic stay out of pedestrian lanes */
+    N.hasCar = N.streets.some(s => s.car); if (N.hasCar) { const CM = N.CM = new Uint8Array(nx * nz); for (const s of N.streets) if (s.car) paintCapsule(s.pts, s.w / 2 + .5, 1, CM); for (const b of N.bridges) paintCapsule(b.pts, b.w / 2, 1, CM); for (const p of N.plazas) if (p.car) paintPoly(p.poly, 1, CM) }
     erode(0, nx - 1, 0, nz - 1); N.built = true; return N };
+  N.carOK = (x, z) => { if (!N.CM) return true; const k = N.idx(x, z); return k >= 0 && N.CM[k] === 1 };
   /* after build: carve walkable floor (interiors, gates, passages) or block (counters, fountains) and re-erode locally */
   const touch = (P, code) => { paintPoly(P, code); let a = 1e9, b = -1e9, d = 1e9, e = -1e9; for (const p of P) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); d = Math.min(d, p[1]); e = Math.max(e, p[1]) } erode(ix(a) - 2, ix(b) + 2, iz(d) - 2, iz(e) + 2) };
-  N.carve = P => { N.carves.push(P); touch(P, C_IN) };
+  N.carve = (P, y) => { N.carves.push(P); if (y != null) (N.flats = N.flats || []).push({ P, y }); touch(P, C_IN) };   /* y: a flat floor (a room on a slope) */
   N.block = P => { N.blocks.push(P); touch(P, C_SOL) };
   N.blockCircle = (x, z, r) => N.block(circPoly(x, z, r, 10));
   N.setCode = (P, code) => touch(P, code);   /* toggles (festival structures): paint any code and re-erode locally */
   /* ---- surface: null where you can't stand; bridges arch ---- */
-  N.bridgeY = (x, z) => { for (const b of N.bridges) { const [a, e] = b.pts, dx = e[0] - a[0], dz = e[1] - a[1], L = Math.hypot(dx, dz), t = ((x - a[0]) * dx + (z - a[1]) * dz) / (L * L); if (t < -.02 || t > 1.02) continue; if (segD(x, z, a[0], a[1], e[0], e[1]) > b.w / 2 + .1) continue; const tt = Math.max(0, Math.min(1, t)); return .02 + b.rise * Math.sin(tt * Math.PI) } return 0 };
-  N.surface = (x, z) => { const k = N.idx(x, z); if (k < 0 || !Wk[k]) return null; if (R[k] === C_BRG) return N.bridgeY(x, z); return N.height ? N.height(x, z) : 0 };
+  N.bridgeY = (x, z) => { for (const b of N.bridges) { const [a, e] = b.pts, dx = e[0] - a[0], dz = e[1] - a[1], L = Math.hypot(dx, dz), t = ((x - a[0]) * dx + (z - a[1]) * dz) / (L * L); if (t < -.02 || t > 1.02) continue; if (segD(x, z, a[0], a[1], e[0], e[1]) > b.w / 2 + .1) continue; const tt = Math.max(0, Math.min(1, t)), base = N.height ? N.height(a[0], a[1]) * (1 - tt) + N.height(e[0], e[1]) * tt : 0; return base + .02 + b.rise * Math.sin(tt * Math.PI) } return 0 };   /* on a slope the deck runs from bank to bank */
+  N.surface = (x, z) => { const k = N.idx(x, z); if (k < 0 || !Wk[k]) return null; if (R[k] === C_BRG) return N.bridgeY(x, z); if (R[k] === C_IN && N.flats) for (const f of N.flats) if (inPoly(x, z, f.P)) return f.y; return N.height ? N.height(x, z) : 0 };
   /* can you walk from a to b: straight, or round a small obstacle (a tree, a lamp) via a side-step? */
   N.reach = (ax, az, bx, bz) => { if (N.lineWalk(ax, az, bx, bz)) return true; const L = Math.hypot(bx - ax, bz - az); if (L < .1) return true; const px = -(bz - az) / L, pz = (bx - ax) / L, mx = (ax + bx) / 2, mz = (az + bz) / 2; for (const k of [1.2, -1.2, 2.4, -2.4, 3.6, -3.6]) { const x = mx + px * k, z = mz + pz * k; if (N.lineWalk(ax, az, x, z) && N.lineWalk(x, z, bx, bz)) return true } return false };
   N.lineWalk = (ax, az, bx, bz, step) => { const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / (step || .5))); for (let i = 0; i <= n; i++) if (!N.walk(ax + (bx - ax) * i / n, az + (bz - az) * i / n)) return false; return true };
@@ -122,6 +128,10 @@ GW.Net = function (o) {
         /* the end may join via a node just before it (short final segment) */
         const near = other || G.links[nid].some(j => G.links[j].some(k => G.feat[k] !== own && Math.hypot(G.nodes[k][0] - G.nodes[nid][0], G.nodes[k][1] - G.nodes[nid][1]) < 12));
         if (near) continue; const cul = s.cul && (s.cul === true || s.cul === end || (Array.isArray(s.cul) && s.cul.includes(end))); (cul ? rep.culs : rep.deadEnds).push({ id: s.id, end, at: G.nodes[nid].map(v => Math.round(v)) }) } }
+    /* hidden dead ends: a street node (not its first / last) with a single link - the street runs into a landmark or wall drawn across it
+       and nothing else picks it up there (a street that goes round a landmark through a plaza is fine) */
+    rep.splits = []; { const endSet = new Set(); for (const e of G.ends) { endSet.add(e.a); endSet.add(e.b) }
+      G.nodes.forEach((n, i) => { if (G.feat[i][0] !== 's' || endSet.has(i) || G.links[i].length > 1) return; const s2 = N.streets[+G.feat[i].slice(1)]; rep.splits.push({ id: s2.id, at: n.map(v => Math.round(v)) }) }) }
     /* raster flood fill from the arrival */
     if (from) { const s = N.snap(from[0], from[1], 6); if (s) { const seen = new Uint8Array(nx * nz), q = new Int32Array(nx * nz); let h = 0, t = 0; const k0 = N.idx(s[0], s[1]); seen[k0] = 1; q[t++] = k0; let tot = 0;
         while (h < t) { const k = q[h++]; const i = k % nx; for (const d of [1, -1, nx, -nx]) { const m = k + d; if (m < 0 || m >= nx * nz || seen[m] || !Wk[m]) continue; if ((d === 1 && i === nx - 1) || (d === -1 && i === 0)) continue; seen[m] = 1; q[t++] = m } }
@@ -174,7 +184,7 @@ GW.Net = function (o) {
       for (let z = rect[2] - 1.5; z <= rect[3] + 1.5 && !vis; z += 1) for (const x of [rect[0] - 1.5, rect[1] + 1.5]) if (N.walk(x, z)) { vis = true; break }
       out.push({ r: rect, vis }) }
     return out };
-  N.mapRoads = () => { const out = []; for (const s of N.streets) for (let i = 0; i + 1 < s.pts.length; i++) out.push([s.pts[i][0], s.pts[i][1], s.pts[i + 1][0], s.pts[i + 1][1], Math.max(2, s.w)]); for (const b of N.bridges) out.push([b.pts[0][0], b.pts[0][1], b.pts[1][0], b.pts[1][1], b.w]); return out };
+  N.mapRoads = () => { const out = []; for (const s of N.streets) for (let i = 0; i + 1 < s.pts.length; i++) out.push([s.pts[i][0], s.pts[i][1], s.pts[i + 1][0], s.pts[i + 1][1], Math.max(2, N.hasCar && !s.car ? Math.min(s.w, 6.5) : s.w)]);   /* pedestrian streets stay under the 7 m the taxi network needs */ for (const b of N.bridges) out.push([b.pts[0][0], b.pts[0][1], b.pts[1][0], b.pts[1][1], b.w]); return out };
   return N };
 
 /* ======================= parts, merging, chunking ======================= */
@@ -186,6 +196,9 @@ GW.chunked = function (items, cell, build, mat, grp, name, o) { o = o || {}; if 
     const k = wide ? 'wide' : key(x, z); let a = B.get(k); if (!a) B.set(k, a = []); a.push(it) }
   const out = []; for (const [k, arr] of B) { if (!arr.length) continue; const g = build(arr); if (!g || !g.attributes.position || !g.attributes.position.count) continue; g.computeBoundingSphere(); const m = new THREE.Mesh(g, mat); m.name = name + '_' + k; if (o.shadow) m.castShadow = m.receiveShadow = true; if (o.order) m.renderOrder = o.order; grp.add(m); out.push(m) }
   return out };
+/* distance LOD: meshes (e.g. chunked detail tiles) are drawn only within dist of the camera; checked a few times a second */
+GW.lod = function (ctx, meshes, dist) { const C = meshes.map(m => { m.geometry.computeBoundingSphere(); const s = m.geometry.boundingSphere; return [m, s.center.x, s.center.z, s.radius] }); let t = 0; const st = { shown: 0, total: C.length };
+  ctx.upd.push(dt => { t -= dt || .016; if (t > 0) return; t = .25; const cam = AV.cam && AV.cam.position; if (!cam) return; let n = 0; for (const [m, x, z, r] of C) { const v = Math.hypot(cam.x - x, cam.z - z) - r < dist; m.visible = v; if (v) n++ } st.shown = n }); return st };
 /* ======================= signs ======================= */
 GW.fit = (g, t, w, px, fam, y, x) => { let n = px; do { g.font = fam.replace('#', n); n -= 2 } while (g.measureText(t).width > w && n > 9); g.fillText(t, x, y) };
 GW.rr = (g, x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath() };
@@ -193,9 +206,9 @@ GW.atlas = function (LIST, SG, W, H) { if (SG.tex) return SG.tex; SG.r = SG.r ||
   for (const [k, w, h, fn] of LIST.slice().sort((a, b) => b[2] - a[2] || b[1] - a[1])) { let s = sh.find(q => q.h >= h && q.x + w <= W); if (!s) { if (top + h > H) { (SG.over = SG.over || []).push(k); continue } s = { y: top, h, x: 0 }; sh.push(s); top += h + 4 } g.save(); g.translate(s.x, s.y); g.beginPath(); g.rect(0, 0, w, h); g.clip(); try { fn(g, w, h) } catch (e) { (SG.bad = SG.bad || []).push(k) } g.restore(); SG.r[k] = [s.x / W, 1 - (s.y + h) / H, w / W, h / H]; s.x += w + 4 }
   SG.used = top; SG.canvas = cv; const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; SG.tex = t; return t };
 GW.quadGeo = function (qs, R) { const n = qs.length, pos = new Float32Array(n * 18), nor = new Float32Array(n * 18), uv = new Float32Array(n * 12); let o = 0;
-  qs.forEach(q => { const r = R[q.k]; if (!r) return; const c = Math.cos(q.ry), s = Math.sin(q.ry), hw = q.w / 2, hh = q.h / 2, P = (a, b) => [q.x + a * c, q.y + b, q.z - a * s];
+  qs.forEach(q => { const r = R[q.k]; if (!r) return; const c = Math.cos(q.ry), s = Math.sin(q.ry), hw = q.w / 2, hh = q.h / 2, P = q.flat ? (a, b) => [q.x + a * c - b * s, q.y, q.z - a * s - b * c] : (a, b) => [q.x + a * c, q.y + b, q.z - a * s], nv = q.flat ? [0, 1, 0] : [s, 0, c];   /* flat: lies on the ground (sand carpets, floor art) */
     const v = [[P(-hw, -hh), [r[0], r[1]]], [P(hw, -hh), [r[0] + r[2], r[1]]], [P(hw, hh), [r[0] + r[2], r[1] + r[3]]], [P(-hw, hh), [r[0], r[1] + r[3]]]];
-    for (const i of [0, 1, 2, 0, 2, 3]) { pos.set(v[i][0], o * 3); nor.set([s, 0, c], o * 3); uv.set(v[i][1], o * 2); o++ } });
+    for (const i of [0, 1, 2, 0, 2, 3]) { pos.set(v[i][0], o * 3); nor.set(nv, o * 3); uv.set(v[i][1], o * 2); o++ } });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0, o * 3), 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor.subarray(0, o * 3), 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv.subarray(0, o * 2), 2)); g.computeBoundingSphere(); return g };
 /* azulejo (glazed tile) panel with lettering: the classic Andalusian shop / street-name sign.  o: { bg, ink, border, sub, font, motif } */
 GW.azulejo = (text, o) => (g, w, h) => { o = o || {}; const T = Math.max(16, Math.round(h / (o.rows || 4))); g.fillStyle = o.bg || '#f6f0e0'; g.fillRect(0, 0, w, h);
@@ -215,9 +228,9 @@ GW.azulejo = (text, o) => (g, w, h) => { o = o || {}; const T = Math.max(16, Mat
    { walls: [hex], trim: [hex], base: [hex], shutter: [hex], door: [hex], iron: hex, roof: 'flat'|'tile'|'mix', tile: hex,
      floors: [min, max], fh: floor height, balcony: probability, cierro: probability (glazed box balcony), reja: bool,
      pots: probability, mirador: probability, q: quality 0..2 }
-   o = { shop: bool (shopfront ground floor), lit, hollow (depth: walk-in, front wall with a door gap), floors (force), wall (force colour) }
+   o = { D: detail part list (railings, rejas, pots, pilasters: drawn only near the camera), shop: bool (shopfront ground floor), lit, hollow (depth: walk-in, front wall with a door gap), floors (force), wall (force colour) }
    Returns { base (Matrix4), h (eave height), signY, shopW, door: [x,z] world } */
-GW.medHouse = function (P, Gl, lot, st, rng, o) { o = o || {}; const BG = AV.kit.BG, base = GW.basis(lot.x, lot.z, lot.yaw), put = GW.putter(P, base), putG = GW.putter(Gl, base), q = st.q == null ? 2 : st.q;
+GW.medHouse = function (P, Gl, lot, st, rng, o) { o = o || {}; const BG = AV.kit.BG, base = GW.basis(lot.x, lot.z, lot.yaw, lot.y || 0), put = GW.putter(P, base), putG = GW.putter(Gl, base), putD = GW.putter(o.D || P, base), q = st.q == null ? 2 : st.q;
   const pick = a => a[(rng() * a.length) | 0], w = lot.w, d = lot.d, fh = st.fh || 3.3;
   const nf = o.floors || (st.floors[0] + ((rng() * (st.floors[1] - st.floors[0] + 1)) | 0)), h = nf * fh + .6;
   const wall = o.wall || pick(st.walls), trim = pick(st.trim), zoc = pick(st.base), shut = pick(st.shutter), iron = st.iron || 0x1a1a1a;
@@ -226,11 +239,12 @@ GW.medHouse = function (P, Gl, lot, st, rng, o) { o = o || {}; const BG = AV.kit
     if (d > hd + .5) put(BG.box, wall, 0, hh / 2, -(hd + d) / 2, w, hh, d - hd);
     put(BG.box, 0x3a2a20, 0, hh - .05, -hd / 2, w - .6, .1, hd - .4) }
   else put(BG.box, wall, 0, h / 2, -d / 2, w, h, d);
+  if (lot.y > .2 || lot.dy > .2) put(BG.box, pick(st.base), 0, -1.6, -d / 2, w, 3.2, d);   /* foundation on a slope */
   /* zócalo (painted plinth), cornice, parapet */
   put(BG.box, zoc, 0, .5, .03, w + .02, 1, .08);
   put(BG.box, trim, 0, h - .55, .06, w + .12, .28, .2); put(BG.box, wall, 0, h + .35, .0, w, .7, .3); put(BG.box, trim, 0, h + .72, .02, w + .06, .08, .36);
   /* corner pilasters on wider houses */
-  if (w > 6.5 && q > 0) for (const sx of [-1, 1]) put(BG.box, trim, sx * (w / 2 - .18), h / 2, .04, .36, h - .4, .1);
+  if (w > 6.5 && q > 0) for (const sx of [-1, 1]) putD(BG.box, trim, sx * (w / 2 - .18), h / 2, .04, .36, h - .4, .1);
   /* roof */
   const roof = st.roof === 'mix' ? (rng() < .45 ? 'tile' : 'flat') : st.roof;
   if (roof === 'tile') { const rh = 1.6; put(BG.box, st.tile || 0xa8542e, 0, h + .2 + rh / 2, -d * .3, w + .3, .18, d * .62, 0, -.42, 0, 0); put(BG.box, st.tile || 0xa8542e, 0, h + .2 + rh / 2, -d * .7, w + .3, .18, d * .62, 0, .42, 0, 0) }
@@ -241,17 +255,17 @@ GW.medHouse = function (P, Gl, lot, st, rng, o) { o = o || {}; const BG = AV.kit
   const win = (x, y, ww, wh, bal) => { put(BG.box, trim, x, y, .05, ww + .34, wh + .34, .08);   /* painted surround (albero yellow, almagra red, grey) */
     const lit = rng() < .22, closed = rng() < .4; if (closed && q > 0) { put(BG.box, shut, x, y, .1, ww, wh, .06) } else (lit ? putG : put)(BG.box, lit ? 0xffd9a0 : 0x1e262c, x, y, .09, ww, wh, .04, lit ? 1 : 0);
     if (bal === 'cierro') { put(BG.box, 0xf2f0ea, x, y - wh / 2 - .08, .38, ww + .5, .14, .7); put(BG.box, 0x2a2a2a, x, y + wh / 2 + .1, .38, ww + .5, .14, .7); putG(BG.box, 0x9ab8c8, x, y, .72, ww + .4, wh, .04, 0); for (const sx of [-1, 1]) put(BG.box, 0xf2f0ea, x + sx * (ww / 2 + .22), y, .38, .06, wh, .68) }
-    else if (bal) { put(BG.box, 0x9a948a, x, y - wh / 2 - .08, .32, ww + .7, .12, .6); put(BG.box, iron, x, y - wh / 2 + .48, .6, ww + .66, .04, .04); put(BG.box, iron, x, y - wh / 2 + .9, .6, ww + .7, .05, .06); if (q > 1) for (let k = 1; k < 4; k++) put(BG.box, iron, x - (ww + .66) / 2 + k * (ww + .66) / 4, y - wh / 2 + .45, .6, .03, .9, .03);
-      for (const sx of [-1, 1]) put(BG.box, iron, x + sx * (ww / 2 + .33), y - wh / 2 + .45, .32, .03, .9, .56);
-      if (q > 0 && rng() < (st.pots || 0)) for (const px of [-ww / 2 + .1, ww / 2 - .1]) { put(BG.box, 0xa8542e, x + px, y - wh / 2 + .12, .62, .22, .2, .12); put(BG.box, [0xd8203a, 0xe84a8a, 0xf2f0ea, 0xd85a1a][(rng() * 4) | 0], x + px, y - wh / 2 + .34, .66, .3, .2, .2) } }
-    else if (st.reja) { for (const k of [-.33, 0, .33]) put(BG.box, iron, x + k * ww, y, .26, .035, wh + .2, .035); put(BG.box, iron, x, y + wh * .2, .26, ww + .2, .035, .035); put(BG.box, iron, x, y - wh / 2 - .1, .2, ww + .3, .08, .2) } };
+    else if (bal) { put(BG.box, 0x9a948a, x, y - wh / 2 - .08, .32, ww + .7, .12, .6); putD(BG.box, iron, x, y - wh / 2 + .48, .6, ww + .66, .04, .04); putD(BG.box, iron, x, y - wh / 2 + .9, .6, ww + .7, .05, .06); if (q > 1) for (let k = 1; k < 4; k++) putD(BG.box, iron, x - (ww + .66) / 2 + k * (ww + .66) / 4, y - wh / 2 + .45, .6, .03, .9, .03);
+      for (const sx of [-1, 1]) putD(BG.box, iron, x + sx * (ww / 2 + .33), y - wh / 2 + .45, .32, .03, .9, .56);
+      if (q > 0 && rng() < (st.pots || 0)) for (const px of [-ww / 2 + .1, ww / 2 - .1]) { putD(BG.box, 0xa8542e, x + px, y - wh / 2 + .12, .62, .22, .2, .12); putD(BG.box, [0xd8203a, 0xe84a8a, 0xf2f0ea, 0xd85a1a][(rng() * 4) | 0], x + px, y - wh / 2 + .34, .66, .3, .2, .2) } }
+    else if (st.reja) { for (const k of [-.33, 0, .33]) putD(BG.box, iron, x + k * ww, y, .26, .035, wh + .2, .035); putD(BG.box, iron, x, y + wh * .2, .26, ww + .2, .035, .035); putD(BG.box, iron, x, y - wh / 2 - .1, .2, ww + .3, .08, .2) } };
   /* ground floor */
   if (o.hollow) { const dx = o.doorX || 0, hh = fh + .3, l0 = -w / 2, r1 = w / 2;   /* front wall with a 2 m door gap + a shop window in the wider side */
     put(BG.box, wall, (l0 + dx - 1) / 2, hh / 2, -.15, dx - 1 - l0, hh, .3); put(BG.box, wall, (dx + 1 + r1) / 2, hh / 2, -.15, r1 - dx - 1, hh, .3); put(BG.box, wall, dx, (2.7 + hh) / 2, -.15, 2, hh - 2.7, .3);
     put(BG.box, o.shopCol || 0x2a1e16, dx, 2.75, .05, 2.3, .14, .12); for (const sx of [-1, 1]) put(BG.box, o.shopCol || 0x2a1e16, dx + sx * 1.08, 1.35, .05, .14, 2.7, .12);
     const ws = dx > 0 ? [l0 + .6, dx - 1.4] : [dx + 1.4, r1 - .6]; if (ws[1] - ws[0] > 1) { put(BG.box, o.shopCol || 0x2a1e16, (ws[0] + ws[1]) / 2, 1.5, .05, ws[1] - ws[0] + .2, 2.3, .1); (o.glass || Gl).push([BG.box, 0xc8dce4, new THREE.Matrix4().multiplyMatrices(base, AV.kit.M((ws[0] + ws[1]) / 2, 1.55, .12, ws[1] - ws[0], 1.9, .04)), 0]) } }
   else if (o.shop) { put(BG.box, o.shopCol || 0x2a1e16, 0, 1.55, .07, w - .5, 3.1, .1); (o.lit ? putG : put)(BG.box, o.lit ? 0xffe2b0 : 0x3a3a34, 0, 1.45, .14, w - 1.3, 2.4, .04, o.lit ? 1 : 0) }
-  else for (let b = 0; b < nb; b++) { const x = -w / 2 + bw * (b + .5); if (b === door) { put(BG.box, trim, x, 1.35, .05, 1.7, 2.9, .08); put(BG.box, pick(st.door || [0x5a3420]), x, 1.25, .1, 1.3, 2.5, .06); if (q > 0 && rng() < .35) put(BG.box, iron, x, 2.75, .12, 1.3, .3, .03) } else win(x, 1.7, Math.min(1.2, bw * .5), 1.5, false) }
+  else for (let b = 0; b < nb; b++) { const x = -w / 2 + bw * (b + .5); if (b === door) { put(BG.box, trim, x, 1.35, .05, 1.7, 2.9, .08); put(BG.box, pick(st.door || [0x5a3420]), x, 1.25, .1, 1.3, 2.5, .06); if (q > 0 && rng() < .35) putD(BG.box, iron, x, 2.75, .12, 1.3, .3, .03) } else win(x, 1.7, Math.min(1.2, bw * .5), 1.5, false) }
   for (let f = 1; f < nf; f++) for (let b = 0; b < nb; b++) { const x = -w / 2 + bw * (b + .5), y = f * fh + 1.5, r = rng(); win(x, y, Math.min(1.1, bw * .42), 1.75, r < (st.cierro || 0) ? 'cierro' : r < (st.cierro || 0) + (st.balcony || 0) ? 'bal' : false) }
   return { base, h, nf, signY: 3.25, wall, trim } };
 /* lot-local polygon (x along the local facade axis, z: 0 = facade, negative = inside) -> world polygon */

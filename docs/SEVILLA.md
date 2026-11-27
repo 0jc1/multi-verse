@@ -2,7 +2,26 @@
 
 ## Verdict
 
-Sevilla is **playable and connected**. The full real-GPU suite passed **137/137** (`suite_sevilla.js`, Medium, 1536×864, Intel Iris Xe). After that run, the portada screenshot viewpoint was fixed and those steps re-run: 23/23. The offline network check passes 13/13.
+Sevilla is **playable, connected and optimised**. On a quiet GPU (taken through the shared GPU-test queue), the full suite passed **157/157** (and again 157/157 in the final regression after the kit changes for Cádiz and Oaxaca; Feria entrance 49 fps, all views 41–61 fps) (`suite_sevilla.js`, Medium, 1536×864, Intel Iris Xe), and every view now runs at **54–60 fps**. The Feria entrance at night, which was the hotspot at 17 fps, now runs at **58.3 fps**, with every decoration still there. The offline network check passes 14/14. Phone emulation is covered by `suite_sevilla_mobile.js`; see Phone below.
+
+**Changes in the optimisation pass:**
+- **Distance LOD for house detail.** Balcony railings, rejas, pots, pilasters, awnings, wall lanterns and orange fruit sit in separate 40 m tiles. They are drawn within 85 m on Medium (55 on Low, 130 on High).
+- **Signs.** Drawn within 180 m on Medium, in 64 m tiles.
+- **Solid tiles past the fog (470 m)** are not drawn.
+- **Farolillos** use an 8-triangle shape instead of 80 (about 2,400 of them).
+- **Trees** use cheaper canopies below High.
+- **NPC density on Medium:** street crowd 40 → 34, Feria crowd 30 → 22, dancing pairs 12 → 8.
+- **No new lights.** Lit windows and lanterns are emissive geometry, not lights.
+
+**Other fixes:**
+- **Feria de Abril is seasonal, not weekly.** It runs during "the April week", which is the 4th week of every 4-week Apeverse cycle (days 21–27, 49–55, …), 12:00–04:00. It can also be switched by hand: there is a "Feria de Abril: festival mode" panel at the fairground gate, Plaza de Cuba and Plaza Nueva, with Seasonal, On now and Off. The choice is saved in `S.sev.feriaMode`. The phone calendar and gig guide show the next April week.
+- **Taxis stay out of pedestrian lanes.**
+  - Only 16 streets are car streets (`PLAN.car`): Paseo Colón, the ring, the Arenal, Triana's main streets. Plaza de Cuba and Puerta de Jerez are also open to cars.
+  - Pedestrian streets are no longer in the taxi network.
+  - A one-line opt-in hook in the shared `js/rides.js` (`W.noCar`) stops the pickup and drop-off legs from entering Santa Cruz lanes, Sierpes, the Avenida or San Jacinto.
+  - The suite plans taxi trips into Santa Cruz and checks that they stay on car streets.
+- **The kit's check now also finds hidden dead ends.** These are streets that run into a landmark drawn across them. It caught the Calle Judería clipping the Alcázar, which is now rerouted.
+- **Agent 3's `AV.snd` is registered.** It is guarded, so it does nothing until their branch merges: rooms for the 4 walk-ins, the tablao venue, bars, market and fountains, and footstep materials.
 
 **Not done in this milestone:**
 - Plaza de España and Parque de María Luisa;
@@ -74,7 +93,7 @@ Sevilla is **playable and connected**. The full real-GPU suite passed **137/137*
 | **Missions** | — | "Una cuerda para Rocío" (strings from Triana before the show); "Un azulejo para Manolo" (a tile from Cerámica La Cava); at the Feria, sevillanas with Rocío |
 | **6 hidden discoveries** | — | Calle Reinoso, the Callejón del Dormitorio, the Mercury pond, the corral, the Alcázar water gate, the Giralda's ramps |
 | **People** | — | Rocío, Manolo, Lucía, Curro and Inma, each with a daily routine (they walk real GPS routes when you are near) and 4 conversation choices. Pedestrians and pairs, regulars at terrace tables, a busker, shop and market staff, cyclists in the bike lanes, taxis and cars on the river avenue, the tram |
-| **Feria de Abril** | Real de la Feria | Every **Thursday, 12:00–04:00** (`AV.fest.force('feria_abril', true)` to preview). See below |
+| **Feria de Abril** | Real de la Feria | **Seasonal**: the April week (every 4th Apeverse week), 12:00–04:00, or switched on by hand at the gate, Plaza de Cuba or Plaza Nueva. See below |
 
 **At the Feria:**
 - 70 walk-in casetas with striped canvas, a pelmet, a railing gate and a bar;
@@ -105,39 +124,39 @@ The rest of the week the Real is open albero ground.
 
 **Save:** state lives in the optional `S.sev`: missions, rides, discoveries, shows. A sandboxed save/load round trip passed, and the player's real save was left untouched.
 
-## Performance (real GPU: Intel Iris Xe, Medium, 1536×864, final run)
+## Performance (real GPU: Intel Iris Xe, Medium, 1536×864, quiet GPU, after optimisation)
 
-Another agent may have been running GPU tests at the same time, so treat single samples as noisy.
+| View | fps | draw calls | triangles | before optimisation (noisy, shared GPU) |
+|---|---|---|---|---|
+| Arrival (first sample after load) | 54 | 172 | 372k | 15–26 fps, 676k |
+| Santa Cruz | 60.4 | 135 | 322k | 52 fps, 513k |
+| Mercado de Triana | 60.4 | 152 | 403k | 48 fps, 538k |
+| Feria at night, down the Real | 60.4 | 173 | 509k | 43 fps |
+| **Feria entrance (portada) at night** | **58.3** | 244 | 512k | **17 fps, 1.17M** |
+| Santa Cruz at night | 60 | 80 | 163k | 60 fps |
+| Under the Giralda | 60 | 199 | 398k | 45 fps, 742k |
+| Calle Sierpes | 60 | 80 | 162k | 60 fps |
+| Torre del Oro | 60.5 | 108 | 117k | 48 fps |
+| Patio de las Doncellas | 60.5 | 123 | 218k | 50 fps |
 
-| View | fps | draw calls | triangles |
-|---|---|---|---|
-| Arrival (first sample after load) | **15.2** | 199 | 676k |
-| Santa Cruz | 52 | 124 | 513k |
-| Mercado de Triana | 48.4 | 150 | 538k |
-| Feria at night, looking down the Real | 42.8 | 155 | 526k |
-| Feria, looking at the portada (in the screenshot run) | **17** | 284 | 1.17M |
-| Santa Cruz at night | 60.4 | 60 | 162k |
-| Under the Giralda | 45.5 | 219 | 742k |
-| Calle Sierpes | 60.5 | 74 | 239k |
-| Torre del Oro | 48 | 98 | 169k |
-| Patio de las Doncellas | 49.5 | 114 | 291k |
-
-- **The arrival sample swings between runs:** 15.2, then 17.2, then 25.6. It is taken right after the 9 s load, and on Sierpes the same first-sample effect read 14.5 and then 51–60 later.
-- **An in-run A/B:** Santa Cruz did 41.5 fps while the shipped Amsterdam reference did 30.8 fps in the same run.
-- **The real hotspot** is the view across the whole Feria with the portada at night, at 1.2M triangles.
-- **Next optimisation** (not done):
-  - distance LOD for house detail (balconies and pots beyond about 60 m);
-  - instanced farolillos;
-  - fewer filler roofs.
-- **Load:** 9.2 s, of which 5.1 s is the build.
-- **Static parts:** about 87k, merged in 64 m tiles.
+- **The frame cap is 60 fps,** so these views show headroom on this laptop, not how much.
+- **The before column is noisy.** Those numbers were taken while other agents' GPU tests were running. All runs now go through `tools/tests/gpu_queue.ps1`, which waits for a quiet GPU and holds the shared lock `%TEMP%apeverse_gpu.lock`.
+- **Load:** 3.2 s on a quiet GPU (9.2 s before, under contention).
+- **Static parts:** about 87k, of which 42k are LOD detail.
 
 ## Known limitations
 
-- **Phone:** not tested on a phone, real or emulated (the `-Mobile` suite was not run).
+- **Phone:** tested in emulation only (915×412, touch), not on a real phone. These checks passed:
+  - detected as a phone, touch controls shown;
+  - the joystick walks you; houses and the river stop you; the bridge carries you;
+  - you can walk into Casa Fermín and buy with ▶ act;
+  - the bar menu (458×363), the portal, Feria-switch and torno panels fit the screen;
+  - GPS works;
+  - 60 fps in Santa Cruz and at the Feria entrance.
+
+  One check failed because of a test bug (the start point was inside a house). It was fixed and re-run; see `docs/screenshots/sevilla/`.
 - **Detail level:** houses are built from boxes. The detail (surrounds, rejas, balconies, cierros, pots, awnings, signs) is dense at street level but blocky up close. The Cathedral and Alcázar are suggestive interpretations, not replicas.
 - **Interiors:** only the 4 walk-ins and the Alcázar patios and gardens are enterable. Other shops are walk-up.
 - **Feria crowds:** while the fair is on, the crowd uses the city graph, so some festival-goers wander outside the Real.
-- **Taxis:** taxi rides follow the city's map roads, which include Santa Cruz lanes; that is narrow for a car.
-- **Audio:** uses the shared ambience presets, because agent 3's audio API was not published yet.
+- **Audio:** uses the shared ambience presets, plus agent 3's `AV.snd` registrations, which are active once `apeverse-2-gameplay-audio` is merged.
 - **Screenshots:** in `docs/screenshots/sevilla/` (JPEG), with the suite report alongside.

@@ -11,11 +11,24 @@ Branched from `apeverse-2-living-worlds` at `6b369c7`, the last pushed commit, i
 | World | State | Evidence |
 |---|---|---|
 | **Tokyo** (Shibuya + Harajuku) | **playable, district 1 done** | `suite_tokyo` on the real GPU (Medium). Full run: 162/166. All four failures were test-side: a walk path into the wall, a too-short wait for a car, the GPS wait, and stop-line timing. After fixing them, every affected step passed in targeted GPU reruns (19/19 and 46/49). The remaining 3 in the 46/49 run were a step-filter artefact: "Loop Line: arrive at Harajuku" ran without the ride before it. **There is no single clean full run yet.** |
-| **Paris** (Seine + Saint-Germain) | in progress | code written (`world_paris.js`, `paris_life.js`). **Not loaded in `index.html` yet, and not tested.** |
+| **Paris** (Seine + Saint-Germain) | **playable, district 1 done** | `suite_paris` on the real GPU (Medium). Full run: 129/130. The one failure was real: the cathedral collider cut the Île off from the north bridge, so the route was a 371 m detour. It is fixed (bridge moved to the parvis, colliders tightened to the footprint); the affected steps reran 30/30 and the route is now 37 m. See docs/PARIS.md. |
 | Barcelona, Sevilla, Cádiz, Oaxaca, Rio, Chefchaouen, Medellín, NYC 1926, Ibiza, Galicia | not started | — |
 | Atlantis, LSD-DMT, Somatra, Neon Nexus, Weird Alien, Bio Jungle, Robot World, Volcanic Funk, Quantum Ziggurat, Space Jazz, Mayan Canal Kingdom | not started (registry entries are still `planned`) | — |
 
 **Sevilla note:** there is a separate Sevilla slice on `codex/agent4-sevilla-20261123`, quarantined (agent 4). It was not reused or touched; check it before building Sevilla.
+
+### Paris measurements
+Real GPU, Medium, one 2.5 s sample each:
+
+| View | FPS | Draw calls | Triangles |
+|---|---|---|---|
+| Arrival (south quai, 11:00) | 52.8 | 110 | 543k |
+| Boulevard Saint-Germain (21:00) | 39.6 | 29 | 528k |
+| Quai facing the cathedral (21:00) | 38.8 | 85 | 629k |
+| Rue de Buci (21:00) | 46.8 | 37 | 561k |
+
+- **Build:** 308 buildings, about 32,900 merged parts (down from 48,600 after slimming the Haussmann kit), 554 sign faces, 0 atlas overflow, 13 businesses.
+- **Bottleneck:** triangle count, not draw calls. The next lever is a far-LOD version of the fill blocks and the back rows.
 
 ### Tokyo measurements
 Real GPU (`run_tests.ps1 -Gpu`, 1536×864, Medium), one 2.5 s sample each.
@@ -58,9 +71,9 @@ Real GPU (`run_tests.ps1 -Gpu`, 1536×864, Medium), one 2.5 s sample each.
    <script src="js/world_tokyo.js"></script>
    <script src="js/tokyo_life.js"></script>
    ```
-   When Paris is ready, add `js/nw_kit.js`, `js/world_paris.js` and `js/paris_life.js` in the same place.
+   Paris adds `js/nw_kit.js`, `js/world_paris.js` and `js/paris_life.js` right after them (already in this branch).
 2. **World registry:** `tokyo_life.js` pushes its own entry into `AV.WORLDS_DATA` at load (status `playable`), so `data/worlds.json` and `data/worlds.js` are untouched. To make it permanent, copy that object into `data/worlds.json`, regenerate `data/worlds.js`, and the runtime push becomes a no-op (it checks the id first).
-3. **Shared registries** are filled at runtime and guarded with `if (!...)`, the same pattern Amsterdam uses:
+3. **Shared registries** (Tokyo, and the same set for Paris: `paris`, `fete_musique`) are filled at runtime and guarded with `if (!...)`, the same pattern Amsterdam uses:
    - `AV.transit.CFG.tokyo`
    - `AV.rides.VEH.tokyo`
    - `AV.garage.ALLOW.tokyo`

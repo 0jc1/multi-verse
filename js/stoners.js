@@ -1,7 +1,9 @@
 /* APEVERSE V0.9.9 - stoners.js : red-eyed, joint-smoking humans who turn up in EVERY world.
    The cast is deliberately odd: festival clothes, wild hair, manic gestures, a joint in one hand and
-   absolutely no urgency about anything. They are spawned after each world builds (AV.onWorldEnter), near
-   the arrival point and around the world's own places, so new worlds get them for free.
+   absolutely no urgency about anything.
+   2.1 corrective pass (owner): they no longer hang around arrival points and street corners in every world (it read as
+   loitering / squatting). They are regulars of the places where smoking belongs: a coffeeshop, a social club, the hostel's adults-only
+   counter, a leaf shack. A world with no such venue gets none. They stand with the venue, they don't pace.
    Bodies come from AV.chars.stoner() (js/chars_human.js); smoke puffs reuse AV.city.smoke(). */
 'use strict';
 (function (AV) {
@@ -194,6 +196,9 @@
     }
     return AV.safeSpot(W, x, z);
   }
+  /* 2.1: the venues where these regulars belong (found from the world's own interactions) */
+  const VENUE_RE = /🌿|coffeeshop|social club|leaf shack|adults only|shop counter \(nunyin\)|blauwe lantaarn|la nube/i;
+  function venuesFor(W) { const out = []; for (const t of W.T || []) { let l = ''; try { l = typeof t.label === 'function' ? t.label() : (t.label || '') } catch (e) { } if (VENUE_RE.test(l) && isFinite(t.x) && out.every(o => Math.hypot(o[0] - t.x, o[1] - t.z) > 15)) out.push([t.x, t.z]) } return out }
   function anchorsFor(W, n, rng) {
     /* V1.1: a world can mark private places (a home, a metro carriage) where no wandering stranger should appear */
     const priv = (x, z) => !!(W.noStrangersAt && W.noStrangersAt(x, z)), a0 = W.arrivals && (W.arrivals[W.defaultArrival] || W.arrivals.default);
@@ -210,22 +215,23 @@
   function spawnWorld(W) {
     if (!W || W.__stoners || W.noStoners) return; W.__stoners = true;   /* a world can opt out (Jerusalem: holy sites) */
     const ctx = W.ctx; if (!ctx || !W.surface || !AV.npc) return;
-    const q = ctx.q == null ? 2 : ctx.q, n = q === 0 ? 1 : 2;
+    const venues = venuesFor(W); AV.stoners.lastVenues = venues.length; if (!venues.length) return;   /* 2.1: no venue, no stoners */
+    const q = ctx.q == null ? 2 : ctx.q, n = Math.min(venues.length, q === 0 ? 1 : 2);
     const rng = AV.rng((AV.S.seed || 1) * 17 + hash(W.id) + (AV.S.day || 1) * 7);
     const smoke = AV.city && AV.city.smoke ? AV.city.smoke(ctx, q === 0 ? 48 : 96, { color: 0xd8ccff, opacity: .4 }) : null;
     const start = hash(W.id) % PROFILES.length;
-    anchorsFor(W, n, rng).forEach((a, i) => {
+    venues.slice(0, n).forEach((a, i) => {
       const [x, z] = findSpot(W, a[0], a[1], rng), y = W.surface(x, z) || 0;
       const prof = PROFILES[(start + i) % PROFILES.length], H = (px, pz) => { const s = W.surface(px, pz); return s == null ? 0 : s };
       const npc = AV.npc.spawn(ctx, prof.id, {
         x, z, y, H, body: C.softStoner ? C.softStoner(hash(W.id) + i * 97 + 1) : C.stoner(hash(W.id) + i * 97 + 1),
-        yaw: Math.atan2(AV.P.x - x, AV.P.z - z), r: 3.2, speed: .75,
+        yaw: Math.atan2(a[0] - x, a[1] - z), r: 1.2, speed: .5,
         anim: makeAnim((hash(W.id) % 23) + i * 3.7, i % 2 ? -1 : 1)
       });
       npc.smokeFx = smoke; npc.smokeSide = i % 2 ? -1 : 1;
       npc.tag.position.y = 2.32; npc.bub.position.y = 3.05;   /* human height, not ape height */
       /* the furthest one paces a tiny loop when you walk away; near you, everyone stands and tokes */
-      if (i === n - 1) {
+      if (false) {   /* 2.1: no pacing loops */
         const path = [];
         for (let k = 0; k < 4; k++) { const ang = k / 4 * TAU, px = x + Math.cos(ang) * 1.8, pz = z + Math.sin(ang) * 1.8; if (W.surface(px, pz) != null && AV.isFree(W, px, pz, .5)) path.push([px, pz, 4 + k % 2]) }
         if (path.length >= 3) npc.path = path;
@@ -235,6 +241,6 @@
 
   /* run after every world build (including future worlds) */
   const prevEnter = AV.onWorldEnter;
-  AV.onWorldEnter = function (W) { if (prevEnter) prevEnter(W); try { spawnWorld(W) } catch (e) { console.warn('stoners:', e) } };
+  AV.onWorldEnter = function (W) { if (prevEnter) prevEnter(W); setTimeout(() => { if (AV.W !== W) return; try { spawnWorld(W) } catch (e) { console.warn('stoners:', e) } }, 1200) };   /* 2.1: after the venues have registered */
   AV.stoners = { profiles: PROFILES, spawnWorld };
 })(window.AV);

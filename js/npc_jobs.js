@@ -7,7 +7,9 @@
      Bix  (guard)     patrols; tells you off for sprinting through the market; chases you down if you punch anyone. Night shift.
      Melo (busker)    plays for tips (real notes, E to tip him), packs up, spends his tips at Mae's stall, plays again.
    Shared behaviour: tired -> sits on a bench, hungry -> buys fruit from Mae, lonely -> walks over to chat with a crewmate,
-   bedtime -> sleeps by the campfire (Bix naps in the afternoon instead). They wave when you come close, react when punched, and pause
+   bedtime -> closes up and goes home (they walk to the depot and leave; Bix takes his break in the afternoon instead).
+   2.1 corrective pass (owner): no campfire / sleeping-rough scene any more, and the market only sets up where a village market fits
+   (Ape Town, Jungle Dub, Verdalux). Cities get ordinary city life instead (js/city_life_plus.js). They wave when you come close, react when punched, and pause
    while you talk to them. The status line under each name tag shows the current state. Try AV.npc.debug() in the console.
    A world can opt out with `noWorkers: true`; private places (W.noStrangersAt) are avoided. Dialogue: data/npcs_workers.js. */
 'use strict';
@@ -131,16 +133,14 @@ function buildBench(S, s) {
   const g = holder(S, s); part(g, G.box, 0x8a5a30, 0, .42, 0, 1.5, .07, .44); for (const x of [-.6, .6]) part(g, G.box, 0x4a3a2a, x, .2, 0, .08, .4, .38);
   return [-.38, .38].map(lx => { const p = toW(s, lx, -.05), f = toW(s, lx, 3); return { x: p.x, z: p.z, fx: f.x, fz: f.z, kind: 'bench', by: null } });
 }
-function buildCamp(S, s, n) {
-  const g = holder(S, s), flames = [], seats = [];
-  for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; part(g, G.ico, 0x6a6a6a, Math.cos(a) * .55, .08, Math.sin(a) * .55, .14, .1, .12) }
-  part(g, G.cyl, 0x5a3a20, 0, .1, 0, .06, .8, .06, { rz: Math.PI / 2 }); part(g, G.cyl, 0x5a3a20, 0, .12, 0, .06, .8, .06, { rx: Math.PI / 2 });
-  for (let i = 0; i < 3; i++) flames.push(AV.mk(G.cone, AV.std(0xff8a20, .6, 0, 0xff6a10, 2.2), (i - 1) * .12, .35, (i % 2) * .08, .14, .5, .14, g, false));
-  let light = null; if (S.ctx.q >= 1) { light = new THREE.PointLight(0xff9040, 0, 13, 2); light.position.set(0, 1, 0); g.add(light) }
+function buildCamp(S, s, n) {   /* 2.1: the crew's rest corner is a market picnic table under a parasol (it used to be a campfire ring) */
+  const g = holder(S, s), flames = [], seats = [], light = null;
+  part(g, G.box, 0x9a6a3a, 0, .74, 0, 2.2, .07, .9); for (const x of [-.9, .9]) part(g, G.box, 0x6a4a2a, x, .37, 0, .08, .74, .8);
+  for (const z of [-.85, .85]) { part(g, G.box, 0x8a5a30, 0, .44, z, 2.2, .06, .34); for (const x of [-.9, .9]) part(g, G.box, 0x6a4a2a, x, .22, z, .08, .44, .3) }
+  part(g, G.cyl, 0xd8d0c0, 0, 1.3, 0, .03, 2.6, .03); part(g, G.cone, 0x2a8a8a, 0, 2.55, 0, 1.5, .45, 1.5);
   for (let i = 0; i < n; i++) {
-    const a = (i + .5) / n * TAU, lx = Math.cos(a) * 2.1, lz = Math.sin(a) * 2.1;
-    part(g, G.cyl, 0x6a4a2a, lx, .2, lz, .2, .8, .2, { rz: Math.PI / 2, ry: -(a + Math.PI / 2) });
-    const p = toW(s, lx * 1.06, lz * 1.06); seats.push({ x: p.x, z: p.z, fx: s.x, fz: s.z, kind: 'camp', by: null });
+    const side = i % 2 ? 1 : -1, lx = -.75 + (Math.floor(i / 2) % 3) * .75, lz = side * .85;
+    const p = toW(s, lx, lz), f = toW(s, lx, 0); seats.push({ x: p.x, z: p.z, fx: f.x, fz: f.z, kind: 'camp', by: null });
   }
   S.ctx.circles.push([s.x, s.z, .7]);
   return { x: s.x, z: s.z, flames, light, seats };
@@ -175,6 +175,7 @@ function buildSite(W, ctx, c, rng, cast) {
   S.stall = buildStall(S, sp.stall); S.depot = buildDepot(S, sp.depot); S.bin = buildBin(S, sp.bin);
   const camp = S.camp = buildCamp(S, sp.camp, Math.max(4, cast.length)); S.seats.push(...camp.seats);
   for (const b of sp.benches) if (b) S.seats.push(...buildBench(S, b));
+  for (let i = 0; i < cast.length; i++) { const h = S.depot.stand; S.seats.push({ x: h.x + (i % 3 - 1) * .5, z: h.z + (i / 3 | 0) * .5, fx: S.depot.x, fz: S.depot.z, kind: 'home', by: null }) }
   if (has('fern')) { S.well = buildWell(S, sp.well); S.plants = sp.plants.map((p, i) => buildPlant(S, p, i)) } else S.plants = [];
   if (has('melo')) S.busk = buildBusk(S, sp.busk);
   S.patrol = sp.patrol || [];
@@ -302,11 +303,11 @@ const COMMON = {
   sleep: {
     pri: 5, effort: -4,
     enter(B, m) {
-      if (!m.data.at) { const s = B.site.claimSeat(B, ['camp', 'bench']); if (s) return walk(s.x, s.z, ['sleep', { at: true }], { pri: 5, icon: '🌙', label: L('Heading to the campfire for the night', 'Va a dormir junto a la hoguera'), hold: null }); m.data.at = true }
-      const s = B.mem.seat; if (s) B.faceTo(s.fx, s.fz); B.pose = s ? 'sleep' : 'bow'; B.hold(); B.status('💤', L('Sleeping', 'Durmiendo'));
+      if (!m.data.at) { const s = B.site.claimSeat(B, ['home']); if (s) return walk(s.x, s.z, ['sleep', { at: true }], { pri: 5, icon: '🏠', label: L('Closing up and heading home', 'Recoge y se va a casa'), hold: null }); m.data.at = true }
+      B.hold(); B.n.g.visible = false; B.status('🏠', L('Gone home for the night', 'Se ha ido a casa'));   /* 2.1: they leave; nobody sleeps rough at the market */
     },
     update(B) { if (!inHours(NP.hour(), ROLES[B.role].sleep)) { B.say(lines(B, 'morning'), true); stat(B, 'nights'); return 'decide' } },
-    exit(B, m) { B.pose = null; if (m.data.at) B.site.releaseSeat(B) }
+    exit(B, m) { B.pose = null; B.n.g.visible = true; if (m.data.at) B.site.releaseSeat(B) }
   },
   greet: {
     pri: 1, transient: true,
@@ -646,8 +647,9 @@ function defFor(role) {
   return DEFS[role] || (DEFS[role] = { initial: 'decide', states: Object.assign({}, COMMON, R.states), on: Object.assign({}, ON, R.on || {}), any: (R.any || []).concat(ANY).sort((a, b) => b.pri - a.pri) });
 }
 const ORDER = ['mae', 'dash', 'tam', 'fern', 'bix', 'melo'];
+const MARKET_WORLDS = ['ape_town', 'jungle_dub', 'verdalux'];   /* 2.1: village / fantasy settings only; a world can also ask with workers: true */
 function spawnWorld(W) {
-  if (!W || W.__workers || W.noWorkers || !W.ctx || !W.surface) return; W.__workers = true;
+  if (!W || W.__workers || W.noWorkers || !W.ctx || !W.surface) return; if (!(W.workers || MARKET_WORLDS.indexOf(W.id) >= 0)) return; W.__workers = true;
   const ctx = W.ctx, rng = AV.rng((AV.S.seed || 1) * 31 + hash(W.id)), cast = (ctx.q === 0 ? ORDER.slice(0, 4) : ORDER.slice()).filter(id => AV.NPCS[id]);
   const c = findCenter(W, rng); if (!c) return;
   const S = buildSite(W, ctx, c, rng, cast); if (!S) return;

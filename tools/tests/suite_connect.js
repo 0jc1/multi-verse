@@ -50,7 +50,12 @@ window.APE_T = (() => {
       { name: 'Montmartre', hub: [0, -452], box: [-220, 220, -790, -408], dest: { clichy_w: [-200, -440], moulin: [-120, -452], steinkerque: [0, -480], stairs_top: [0, -650], tertre: [-64, -672], lepic: [-170, -520], vineyard: [80, -754], clichy_e: [200, -440], west_street: [-212, -510], east_street: [204, -600] },
         alt: [['clichy_w', 'tertre'], ['steinkerque', 'tertre'], ['moulin', 'stairs_top'], ['tertre', 'vineyard'], ['clichy_e', 'vineyard'], ['clichy_w', 'lepic']],
         walk: [['moulin', 'tertre'], ['tertre', 'vineyard']] }],
-      allow: [[190, 0, 6]] }
+      allow: [[190, 0, 6]] },
+    barcelona: { areas: [
+      { name: 'Barcelona (Eixample + Ciutat Vella + port)', hub: [-20, 2], box: [-195, 195, -320, 370], dest: { placa: [-20, 2], pdg_n: [11, -280], rcat: [-92, -170], garden: [-50, -173], granvia_e: [150, -47], rambla_top: [-72, 40], mercat: [-110, 165], liceu: [-68, 178], catedral: [62, 121], pi: [-3, 181], santjaume: [44, 251], reial: [-3, 280], escudellers: [30, 329], born: [145, 240], raval: [-150, 224], colom: [-62, 350], pier: [40, 388], edge_w: [-180, 0], edge_e: [180, 200], ronda: [60, 27] },
+        alt: [['placa', 'pdg_n'], ['placa', 'liceu'], ['rambla_top', 'catedral'], ['catedral', 'santjaume'], ['santjaume', 'reial'], ['liceu', 'reial'], ['mercat', 'raval'], ['born', 'santjaume'], ['rcat', 'garden'], ['colom', 'born'], ['pi', 'catedral']],
+        walk: [['rambla_top', 'reial'], ['pdg_n', 'garden'], ['catedral', 'mercat'], ['born', 'colom']] }],
+      allow: [[40, 390, 4]] }
   };
   step('boot', async c => { await until(() => window.AV && AV.worldDefs && $('bNew'), 30000); $('gq').value = 'Low'; $('bNew').click(); if (!await until(() => AV.W && AV.running, 30000)) $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 30000)); AV.save = () => { } });
   for (const wid of Object.keys(CITIES)) step(wid + ': connectivity', async c => { AV.travel(wid); c('loads', await until(() => W() && W().id === wid && $('fade').style.opacity === '0', 240000)); await sleep(2500); const C = CITIES[wid], O = OUT[wid] = { areas: {} };
@@ -61,7 +66,7 @@ window.APE_T = (() => {
       res.alt = { tested: A2.alt.length, alts, altFail }; c(A2.name + ': a second, distinct route exists when the first is blocked', alts === A2.alt.length, alts + '/' + A2.alt.length + (altFail.length ? ' · ' + altFail.join(' | ') : ''));
       /* 4. pockets */ seed = 7; const pk = pockets(A2.hub, A2.box, 60, rng); res.pockets = pk; c(A2.name + ': no isolated pockets (random free ground routes to the hub)', pk.bad.length === 0, pk.sampled + ' sampled · ' + pk.bad.length + ' isolated' + (pk.bad.length ? ': ' + JSON.stringify(pk.bad.slice(0, 6)) : ''));
       /* 5. walk */ for (const [a, b] of A2.walk) { const wr = await walkRoute(D[a], D[b]); c(A2.name + ': walk ' + a + ' -> ' + b + ' with collision', wr.ok, (wr.L ? Math.round(wr.L) + ' m' : '') + (wr.why ? ' · ' + wr.why : '')) } }
-    /* 3. dead ends in the street graph */ const nav = wid === 'tokyo' ? AV.tokyo.nav : AV.paris.nav, de = deadEnds(nav, C.allow); O.deadEnds = de; c('street graph: no unplanned dead ends', de.n === 0, de.n + (de.n ? ': ' + JSON.stringify(de.list.slice(0, 14)) : ''));
+    /* 3. dead ends in the street graph */ const nav = AV[wid] && AV[wid].nav, de = deadEnds(nav, C.allow); O.deadEnds = de; c('street graph: no unplanned dead ends', de.n === 0, de.n + (de.n ? ': ' + JSON.stringify(de.list.slice(0, 14)) : ''));
     /* 4. crossings: every pair of street lines that cross shares a junction */ const ux = unjoined(nav); O.unjoined = ux; c('street graph: every crossing is a junction', ux.n === 0, ux.n + (ux.n ? ': ' + JSON.stringify(ux.list.slice(0, 14)) : '')) });
   step('summary', async c => c('connect', true, JSON.stringify(Object.fromEntries(Object.entries(OUT).map(([k, v]) => [k, Object.fromEntries(Object.entries(v.areas).map(([a, r]) => [a, { reach: r.reach.good + '/' + r.reach.pairs, alt: r.alt.alts + '/' + r.alt.tested, pockets: r.pockets.bad.length }])) ]))) + ' dead ends: ' + JSON.stringify(Object.fromEntries(Object.entries(OUT).map(([k, v]) => [k, v.deadEnds.n])))));
   return { names() { return steps.map(s => s.name) }, async exec(i) { const s = steps[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };

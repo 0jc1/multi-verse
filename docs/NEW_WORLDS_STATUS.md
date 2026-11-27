@@ -75,6 +75,22 @@ This needs a clean re-measure when the GPU is free.
   - `suite_connect`: 41/41.
 - **Frames (Medium, shared GPU):** Shinjuku crossing 29.6 fps / 63 calls; Kabukichō 30.8 / 256; Golden Gai 42.8 / 109.
 
+### Barcelona (started to the 2.2 standard), see docs/BARCELONA.md
+
+- **Built:**
+  - the Eixample: 12 chamfered blocks, plus Passeig de Gràcia, Rambla de Catalunya and an open garden courtyard;
+  - Plaça de Catalunya;
+  - La Rambla, with kiosks, living statues and the market hall;
+  - the Gothic Quarter: the cathedral, Plaça del Pi, Plaça Sant Jaume and Plaça Reial;
+  - the Raval, Via Laietana, the Born, and the port with the Columbus column.
+- **Businesses:** 21 named businesses and landmarks (6 walk-ins, including the jazz club) and 4 market stalls.
+- **Transport:** Metro L3, the harbour boat, taxis and bikes.
+- **People and festival:** 5 residents and one story (Jordi's faixa). **La Mercè** runs on Thursday nights, with castells, gegants, the correfoc and a port stage.
+- **Gates:**
+  - `suite_barcelona`: 115 checks. The full run had 1 test-side failure (an ambiguous label), which is fixed; a re-run of the affected steps passed 29/29.
+  - `suite_connect` (all three cities): 51/51. Barcelona: reach 190/190, second routes 11/11, 0 pockets, 0 dead ends.
+- **Frames (Medium, shared GPU):** arrival 37 fps, Passeig de Gràcia 31, Rambla 41, Gothic 45, Plaça Reial 41, port 53. Draw calls stay between 98 and 189.
+
 ## Ledger (failures first)
 
 | World | State | Evidence |

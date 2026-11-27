@@ -2,7 +2,7 @@
 
 ## Verdict
 
-Oaxaca de Juárez is **playable and connected**, with Día de Muertos. The release gate is `suite_oaxaca.js` on the real GPU (Medium, 1536×864), run through the shared GPU queue: **81/83**. The two open items are below. The offline network check passes 12/12.
+Oaxaca de Juárez is **playable and connected**, with Día de Muertos. The release gate is `suite_oaxaca.js` on the real GPU (Medium, 1536×864), run through the shared GPU queue: **84/84**. The two items that failed earlier are fixed, as described below. The offline network check passes 12/12.
 
 ## The map
 
@@ -65,9 +65,9 @@ Real GPU (Intel Iris Xe), Medium, 1536×864, quiet GPU, final run:
 - **Load:** 3.9 s.
 - **Static parts:** about 32k.
 
-**Open items (the 2 failing checks):**
-- **The Chocolatería La Molienda doorway** stops the test walker partway in. You can still shop at its counter, and the mission that needs its chocolate passed. A probe is tracing which prop blocks the doorway.
-- **A second, small walking-graph component.** The raster reach is still 100%: every bit of ground is physically reachable. Most likely it is the same chocolatería interior.
+**Fixed since the first run:**
+- **The Chocolatería La Molienda doorway:** the counter stood across it. The counter moved to the far side. The dresser now checks every walk-in doorway again after furnishing (`doorsBlocked`).
+- **A second, small walking-graph component:** it was the same interior. Rooms now get their own node grid, and isolated nodes are linked to the nearest reachable node.
 
 ## Known limitations
 

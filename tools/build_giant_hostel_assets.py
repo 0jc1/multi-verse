@@ -103,12 +103,12 @@ res['brick'] = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).filter(Image
 # ---- 6. GIANT HOSTEL vinyl banner (the photo is cut off; re-typeset from the photo's colours + layout) ----
 #      Thai lines are left blank here (Pillow has no Thai shaping): the game writes them with the browser's Thai font.
 MAG, INK, CYAN = (214, 28, 120), (18, 12, 16), (120, 220, 240)
-Bw, Bh = 2100, 760
+Bw, Bh = 2400, 760
 cv = Image.new('RGB', (Bw, Bh), (246, 244, 240)); d = ImageDraw.Draw(cv)
 d.rectangle([0, 0, Bw, 92], fill=MAG)
 d.text((40, 46), 'GUEST HOUSE  ·  HOSTEL  ·  CHIANG MAI', font=font('Arial Bold.ttf', 50), fill=CYAN, anchor='lm')
-outlined(d, (60, 92), 'GIANT', font('Times New Roman Bold.ttf', 330), MAG, INK, 11, shadow=13)
-outlined(d, (Bw - 60, 360), 'HOSTEL', font('Times New Roman Bold.ttf', 260), MAG, INK, 9, shadow=11, anchor='ra')
+outlined(d, (60, 70), 'GIANT', font('Times New Roman Bold.ttf', 410), MAG, INK, 13, shadow=15)
+outlined(d, (Bw - 60, 395), 'HOSTEL', font('Times New Roman Bold.ttf', 300), MAG, INK, 10, shadow=12, anchor='ra')
 d.rectangle([0, Bh - 22, Bw, Bh], fill=MAG); d.rectangle([4, 4, Bw - 5, Bh - 5], outline=MAG, width=10)
 a = np.asarray(cv).astype(np.float32)
 yy, xx = np.mgrid[0:Bh, 0:Bw]
@@ -125,6 +125,18 @@ cv = grade(cv, 1.05, 0, 1.1); d = ImageDraw.Draw(cv)
 d.rectangle([0, 0, 899, 559], outline=(120, 30, 30), width=34)
 d.text((450, 290), 'WELCOME', font=font('Arial Bold.ttf', 150), fill=(226, 206, 140), anchor='mm')
 res['mat'] = cv.filter(ImageFilter.GaussianBlur(1.1)).resize((512, 256), Image.LANCZOS)
+
+# Desk display and the yellow blade sign seen across the lane (coordinates in the
+# 1200 x 1600 upright previews). Only the display and sign faces enter the game.
+def preview_quad(name, points, size):
+    im = photo(name)
+    return rectify(im, [(x * im.width / 1200, y * im.height / 1600) for x, y in points], size)
+
+# The left edge of the screen is outside the photograph; trim to the visible UI.
+res['display'] = preview_quad('image0', [(4, 751), (613, 698), (640, 1017), (42, 1066)], (512, 256))
+res['mechanic'] = preview_quad('image3', [(158, 686), (213, 695), (229, 772), (168, 770)], (128, 128))
+# Side window with the green neon leaf: two stacked panes in image1, rebuilt as one 2:1 face.
+res['side_window'] = preview_quad('image1', [(62, 1948), (856, 1878), (872, 3508), (66, 3866)], (1024, 512))
 
 # ---- write JPEGs + the data-URI pack ----
 pack = {}

@@ -400,6 +400,8 @@ AV.registerWorld({
       box(hb, MT.v, 0x6a7a8a, rx + 1.4, rx + 4.6, 0, 1.8, H.z1 - .6, H.z1 - .25); ctx.cols.push([rx + 1.4, rx + 4.6, H.z1 - .6, H.z1 - .25]); box(hb, MT.v, 0xffe0a0, rx + 2.2, rx + 3.8, 2.2, 3.2, H.z1 - .3, H.z1 - .2, .8); box(hb, MT.v, 0xfff0c0, cx2 - .3, cx2 + .3, 3.9, 4.1, 79.4, 79.8, 1) }
     sign('Rooms 1–4', 15, 3.4, 70.35, Math.PI, 2, '#ffd84a');
     { const l = new THREE.PointLight(0xffc98a, 1.3, 22); l.position.set(18, 3.6, 62); grp.add(l); const l2 = new THREE.PointLight(0xffb08a, .7, 14); l2.position.set(20, 3.5, 80); grp.add(l2) }
+    /* V1.2 photo skin: real shopfront textures from assets/reference/giant_hostel/ (js/giant_hostel.js) */
+    if (AV.buildGiantHostel && AV.TEX_GH) AV.buildGiantHostel({ ctx, H, MT, M, box, grp, hb, B });
     occ.push({ x0: 5, x1: 34, z0: 47, z1: 89 });
 
     /* ---------- Blue's Live Music Bar: directly OPPOSITE the hostel (interior authored in the old coordinates, mapped by bX/bZ) ---------- */

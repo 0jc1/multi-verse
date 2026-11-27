@@ -70,6 +70,7 @@ function markers() {
   for (const v of (AV.act && AV.act.venues) || []) if (v.W === W && ICON[v.type]) { const vx = v.x != null ? v.x : v.p && v.p.x, vz = v.z != null ? v.z : v.p && v.p.z; if (!isFinite(vx) || !isFinite(vz)) continue; const k = 'v_' + v.type + Math.round(vx) + '_' + Math.round(vz); if (Math.hypot(vx - P.x, vz - P.z) < 80) sn[k] = 1; if (sn[k]) out.push({ x: vx, z: vz, kind: 'venue', icon: v.type === 'rental' && v.p && AV.veh ? AV.veh.KINDS[v.p.kind].icon : ICON[v.type], name: v.p && v.p.name ? tr(v.p.name[0], v.p.name[1]) : v.type }) }
   for (const t of W.T) { let l = ''; try { l = typeof t.label === 'function' ? t.label() : t.label } catch (e) { } if (/portal|Portal|pipe gate|gate to/i.test(l || '') && (!t.show || t.show())) { const k = 'p' + Math.round(t.x) + '_' + Math.round(t.z); if (Math.hypot(t.x - P.x, t.z - P.z) < 60) sn[k] = 1; if (sn[k]) out.push({ x: t.x, z: t.z, kind: 'portal', name: l }) } }
   if (AV.transit && AV.transit.has()) for (const t of W._taxis || []) { const k = 'tx' + Math.round(t.x) + '_' + Math.round(t.z); if (Math.hypot(t.x - P.x, t.z - P.z) < 90) sn[k] = 1; if (sn[k]) out.push({ x: t.x, z: t.z, kind: 'venue', icon: AV.transit.CFG[W.id].taxi.icon, name: tr('Taxi / shuttle stand', 'Parada de taxi / lanzadera') }) }
+  if (MM.extra) try { for (const m of MM.extra()) out.push(m) } catch (e) { }   /* 2.3: mission markers (lw_missions.js) */
   if (AV.veh) for (const o of AV.veh.live()) if (!(AV.act.cur && AV.act.cur.rec === o.rec)) out.push({ x: o.rec.x, z: o.rec.z, kind: 'veh', icon: AV.veh.KINDS[o.rec.kind].icon, name: tr('Your ', 'Tu ') + AV.veh.KINDS[o.rec.kind].n[AV.ui === 'es' ? 1 : 0] });
   return out;
 }
@@ -127,10 +128,10 @@ function routeTo(x, z) {
 }
 MM._route = routeTo;
 const pathLen = p => { let l = Math.hypot(p[0][0] - AV.P.x, p[0][1] - AV.P.z); for (let i = 1; i < p.length; i++) l += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return l };
-MM.setDest = function (x, z, name) { MM.dest = { x, z, name: name || tr('Waypoint', 'Destino'), path: MM._route(x, z), w: AV.W };   /* M13: MM._route is AV.path.route when pathfind.js is loaded */ const l = pathLen(MM.dest.path); AV.toast('📍 ' + MM.dest.name + ' · ' + (l > 999 ? (l / 1000).toFixed(1) + ' km' : Math.round(l) + ' m') + tr(' — follow the pink route', ' — sigue la ruta rosa')); return MM.dest };
+MM.setDest = function (x, z, name) { const d0 = AV.P ? Math.hypot(AV.P.x - x, AV.P.z - z) : 99; MM.dest = { x, z, name: name || tr('Waypoint', 'Destino'), path: MM._route(x, z), w: AV.W, arr: d0 < 16 ? 2.5 : 12 };   /* 2.3: short-range waypoints arrive at 2.5 m, not 12 m */   /* M13: MM._route is AV.path.route when pathfind.js is loaded */ const l = pathLen(MM.dest.path); AV.toast('📍 ' + MM.dest.name + ' · ' + (l > 999 ? (l / 1000).toFixed(1) + ' km' : Math.round(l) + ' m') + tr(' — follow the pink route', ' — sigue la ruta rosa')); return MM.dest };
 MM.clearDest = () => { MM.dest = null };
 let dt0 = 0; AV.frameFns.push(() => { const d = MM.dest; if (!d) return; if (d.w !== AV.W) { MM.dest = null; return } const P = AV.P;
-  if (Math.hypot(P.x - d.x, P.z - d.z) < 12) { AV.toast('📍 ' + tr('You have arrived: ', 'Has llegado: ') + d.name); MM.dest = null; return }
+  if (Math.hypot(P.x - d.x, P.z - d.z) < (d.arr || 12)) { AV.toast('📍 ' + tr('You have arrived: ', 'Has llegado: ') + d.name); MM.dest = null; return }
   while (d.path.length > 1 && Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z) < 9) d.path.shift();
   const now = AV.now(); if (now - dt0 > 2) { dt0 = now; const off = (() => { let best = Math.hypot(d.path[0][0] - P.x, d.path[0][1] - P.z), a = [P.x, P.z]; for (let i = 0; i < Math.min(3, d.path.length - 1); i++) { const p = d.path[i], q = d.path[i + 1], dx = q[0] - p[0], dz = q[1] - p[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((P.x - p[0]) * dx + (P.z - p[1]) * dz) / l2)); best = Math.min(best, Math.hypot(P.x - p[0] - dx * t, P.z - p[1] - dz * t)) } return best })();
     if (off > 15) { d.path = MM._route(d.x, d.z); MM.rerouted = (MM.rerouted || 0) + 1 } } });   /* M13: off the route line by > 15 m: re-route */

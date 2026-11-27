@@ -91,7 +91,9 @@ const SEGS = {
   eat: (l, last) => [['raise', .4], ['bite', .6], ['lower', .4], ['chew', .6]].concat(last ? [['empty', .4]] : []),
   breathe: (l, last) => [['raise', .45], ['inhale', 1.3], ['lower', .45], ['exhale', 1.2]]
 };
-CONS.busy = () => !!A;
+let autoPend = null;   /* 2.3: id whose next auto-step is scheduled; busy() stays true across the 350 ms gap */
+CONS.busy = () => !!A || !!autoPend;
+CONS.finishing = id => autoPend === id || !!(A && A.id === id && A.auto);
 CONS.step = function (id) {
   const S = AV.S, d = AV.ITEMS[id], sp = CONS.spec(id); if (!sp || !d) return false; if (A) return true;
   if (!AV.bag.count(id)) { AV.toast(tr('You don’t have that.', 'No tienes eso.')); return true }
@@ -123,7 +125,7 @@ function done(a) {
   else if (sp.load && rec.left <= 0) { rec.lit = false; AV.toast(tr('The bowl is finished. The pipe stays in your backpack.', 'La pipa se ha terminado. Se queda en tu mochila.')) }
   else if (!a.auto) AV.toast(d.ic + ' ' + left(id) + tr(' — U for another', ' — U para otra'));
   AV.save(); AV.bag.refresh && AV.bag.refresh();
-  if (a.auto && AV.bag.count(id) && (rec.left > 0)) setTimeout(() => { if (!A && AV.bag.held().id === id) { CONS.step(id); if (A) A.auto = true } }, 350);
+  if (a.auto && AV.bag.count(id) && (rec.left > 0)) { autoPend = id; setTimeout(() => { autoPend = null; if (!A && AV.bag.held().id === id) { CONS.step(id); if (A) A.auto = true } }, 350) }
 }
 const UNIT = { joint: L('drags', 'caladas'), pipe: L('hits', 'caladas'), hookah: L('puffs', 'caladas'), drink: L('sips', 'sorbos'), eat: L('bites', 'bocados'), breathe: L('breaths', 'respiraciones') };
 function left(id) { const r = st().open[id], sp = CONS.spec(id); if (!r || !sp) return ''; return r.left + '/' + r.n + ' ' + tr(UNIT[sp.kind][0], UNIT[sp.kind][1]) + tr(' left', ' restantes') }

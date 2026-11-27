@@ -74,7 +74,7 @@ function tick(dt) { if (!S) return; S.t += dt; const P = AV.P, t = S.t;
       for (const o of S.cars) if (o.turn && o.turn.from === ln && o !== c) gap = Math.min(gap, ln.L - c.s - c.len / 2 - 1);   /* someone turning out ahead */
       /* light */ const stopS = ln.L - STOPBACK(ln); let mustStop = false; if (ln.b.light) { const ph = T.phaseOf(ln.b, ln.axis, t); if (ph === 2 || (ph === 1 && c.s < stopS - c.v * 1.2)) mustStop = c.s < stopS + .3; else if (ph === 1 && c.s < stopS) c.goAmber = true }   /* committed on amber: it may finish crossing */ const toLine = stopS - c.s - c.len / 2;
       const blk = blockedAhead(c, x, z, hx, hz); if (blk && c.v > 1 && !c.stopped) { c.stopped = true; T.stats.stopsForPeople++ } if (!blk) c.stopped = false;
-      if (blk === 'you' && S.t > honkT && Math.hypot(P.x - x, P.z - z) < 7 && AV.audio && AV.audio.blip) { honkT = S.t + 4; AV.audio.blip(c.k === 'scooter' ? 660 : 400, .18, 'square', .05) }
+      if (blk === 'you' && S.t > honkT && Math.hypot(P.x - x, P.z - z) < 7 && AV.audio && AV.audio.blip) { honkT = S.t + 4; if (AV.snd && AV.snd.horn) AV.snd.horn(x, z, c.k); else AV.audio.blip(c.k === 'scooter' ? 660 : 400, .18, 'square', .05) }   /* 2.2: a real spatial two-tone horn (audio2.js) */
       let want = c.vmax; if (gap < 30) want = Math.min(want, gap < 1.5 ? 0 : c.vmax * (gap - 1.5) / 12); if (mustStop) want = Math.min(want, toLine < .2 ? 0 : Math.min(c.vmax, toLine * .9)); if (blk) want = 0;
       c.v += (want - c.v) * Math.min(1, dt * (want < c.v ? 4.5 : 1.3)); if (c.v < .02 && want === 0) c.v = 0;
       const s0 = c.s; c.s += c.v * dt; if (ln.b.light && s0 < stopS && c.s >= stopS) { if (T.phaseOf(ln.b, ln.axis, t) === 2 && !c.goAmber) T.stats.violations++; c.goAmber = false }

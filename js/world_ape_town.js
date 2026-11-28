@@ -97,7 +97,7 @@ AV.registerWorld({
   build(ctx) {
     const q = ctx.q, rng = ctx.rng, grp = ctx.group, MT = A.mats(), walk = A.walk(), occ = [];
     const B = { core: K.batch(), south: K.batch(), north: K.batch(), west: K.batch(), east: K.batch(), sky: K.batch() };
-    const isWater = (x, z) => waterDepth(x, z) > 0;
+    const isWater = (x, z) => waterDepth(x, z) > 0; ctx.isWater = isWater;   /* 2.3: festival crowds stay out of the water */
     const free = (x, z, pad) => ell(x, z) < 1 && waterDepth(x, z) < -1.2 && roadDist(x, z) > (pad || .8) && !occ.some(o => Math.hypot(x - o[0], z - o[1]) < o[2]);
     const sign = (txt, x, z, ry, w, col, h) => ctx.sign(txt, x, H(x, z) + (h || 3.2), z, ry, w, col, { posts: true });
     M.resetFrames();

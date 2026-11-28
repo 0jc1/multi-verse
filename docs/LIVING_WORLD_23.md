@@ -428,3 +428,32 @@ A professional controller view (functional inspiration: Serato DJ Intro / DJUCED
 **Test:** `suite_lw23g` **26/26**: clean vs witnessed theft, stars, officers, police car at 3 ★, chase to arrest (fine and impound), surrender at half the fine, escape by losing sight, damage, knock-out to hospital (position, health, fee, homes kept), hospital heal.
 
 **Performance finding (to fix in the polish milestone):** the first ~40 s after arriving in Madrid run at about 10 FPS (Medium, 1536×864), and later visits at 25–31 FPS. An A/B run with the police module on and off shows its cost is within noise. The warm-up (minimap mapping, GPS warm-up, venue / interior placement, sound decoding) is the cause and needs spreading out.
+
+## Festivals, crowds and calendar (`js/lw_festivals.js`)
+
+**Original Apeverse festivals** (added to the shared festival list, so What's Happening? and the festival guide show them):
+- **Stoned Ape Carnival:** Ape Town, Saturdays 17:00–02:00, with the Stone Ape Band headline.
+- **Graviton Night:** Astro-9, Fridays 20:00.
+- **Dub Moon Gathering:** Jungle Dub, Wednesdays 19:00.
+- **Yi Peng lantern night:** Chiang Mai, Tuesdays 18:00. It switches the city into lantern mode, with **packed streets** at Tha Phae Gate and the Ping River.
+
+**While any festival is on in your world** (the new ones and Koningsdag, La Mercè, Festa de Gràcia, Fête de la Musique, Feria de Abril, Bon Odori, Sairee Fire Night, Hanging Bazaar):
+- **Instanced crowds:** 220–320 people around the centre, more at peak and fewer on Low graphics. Each person has legs, a torso with arms (a third with hands up, dancing), a head and hair, each with its own palette. That is 5 draw calls per cluster; people dance and sway to the beat, animated only within 45 m.
+- Three pop-up stalls (street food, drinks, merch) with real serving.
+- A **festival stage**: a paid DJ set that opens APE·DJ PRO.
+- A **festival board** with jobs (stall shift, crowd photo challenge), offered only while the festival is on.
+- Characters bring up the festival in conversation.
+
+**Bamb:** four permanent murals of a smoking alien around Ape Town ("take it easy, earthling"), each a photo spot. A Bamb piece also hangs in every 2.3 gallery.
+
+**📅 Events app:** the next 14 days across all worlds. "Go now" is **festival travel mode**: in-game time skips to the start and you travel there.
+
+**Test:** `suite_lw23h` **26/26**: calendar, travel mode, the quarter transforms (crowd, stalls, stage, board), dancing crowd, festival food served, stall-shift job, festival DJ set paid, festival talk, Bamb murals, Yi Peng lantern mode with crowds at the gate and the river.
+- **Fixed along the way:** crowd members were standing on Ape Town's water; Ape Town now exposes `ctx.isWater`.
+
+**Not yet:**
+- general (non-festival) crowd density by time and weather;
+- arcade and billiards competitions at festivals (minigames milestone);
+- festival-specific merch items.
+
+**Performance:** 6–15 FPS in dense festival scenes on the test runs (headless, 1536×864, Medium, other work on the laptop). To be profiled with the Madrid warm-up issue.

@@ -403,3 +403,28 @@ A professional controller view (functional inspiration: Serato DJ Intro / DJUCED
 - hot cues set and jump; loops; SYNC matches BPM.
 
 **Not yet:** scratching is rate-based on the browser's media playback, not a sample-accurate vinyl emulation. Gig pay and audience reactions still come from the existing DJ activity (`music_play.js`); DJ competitions come with the minigames milestone.
+
+## Milestone G: theft, wanted stars, police, health, hospital (`js/lw_police.js`)
+
+**Theft:**
+- Every city has parked civilian vehicles (cars and scooters; on Astro-9 a hover car and a hoverbike). "🎭 Steal this…" puts you in the driver's seat.
+- Rental stands also offer "take one without paying".
+- **Witnesses** (characters or crowds within 18 m) report you: a car is +2 ★, a scooter or bike +1 ★. With nobody around you get away clean.
+
+**Wanted (1–5 ★):**
+- The HUD shows the stars and which police are after you, plus a 🙌 Surrender button (also on the phone).
+- Officers on foot (one per star, scaled by city) run at you. From 3 ★ a police car with a flashing light bar and the **recorded siren** (public domain, spatial) joins.
+- **Regional police:** name and colour per city; Tokyo responds strongest; Pai and Koh Tao are lenient.
+
+**Arrest:** an officer next to you for 1.5 s while you're on foot or slow means **busted**: a fine of 120 × stars, stolen vehicles impounded, stars cleared, released at the station. Surrendering costs half the fine.
+
+**Escape:** out of sight for 18 s per star removes a star; hiding inside a building (enclosed on 3 sides) halves the time.
+
+**Health 0–100:**
+- Riding crashes hurt (by impact speed), and so do hard falls (over 4.5 m).
+- At 0: **KNOCKED OUT**, then you wake up at the **city hospital**, a walk-in building with a nurse counter (heal 30 ¢). Medical fee 150 (`LW.CFG.medFee`); wanted cleared; homes, money and missions kept; a timed mission in progress fails and can be retried.
+- **Non-graphic, no weapons.** Fictional weapons are still to do, together with punch-reports to the police.
+
+**Test:** `suite_lw23g` **26/26**: clean vs witnessed theft, stars, officers, police car at 3 ★, chase to arrest (fine and impound), surrender at half the fine, escape by losing sight, damage, knock-out to hospital (position, health, fee, homes kept), hospital heal.
+
+**Performance finding (to fix in the polish milestone):** the first ~40 s after arriving in Madrid run at about 10 FPS (Medium, 1536×864), and later visits at 25–31 FPS. An A/B run with the police module on and off shows its cost is within noise. The warm-up (minimap mapping, GPS warm-up, venue / interior placement, sound decoding) is the cause and needs spreading out.

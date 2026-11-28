@@ -1,0 +1,28 @@
+/* APEVERSE 2.3 MILESTONE G - theft, wanted stars, police chase, arrest / surrender / escape, health, knock-out -> hospital respawn.
+   run_tests.ps1 -Suite tools/tests/suite_lw23g.js -Gpu -Port 8102 -StepTimeout 900 */
+window.APE_T = (() => {
+  const steps = [], step = (name, fn, o) => steps.push(Object.assign({ name, fn }, o || {}));
+  const sleep = ms => new Promise(r => setTimeout(r, ms)), $ = id => document.getElementById(id);
+  const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(120) } return false };
+  const settled = () => AV.W && $('fade').style.opacity === '0';
+  const go = async id => { if (AV.W && AV.W.id === id) return true; AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 240000) };
+  const lbl = t => { try { return typeof t.label === 'function' ? t.label() : String(t.label) } catch (e) { return '' } };
+  const put = (x, z) => { const P = AV.P; P.x = x; P.z = z; P.y = AV.W.surface(x, z) || 0; P.vx = P.vz = 0 };
+  const errs = () => (window.__APE_ERRS || []).filter(e => !/api\/mp\//.test(e)); const PO = () => AV.LW.police;
+  step('boot (sandboxed save)', async c => { c('page scripts loaded', await until(() => window.AV && AV.boot && $('bNew') && $('bNew').onclick, 120000)); AV.saveKey = 'apeverse_test_lw23g'; $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(1500);
+    c('police module', !!(AV.LW.police && AV.LW.steal && AV.LW.die)); c('Madrid', await go('madrid')); await sleep(3500); c('civilian vehicles parked to steal', AV.LW.parked().length >= 3, AV.LW.parked().map(r => r.kind).join(',')); c('a hospital (walk-in, heal counter)', !!AV.LW.hospital.madrid, AV.LW.hospital.madrid && AV.LW.hospital.madrid.name) });
+  step('clean theft (no witnesses) vs seen theft', async c => { const r0 = AV.LW.parked().find(r => r.kind === 'scooter'); put(r0.x + 1.6, r0.z); const npcs = AV.W.T.filter(t => t.npc); npcs.forEach(t => t.npc.g.position.x += 500); AV.LW._forceWitness = false;
+    const near = (AV.city && AV.city.near) ? AV.city.near : null; if (AV.city) AV.city.near = () => []; const v = AV.LW.steal(r0); c('stolen scooter: you ride it', !!v && AV.act.cur && AV.act.cur.id === 'ride'); c('nobody saw: no stars', PO().stars === 0); AV.act.end('t'); npcs.forEach(t => t.npc.g.position.x -= 500); if (AV.city) AV.city.near = near;
+    const car = AV.LW.parked().find(r => r.kind === 'car' && !r.gone); put(car.x + 1.6, car.z); AV.LW._forceWitness = true; AV.LW.steal(car); AV.LW._forceWitness = false; c('seen car theft: 2 stars', PO().stars === 2, PO().stars); c('officers spawned (1 per star)', PO().cops.length >= 2, PO().cops.length);
+    c('wanted HUD + surrender button', /★★/.test($('lwWanted').textContent) && [...document.querySelectorAll('button')].some(b => /Surrender/.test(b.textContent) && b.style.display === 'block')) }, { shot: 'lw_g_wanted' });
+  step('escalation: police car with siren at 3 stars', async c => { AV.LW.setStars(3); await sleep(300); c('a police car joins', !!PO().car); c('officers keep running to you', await until(() => PO().cops.some(k => Math.hypot(k.g.position.x - AV.P.x, k.g.position.z - AV.P.z) < 25), 15000)) });
+  step('arrest: fine + impound', async c => { if (AV.act.cur) AV.act.end('t'); const m0 = AV.S.money; c('busted when an officer reaches you on foot', await until(() => PO().stars === 0, 40000), PO().stars); c('fine paid (120 per star)', AV.S.money < m0, m0 - AV.S.money); c('stolen vehicles impounded', !(AV.S.veh.list || []).some(r => r.stolen)) });
+  step('surrender = half fine; escape by hiding', async c => { AV.LW.setStars(2); const m0 = AV.S.money; AV.LW.surrender(); c('surrender: fine 120 (half of 240)', m0 - AV.S.money === 120 && PO().stars === 0, m0 - AV.S.money);
+    AV.LW.setStars(1); PO().cops.forEach(k => { k.g.position.x += 300 }); const t0 = Date.now(); c('out of sight: the star fades', await until(() => PO().stars === 0, 30000), ((Date.now() - t0) / 1000).toFixed(1) + ' s') });
+  step('health: crash damage, knock-out -> hospital', async c => { const hp0 = AV.LW.hp(); AV.LW.hurt(30, ['crash', 'choque']); c('damage lowers health', AV.LW.hp() === hp0 - 30); AV.LW.setStars(2); const m0 = AV.S.money, d0 = Object.keys(AV.S.homes || {}).length;
+    AV.LW.hurt(200, ['a bad fall', 'una mala caída']); c('knocked out at 0', AV.LW.police.dead === true); c('wakes up at the hospital', await until(() => !AV.LW.police.dead, 6000) && Math.hypot(AV.P.x - AV.LW.hospital.madrid.front[0], AV.P.z - AV.LW.hospital.madrid.front[1]) < 4);
+    c('health restored, wanted cleared, fee paid, homes kept', AV.LW.hp() === 100 && PO().stars === 0 && AV.S.money === m0 - 150 && Object.keys(AV.S.homes || {}).length === d0, AV.S.money - m0);
+    AV.LW.hurt(40, ['test', 'test']); const T = AV.W.T.find(t => /nurse/.test(lbl(t))); c('hospital heal counter', !!T); if (T) { put(T.x, T.z); const m1 = AV.S.money; T.fn(); c('healed for 30', AV.LW.hp() === 100 && m1 - AV.S.money === 30) }
+    c('no JS errors', !errs().length, errs().slice(-3).join(' | ')); try { localStorage.removeItem('apeverse_test_lw23g'); localStorage.removeItem('apeverse_test_lw23g_bak') } catch (e) { } }, { shot: 'lw_g_hospital' });
+  return { names() { return steps.map(s => s.name) }, async exec(i) { const s = steps[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };
+})();

@@ -26,7 +26,10 @@ async function init() { B = window.BABYLON;
      attribute is not declared (vertex + instance colours, readiness checks without instancing): guard it like the declaration is guarded */
   for (const st of [B.Effect && B.Effect.IncludesShadersStore, B.ShaderStore && B.ShaderStore.IncludesShadersStoreWGSL]) { const k = 'vertexColorMixing'; if (st && typeof st[k] === 'string') st[k] = st[k].split('#ifdef INSTANCESCOLOR\nvColor').join('#if defined(INSTANCESCOLOR) && defined(INSTANCES)\nvColor').split('#ifdef INSTANCESCOLOR\nvertexOutputs.vColor').join('#if defined(INSTANCESCOLOR) && defined(INSTANCES)\nvertexOutputs.vColor') }
   const host = AV.R.domElement; cv = document.createElement('canvas'); cv.id = 'bcv'; cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;outline:none'; host.parentNode.insertBefore(cv, host.nextSibling); host.style.visibility = 'hidden';
-  let api = 'WebGL2'; try { if (window.__BAB_API !== 'webgl' && navigator.gpu && B.WebGPUEngine && await B.WebGPUEngine.IsSupportedAsync) { engine = new B.WebGPUEngine(cv, { antialias: true, adaptToDeviceRatio: true }); await engine.initAsync(); api = 'WebGPU' } } catch (e) { engine = null }
+  /* backend: WebGL2 by default.  Babylon 7's WebGPU path converts every GLSL material to WGSL at runtime; with Ape Town's ~350 PBR
+     materials that stalled real Chrome at 0 frames (owner's black screen).  WebGPU stays opt-in: ?engine=webgpu or __BAB_API='webgpu'. */
+  let want = window.__BAB_API || (/engine=webgpu/.test(location.search) ? 'webgpu' : 'webgl'); try { want = localStorage.getItem('apeverse_bab_api') || want } catch (e) { }
+  let api = 'WebGL2'; try { if (want === 'webgpu' && navigator.gpu && B.WebGPUEngine && await B.WebGPUEngine.IsSupportedAsync) { engine = new B.WebGPUEngine(cv, { antialias: true, adaptToDeviceRatio: true }); await engine.initAsync(); api = 'WebGPU' } } catch (e) { engine = null }
   if (!engine) engine = new B.Engine(cv, true, { stencil: true, preserveDrawingBuffer: true }, true); BB.stats.api = api; BB.engine = engine;
   scene = new B.Scene(engine); scene.useRightHandedSystem = true; scene.skipPointerMovePicking = true; scene.autoClear = true; BB.scene = scene;
   cam = new B.UniversalCamera('cam', B.Vector3.Zero(), scene); cam.inputs.clear(); cam.rotationQuaternion = new B.Quaternion(); cam.minZ = .1; scene.activeCamera = cam;
@@ -41,7 +44,8 @@ async function init() { B = window.BABYLON;
   const r0 = AV.R.render.bind(AV.R); BB.threeRender = r0; AV.R.render = (s, c) => { if (!BB.on) return r0(s, c); try { frame() } catch (e) { console.warn('bab frame', e); BB.on = false; host.style.visibility = 'visible'; cv.style.display = 'none' } };
   if (AV.gfx && AV.gfx.render) { const g0 = AV.gfx.render; AV.gfx.render = function () { return BB.on ? false : g0.apply(this, arguments) } }   /* Three's EffectComposer is bypassed: Babylon has its own pipeline */
   BB.setOn = v => { BB.on = !!v; host.style.visibility = BB.on ? 'hidden' : 'visible'; cv.style.display = BB.on ? 'block' : 'none'; if (BB.on) engine.resize() };
-  addEventListener('resize', () => engine.resize()); BB.on = true; console.log('[Apeverse] Babylon.js ' + V + ' renderer on (' + api + ')') }
+  addEventListener('resize', () => engine.resize()); BB.on = true; watchdog();
+  try { engine.onContextLostObservable.add(() => fallback('the graphics context was lost (e.g. after sleep)')) } catch (e) { } console.log('[Apeverse] Babylon.js ' + V + ' renderer on (' + api + ')') }
 /* ---------- conversion ---------- */
 const GEO = new Map(), MAT = new Map(), TEX = new Map(), toC = (c, k) => new B.Color3(c.r * (k == null ? 1 : k), c.g * (k == null ? 1 : k), c.b * (k == null ? 1 : k));
 /* characters (chars_real) colour themselves in an onBeforeCompile shader: albedo = palette uC0..uC3 weighted by the aMat attribute.
@@ -127,7 +131,18 @@ function rebuild(b) { if (b.mesh) { b.mesh.dispose(false, false); b.mesh = null 
 function flush() { for (const [b, t] of DIRTY) if (tick - t > 40) { DIRTY.delete(b); rebuild(b) } let s = 0, nb = 0; for (const b of BAT.values()) { s += b.live.size; if (b.mesh) nb++ } BB.stats.batched = s; BB.stats.batchMeshes = nb }
 function scan() { const live = new Set(); AV.scene.traverse(o => { if (!(o.isMesh || o.isSprite)) return; live.add(o); if (!BB.map.has(o)) make(o) }); for (const [o, n] of BB.map) if (!live.has(o)) { if (n) { unbatch(n); n.dispose(false, false) } BB.map.delete(o) } }
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _d = new THREE.Vector3();
-function frame() { if (tick % 30 === 15 && FRZ.size) { for (const bm of FRZ) if (bm.isReady && bm.getScene && !bm.isFrozen) { const t = [bm.albedoTexture, bm.diffuseTexture, bm.emissiveTexture].filter(Boolean); if (t.every(x => x.isReady())) { bm.freeze(); FRZ.delete(bm) } } }
+/* ---------- safety: never a black screen ----------
+   If Babylon is not really drawing (frame counter stalls, or the picture reads back blank/black several times) or its GPU context is
+   lost, rendering goes back to the stable Three.js renderer and the player sees a short notice instead of a black world. */
+BB.frames = 0;
+function notice(msg) { let n = document.getElementById('babNotice'); if (!n) { n = document.createElement('div'); n.id = 'babNotice'; n.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:rgba(20,10,40,.92);color:#ffe9a8;border:1px solid #c79cff;border-radius:10px;padding:10px 16px;font:14px system-ui,sans-serif;max-width:80vw;box-shadow:0 6px 24px rgba(0,0,0,.4)'; document.body.appendChild(n) } n.textContent = msg; clearTimeout(n._t); n._t = setTimeout(() => n.remove(), 9000) }
+function fallback(why) { if (!BB.on && BB.fellBack) return; BB.fellBack = why; BB.setOn(false); console.warn('[Apeverse] Babylon off: ' + why); notice('Babylon renderer switched off (' + why + '). The game continues with the stable renderer.') }
+function blank() { try { const c = document.createElement('canvas'); c.width = 32; c.height = 18; const g = c.getContext('2d'); g.drawImage(cv, 0, 0, 32, 18); const d = g.getImageData(0, 0, 32, 18).data; let s = 0, s2 = 0; const n = d.length / 4; for (let i = 0; i < d.length; i += 4) { const v = (d[i] + d[i + 1] + d[i + 2]) / 3; s += v; s2 += v * v } const m = s / n, sd = Math.sqrt(Math.max(0, s2 / n - m * m)); return m < 3 || sd < 1.5 } catch (e) { return false } }
+function watchdog() { let lastF = BB.frames, lastT = performance.now(), blanks = 0; const iv = setInterval(() => { if (!BB.on) return; if (!AV.running || document.hidden) { lastF = BB.frames; lastT = performance.now(); return }
+    const now = performance.now(), fps = (BB.frames - lastF) * 1000 / (now - lastT); lastF = BB.frames; lastT = now; BB.stats.babFps = Math.round(fps);
+    const fade = document.getElementById('fade'), covered = fade && +fade.style.opacity > .2; if (fps < 1 && (AV.fps || 0) > 5 && !covered) return fallback('no frames were being drawn');   /* the game loop runs but Babylon does not */
+    if (!covered && blank()) { if (++blanks >= 3) return fallback('the picture stayed black') } else blanks = 0 }, 2000); BB._wd = iv }
+function frame() { BB.frames++; if (tick % 30 === 15 && FRZ.size) { for (const bm of FRZ) if (bm.isReady && bm.getScene && !bm.isFrozen) { const t = [bm.albedoTexture, bm.diffuseTexture, bm.emissiveTexture].filter(Boolean); if (t.every(x => x.isReady())) { bm.freeze(); FRZ.delete(bm) } } }
   const t0 = performance.now(), c = AV.cam; c.updateMatrixWorld(); AV.scene.updateMatrixWorld(); if (tick++ % 20 === 0) scan(); const t1 = performance.now();
   for (const [o, n] of BB.map) if (n) syncObj(o, n); if (DIRTY.size) flush(); const t2 = performance.now();
   const p = _p, q = _q, s = _s; c.matrixWorld.decompose(p, q, s); cam.position.set(p.x, p.y, p.z); cam.rotationQuaternion.set(q.x, q.y, q.z, q.w); cam.fov = c.fov * Math.PI / 180; cam.maxZ = c.far; cam.minZ = c.near;

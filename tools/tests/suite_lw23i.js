@@ -1,0 +1,24 @@
+/* APEVERSE 2.3 - minigames + competitions: APE-SNAKE arcade (real game steered by the test), billiards tournament flow (3 rounds,
+   entry, prize, title; individual pool games' results injected - the pool game itself is covered by the older suites), wager game,
+   real pool table opens with the new skill setting.   run_tests.ps1 -Suite tools/tests/suite_lw23i.js -Gpu -Port 8102 -StepTimeout 900 */
+window.APE_T = (() => {
+  const steps = [], step = (name, fn, o) => steps.push(Object.assign({ name, fn }, o || {}));
+  const sleep = ms => new Promise(r => setTimeout(r, ms)), $ = id => document.getElementById(id);
+  const until = async (cond, max) => { const t0 = Date.now(); while (Date.now() - t0 < (max || 8000)) { try { if (cond()) return true } catch (e) { } await sleep(150) } return false };
+  const settled = () => AV.W && $('fade').style.opacity === '0';
+  const go = async id => { if (AV.W && AV.W.id === id) return true; AV.travel(id); return until(() => AV.W && AV.W.id === id && settled(), 240000) };
+  const lbl = t => { try { return typeof t.label === 'function' ? t.label() : String(t.label) } catch (e) { return '' } };
+  const errs = () => (window.__APE_ERRS || []).filter(e => !/api\/mp\//.test(e)); const G = () => AV.LW.games;
+  step('boot + Tokyo arcade row', async c => { c('page scripts loaded', await until(() => window.AV && AV.boot && $('bNew') && $('bNew').onclick, 120000)); AV.saveKey = 'apeverse_test_lw23i'; $('gq').value = 'Low'; $('bNew').click(); c('game starts', await until(() => AV.W && AV.running, 60000)); await sleep(1500);
+    c('Tokyo', await go('tokyo')); c('arcade cabinets placed (Center Gai row + bars)', await until(() => G().cabinets.length >= 4, 10000), G().cabinets.length) });
+  step('APE-SNAKE: play for real', async c => { const T = AV.W.T.find(t => t.lwArcade); AV.P.x = T.x; AV.P.z = T.z; const m0 = AV.S.money; T.fn(); await sleep(300); c('cabinet screen opens, 5 ¢ credit', $('lwArc').style.display === 'flex' && AV.S.money === m0 - 5);
+    const S = G()._snake; let eaten = 0; for (let k = 0; k < 400 && S.alive && S.score < 6; k++) { const h = S.head(), f = S.food(), cur = S.dir(); let d = f[0] !== h[0] ? [Math.sign(f[0] - h[0]), 0] : [0, Math.sign(f[1] - h[1])]; if (d[0] === -cur[0] && d[1] === -cur[1]) d = cur[0] ? [0, h[1] < 11 ? 1 : -1] : [h[0] < 11 ? 1 : -1, 0];   /* never reverse into yourself: turn sideways first */ S.setDir(d); await sleep(90) } eaten = S.score; c('steered to eat fruit (the snake grows)', eaten >= 4 && S.len() >= 7, eaten + ' fruit, length ' + S.len());
+    await sleep(600); G()._end(false); await sleep(300); c('prize 2 ¢ per fruit + record bonus', AV.S.money >= m0 - 5 + eaten * 2, AV.S.money - (m0 - 5)); c('high score saved', (AV.LW.st().hi || {}).snake_tokyo === eaten); c('leaderboard shown', /KENJI/.test($('lwArc').textContent)); $('lwArcX').click() }, { shot: 'lw_i_snake' });
+  step('billiards: tournament flow + wager', async c => { c('Chiang Mai', await go('chiang_mai')); await sleep(2600); const T = AV.W.T.find(t => /Billiards tournament/.test(lbl(t))); c('tournament entry at the pool table', !!T); const real = AV.pool.openGame, seen = [];
+    AV.pool.openGame = o => { seen.push(o.skill); setTimeout(() => o.onEnd(true), 50) }; const m0 = AV.S.money; T.fn(); c('three rounds, harder each time', await until(() => !G().cur && seen.length === 3, 8000) && seen[0] > seen[1] && seen[1] > seen[2], JSON.stringify(seen)); c('champion: -50 entry +400 prize', AV.S.money - m0 === 350, AV.S.money - m0); c('title on the board', (AV.LW.st().hi || {}).pool_chiang_mai === 1);
+    AV.pool.openGame = o => { setTimeout(() => o.onEnd(false), 50) }; const m1 = AV.S.money; AV.LW.games.tournament(T); await until(() => !G().cur, 4000); c('knocked out: only the entry is lost', m1 - AV.S.money === 50);
+    AV.pool.openGame = o => { setTimeout(() => o.onEnd(true), 50) }; const m2 = AV.S.money; AV.LW.games.wager(T, 50); await sleep(400); c('wager won: +50 net', AV.S.money - m2 === 50, AV.S.money - m2); AV.pool.openGame = real;
+    AV.pool.openGame({ skill: 3, onEnd: () => { } }); await sleep(500); c('the real pool table opens with a skill level', AV.pool.open && $('pool').style.display === 'block'); AV.pool.close(true); c('no JS errors', !errs().length, errs().slice(-3).join(' | '));
+    try { localStorage.removeItem('apeverse_test_lw23i'); localStorage.removeItem('apeverse_test_lw23i_bak') } catch (e) { } });
+  return { names() { return steps.map(s => s.name) }, async exec(i) { const s = steps[i], checks = [], c = (n, pass, d) => checks.push({ n: s.name + ': ' + n, pass: !!pass, d: d == null ? '' : String(d) }); try { await s.fn(c) } catch (e) { checks.push({ n: s.name + ': exception', pass: false, d: String(e && e.stack || e).slice(0, 400) }) } return { checks, shot: s.shot || null } } };
+})();

@@ -457,3 +457,35 @@ A professional controller view (functional inspiration: Serato DJ Intro / DJUCED
 - festival-specific merch items.
 
 **Performance:** 6–15 FPS in dense festival scenes on the test runs (headless, 1536×864, Medium, other work on the laptop). To be profiled with the Madrid warm-up issue.
+
+## Minigames and competitions (`js/lw_games.js`)
+
+- **🕹️ APE-SNAKE arcade cabinets:**
+  - placement: inside the first two 2.3 bars or record shops of every city, a row of 4 in Tokyo's Center Gai, 2 on Ape Town's Brand Row and Amsterdam's Damrak, one by the stage at festivals;
+  - a real Snake game on the cabinet screen (arrows / WASD / swipe) that speeds up as you eat;
+  - 5 ¢ per credit, 2 ¢ per fruit, a +50 bonus for a new record;
+  - a high score per world and a leaderboard against local legends.
+- **🏆 Billiards tournaments** at every pool table: entry 50 ¢, three rounds against rising opposition. `pool.js` gained `opts.skill`, an aim-error multiplier: 3.2, then 2, then 1 in the final (Nuni in Chiang Mai). Prize 400 ¢, +6 reputation and your title on the board; lose and you're out.
+- **💰 Wager game:** bet 50 ¢ on one game; a win doubles it.
+- **Test:** `suite_lw23i` **19/19**:
+  - Snake played for real: the test steers to the fruit, the snake grows, prize, high score, leaderboard.
+  - Tournament flow: three rounds getting harder, champion prize, title, knocked out, wager. The individual pool results are injected; the pool game itself is covered by the older Chiang Mai suites.
+  - The real pool table opens with a skill level.
+
+## CRITICAL FIX: white screen after character creation (owner playtest, 2026-11-28)
+
+**Cause:**
+- The character creator's live preview created a **new WebGLRenderer on every option change**.
+- `dispose()` does not free a WebGL context, and Chrome keeps about 16 active contexts.
+- After roughly 16 changes, Chrome silently dropped the **oldest context, which is the game's own renderer**.
+- The game kept running (movement, portals), but it could not draw any more: a white, frozen world that travel could not fix.
+- The earlier automated creator test made only about 8 changes, so it never crossed the limit.
+
+**Fix (`lw_onboard.js`):**
+- **One preview renderer for the creator's lifetime.** The same canvas is kept across re-renders, and `forceContextLoss()` + `dispose()` run on close.
+- **Safety net:** if the game's context is ever lost, the game saves and reloads instead of freezing white.
+
+**Verification:** `suite_lw23w` **18/18**.
+- It goes through the real creator UI with **30 option changes** and checks the context stays alive.
+- Rendered frames are **read back pixel by pixel** (not blank, not white, has variety) at home, outside, after travel to Astro-9, Amsterdam and Ape Town, and after the wake-up chooser. Screenshots were checked visually.
+- `suite_lw23e` 49/49.

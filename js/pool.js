@@ -136,7 +136,7 @@ function nuniPlay() {
   if (S.inHand) { const p = bestPlacement() || { x: TW * .25, y: TH / 2 }; const c = S.balls[0]; c.x = p.x; c.y = p.y; c.in = false; S.inHand = false; S.think = .6; return }
   if (!S.broke) { shoot('n', Math.PI + (Math.random() - .5) * .02, 1); return }
   const pick = choose(S.balls);
-  const err = (Math.random() + Math.random() + Math.random() - 1.5) * .0045;   // ~0.15° typical error: a champion, not a robot
+  const err = (Math.random() + Math.random() + Math.random() - 1.5) * .0045 * ((opts && opts.skill) || 1);   // ~0.15° typical error: a champion, not a robot (2.3: opts.skill > 1 = weaker opponents in tournaments)
   aim.a = pick.a + err; S.nAim = aim.a; setTimeout(() => G.open && !S.over && shoot('n', pick.a + err, pick.pow), 700);
 }
 function choose(balls) {

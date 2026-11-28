@@ -71,6 +71,7 @@ function bambTex() { if (F.bt) return F.bt; const c = document.createElement('ca
   g.strokeStyle = '#f4f0e8'; g.lineWidth = 10; g.beginPath(); g.moveTo(205, 205); g.lineTo(290, 222); g.stroke(); g.fillStyle = '#ff6a2a'; g.fillRect(286, 214, 14, 16); g.fillStyle = 'rgba(230,230,230,.55)'; for (let s = 0; s < 8; s++) { g.beginPath(); g.arc(300 + s * 9, 196 - s * 20, 8 + s * 3, 0, 7); g.fill() }
   g.fillStyle = '#ff4ad2'; g.font = 'bold 64px Impact, Arial Black'; g.fillText('BAMB', 340, 300); g.font = 'italic 20px Georgia'; g.fillStyle = '#ffd23a'; g.fillText('“take it easy, earthling”', 300, 60);
   const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.userData = { keep: true }; return F.bt = t }
+F.bambTex = bambTex;
 function bambMurals(W) { if (W.id !== 'ape_town' || W.__bamb) return; W.__bamb = 1; const spots = ['plaza', 'stage', 'gallery', 'finca'].map(id => placeXY(W, id)).filter(Boolean);
   spots.forEach(([x, z], i) => { const sp = AV.safeSpot(W, x + 9 + i, z + 7), g = new THREE.Group(); g.position.set(sp[0], W.surface(sp[0], sp[1]) || 0, sp[1]); g.rotation.y = Math.atan2(x - sp[0], z - sp[1]);
     const wall = new THREE.Mesh(AV.G.box, AV.std(0xd8d0c4, .9)); wall.scale.set(4.4, 2.9, .3); wall.position.y = 1.45; g.add(wall); const art = new THREE.Mesh(AV.G.pln, new THREE.MeshBasicMaterial({ map: bambTex() })); art.material.userData.lin = 1; art.scale.set(4.1, 2.56, 1); art.position.set(0, 1.5, .16); g.add(art); W.ctx.group.add(g);

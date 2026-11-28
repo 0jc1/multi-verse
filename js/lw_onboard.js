@@ -48,7 +48,10 @@ const ov = document.createElement('div'); ov.id = 'lwOnb'; document.body.appendC
 let me = null, opt = null, pv = null, mode = 'new';
 const CITIES = ['ape_town', 'chiang_mai', 'pai', 'koh_tao', 'amsterdam', 'madrid', 'barcelona', 'sevilla', 'paris', 'vienna', 'tokyo', 'rio', 'oaxaca', 'astro9'];
 const wn = w => (AV.worldMeta && (AV.worldMeta(w) || {}).name) || w;
-function preview() { const cv = ov.querySelector('canvas'); if (!cv) return; if (!pv) { const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); R.outputEncoding = THREE.sRGBEncoding; R.setPixelRatio(Math.min(2, devicePixelRatio || 1)); R.setSize(300, 420, false);
+/* 2.3 fix (owner's white screen): ONE preview renderer for the creator's lifetime. It used to create a new WebGLRenderer on every option
+   change; dispose() does not free a WebGL context, so after ~16 changes Chrome dropped the OLDEST context = the game's own renderer. */
+let pvCanvas = null;
+function preview() { const cv = pvCanvas; if (!cv) return; if (!pv) { const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true }); R.outputEncoding = THREE.sRGBEncoding; R.setPixelRatio(Math.min(2, devicePixelRatio || 1)); R.setSize(300, 420, false);
     const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x4a3a5a, .9)); const d = new THREE.DirectionalLight(0xffe8d0, 1.1); d.position.set(2, 4, 3); sc.add(d); const cam = new THREE.PerspectiveCamera(32, 300 / 420, .1, 50); cam.position.set(0, 1.05, 4.4); cam.lookAt(0, .92, 0);
     pv = { R, sc, cam, g: null, a: 0, on: true }; const loop = () => { if (!pv || !pv.on) return; pv.a += .012; if (pv.g) pv.g.rotation.y = Math.sin(pv.a) * .9; pv.R.render(pv.sc, pv.cam); requestAnimationFrame(loop) }; loop() }
   if (pv.g) { pv.sc.remove(pv.g); AV.dispose(pv.g) } try { pv.g = LW.buildAvatar(me); pv.sc.add(pv.g); LW.stats.preview = (LW.stats.preview || 0) + 1 } catch (e) { console.warn('preview', e) } }
@@ -72,8 +75,11 @@ function render() { const homes = LW.STARTER_HOMES.filter(id => H.PROPS[id]), P 
   ov.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { const id = b.dataset.h, w = H.PROPS[id].w; if (opt.homes.includes(id)) opt.homes = opt.homes.filter(x => x !== id); else { opt.homes = opt.homes.filter(x => H.PROPS[x].w !== w); opt.homes.push(id); if (opt.homes.length > 2) opt.homes.shift() } render() });
   const tu = ov.querySelector('#lwTut'); if (tu) tu.onchange = e => { opt.tut = e.target.checked };
   ov.querySelector('#lwCancel').onclick = () => close(); ov.querySelector('#lwGo').onclick = () => finish();
-  if (pv) { pv.on = false; try { pv.R.dispose() } catch (e) { } pv = null } preview() }
-function close() { ov.style.display = 'none'; if (pv) { pv.on = false; try { pv.R.dispose() } catch (e) { } pv = null } }
+  if (!pvCanvas) { pvCanvas = document.createElement('canvas'); pvCanvas.width = 300; pvCanvas.height = 420 } const ph = ov.querySelector('canvas'); if (ph && ph !== pvCanvas) ph.replaceWith(pvCanvas); preview() }
+function close() { ov.style.display = 'none'; if (pv) { pv.on = false; try { pv.R.forceContextLoss(); pv.R.dispose() } catch (e) { } pv = null } pvCanvas = null }
+LW.previewContexts = () => (pv ? 1 : 0);
+/* safety net: if the game's WebGL context is ever lost, save and reload (instead of a frozen white world) */
+addEventListener('load', () => { const cv = AV.R && AV.R.domElement; if (!cv) return; cv.addEventListener('webglcontextlost', e => { e.preventDefault(); LW.stats.ctxLost = (LW.stats.ctxLost || 0) + 1; try { AV.save() } catch (x) { } AV.toast && AV.toast(tr('The graphics context was lost. Your game is saved; reloading...', 'Se perdió el contexto gráfico. Tu partida está guardada; recargando...')); if (!LW.AUTOTEST) setTimeout(() => location.reload(), 1800) }) });
 LW.creator = function (m, edit) { mode = edit ? 'edit' : 'new'; me = Object.assign(LW.defaultMe(), m || {}); opt = { city: 'ape_town', homes: ['at_mushroom_studio', 'cm_nimman_condo'], tut: true }; ov.style.display = 'block'; render(); return ov };
 LW.creatorState = () => ({ me, opt });
 function finish() { const err = ov.querySelector('#lwErr'); if (!me.name.trim()) { err.textContent = tr('Choose a name first.', 'Elige un nombre primero.'); return }

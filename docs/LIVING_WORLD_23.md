@@ -371,3 +371,35 @@ powershell -ExecutionPolicy Bypass -File tools\tests\gpu_queue.ps1 -Owner lw23 -
 - an order placed inside is served.
 
 **Known:** the interiors are clean but plain (flat colours, box furniture). Textures, props and staff come in the Ape Town / brands pass.
+
+## APE·DJ PRO: two-deck controller (`js/lw_dj.js`)
+
+A professional controller view (functional inspiration: Serato DJ Intro / DJUCED; original branding) on top of the existing Web Audio engine in `dj_mixer.js`. It opens automatically at every DJ booth; "Classic view" or Esc returns to the old panel.
+
+**Decks:**
+- **Jog wheels:**
+  - dragging the platter while playing **scratches**: the playback rate follows your hand; backwards is approximated by stepping back;
+  - dragging while paused **seeks**;
+  - the outer ring **nudges** ±8% for beat-matching by ear.
+- **Waveform:** scrolling, high resolution (50 points per second, computed per track), coloured by loudness, with hot-cue markers, loop shading and a centre playhead.
+- **Readouts:** BPM (the curated playlist tempo wins over a doubled or halved auto-detection) and pitch %.
+- **Time:** elapsed and remaining.
+- **Buttons:** PLAY, CUE, 4 hot cues, loop 1/2/4/8, SYNC, KEY LOCK, pitch fader ±16%.
+
+**Mixer:**
+- per channel: GAIN, HIGH / MID / LOW (full kill), FILTER (low-pass ◀ ▶ high-pass), channel fader, level meter, 🎧 CUE (solo pre-listen; browsers have one output, which the UI says);
+- crossfader and master volume;
+- **searchable library** of the owner's tracks, loading to A or B;
+- mouse and touch (pointer events).
+
+**Test:** `suite_lw23f` **26/26**, at the real Ape Town DJ booth. Each control is checked against the audio graph:
+- the pitch fader changes the playback rate;
+- the LOW kill sets the shelf to -40 dB;
+- the filter sweeps the low-pass;
+- the crossfader mutes A;
+- scratching changes the rate and returns to the fader tempo on release;
+- the outer ring nudges;
+- the paused platter seeks;
+- hot cues set and jump; loops; SYNC matches BPM.
+
+**Not yet:** scratching is rate-based on the browser's media playback, not a sample-accurate vinyl emulation. Gig pay and audience reactions still come from the existing DJ activity (`music_play.js`); DJ competitions come with the minigames milestone.

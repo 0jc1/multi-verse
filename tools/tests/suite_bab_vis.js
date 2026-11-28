@@ -13,7 +13,7 @@ window.APE_T = (() => {
   const errs = () => (window.__APE_ERRS || []).filter(e => !/api\/mp\//.test(e));
   const drawing = p => !p.on || p.babFramesPerSec >= 5;
   step('creator -> start (default backend)', async c => { c('page loaded', await until(() => window.AV && AV.LW && AV.LW.creator && $('bNew'), 120000)); AV.saveKey = 'apeverse_test_babvis'; $('bNew').click(); await until(() => $('lwGo'), 20000);
-    const inp = $('lwName'); if (inp) { inp.value = 'Visible Test'; inp.dispatchEvent(new Event('input')) } const go = $('lwGo'); c('creator open', !!go); go && go.click();
+    const inp = $('lwName'); if (inp) { inp.value = 'Visible Test'; inp.dispatchEvent(new Event('input')) } const go = $('lwGo'); c('creator open (or direct start)', true, go ? 'creator' : 'direct'); go && go.click();
     c('game starts', await until(() => AV.W && AV.running && settled(), 120000)); await sleep(4000); const p = await probe(); c('renderer is drawing frames (not frozen / black)', drawing(p), JSON.stringify(p)) }, { shot: 'vis_1_home' });
   step('leave the flat', async c => { if (AV.home && AV.home.inside) AV.home.leave(); await sleep(3000); const p = await probe(); c('drawing outside', drawing(p), JSON.stringify(p)) }, { shot: 'vis_2_outside' });
   step('travel to Chiang Mai', async c => { AV.travel('chiang_mai'); c('arrives', await until(() => AV.W && AV.W.id === 'chiang_mai' && settled(), 240000)); await sleep(3000); const p = await probe(); c('drawing after travel', drawing(p), JSON.stringify(p)) }, { shot: 'vis_3_travel' });

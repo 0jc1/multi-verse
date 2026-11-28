@@ -21,7 +21,10 @@ const clamp = (x, a, b) => x < a ? a : x > b ? b : x, ease = x => x * x * (3 - 2
 /* ======================= background generation: worker pool + IndexedDB cache ======================= */
 const GEN = C.gen = (function () {
   const SRC = (AV._gensrc || []).join('\n'), mem = new Map(), geos = new Map(), jobs = new Map(); let workers = null, rr = 0, jid = 0, dbp = null, pending = 0;
-  let h = 2166136261; for (let i = 0; i < SRC.length; i++) { h ^= SRC.charCodeAt(i); h = Math.imul(h, 16777619) } const HASH = (h >>> 0).toString(36);
+  /* 3.0: anatomy_hair.js only ADDS new part styles ('h_*' / 'b_*', versioned in their own cache keys), so it must not invalidate every
+     cached character of existing players: it is left out of the cache hash */
+  const HSRC = (AV._gensrc || []).filter(f => f.indexOf('AN._hair') < 0).join(String.fromCharCode(10));   /* same join as SRC: the hash equals the pre-3.0 one */
+  let h = 2166136261; for (let i = 0; i < HSRC.length; i++) { h ^= HSRC.charCodeAt(i); h = Math.imul(h, 16777619) } const HASH = (h >>> 0).toString(36);
   const waiters = [];
   function initWorkers() {
     workers = [];

@@ -45,6 +45,9 @@ The export receiver, needed only for GLB/world exports, is `apeverse-babylon-wt\
 - `babylon_gfx.js`: the visual upgrade, with presets Low / Medium / High / Ultra (F6 or Settings).
   - Physically based sky with sunsets/night, sky lighting (IBL) and reflections, sun shadows, neon glow, reflective animated water.
   - High adds bloom and street lights; Ultra adds ambient occlusion.
+- `lw_style.js` + `anatomy_hair.js`: creator / wardrobe / barbers / boutiques / closet.
+  - Sculpted hair parts are versioned by `AN.HAIR_V`: bump it after changing a shape.
+  - `anatomy_hair.js` is deliberately excluded from the character-cache hash, so players' existing sculpted characters stay cached.
 - `lw_wormhole.js`: the wormhole travel transition. Cinematic / short / instant modes in Settings; respects reduced motion; Space/click skips; always clears.
 
 **URL switches on 8103:**
@@ -75,7 +78,7 @@ cd "C:\Users\Alejo\Downloads\ape multiverse 1\apeverse-babylon-wt"; powershell -
 | 2. Native Babylon | **Started.** Static Ape Town is baked natively (welded, merged). Dynamic objects are still mirrored. Three.js's own environment-cube renders are skipped, which removed a whole extra frame of work. Character-part merging exists but is opt-in (`?chars=1`). Next: load the baked world from GLB on arrival, district streaming. |
 | 3. Graphics upgrade | **First pass done.** Physical sky, image lighting and reflections, sun shadows, neon glow, reflective water. Presets Auto / Low / Medium / High / Ultra. Measured on the Iris Xe (headless GPU, 1536×864): **Low 47–48 FPS, Medium 38–40 FPS** vs Three.js 40–50 on the same views. High ~22, Ultra ~13 (future hardware). |
 | 4. Better 3D meshes | Not started (needs an asset plan + licensing manifest). |
-| 5. Character creator | Not started in 3.0 (the 2.3 creator works). |
+| 5. Character creator | **Done (first full pass).** `lw_style.js` + `anatomy_hair.js`, one editor with four modes. **New game:** everything free. **Barber** (every world, paid): hair / beard / eyes. **Boutique** (every world, paid): clothes / shoes / accessories / brand prints. **Closet** (home wardrobe + phone 🪞 Me): wear what you own. Catalogue: 33 hairstyles (25 newly sculpted), 17 facial-hair styles, 115 tops (incl. 92 brand-print tees / hoodies), 12 bottoms, 9 shoes, 4 hats, sunglasses / glasses, chains, earrings, backpacks, flowers, 12 skin tones, 12 fur colours, 14 hair colours, 8 eye colours, 4 builds, height slider, 8 outfit presets. Drag-to-rotate / zoom / face preview. Purchases and looks persist; brand-store merch counts as owned. Townsfolk use some of the new cuts and beards. Not yet: face-shape sliders, eyebrow styles (no face-paint system for the soft characters), cloth physics. |
 | 6. Real-estate app | Not started. |
 | 7. Wormhole | **Done** (works with both engines). |
 | 8. Havok / navmesh / crowds | Not started. |

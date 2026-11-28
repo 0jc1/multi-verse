@@ -87,23 +87,24 @@ function matHook(L) {
 const STYLE = { short: 'hairShort', messy: 'hairMessy', blond: 'hairMessy', bun: 'hairBun', long: 'hairLong', afro: 'hairAfro', cap: 'cap', bald: null };
 function look(o) {
   const sp = o.sp || 'human_a', skin = hexN(o.skin == null ? 0xd8a47a : o.skin), hair = hexN(o.hair == null ? 0x2a1a10 : o.hair), sh = o.shirt || {}, pt = o.pants || {};
-  const hs = STYLE[o.style || 'short'], shoe = hexN(o.shoe == null ? 0x2a2a2c : o.shoe), flip = o.foot === 'flip';
+  const st0 = o.style || 'short', hs = STYLE[st0] !== undefined ? STYLE[st0] : (String(st0).startsWith('h_') ? st0 : 'hairShort'), shoe =   /* 3.0: barber book styles 'h_*' (anatomy_hair.js) */ hexN(o.shoe == null ? 0x2a2a2c : o.shoe), flip = o.foot === 'flip';
   const L = { kind: 'human', human: true, sp, skin, eye: hexN(o.eye || 0x4a2a10), shells: 0, shadow: o.shadow,
     dark: new THREE.Color(skin).multiplyScalar(.72).lerp(new THREE.Color(0xa04a4a), .25).getHex(), nail: new THREE.Color(skin).lerp(new THREE.Color(0xffe8e0), .45).getHex(),
     shirt: { o: Object.assign({ loose: sh.loose || 1.08, sleeve: sh.sleeveless ? .07 : .5 }, sh.o || {}), col: hexN(sh.col == null ? 0xe8e4da : sh.col), fab: sh.fab, decal: sh.decal, print: sh.print },
     pants: { o: Object.assign({ loose: pt.loose || (pt.shorts ? 1.14 : 1.06) }, pt.shorts ? { shorts: true } : {}), col: hexN(pt.col == null ? 0x3a3a52 : pt.col), kind: pt.kind || 'twill', fab: pt.fab },
     shoes: { o: flip ? { flip: true } : o.boots ? { high: true } : {}, cols: flip ? [shoe, 0x2a2622, shoe, new THREE.Color(shoe).multiplyScalar(.7).getHex()] : o.boots ? [shoe, new THREE.Color(shoe).multiplyScalar(.55).getHex(), new THREE.Color(shoe).multiplyScalar(.8).getHex(), shoe] : [shoe, 0xf0ece4, 0xe8e4da, new THREE.Color(shoe).multiplyScalar(.75).getHex()] },
     hat: hs ? { style: hs, cols: hs === 'cap' ? [hexN(o.capCol || 0x2a6a3a), hexN(o.capCol || 0x2a6a3a)] : [hair, hair] } : null,
-    hairCol: hair, beard: !!o.beard, glasses: o.glasses, flower: o.flower, redEye: !!o.redEye, height: o.height };
+    hairCol: hair, beard: o.beard ? (o.beard === true || o.beard === 'full' ? 'beard' : String(o.beard).startsWith('b_') ? o.beard : 'b_' + o.beard) : false, beardCol: hexN(o.beardCol == null ? hair : o.beardCol),
+    headwear: o.headwear ? { style: o.headwear, col: hexN(o.headwearCol == null ? 0x2a2a2e : o.headwearCol) } : null, extras: o.extras || null, glasses: o.glasses, flower: o.flower, redEye: !!o.redEye, height: o.height };
   if (o.lod) L.ov = { h: o.lod === 'crowd' ? .017 : .011 };   /* Cinematic V1: 'crowd' = background street people (about a third of the triangles) */
   L.matHook = matHook(L);
   if (o.tweak) o.tweak(L);   // chars_regional.js: fabric scale, vest colours...
   return L;
 }
-const D = (L, p) => Object.assign({ sp: L.sp }, L.ov ? { ov: L.ov } : {}, p);
+const D = (L, p) => Object.assign({ sp: L.sp }, L.ov ? { ov: L.ov } : {}, p, p && typeof p.style === 'string' && /^[hb]_/.test(p.style) ? { hv: AN.HAIR_V || 1 } : {});   /* versioned barber-book parts */
 const partDescs = L => [D(L, { part: 'shirt', o: L.shirt.o }), D(L, { part: 'pants', o: L.pants.o }), D(L, { part: 'shoes', o: L.shoes.o })].concat(L.hat ? [D(L, { part: 'hat', style: L.hat.style })] : []);
 /* warm the worker cache for a look (no meshes) */
-function prefetchLook(L) { const parts = partDescs(L); GEN.data(D(L, { part: 'body', cover: parts.slice(0, 3) })); parts.forEach(GEN.data); if (L.beard) GEN.data(D(L, { part: 'hat', style: 'beard' })) }
+function prefetchLook(L) { const parts = partDescs(L); GEN.data(D(L, { part: 'body', cover: parts.slice(0, 3) })); parts.forEach(GEN.data); if (L.beard) GEN.data(D(L, { part: 'hat', style: L.beard })); if (L.headwear) GEN.data(D(L, { part: 'hat', style: L.headwear.style })) }
 
 /* ======================= props (rest character space, then parented to a bone) ======================= */
 const SH = SO.shared;
@@ -186,7 +187,9 @@ function buildHuman(L, opt) {
   const top = (L.sp === 'human_b' ? 1.71 : 1.79), h = L.height || (L.sp === 'human_b' ? 1.66 : 1.76); g.scale.setScalar(h / top);
   st.x = { hand: { L: null, R: null }, uke: null, joint: null, playing: false };
   /* beard: a second rigid hair part on the head bone */
-  if (L.beard) GEN.geo(D(L, { part: 'hat', style: 'beard' })).then(G => { const m = new THREE.Mesh(G.main, hairMat(L.hairCol)); m.castShadow = L.shadow !== false; m.receiveShadow = true; st.R.attach('head', m); C.stats.tris += G.tris });
+  if (L.headwear) GEN.geo(D(L, { part: 'hat', style: L.headwear.style })).then(G => { const m = new THREE.Mesh(G.main, hairMat(L.headwear.col)); m.castShadow = L.shadow !== false; m.receiveShadow = true; st.R.attach('head', m); C.stats.tris += G.tris });
+  if (L.extras) extras(st, L.extras);
+  if (L.beard) GEN.geo(D(L, { part: 'hat', style: L.beard })).then(G => { const m = new THREE.Mesh(G.main, hairMat(L.beardCol)); m.castShadow = L.shadow !== false; m.receiveShadow = true; st.R.attach('head', m); C.stats.tris += G.tris });
   if (L.glasses) attach(st, 'head', PROP.glasses(st, L.glasses));
   if (L.flower) attach(st, 'head', PROP.flower(st, hexN(L.flower)));
   /* red eyes: bloodshot whites, a glowing ember-red iris (the multiverse's professional cloud-watchers) */
@@ -194,6 +197,16 @@ function buildHuman(L, opt) {
   if (opt.puppet !== false) { SO.addProxies(st); st.poseHook = poseHook; const ctrl = C.brain(g, { external: true }); ctrl.wait = 0; SO.PUPPETS.add(ctrl); st.ctrl = ctrl }
   return st;
 }
+/* 3.0 accessories: sunglasses (dark lenses), gold chain, earrings, backpack. x: { sun, chain, earrings, backpack } (colours optional) */
+function extras(st, x) { const K = st.K, I = K.idx;
+  if (x.sun) { const g = PROP.glasses(st, typeof x.sun === 'number' ? x.sun : 0x111111); g.traverse(o => { if (o.isMesh && o.material && o.material.transparent) { o.material = PBR.propMat({ color: 0x141820, roughness: .05, metalness: .3, transparent: true, opacity: .88, clearcoat: 1, envI: 1.6 }) } }); attach(st, 'head', g) }
+  if (x.chain) { const n = K.bones[I.neck].pos, c = K.bones[I.chest].pos, s = K.s, g = new THREE.Group(), m = PBR.propMat({ color: typeof x.chain === 'number' ? x.chain : 0xe8c040, roughness: .25, metalness: 1, envI: 1.4 });
+    const t = mesh(SH('sChain', () => new THREE.TorusGeometry(1, .06, 6, 40)), m, n[0], (n[1] + c[1]) * .5 + .03 * s, n[2] + .04 * s, g); t.scale.set(.075 * s, .09 * s, .075 * s); t.rotation.x = Math.PI / 2 - .5; attach(st, 'chest', g) }
+  if (x.earrings) { const hp = K.bones[I.head].pos, s = K.s * K.P.head, g = new THREE.Group(), m = PBR.propMat({ color: typeof x.earrings === 'number' ? x.earrings : 0xe8c040, roughness: .2, metalness: 1 });
+    for (const sd of [1, -1]) { const e = mesh(SH('sEar', () => new THREE.TorusGeometry(1, .25, 6, 16)), m, hp[0] + sd * .09 * s, hp[1] + .02 * s, hp[2] - .005 * s, g); e.scale.setScalar(.009 * s) } attach(st, 'head', g) }
+  if (x.backpack) { const c = K.bones[I.chest].pos, s = K.s, g = new THREE.Group(), m = PBR.propMat({ color: typeof x.backpack === 'number' ? x.backpack : 0x2a4a6a, roughness: .8 }), m2 = PBR.propMat({ color: 0x1a1a1a, roughness: .7 });
+    mesh(SH('sPack', () => new THREE.BoxGeometry(1, 1, 1)), m, c[0], c[1] - .1 * s, c[2] - .17 * s, g).scale.set(.28 * s, .38 * s, .14 * s); mesh(SH('sPack', () => new THREE.BoxGeometry(1, 1, 1)), m, c[0], c[1] - .2 * s, c[2] - .25 * s, g).scale.set(.22 * s, .14 * s, .05 * s);
+    for (const sd of [1, -1]) mesh(SH('sStrap', () => new THREE.BoxGeometry(1, 1, 1)), m2, c[0] + sd * .085 * s, c[1] - .02 * s, c[2] + .105 * s, g).scale.set(.035 * s, .26 * s, .015 * s);   /* straps on the chest */ attach(st, 'chest', g) } }
 /* props by classic side: +1 = classic aR (this rig's LEFT hand), -1 = classic aL (right hand) */
 function giveProp(st, name, side) {
   const k = side > 0 ? 'L' : 'R', p = attach(st, 'hand' + k, PROP[name](st, k)); st.x.hand[k] = p; if (name === 'joint') st.x.joint = p; st.g.userData[name] = p; return p;
@@ -246,7 +259,7 @@ C.crew = {
 const HUM = {
   skin: [0xf0c8a8, 0xe0ac69, 0xd8a47a, 0xc68642, 0xa86a3c, 0x8d5524, 0x5c3a21],
   hair: [0x14100c, 0x2a1a10, 0x4a2c18, 0x7a5230, 0xd8b860, 0xb0b0b0, 0x8a2a1a],
-  styles: ['short', 'messy', 'bun', 'long', 'cap', 'afro', 'short'],
+  styles: ['short', 'messy', 'bun', 'long', 'cap', 'afro', 'short', 'h_fade', 'h_curly', 'h_dreads', 'h_ponytail', 'h_buzz', 'h_boxBraids', 'h_bob', 'h_quiff', 'h_curlyTop', 'h_topKnot'],   /* 3.0: barber book variety on the street */
   shirt: [0xe8e4da, 0xd84a3a, 0x3a7ad8, 0xf2c43a, 0x2aa878, 0x7a4ac8, 0xe87aa8, 0x2a2a2e, 0xf08a2a, 0xff4ad2, 0x3ad8ff],
   fabs: ['hawaii', 'tiedye', 'reggae'],
   pants: [[0x5a7aa8, 'denim'], [0x2c3a5a, 'denim'], [0xb8a27a, 'twill'], [0x2a2a2c, 'twill'], [0x5a6a3a, 'twill'], [0xc8c2b4, 'twill'], [0x6a2a4a, 'twill']],
@@ -257,7 +270,7 @@ function randomHuman(seed, o) {
   const r = rng((seed | 0) * 2654435761 + 1013904223), pick = a => a[Math.floor(r() * a.length) % a.length];
   const sp = r() < .5 ? 'human_a' : 'human_b', shorts = r() < .45, flip = shorts && r() < .5, fabbed = r() < .22;
   return look({ sp, height: (sp === 'human_a' ? 1.68 : 1.57) + r() * .16, skin: pick(HUM.skin), hair: pick(HUM.hair), style: pick(HUM.styles), capCol: pick(HUM.shirt), eye: pick([0x4a2a10, 0x2a1a0a, 0x3a6a8a, 0x4a6a3a]),
-    beard: sp === 'human_a' && r() < .22, glasses: r() < .2,
+    beard: sp === 'human_a' && r() < .3 ? ['full', 'short', 'goatee', 'mustache', 'stubble', 'vanDyke', 'boxed'][Math.floor(r() * 7)] : false, glasses: r() < .2,
     shirt: fabbed ? { fab: pick(HUM.fabs), albS: 2.2 } : ((pr => pr ? { col: pr.col, print: pr.id, o: pr.o } : { col: pick(HUM.shirt) })(AV.merch && AV.merch.npcPrint ? AV.merch.npcPrint(seed) : null)),   /* M6: a minority wear store designs (own random stream: every other look is unchanged) */ pants: (p => ({ col: p[0], kind: p[1], shorts }))(pick(HUM.pants)),
     foot: flip ? 'flip' : 'sneaker', shoe: pick(HUM.shoe), lod: o.lod, shadow: o.shadow });
 }

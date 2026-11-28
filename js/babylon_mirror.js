@@ -109,7 +109,7 @@ function skin(o, n) { const S = o.skeleton, N = S.bones.length, ident = o.bindMa
       /* Three 'attached' skins refresh bindMatrixInverse = inverse(matrixWorld) every frame, so the world placement is NOT applied twice;
          using the bone matrices alone (the old shortcut) drew every character at twice its distance from the origin */
       for (let i = 0; i < N; i++) { _bm4.fromArray(bmx, i * 16); _sm.multiplyMatrices(o.bindMatrixInverse, _bm4); if (!ident) _sm.multiply(o.bindMatrix); arr.set(_sm.elements, i * 16) } if (tx) tx.update(arr) };
-    sk.getTransformMatrices = () => { upd(); return arr }; sk.getTransformMatrixTexture = () => { upd(); return tx }; K = { sk }; SKEL.set(key, K); BB.stats.skeletons = (BB.stats.skeletons || 0) + 1 }
+    sk.getTransformMatrices = () => { upd(); return arr }; sk.getTransformMatrixTexture = () => { upd(); return tx }; K = { sk, tx }; SKEL.set(key, K); BB.stats.skeletons = (BB.stats.skeletons || 0) + 1 }
   const sk = K.sk;
   n.skeleton = sk; n.numBoneInfluencers = 4; n._skin = sk; BB.stats.skinned = (BB.stats.skinned || 0) + 1 }
 const rgba = a => { const n = a.length / 3, o = new Float32Array(n * 4); for (let i = 0; i < n; i++) { o[i * 4] = a[i * 3]; o[i * 4 + 1] = a[i * 3 + 1]; o[i * 4 + 2] = a[i * 3 + 2]; o[i * 4 + 3] = 1 } return o };
@@ -157,7 +157,8 @@ function watchdog() { let lastF = BB.frames, lastT = performance.now(), blanks =
     if (!covered && blank()) { if (++blanks >= 3) return fallback('the picture stayed black') } else blanks = 0 }, 2000); BB._wd = iv }
 function frame() { BB.frames++; if (!FLIP) FLIP = new B.Quaternion(0, 1, 0, 0); if (tick % 30 === 15 && FRZ.size) { for (const bm of FRZ) if (bm.isReady && bm.getScene && !bm.isFrozen) { const t = [bm.albedoTexture, bm.diffuseTexture, bm.emissiveTexture].filter(Boolean); if (t.every(x => x.isReady())) { bm.freeze(); FRZ.delete(bm) } } }
   const t0 = performance.now(), c = AV.cam; c.updateMatrixWorld(); AV.scene.updateMatrixWorld(); if (tick++ % 20 === 0) scan(); const t1 = performance.now();
-  for (const [o, n] of BB.map) if (n) syncObj(o, n); if (DIRTY.size) flush(); if (BB._frameHook) try { BB._frameHook(tick) } catch (e) { console.warn('bab hook', e) } const t2 = performance.now();
+  for (const [o, n] of BB.map) if (n) syncObj(o, n); if (AV.W && AV.W.id !== sweepW) { sweepW = AV.W.id; sweepAt = performance.now() + 5000 } if (sweepAt && performance.now() > sweepAt && tick % 20 === 5) { sweepAt = 0;   /* 5 s after arrival, once everything was scanned */ try { BB.lastSweep = BB.sweep() } catch (e) { console.warn('bab sweep', e) } }
+  if (DIRTY.size) flush(); if (BB._frameHook) try { BB._frameHook(tick) } catch (e) { console.warn('bab hook', e) } const t2 = performance.now();
   const p = _p, q = _q, s = _s; c.matrixWorld.decompose(p, q, s); cam.position.set(p.x, p.y, p.z); cam.rotationQuaternion.set(q.x, q.y, q.z, q.w).multiplyInPlace(FLIP);   /* Babylon cameras look down +Z, Three's down -Z: turn 180 degrees about the camera's own up axis */ cam.fov = c.fov * Math.PI / 180; cam.maxZ = c.far; cam.minZ = c.near;
   /* lights + fog from the Three scene (time of day keeps working) */
   const S = AV.SUN, H = AV.HS; if (S) { const d = _d.subVectors(S.target.position, S.position).normalize(); sun.direction.set(d.x, d.y, d.z); sun.diffuse = toC(S.color); sun.intensity = S.intensity; sun.position.set(p.x - d.x * 80, p.y - d.y * 80, p.z - d.z * 80) }
@@ -166,6 +167,16 @@ function frame() { BB.frames++; if (!FLIP) FLIP = new B.Quaternion(0, 1, 0, 0); 
   if (BB._lateHook) try { BB._lateHook(p) } catch (e) { console.warn('bab late hook', e) }   /* graphics module: sky, IBL, shadows, lights */
   scene.render(); const t3 = performance.now(), PR = BB.prof; PR.n++; PR.scan += t1 - t0; PR.sync += t2 - t1; PR.render += t3 - t2; if (PR.n >= 60) { BB.stats.ms = { scan: +(PR.scan / PR.n).toFixed(2), sync: +(PR.sync / PR.n).toFixed(2), render: +(PR.render / PR.n).toFixed(2), active: scene.getActiveMeshes().length }; PR.n = PR.scan = PR.sync = PR.render = 0 } BB.stats.fps = Math.round(engine.getFps()); BB.stats.draws = BB.instr ? BB.instr.drawCallsCounter && BB.instr.drawCallsCounter.current : 0 }
 /* ---------- export pipeline (GLB of the mirrored world + portable world data) ---------- */
+/* memory: after a world change, free every texture / material / geometry the new world no longer uses (each trip used to keep the
+   previous world's GPU resources alive -> growing memory, very slow frames, eventually a crashed tab) */
+BB.sweep = function () { if (!scene) return { tex: 0, mat: 0, geo: 0 }; const used = new Set(); for (const m of scene.meshes) if (m.material) used.add(m.material); let nt = 0, nm = 0, ng = 0;
+  for (const [k, M] of MAT) if (!used.has(M.bm)) MAT.delete(k); for (const [k, bm] of SIG) if (!used.has(bm)) { SIG.delete(k); FRZ.delete(bm); try { bm.dispose(false, false) } catch (e) { } nm++ }
+  const usedTex = new Set(); for (const m of scene.materials) for (const t of m.getActiveTextures ? m.getActiveTextures() : []) usedTex.add(t);
+  for (const [k, e] of TEX) if (e.bt && !usedTex.has(e.bt)) { try { e.bt.dispose() } catch (x) { } TEX.delete(k); nt++ }
+  for (const [k, G] of GEO) if (G.isDisposed() || !G.meshes || !G.meshes.length) { try { if (!G.isDisposed()) G.dispose() } catch (e) { } GEO.delete(k); ng++ }
+  const liveSk = new Set(); for (const m of scene.meshes) if (m.skeleton) liveSk.add(m.skeleton); let ns = 0; for (const [k, K] of SKEL) if (!liveSk.has(K.sk)) { try { K.sk.dispose(); if (K.tx) K.tx.dispose() } catch (e) { } SKEL.delete(k); ns++ }
+  BB.stats.swept = (BB.stats.swept || 0) + nt + nm + ng + ns; return { tex: nt, mat: nm, geo: ng, skel: ns } };
+let sweepW = null, sweepAt = 0;
 /* internals the native static world needs */
 BB._frz = FRZ; BB._unbatch = n => unbatch(n); BB._tick = () => tick; BB._mat = (m, vc, ic) => mat(m, vc, ic); BB._flushHook = null;
 BB.exportGLB = async function (name, filter) { if (!B || !B.GLTF2Export) throw new Error('serializers not loaded');

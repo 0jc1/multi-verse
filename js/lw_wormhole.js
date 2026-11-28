@@ -32,7 +32,8 @@ void main(){vec2 uv=(gl_FragCoord.xy-.5*r)/r.y;float rad=length(uv)+1e-3,ang=ata
  float z=.35/rad+t*sp;            /* depth along the tunnel */
  float tw=ang/6.2831853+z*.18+.15*sin(z*.7);   /* spiral twist */
  float s1=.5+.5*sin(6.2831853*(tw*5.)+z*1.3), s2=.5+.5*sin(6.2831853*(tw*3.-z*.21)+2.);
- float cl=fb(vec2(tw*6.,z*.9));  float org=smoothstep(.35,.95,fb(vec2(tw*10.+z*.3,z*2.)));
+ float a2=6.2831853*tw; vec2 ring=vec2(cos(a2),sin(a2));   /* noise sampled on a circle: no seam where the angle wraps */
+ float cl=fb(ring*2.2+vec2(z*.9,z*.37));  float org=smoothstep(.35,.95,fb(ring*3.4+vec2(z*.3+3.,z*2.)));
  vec3 col=mix(cA,cB,s1); col=mix(col,cD,.55*cl); col+=cC*org*.55; col*=.55+.45*s2;
  float st=step(.985,h(floor(vec2(tw*90.,z*14.))))*smoothstep(.0,.25,fract(z*14.));   /* star streaks */
  col+=vec3(st)*.8*smoothstep(.15,.6,rad);
